@@ -1,8 +1,9 @@
 import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
 import type { World } from "../world/world";
+import { tileRegistry } from "../block/blockRegistry";
 
 
-interface TileFace {
+export interface TileFace {
     x: number;
     y: number;
     z: number;
@@ -15,7 +16,7 @@ interface TileFace {
     uvMaxY: number;
 }
 
-interface TileMesh {
+export interface TileMesh {
     skipRender: boolean;
     occludeNorth: boolean;
     occludeEast: boolean;
@@ -32,62 +33,18 @@ interface TileMesh {
     down: TileFace[];
 }
 
-const meshes: (TileMesh | null)[] = [
-    {
-        skipRender: true,
-        occludeNorth: false,
-        occludeEast: false,
-        occludeSouth: false,
-        occludeWest: false,
-        occludeUp: false,
-        occludeDown: false,
-        north: [ ],
-        east: [ ],
-        south: [ ],
-        west: [ ],
-        up: [ ],
-        down: [ ],
-    },
-    {
-        skipRender: false,
-        occludeNorth: true,
-        occludeEast: true,
-        occludeSouth: true,
-        occludeWest: true,
-        occludeUp: false,
-        occludeDown: true,
-        north: [ { x: 0, y: 0, z: 1, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-        east: [ { x: 1, y: 0, z: 1, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-        south: [ { x: 1, y: 0, z: 0, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-        west: [ { x: 0, y: 0, z: 0, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-        up: [ { x: 0, y: 1, z: 1, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-        down: [ { x: 0, y: 0, z: 0, width: 1, height: 1, cull: true, uvMinX: 0, uvMinY: 0.5, uvMaxX: 0.5, uvMaxY: 1 } ],
-    },
-    {
-        skipRender: false,
-        occludeNorth: false,
-        occludeEast: false,
-        occludeSouth: false,
-        occludeWest: false,
-        occludeUp: false,
-        occludeDown: true,
-        north: [ { x: 0, y: 0, z: 1, width: 1, height: 0.5, cull: true, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 0.75 } ],
-        east: [ { x: 1, y: 0, z: 1, width: 1, height: 0.5, cull: true, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 0.75 } ],
-        south: [ { x: 1, y: 0, z: 0, width: 1, height: 0.5, cull: true, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 0.75 } ],
-        west: [ { x: 0, y: 0, z: 0, width: 1, height: 0.5, cull: true, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 0.75 } ],
-        up: [ { x: 0, y: 0.5, z: 1, width: 1, height: 1, cull: false, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 1 } ],
-        down: [ { x: 0, y: 0, z: 0, width: 1, height: 1, cull: true, uvMinX: 0.5, uvMinY: 0.5, uvMaxX: 1, uvMaxY: 1 } ],
-    }
-]
-
-function getMesh(tile: number) {
-    return meshes[tile]!;
-}
-
 export class ChunkMesher {
+    private readonly tileMeshes: TileMesh[];
+
     public constructor(
         public readonly world: World
-    ) {}
+    ) {
+        this.tileMeshes = Array.from(tileRegistry.values());
+    }
+
+    private getMesh(tile: number) {
+        return this.tileMeshes[tile]!;
+    }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {
         const tiles = this.world.tiles;
@@ -109,12 +66,12 @@ export class ChunkMesher {
             for(let blockY = minBlockY, y = 0; blockY < maxBlockY; blockY++, y++) {
                 for(let blockZ = minBlockZ, z = 0; blockZ < maxBlockZ; blockZ++, z++) {
                     const tile = tiles.getTile(blockX, blockY, blockZ);
-                    const mesh = getMesh(tile);
+                    const mesh = this.getMesh(tile);
 
                     if(mesh.skipRender) continue;
 
                     // North
-                    const showNorth = !getMesh(tiles.getTile(blockX, blockY, blockZ + 1)).occludeWest;
+                    const showNorth = !this.getMesh(tiles.getTile(blockX, blockY, blockZ + 1)).occludeWest;
                     for(const face of mesh.north) {
                         if(face.cull && !showNorth) continue;
 
@@ -144,7 +101,7 @@ export class ChunkMesher {
                     }
 
                     // South
-                    const showSouth = !getMesh(tiles.getTile(blockX, blockY, blockZ - 1)).occludeNorth;
+                    const showSouth = !this.getMesh(tiles.getTile(blockX, blockY, blockZ - 1)).occludeNorth;
                     for(const face of mesh.south) {
                         if(face.cull && !showSouth) continue;
 
@@ -174,7 +131,7 @@ export class ChunkMesher {
                     }
 
                     // East
-                    const showEast = !getMesh(tiles.getTile(blockX + 1, blockY, blockZ)).occludeEast;
+                    const showEast = !this.getMesh(tiles.getTile(blockX + 1, blockY, blockZ)).occludeEast;
                     for(const face of mesh.east) {
                         if(face.cull && !showEast) continue;
                         
@@ -204,7 +161,7 @@ export class ChunkMesher {
                     }
 
                     // West
-                    if(!getMesh(tiles.getTile(blockX - 1, blockY, blockZ)).occludeWest) {
+                    if(!this.getMesh(tiles.getTile(blockX - 1, blockY, blockZ)).occludeWest) {
                         for(const face of mesh.west) {
                             floatAttributes.push(
                 /* pos      */  x + face.x, y + face.y, z + face.z,
@@ -233,7 +190,7 @@ export class ChunkMesher {
                     }
 
                     // Up
-                    const showUp = !getMesh(tiles.getTile(blockX, blockY + 1, blockZ)).occludeDown;
+                    const showUp = !this.getMesh(tiles.getTile(blockX, blockY + 1, blockZ)).occludeDown;
                     for(const face of mesh.up) {
                         if(face.cull && !showUp) continue;
                         
@@ -263,7 +220,7 @@ export class ChunkMesher {
                     }
 
                     // Down
-                    const showDown = !getMesh(tiles.getTile(blockX, blockY - 1, blockZ)).occludeUp;
+                    const showDown = !this.getMesh(tiles.getTile(blockX, blockY - 1, blockZ)).occludeUp;
                     for(const face of mesh.down) {
                         if(face.cull && !showDown) continue;
 

@@ -39,6 +39,9 @@ async function main() {
             1 + Math.floor(Math.random() * 2)
         )
     }
+    for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
+        world.tiles.setTile(x * 16, y * 16, z * 16, 3);
+    }
 
     const atlas = await textureLoader.loadAsync("assets/atlas.png");
     atlas.magFilter = NearestFilter;
