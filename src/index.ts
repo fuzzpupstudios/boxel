@@ -1,9 +1,9 @@
-import { AxesHelper, Color, Mesh, MeshNormalMaterial, PerspectiveCamera, Scene, TextureLoader } from "three";
-import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
+import { AxesHelper, Color, Mesh, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { World } from "./world/world";
+import { normalGeometry, texture, uv, vec3, vec4 } from "three/tsl";
+import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
 import { ChunkMesher } from "./rendering/chunkMesher";
-import { normalGeometry, texture, vec3, vec4 } from "three/tsl";
+import { World } from "./world/world";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true });
@@ -41,11 +41,12 @@ async function main() {
     }
 
     const atlas = await textureLoader.loadAsync("assets/atlas.png");
+    atlas.magFilter = NearestFilter;
 
     for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
         const geometry = mesher.mesh(x, y, z);
         const mesh = new Mesh(geometry, new MeshBasicNodeMaterial({
-            colorNode: vec4(texture(atlas).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
+            colorNode: vec4(texture(atlas, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
         }));
         mesh.position.set(x * 16, y * 16, z * 16);
         scene.add(mesh);
