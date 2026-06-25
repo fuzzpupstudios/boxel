@@ -1,9 +1,12 @@
-import { AxesHelper, Color, Mesh, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
+import { AxesHelper, BoxGeometry, Color, Mesh, MeshNormalMaterial, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { normalGeometry, texture, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
 import { ChunkMesher } from "./rendering/chunkMesher";
 import { World } from "./world/world";
+import type { Time } from "./time";
+import { Entity } from "./entity/entity";
+import { Player } from "./entity/player";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true });
@@ -14,6 +17,8 @@ const controls = new OrbitControls(camera, undefined as any);
 const world = new World;
 const mesher = new ChunkMesher(world);
 const textureLoader = new TextureLoader();
+
+const player = new Player(world);
 
 main();
 
@@ -29,7 +34,8 @@ async function main() {
     // attach controls to the renderer's DOM element after it's available
     controls.connect(renderer.domElement);
     controls.enableDamping = true;
-    camera.position.set(0, 2, 5);
+    camera.position.set(32, 82, 37);
+    controls.target.set(32, 64, 32);
 
     for(let i = 0; i < 64000; i++) {
         world.tiles.setTile(
@@ -55,7 +61,9 @@ async function main() {
         scene.add(mesh);
     }
 
-    scene.add(new AxesHelper(16))
+    scene.add(new AxesHelper(16));
+    player.acceleration.y = -1;
+    player.position.set(32, 80, 32);
 
     requestAnimationFrame(render);
 }
@@ -68,9 +76,29 @@ function resize() {
     renderer.setSize(innerWidth, innerHeight, true);
 }
 
-function render() {
+function update(time: Time) {
+    player.acceleration.x = Math.random() * 2 - 1;
+    player.acceleration.z = Math.random() * 2 - 1;
+    player.tick(time);
+}
+
+
+let lastRenderTime = 0;
+function render(miliseconds: number) {
     controls.update();
     renderer.render(scene, camera);
+
+    const dt = Math.min(lastRenderTime - miliseconds, 500);
+    lastRenderTime = miliseconds;
+
+    const time: Time = {
+        seconds: miliseconds / 1000,
+        miliseconds: miliseconds,
+        deltaMs: dt,
+        deltaTime: dt / 1000
+    }
+
+    update(time);
 
     requestAnimationFrame(render);
 }

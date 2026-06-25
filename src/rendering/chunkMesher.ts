@@ -1,6 +1,6 @@
 import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
 import type { World } from "../world/world";
-import { tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry } from "../block/blockRegistry";
 
 
 export interface TileFace {
@@ -39,7 +39,7 @@ export class ChunkMesher {
     public constructor(
         public readonly world: World
     ) {
-        this.tileMeshes = Array.from(tileRegistry.values());
+        this.tileMeshes = Array.from(blockStateRegistry.values()).map(state => state.model);
     }
 
     private getMesh(tile: number) {

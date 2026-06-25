@@ -4,10 +4,11 @@ export namespace DataDrivenJson {
     }
 
     export interface BlockState {
-        model: BlockModel
+        model: BlockStateModel,
+        collider?: BlockStateCollider
     }
 
-    export interface BlockModel {
+    export interface BlockStateModel {
         skipRender?: boolean;
         occlude?: boolean;
         occludeNorth?: boolean,
@@ -16,18 +17,25 @@ export namespace DataDrivenJson {
         occludeWest?: boolean,
         occludeUp?: boolean,
         occludeDown?: boolean,
-        north?: BlockModelFace[],
-        east?: BlockModelFace[],
-        south?: BlockModelFace[],
-        west?: BlockModelFace[],
-        up?: BlockModelFace[],
-        down?: BlockModelFace[],
+        north?: BlockStateModelFace[],
+        east?: BlockStateModelFace[],
+        south?: BlockStateModelFace[],
+        west?: BlockStateModelFace[],
+        up?: BlockStateModelFace[],
+        down?: BlockStateModelFace[],
     }
 
-    export interface BlockModelFace {
+    export interface BlockStateModelFace {
         pos: [ number, number, number ],
         size: [ number, number ],
         uv: [ number, number, number, number ],
         cull?: boolean
+    }
+    
+    export interface BlockStateCollider {
+        hitboxes: {
+            from: [ number, number, number ],
+            to: [ number, number, number ]
+        }[]
     }
 }

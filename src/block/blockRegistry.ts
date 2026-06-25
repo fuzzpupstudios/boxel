@@ -1,8 +1,7 @@
 import { AutoRegistry, KeyedRegistry } from "objectregistry";
-import { DataDrivenBlock } from "./dataDrivenBlock";
-import { Block } from "./block";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
-import type { TileMesh } from "../rendering/chunkMesher";
+import { Block, BlockState } from "./block";
+import { DataDrivenBlock } from "./dataDrivenBlock";
 
 export const blockRegistry = new KeyedRegistry<Block, string>();
 
@@ -18,11 +17,11 @@ blockRegistry.register("axes", new DataDrivenBlock(
 blockRegistry.lock();
 
 
-export const tileRegistry = new AutoRegistry<TileMesh>();
+export const blockStateRegistry = new AutoRegistry<BlockState>();
 for(const block of blockRegistry.values()) {
     for(const state of block.getStates()) {
-        tileRegistry.register(state.model);
+        blockStateRegistry.register(state);
     }
 }
 
-tileRegistry.lock();
+blockStateRegistry.lock();

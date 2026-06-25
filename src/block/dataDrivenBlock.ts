@@ -1,4 +1,6 @@
+import { Box3, Vector3 } from "three";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { TileCollider } from "../entity/entity";
 import type { TileFace, TileMesh } from "../rendering/chunkMesher";
 import { Block, BlockState } from "./block";
 
@@ -9,7 +11,7 @@ export class DataDrivenBlock extends Block {
         super();
     }
 
-    private static parseJsonModelFace(face: DataDrivenJson.BlockModelFace): TileFace {
+    private static parseJsonModelFace(face: DataDrivenJson.BlockStateModelFace): TileFace {
         return {
             x: face.pos[0], y: face.pos[1], z: face.pos[2],
             width: face.size[0], height: face.size[1],
@@ -18,7 +20,7 @@ export class DataDrivenBlock extends Block {
             cull: face.cull ?? true
         };
     }
-    private static parseJsonModel(model: DataDrivenJson.BlockModel): TileMesh {
+    private static parseJsonModel(model: DataDrivenJson.BlockStateModel): TileMesh {
         return {
             skipRender: model.skipRender ?? false,
 
@@ -37,10 +39,16 @@ export class DataDrivenBlock extends Block {
             down: model.down?.map(face => this.parseJsonModelFace(face)) ?? [],
         };
     }
+    private static parseJsonCollider(collider: DataDrivenJson.BlockStateCollider): TileCollider {
+        return {
+            hitboxes: collider.hitboxes.map(({ from, to }) => new Box3(new Vector3(from[0], from[1], from[2]), new Vector3(to[0], to[1], to[2])))
+        }
+    }
 
     protected override buildStates(): BlockState[] {
         return this.data.states.map(state => ({
             model: DataDrivenBlock.parseJsonModel(state.model),
+            collider: DataDrivenBlock.parseJsonCollider(state.collider ?? { hitboxes: [] })
         }));
     }
 }
