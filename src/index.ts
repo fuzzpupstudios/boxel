@@ -70,7 +70,7 @@ async function main() {
     }
 
     scene.add(new AxesHelper(16));
-    player.position.set(32, 80, 32);
+    player.aabb.position.set(32, 80, 32);
 
     requestAnimationFrame(render);
 }
@@ -102,9 +102,9 @@ function update(time: Time) {
     player.tick(time);
 
     camera.position.set(
-        player.position.x,
-        player.position.y + player.eyeHeight,
-        player.position.z
+        player.aabb.position.x,
+        player.aabb.position.y + player.eyeHeight,
+        player.aabb.position.z
     );
     camera.rotation.set(player.pitch, -player.yaw, 0, "YZX");
 

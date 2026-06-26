@@ -1,9 +1,11 @@
 import { Vector3, Box3 } from "three";
-import { Entity } from "./entity";
+import { Entity, type TileCollider } from "./entity";
 import type { Time } from "../time";
+import { AABB } from "../physics/AABB";
+import type { World } from "../world/world";
 
 export class Player extends Entity {
-    public override readonly hitbox = new Box3(
+    public readonly hitbox = new Box3(
         new Vector3(-0.3, 0, -0.3),
         new Vector3(0.3, 1.9, 0.3),
     );
@@ -11,6 +13,15 @@ export class Player extends Entity {
     public yaw = 0;
     public pitch = 0;
 
+    protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
+        return new AABB(
+            new Box3(
+                new Vector3(-0.3, 0, -0.3),
+                new Vector3(0.3, 1.9, 0.3)
+            ),
+            world, tileColliders
+        );
+    }
 
     public walk(dx: number, dz: number, time: Time) {
         const length = Math.sqrt(dx * dx + dz * dz);
@@ -21,8 +32,8 @@ export class Player extends Entity {
 
         const friction = this.onGround ? 0.546 : 0.91;
         const moveSpeed = this.onGround
-            ? 2 * (0.16277136 / (friction * friction * friction))
-            : 0.2;
+            ? 2.5 * (0.16277136 / (friction * friction * friction))
+            : 0.3;
         const factor = moveSpeed * time.deltaTime * 20;
 
         this.velocity.x += Math.cos(this.yaw) * dx * factor - Math.sin(this.yaw) * dz * factor;
