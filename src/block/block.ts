@@ -1,6 +1,5 @@
-import type { Box3 } from "three";
-import type { TileMesh } from "../rendering/chunkMesher";
 import type { TileCollider } from "../entity/entity";
+import type { BlockModel } from "./blockModel";
 
 export abstract class Block {
     private states: BlockState[] | null = null;
@@ -17,7 +16,7 @@ export abstract class Block {
 
 export class BlockState {
     public constructor(
-        public readonly model: TileMesh,
+        public readonly model: BlockModel,
         public readonly collider: TileCollider
     ) {}
 }

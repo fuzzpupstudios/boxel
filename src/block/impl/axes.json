@@ -2,46 +2,55 @@
     "states": [
         {
             "model": {
+                "textures": {
+                    "axes": "assets/axes.png"
+                },
                 "north": [
                     {
                         "pos": [ 0, 0, 1 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ],
                 "east": [
                     {
                         "pos": [ 1, 0, 1 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ],
                 "south": [
                     {
                         "pos": [ 1, 0, 0 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ],
                 "west": [
                     {
                         "pos": [ 0, 0, 0 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ],
                 "up": [
                     {
                         "pos": [ 0, 1, 1 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ],
                 "down": [
                     {
                         "pos": [ 0, 0, 0 ],
                         "size": [ 1, 1 ],
-                        "uv": [ 0, 0.5, 0.5, 1 ]
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "axes"
                     }
                 ]
             },

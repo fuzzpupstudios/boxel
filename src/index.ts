@@ -1,4 +1,4 @@
-import { AxesHelper, Color, Mesh, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
+import { AxesHelper, Color, LoadingManager, Mesh, NearestFilter, PerspectiveCamera, Scene, Texture, TextureLoader } from "three";
 import { normalGeometry, texture, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
 import { Player } from "./entity/player";
@@ -6,24 +6,37 @@ import { ChunkMesher } from "./rendering/chunkMesher";
 import type { Time } from "./time";
 import { World } from "./world/world";
 import { ControlBinding, Input } from "./input/input";
+import { blockStateRegistry } from "./block/blockRegistry";
+import { TextureAtlas } from "./assets/textureAtlas";
+import { Assets } from "./assets/assets";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true });
 const scene = new Scene;
 const camera = new PerspectiveCamera(90);
 
-const world = new World;
-const mesher = new ChunkMesher(world);
-const textureLoader = new TextureLoader();
+let world: World;
+let chunkMesher: ChunkMesher;
+let textureAtlas: TextureAtlas;
 
-const player = new Player(world);
+let player: Player;
 
 const input = new Input;
 
 main();
 
 async function main() {
+    await loadTextures();
+
     document.body.appendChild(renderer.domElement);
+
+    function resize() {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setPixelRatio(devicePixelRatio);
+        renderer.setSize(innerWidth, innerHeight, true);
+    }
 
     resize();
     window.addEventListener("resize", () => resize());
@@ -45,26 +58,33 @@ async function main() {
     await renderer.init();
     renderer.setClearColor(new Color(0x88ccff));
 
+    world = new World;
+    chunkMesher = new ChunkMesher(world);
+    player = new Player(world);
+
     for(let i = 0; i < 64000; i++) {
         world.tiles.setTile(
             Math.floor(Math.random() * 64),
             Math.floor(Math.random() * 64),
             Math.floor(Math.random() * 64),
-            1 + Math.floor(Math.random() * 2)
+            1 + Math.floor(Math.random() * 3)
         )
     }
     for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
-        world.tiles.setTile(x * 16, y * 16, z * 16, 3);
+        for(let dx = 0; dx <= 15; dx += 15) for(let dy = 0; dy <= 15; dy += 15) for(let dz = 0; dz <= 15; dz += 15) {
+            world.tiles.setTile(x * 16 + dx, y * 16 + dy, z * 16 + dz, 4);
+        }
     }
 
-    const atlas = await textureLoader.loadAsync("assets/atlas.png");
-    atlas.magFilter = NearestFilter;
+    console.log(textureAtlas.packedTexture);
+
+    const material = new MeshBasicNodeMaterial({
+        colorNode: vec4(texture(textureAtlas.packedTexture, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
+    });
 
     for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
-        const geometry = mesher.mesh(x, y, z);
-        const mesh = new Mesh(geometry, new MeshBasicNodeMaterial({
-            colorNode: vec4(texture(atlas, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
-        }));
+        const geometry = chunkMesher.mesh(x, y, z);
+        const mesh = new Mesh(geometry, material);
         mesh.position.set(x * 16, y * 16, z * 16);
         scene.add(mesh);
     }
@@ -75,12 +95,24 @@ async function main() {
     requestAnimationFrame(render);
 }
 
-function resize() {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
+async function loadTextures() {
+    const loadingManager = new LoadingManager;
+    textureAtlas = new TextureAtlas;
+    for await(const [ textureId, textureSource ] of Assets.textureRegistry.entries()) {
+        let loadedTexture: Texture;
+        try {
+            loadedTexture = await textureSource.load(loadingManager);
+        } catch(e) {
+            throw new Error("Failed to load texture " + textureSource, { cause: e });
+        }
+        textureAtlas.addTexture(textureId, loadedTexture);
+    }
+    textureAtlas.pack();
 
-    renderer.setPixelRatio(devicePixelRatio);
-    renderer.setSize(innerWidth, innerHeight, true);
+    console.log(textureAtlas);
+    for(const blockState of blockStateRegistry.values()) {
+        blockState.model.setTextureAtlas(textureAtlas);
+    }
 }
 
 function update(time: Time) {

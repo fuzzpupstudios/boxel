@@ -17,6 +17,7 @@ export namespace DataDrivenJson {
         occludeWest?: boolean,
         occludeUp?: boolean,
         occludeDown?: boolean,
+        textures?: Record<string, string>,
         north?: BlockStateModelFace[],
         east?: BlockStateModelFace[],
         south?: BlockStateModelFace[],
@@ -29,6 +30,7 @@ export namespace DataDrivenJson {
         pos: [ number, number, number ],
         size: [ number, number ],
         uv: [ number, number, number, number ],
+        texture?: string,
         cull?: boolean
     }
     

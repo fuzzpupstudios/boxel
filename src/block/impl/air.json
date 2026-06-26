@@ -2,7 +2,6 @@
     "states": [
         {
             "model": {
-                "skipRender": true,
                 "occlude": false
             }
         }

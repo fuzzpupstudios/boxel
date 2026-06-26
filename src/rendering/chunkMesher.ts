@@ -39,7 +39,17 @@ export class ChunkMesher {
     public constructor(
         public readonly world: World
     ) {
-        this.tileMeshes = Array.from(blockStateRegistry.values()).map(state => state.model);
+        this.tileMeshes = new Array;
+        for(const blockModel of blockStateRegistry.values()) {
+            try {
+                const compiledModel = blockModel.model.compile();
+                this.tileMeshes.push(compiledModel);
+            } catch(e) {
+                throw new Error("Failed to compile block model " + blockModel, { cause: e });
+            }
+        }
+
+        console.log(this.tileMeshes);
     }
 
     private getMesh(tile: number) {
