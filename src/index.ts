@@ -1,24 +1,24 @@
-import { AxesHelper, BoxGeometry, Color, Mesh, MeshNormalMaterial, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { AxesHelper, Color, Mesh, NearestFilter, PerspectiveCamera, Scene, TextureLoader } from "three";
 import { normalGeometry, texture, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
-import { ChunkMesher } from "./rendering/chunkMesher";
-import { World } from "./world/world";
-import type { Time } from "./time";
-import { Entity } from "./entity/entity";
 import { Player } from "./entity/player";
+import { ChunkMesher } from "./rendering/chunkMesher";
+import type { Time } from "./time";
+import { World } from "./world/world";
+import { ControlBinding, Input } from "./input/input";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true });
 const scene = new Scene;
 const camera = new PerspectiveCamera(90);
-const controls = new OrbitControls(camera, undefined as any);
 
 const world = new World;
 const mesher = new ChunkMesher(world);
 const textureLoader = new TextureLoader();
 
 const player = new Player(world);
+
+const input = new Input;
 
 main();
 
@@ -28,14 +28,22 @@ async function main() {
     resize();
     window.addEventListener("resize", () => resize());
 
+    input.attachKeyboard(document.body);
+    input.attachMouse(renderer.domElement);
+
+    window.addEventListener("gamepadconnected", event => {
+        console.log(`%cGamepad ${event.gamepad.index} connected`, "color: cornflowerblue; font-family: system-ui; font-size: 2rem; text-stroke: 0.25rem black; font-weight:bold;")
+        console.log(event.gamepad.id)
+        input.attachController(event.gamepad);
+    });
+    window.addEventListener("gamepaddisconnected", event => {
+        console.log(`%cGamepad ${event.gamepad.index} disconnected`, "color: pink; font-family: system-ui; font-size: 2rem; text-stroke: 0.25rem black; font-weight:bold;")
+        console.log(event.gamepad.id)
+        input.detachController(event.gamepad);
+    });
+
     await renderer.init();
     renderer.setClearColor(new Color(0x88ccff));
-
-    // attach controls to the renderer's DOM element after it's available
-    controls.connect(renderer.domElement);
-    controls.enableDamping = true;
-    camera.position.set(32, 82, 37);
-    controls.target.set(32, 64, 32);
 
     for(let i = 0; i < 64000; i++) {
         world.tiles.setTile(
@@ -62,7 +70,6 @@ async function main() {
     }
 
     scene.add(new AxesHelper(16));
-    player.acceleration.y = -1;
     player.position.set(32, 80, 32);
 
     requestAnimationFrame(render);
@@ -77,18 +84,39 @@ function resize() {
 }
 
 function update(time: Time) {
-    player.acceleration.x = Math.random() * 2 - 1;
-    player.acceleration.z = Math.random() * 2 - 1;
+    player.walk(
+        input.getAnalog(ControlBinding.RIGHT) - input.getAnalog(ControlBinding.LEFT),
+        input.getAnalog(ControlBinding.BACKWARD) - input.getAnalog(ControlBinding.FORWARD),
+        time
+    );
+
+    if (input.isPressed(ControlBinding.JUMP)) {
+        player.jump();
+    }
+
+    player.rotate(
+        (input.getAnalog(ControlBinding.ROTATE_CW) - input.getAnalog(ControlBinding.ROTATE_CCW)) * time.deltaTime * 2,
+        (input.getAnalog(ControlBinding.ROTATE_UP) - input.getAnalog(ControlBinding.ROTATE_DOWN)) * time.deltaTime * 2,
+    );
+
     player.tick(time);
+
+    camera.position.set(
+        player.position.x,
+        player.position.y + player.eyeHeight,
+        player.position.z
+    );
+    camera.rotation.set(player.pitch, -player.yaw, 0, "YZX");
+
+    input.update();
 }
 
 
 let lastRenderTime = 0;
 function render(miliseconds: number) {
-    controls.update();
     renderer.render(scene, camera);
 
-    const dt = Math.min(lastRenderTime - miliseconds, 500);
+    const dt = Math.min(miliseconds - lastRenderTime, 500);
     lastRenderTime = miliseconds;
 
     const time: Time = {

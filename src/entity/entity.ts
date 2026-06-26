@@ -14,13 +14,12 @@ export abstract class Entity implements Tickable {
     public world: World;
     public readonly position = new Vector3;
     public readonly velocity = new Vector3;
-    public readonly acceleration = new Vector3;
-    public readonly impulse = new Vector3;
     public readonly hitbox = new Box3(
         new Vector3(-0.5, -0.5, -0.5),
         new Vector3(0.5, 0.5, 0.5)
     );
     private readonly tileColliders: TileCollider[];
+    protected onGround = false;
 
     public constructor(world: World) {
         this.world = world;
@@ -31,16 +30,18 @@ export abstract class Entity implements Tickable {
     }
 
     public tick(time: Time): void {
-        this.acceleration.add(this.impulse);
-        this.impulse.set(0, 0, 0);
+        this.velocity.x += this.world.gravity.x * time.deltaTime;
+        this.velocity.y += this.world.gravity.y * time.deltaTime;
+        this.velocity.z += this.world.gravity.z * time.deltaTime;
 
-        this.velocity.x += this.acceleration.x * time.deltaTime;
-        this.velocity.y += this.acceleration.y * time.deltaTime;
-        this.velocity.z += this.acceleration.z * time.deltaTime;
-
-        this.moveX(this.velocity.x * time.deltaTime);
         this.moveY(this.velocity.y * time.deltaTime);
+        this.moveX(this.velocity.x * time.deltaTime);
         this.moveZ(this.velocity.z * time.deltaTime);
+
+        const friction = this.onGround ? 0.546 : 0.91;
+        const drag = Math.pow(friction, time.deltaTime * 20);
+        this.velocity.x *= drag;
+        this.velocity.z *= drag;
     }
 
     private moveX(deltaX: number): void {
@@ -163,8 +164,14 @@ export abstract class Entity implements Tickable {
             }
         }
 
+        this.onGround = false;
+
         this.position.y += collision;
         if (collision !== deltaY) {
+            if(deltaY < 0) {
+                this.onGround = true;
+            }
+
             this.velocity.y = 0;
         }
     }
