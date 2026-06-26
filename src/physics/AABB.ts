@@ -55,8 +55,8 @@ export class AABB {
                         const tileMinX = tx + box.min.x;
                         const tileMaxX = tx + box.max.x;
 
-                        if (eMaxY < tileMinY || eMinY > tileMaxY) continue;
-                        if (eMaxZ < tileMinZ || eMinZ > tileMaxZ) continue;
+                        if (eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
+                        if (eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
 
                         if (deltaX > 0 && eMaxX <= tileMinX) {
                             const d = tileMinX - eMaxX;
@@ -116,8 +116,8 @@ export class AABB {
                         const tileMinY = ty + box.min.y;
                         const tileMaxY = ty + box.max.y;
 
-                        if (eMaxX < tileMinX || eMinX > tileMaxX) continue;
-                        if (eMaxZ < tileMinZ || eMinZ > tileMaxZ) continue;
+                        if (eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
+                        if (eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
 
                         if (deltaY > 0 && eMaxY <= tileMinY) {
                             const d = tileMinY - eMaxY;
@@ -177,8 +177,8 @@ export class AABB {
                         const tileMinZ = tz + box.min.z;
                         const tileMaxZ = tz + box.max.z;
 
-                        if (eMaxX < tileMinX || eMinX > tileMaxX) continue;
-                        if (eMaxY < tileMinY || eMinY > tileMaxY) continue;
+                        if (eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
+                        if (eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
 
                         if (deltaZ > 0 && eMaxZ <= tileMinZ) {
                             const d = tileMinZ - eMaxZ;
