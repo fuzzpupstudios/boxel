@@ -8,15 +8,17 @@ import { ControlBinding, Input } from "./input/input";
 import { WorldRenderer } from "./rendering/worldRenderer";
 import type { Time } from "./time";
 import { World } from "./world/world";
+import { BlockStateOutline } from "./rendering/blockStateOutline";
 
 
-const renderer = new WebGPURenderer({ forceWebGL: true });
+const renderer = new WebGPURenderer({ forceWebGL: true, antialias: false });
 const scene = new Scene;
 const camera = new PerspectiveCamera(90);
 
 let world: World;
 let worldRenderer: WorldRenderer;
 let textureAtlas: TextureAtlas;
+let targetedBlock: BlockStateOutline;
 
 let player: Player;
 
@@ -60,23 +62,24 @@ async function main() {
     world = new World;
     worldRenderer = new WorldRenderer(world, textureAtlas);
     player = new Player(world);
+    targetedBlock = new BlockStateOutline;
+    
+    for(let x = -64; x < 64; x++) {
+        for(let y = -64; y < 64; y++) {
+            for(let z = -64; z < 64; z++) {
+                let block = "base:cobblestone[default]";
 
-    for(let i = 0; i < 64000; i++) {
-        world.setBlockStateKey(
-            Math.floor(Math.random() * 128 - 64),
-            Math.floor(Math.random() * 128 - 64),
-            Math.floor(Math.random() * 128 - 64),
-            Math.random() > 0.5 ? "base:dirt[default]" : "base:grass[default]"
-        )
-    }
-    for(let x = -4; x < 4; x++) for(let y = -4; y < 4; y++) for(let z = -4; z < 4; z++) {
-        for(let dx = 0; dx <= 15; dx += 15) for(let dy = 0; dy <= 15; dy += 15) for(let dz = 0; dz <= 15; dz += 15) {
-            world.setBlockStateKey(x * 16 + dx, y * 16 + dy, z * 16 + dz, "base:axes[default]");
+                if(y > 28) block = "base:dirt[default]";
+                if(y > 31) block = "base:grass[default]";
+                if(y > 32) block = "base:air[default]";
+                world.setBlockStateKey(x, y, z, block);
+            }
         }
     }
 
     scene.add(worldRenderer.root);
     scene.add(new AxesHelper(16));
+    scene.add(targetedBlock.mesh);
     player.aabb.position.set(32, 80, 32);
 
     requestAnimationFrame(render);
@@ -109,8 +112,12 @@ function update(time: Time) {
         time
     );
 
-    if (input.isPressed(ControlBinding.JUMP)) {
+    if(input.isPressed(ControlBinding.JUMP)) {
         player.jump();
+    }
+
+    if(input.isPressed(ControlBinding.DESTROY)) {
+        player.destroy();
     }
 
     player.rotate(
@@ -119,6 +126,19 @@ function update(time: Time) {
     );
 
     player.tick(time);
+
+    if(player.targetedBlock.hit) {
+        targetedBlock.mesh.visible = true;
+        targetedBlock.mesh.position.copy(player.targetedBlock.voxel)
+        const stateKey = world.getBlockStateKey(
+            player.targetedBlock.voxel.x,
+            player.targetedBlock.voxel.y,
+            player.targetedBlock.voxel.z
+        );
+        targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
+    } else {
+        targetedBlock.mesh.visible = false;
+    }
 
     camera.position.set(
         player.aabb.position.x,
