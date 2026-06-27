@@ -16,7 +16,10 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js"],
+    extensions: [".tsx", ".ts", ".js", ".wasm"],
+    alias: {
+      env: path.resolve(__dirname, "src/wasm/env.ts"),
+    },
   },
   plugins: [
     new CleanWebpackPlugin(),
@@ -29,6 +32,9 @@ module.exports = {
   output: {
     filename: "[name].[contenthash].js",
     path: path.resolve(__dirname, "dist"),
+  },
+  experiments: {
+    asyncWebAssembly: true,
   },
   optimization: {
     moduleIds: "deterministic",

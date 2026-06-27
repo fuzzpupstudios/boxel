@@ -9,6 +9,7 @@ import { WorldRenderer } from "./rendering/worldRenderer";
 import type { Time } from "./time";
 import { World } from "./world/world";
 import { BlockStateOutline } from "./rendering/blockStateOutline";
+import { FastNoise2, initWasm } from "./wasm/wasm";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true, antialias: false });
@@ -27,6 +28,7 @@ const input = new Input;
 main();
 
 async function main() {
+    await initWasm();
     await loadTextures();
 
     document.body.appendChild(renderer.domElement);
