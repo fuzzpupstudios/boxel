@@ -1,0 +1,69 @@
+import { Mesh, Scene } from "three";
+import type { Time } from "../time";
+import { Chunk, World } from "../world/world";
+import { ChunkMesher } from "./chunkMesher";
+import type { TextureAtlas } from "../assets/textureAtlas";
+import { vec4, texture, uv, normalGeometry, vec3 } from "three/tsl";
+import { MeshBasicNodeMaterial } from "three/webgpu";
+
+export class WorldRenderer {
+    public readonly root = new Scene;
+    private readonly dirtyChunks = new Set<Chunk>;
+    private readonly renderedChunks = new Map<Chunk, Mesh>;
+    private readonly chunkMesher: ChunkMesher;
+    private readonly terrainMaterial: MeshBasicNodeMaterial;
+
+    public constructor(
+        public readonly world: World,
+        private readonly textureAtlas: TextureAtlas
+    ) {
+        this.chunkMesher = new ChunkMesher(world);
+        this.terrainMaterial = new MeshBasicNodeMaterial({
+            colorNode: vec4(texture(textureAtlas.packedTexture, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
+        });
+
+        world.renderer = this;
+    }
+
+    public markDirty(chunk: Chunk) {
+        this.dirtyChunks.add(chunk);
+    }
+
+    public render(time: Time) {
+        const todo = Math.max(4, this.dirtyChunks.size / 3);
+        if(this.dirtyChunks.size > 0) {
+            const iterator = this.dirtyChunks.values();
+
+            let i = 0;
+            let next: IteratorResult<Chunk>;
+            do {
+                next = iterator.next();
+                if(next.done) break;
+                
+                this.renderChunk(next.value);
+                this.dirtyChunks.delete(next.value);
+
+                i++;
+            } while(i < todo);
+        }
+    }
+
+    private renderChunk(chunk: Chunk) {
+        const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
+
+        let mesh = this.renderedChunks.get(chunk);
+
+        if(mesh == null) {
+            mesh = new Mesh(geometry, this.terrainMaterial);
+            this.renderedChunks.set(chunk, mesh);
+            mesh.matrixAutoUpdate = false;
+
+            mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
+            mesh.updateMatrix();
+            this.root.add(mesh);
+        } else {
+            mesh.geometry.dispose();
+            mesh.geometry = geometry;
+        }
+    }
+}

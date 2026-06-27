@@ -11,7 +11,7 @@ export class VoxelGrid {
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
         
-        const chunk = this.chunks.get(this.encodeChunkKey(chunkX, chunkY, chunkZ));
+        const chunk = this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
         if (!chunk) return 0;
 
         const localX = x & VoxelGrid.CHUNK_MASK;
@@ -27,7 +27,7 @@ export class VoxelGrid {
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
 
-        const key = this.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
         if (!chunk) {
             chunk = new VoxelChunk();
@@ -43,11 +43,11 @@ export class VoxelGrid {
 
     /** Get a VoxelChunk by chunk coordinates */
     public getChunk(chunkX: number, chunkY: number, chunkZ: number): VoxelChunk | undefined {
-        return this.chunks.get(this.encodeChunkKey(chunkX, chunkY, chunkZ));
+        return this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
     }
 
     /** Encode 3D chunk coordinates into a single number for map key */
-    private encodeChunkKey(x: number, y: number, z: number): number {
+    public static encodeChunkKey(x: number, y: number, z: number): number {
         // Using bit-packing: x (high 10 bits) | y (mid 10 bits) | z (low 10 bits)
         // Supports ±512 chunks range
         return ((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF);
