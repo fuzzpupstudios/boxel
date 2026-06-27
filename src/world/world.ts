@@ -57,8 +57,17 @@ export class World {
         this.tiles.setTile(x, y, z, tile);
 
         if(!markDirty) return;
-        
-        const chunk = this.getChunk(x >> 4, y >> 4, z >> 4)!;
-        if(this.renderer !== null) this.renderer.markDirty(chunk);
+        if(this.renderer === null) return;
+
+        for(let chunkX = (x - 1) >> 4; chunkX <= (x + 1) >> 4; chunkX++) {
+            for(let chunkY = (y - 1) >> 4; chunkY <= (y + 1) >> 4; chunkY++) {
+                for(let chunkZ = (z - 1) >> 4; chunkZ <= (z + 1) >> 4; chunkZ++) {
+                    const chunk = this.getChunk(chunkX, chunkY, chunkZ);
+                    if(chunk == null) continue;
+                    
+                    this.renderer.markDirty(chunk);
+                }
+            }
+        }
     }
 }
