@@ -23,7 +23,7 @@ export class WorldRenderer {
             const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
             const shadow = normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
             const colorNode = vec4(terrainColor.rgb.mul(shadow), terrainColor.a)
-            this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.5 });
+            this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.1 });
         }
 
         world.renderer = this;

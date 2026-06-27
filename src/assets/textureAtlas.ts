@@ -113,16 +113,12 @@ export class TextureAtlas {
         }
 
         this.packedTexture = new Texture(canvas);
-        this.packedTexture.needsUpdate = true;
         this.packedTexture.magFilter = NearestFilter;
         this.packedTexture.colorSpace = SRGBColorSpace;
 
-        canvas.toBlob(blob => {
-            console.log(URL.createObjectURL(blob!));
-            for(const [ textureId, position ] of this.positions) {
-                console.log(`${textureId}: X ${position.min.x} => ${position.max.x} | Y ${position.min.y} => ${position.max.y}`);
-            }
-        });
+        this.packedTexture.generateMipmaps = false;
+        this.packedTexture.mipmaps = [canvas, ...this.generateManualMipmaps(canvas, 4)];
+        this.packedTexture.needsUpdate = true;
     }
 
     private tryPack(slots: AtlasSlot[], atlasSize: number): boolean {
@@ -148,6 +144,32 @@ export class TextureAtlas {
         }
 
         return true;
+    }
+
+    private generateManualMipmaps(canvas: HTMLCanvasElement, levels: number) {
+        const width = canvas.width;
+        const height = canvas.height;
+        let prevCanvas = canvas;
+
+        const mipmaps = new Array;
+        for (let level = 1; level <= levels; level++) {
+            const mipWidth = Math.max(1, width >> level);
+            const mipHeight = Math.max(1, height >> level);
+            const mipCanvas = document.createElement("canvas") as HTMLCanvasElement;
+            mipCanvas.width = mipWidth;
+            mipCanvas.height = mipHeight;
+            const mipCtx = mipCanvas.getContext("2d");
+            if (!mipCtx) break;
+
+            mipCtx.imageSmoothingEnabled = true;
+            mipCtx.clearRect(0, 0, mipWidth, mipHeight);
+            mipCtx.drawImage(prevCanvas, 0, 0, prevCanvas.width, prevCanvas.height, 0, 0, mipWidth, mipHeight);
+
+            mipmaps.push(mipCanvas);
+            prevCanvas = mipCanvas;
+        }
+
+        return mipmaps;
     }
 
     private nextEven(value: number): number {
