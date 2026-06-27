@@ -1,4 +1,4 @@
-import { Box2, NearestFilter, Texture, Vector2 } from "three";
+import { Box2, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
 
 interface AtlasSlot {
     id: string;
@@ -115,6 +115,7 @@ export class TextureAtlas {
         this.packedTexture = new Texture(canvas);
         this.packedTexture.needsUpdate = true;
         this.packedTexture.magFilter = NearestFilter;
+        this.packedTexture.colorSpace = SRGBColorSpace;
 
         canvas.toBlob(blob => {
             console.log(URL.createObjectURL(blob!));
