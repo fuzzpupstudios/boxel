@@ -6,6 +6,8 @@ export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
     JUMP,
 
+    DESTROY, USE,
+
     ROTATE_CW, ROTATE_CCW,
     ROTATE_UP, ROTATE_DOWN,
     CHANGE_PERSPECTIVE
@@ -22,6 +24,9 @@ export class Input {
         [ControlBinding.FORWARD]: "w",
         [ControlBinding.BACKWARD]: "s",
 
+        [ControlBinding.DESTROY]: "r",
+        [ControlBinding.USE]: "f",
+
         [ControlBinding.ROTATE_CW]: "arrowright",
         [ControlBinding.ROTATE_CCW]: "arrowleft",
         [ControlBinding.ROTATE_UP]: "arrowup",
@@ -33,6 +38,9 @@ export class Input {
     public readonly controllerBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.JUMP]: BUTTONS.STANDARD.RC_BOTTOM,
         [ControlBinding.CHANGE_PERSPECTIVE]: BUTTONS.STANDARD.LC_TOP,
+
+        [ControlBinding.DESTROY]: BUTTONS.STANDARD.TRIGGER_RIGHT,
+        [ControlBinding.USE]: BUTTONS.STANDARD.TRIGGER_LEFT,
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
 

@@ -1,8 +1,9 @@
-import { Vector3, Box3 } from "three";
+import { Vector3, Box3, Euler } from "three";
 import { Entity, type TileCollider } from "./entity";
 import type { Time } from "../time";
 import { AABB } from "../physics/AABB";
 import type { World } from "../world/world";
+import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -12,6 +13,8 @@ export class Player extends Entity {
     public readonly eyeHeight = 1.8;
     public yaw = 0;
     public pitch = 0;
+
+    public readonly targetedBlock = new RaycastResult;
 
     protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
         return new AABB(
@@ -43,7 +46,6 @@ export class Player extends Entity {
         this.yaw += deltaYaw;
         this.pitch += deltaPitch;
     }
-
     public jump(): void {
         if (this.onGround) {
             this.velocity.y = 8.4;
@@ -51,7 +53,26 @@ export class Player extends Entity {
         }
     }
 
+    public destroy() {
+        if(this.targetedBlock.hit) {
+            this.world.setBlockStateKey(
+                this.targetedBlock.voxel.x,
+                this.targetedBlock.voxel.y,
+                this.targetedBlock.voxel.z,
+                "base:air[default]"
+            );
+        }
+    }
+
     public tick(time: Time): void {
         super.tick(time);
+
+        const raycaster = new VoxelRaycaster(this.world, (<any><unknown>this.aabb).tileColliders);
+
+        const origin = this.aabb.position.clone();
+        origin.y += this.eyeHeight;
+        const direction = new Vector3(0, 0, -1).applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
+
+        raycaster.cast(origin, direction, this.targetedBlock);
     }
 }
