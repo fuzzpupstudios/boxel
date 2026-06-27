@@ -9,7 +9,8 @@ import { WorldRenderer } from "./rendering/worldRenderer";
 import type { Time } from "./time";
 import { World } from "./world/world";
 import { BlockStateOutline } from "./rendering/blockStateOutline";
-import { FastNoise2, initWasm } from "./wasm/wasm";
+import { SimpleTerrainGenerator } from "./world/simpleTerrainGenerator";
+import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true, antialias: false });
@@ -28,8 +29,8 @@ const input = new Input;
 main();
 
 async function main() {
-    await initWasm();
-    await loadTextures();
+    await loadWasm();
+    await loadAssets();
 
     document.body.appendChild(renderer.domElement);
 
@@ -65,7 +66,7 @@ async function main() {
     worldRenderer = new WorldRenderer(world, textureAtlas);
     player = new Player(world);
     targetedBlock = new BlockStateOutline;
-    
+
     for(let x = -64; x < 64; x++) {
         for(let y = -64; y < 64; y++) {
             for(let z = -64; z < 64; z++) {
@@ -87,8 +88,13 @@ async function main() {
     requestAnimationFrame(render);
 }
 
-async function loadTextures() {
+async function loadWasm() {
+    await preloadFastNoise2Module();
+}
+
+async function loadAssets() {
     const loadingManager = new LoadingManager;
+
     textureAtlas = new TextureAtlas;
     for await(const [ textureId, textureSource ] of Assets.textureRegistry.entries()) {
         let loadedTexture: Texture;

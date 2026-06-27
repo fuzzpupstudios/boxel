@@ -4,17 +4,20 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
+    "fastnoise:build": "node ./scripts/build-fastnoise2.mjs",
+    "postinstall": "npm run fastnoise:build",
+    "prestart": "npm run fastnoise:build",
     "start": "webpack-dev-server --open",
-    "build": "npm run build:wasm && webpack",
+    "prebuild": "npm run fastnoise:build",
+    "build": "webpack",
+    "prewatch": "npm run fastnoise:build",
     "watch": "webpack --watch",
-    "build:wasm": "wasm-pack build src/wasm --target web --out-dir pkg",
     "test": "vitest"
   },
   "author": "lexifuzzpup",
   "license": "ISC",
   "devDependencies": {
     "@types/three": "^0.184.1",
-    "@wasm-tool/wasm-pack-plugin": "^1.7.0",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^7.1.4",
     "html-webpack-plugin": "^5.6.7",

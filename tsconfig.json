@@ -41,5 +41,5 @@
     "skipLibCheck": true,
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "src/wasm/target", "dist"]
+  "exclude": ["node_modules", "dist"]
 }

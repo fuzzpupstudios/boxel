@@ -74,6 +74,7 @@ typings/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
+src/fastnoise/generated/fastnoise2.js
 
 # Next.js build output
 .next
@@ -102,6 +103,3 @@ dist
 
 # TernJS port file
 .tern-port
-
-# WASM
-src/wasm/target

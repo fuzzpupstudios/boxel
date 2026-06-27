@@ -16,10 +16,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js", ".wasm"],
-    alias: {
-      env: path.resolve(__dirname, "src/wasm/env.ts"),
-    },
+    extensions: [".tsx", ".ts", ".js"]
   },
   plugins: [
     new CleanWebpackPlugin(),
