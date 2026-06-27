@@ -1,8 +1,9 @@
 import { Vector3 } from "three";
 import { tileRegistry } from "../block/blockRegistry";
 import { type Tickable } from "../entity/entity";
-import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 import type { WorldRenderer } from "../rendering/worldRenderer";
+import { TerrainGenerator } from "./terrainGenerator";
+import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 
 export class Chunk {
     public constructor(
@@ -19,6 +20,16 @@ export class World {
     public readonly gravity = new Vector3(0, -32, 0);
     public renderer: WorldRenderer | null = null;
     private readonly chunks = new Map<number, Chunk>;
+    private terrainGenerator: TerrainGenerator = TerrainGenerator.DEFAULT;
+    public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
+
+    public setTerrainGenerator(terrainGenerator: TerrainGenerator) {
+        this.terrainGenerator = terrainGenerator;
+    }
+
+    public generateColumn(columnX: number, columnY: number, columnZ: number) {
+        this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
+    }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {
         const chunkKey = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
@@ -64,10 +75,19 @@ export class World {
                 for(let chunkZ = (z - 1) >> 4; chunkZ <= (z + 1) >> 4; chunkZ++) {
                     const chunk = this.getChunk(chunkX, chunkY, chunkZ);
                     if(chunk == null) continue;
-                    
+
                     this.renderer.markDirty(chunk);
                 }
             }
         }
+    }
+    
+    public markChunkDirty(chunkX: number, chunkY: number, chunkZ: number) {
+        if(this.renderer === null) return;
+        
+        const chunk = this.getChunk(chunkX, chunkY, chunkZ);
+        if(chunk == null) return;
+
+        this.renderer.markDirty(chunk);
     }
 }

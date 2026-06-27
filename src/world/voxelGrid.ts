@@ -46,6 +46,20 @@ export class VoxelGrid {
         return this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
     }
 
+    /** Get a VoxelChunk by chunk coordinates, or create it if it doesn't exist */
+    public getChunkOrCreate(chunkX: number, chunkY: number, chunkZ: number): VoxelChunk {
+        const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+
+        let chunk = this.chunks.get(key);
+        
+        if(chunk == null) {
+            chunk = new VoxelChunk();
+            this.chunks.set(key, chunk);
+        }
+
+        return chunk;
+    }
+
     /** Encode 3D chunk coordinates into a single number for map key */
     public static encodeChunkKey(x: number, y: number, z: number): number {
         // Using bit-packing: x (high 10 bits) | y (mid 10 bits) | z (low 10 bits)

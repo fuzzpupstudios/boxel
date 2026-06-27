@@ -67,16 +67,10 @@ async function main() {
     player = new Player(world);
     targetedBlock = new BlockStateOutline;
 
-    for(let x = -64; x < 64; x++) {
-        for(let y = -64; y < 64; y++) {
-            for(let z = -64; z < 64; z++) {
-                let block = "base:cobblestone[default]";
-
-                if(y > 28) block = "base:dirt[default]";
-                if(y > 31) block = "base:grass[default]";
-                if(y > 32) block = "base:air[default]";
-                world.setBlockStateKey(x, y, z, block);
-            }
+    world.setTerrainGenerator(new SimpleTerrainGenerator());
+    for(let x = -8; x < 8; x++) {
+        for(let z = -8; z < 8; z++) {
+            world.generateColumn(x, 0, z);
         }
     }
 
@@ -113,7 +107,7 @@ async function loadAssets() {
     }
 }
 
-function update(time: Time) {
+function tick(time: Time) {
     player.walk(
         input.getAnalog(ControlBinding.RIGHT) - input.getAnalog(ControlBinding.LEFT),
         input.getAnalog(ControlBinding.BACKWARD) - input.getAnalog(ControlBinding.FORWARD),
@@ -177,7 +171,7 @@ function render(miliseconds: number) {
         deltaTime: dt / 1000
     }
 
-    update(time);
+    tick(time);
 
     requestAnimationFrame(render);
 }

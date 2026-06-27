@@ -34,7 +34,7 @@ export class WorldRenderer {
     }
 
     public render(time: Time) {
-        const todo = Math.max(4, this.dirtyChunks.size / 3);
+        const todo = Math.min(128, Math.max(4, this.dirtyChunks.size / 3));
         if(this.dirtyChunks.size > 0) {
             const iterator = this.dirtyChunks.values();
 
@@ -54,20 +54,31 @@ export class WorldRenderer {
 
     private renderChunk(chunk: Chunk) {
         const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
+        const geometrySize = geometry.getAttribute("position").array.byteLength;
 
         let mesh = this.renderedChunks.get(chunk);
 
         if(mesh == null) {
-            mesh = new Mesh(geometry, this.terrainMaterial);
-            this.renderedChunks.set(chunk, mesh);
-            mesh.matrixAutoUpdate = false;
+            if(geometrySize > 0) {
+                mesh = new Mesh(geometry, this.terrainMaterial);
+                this.renderedChunks.set(chunk, mesh);
+                mesh.matrixAutoUpdate = false;
 
-            mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
-            mesh.updateMatrix();
-            this.root.add(mesh);
+                mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
+                mesh.updateMatrix();
+                this.root.add(mesh);
+            }
         } else {
             mesh.geometry.dispose();
-            mesh.geometry = geometry;
+
+            if(geometrySize > 0) {
+                mesh.geometry = geometry;
+                if(mesh.parent == null) {
+                    this.root.add(mesh);
+                }
+            } else {
+                mesh.removeFromParent();
+            }
         }
     }
 }
