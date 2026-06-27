@@ -6,7 +6,7 @@ import { ChunkMesher } from "./rendering/chunkMesher";
 import type { Time } from "./time";
 import { World } from "./world/world";
 import { ControlBinding, Input } from "./input/input";
-import { blockStateRegistry } from "./block/blockRegistry";
+import { blockStateRegistry, tileRegistry } from "./block/blockRegistry";
 import { TextureAtlas } from "./assets/textureAtlas";
 import { Assets } from "./assets/assets";
 
@@ -62,17 +62,23 @@ async function main() {
     chunkMesher = new ChunkMesher(world);
     player = new Player(world);
 
+    const tilesToPlace = [
+        "base:cobblestone[default]",
+        "base:cobblestone[stair]",
+        "base:cobblestone[slab]",
+        "base:axes[default]"
+    ]
     for(let i = 0; i < 64000; i++) {
-        world.tiles.setTile(
-            Math.floor(Math.random() * 64),
-            Math.floor(Math.random() * 64),
-            Math.floor(Math.random() * 64),
-            1 + Math.floor(Math.random() * 3)
+        world.setBlockStateKey(
+            Math.floor(Math.random() * 128 - 64),
+            Math.floor(Math.random() * 128 - 64),
+            Math.floor(Math.random() * 128 - 64),
+            tilesToPlace[Math.floor(Math.random() * tilesToPlace.length)]!
         )
     }
-    for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
+    for(let x = -4; x < 4; x++) for(let y = -4; y < 4; y++) for(let z = -4; z < 4; z++) {
         for(let dx = 0; dx <= 15; dx += 15) for(let dy = 0; dy <= 15; dy += 15) for(let dz = 0; dz <= 15; dz += 15) {
-            world.tiles.setTile(x * 16 + dx, y * 16 + dy, z * 16 + dz, 4);
+            world.setBlockStateKey(x * 16 + dx, y * 16 + dy, z * 16 + dz, "base:axes[default]");
         }
     }
 
@@ -82,7 +88,7 @@ async function main() {
         colorNode: vec4(texture(textureAtlas.packedTexture, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
     });
 
-    for(let x = 0; x < 4; x++) for(let y = 0; y < 4; y++) for(let z = 0; z < 4; z++) {
+    for(let x = -4; x < 4; x++) for(let y = -4; y < 4; y++) for(let z = -4; z < 4; z++) {
         const geometry = chunkMesher.mesh(x, y, z);
         const mesh = new Mesh(geometry, material);
         mesh.position.set(x * 16, y * 16, z * 16);

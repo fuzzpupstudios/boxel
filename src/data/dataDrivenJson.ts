@@ -1,5 +1,6 @@
 export namespace DataDrivenJson {
     export interface Block {
+        id: string;
         states: BlockState[]
     }
 

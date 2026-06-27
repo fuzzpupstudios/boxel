@@ -17,11 +17,13 @@ blockRegistry.register("axes", new DataDrivenBlock(
 blockRegistry.lock();
 
 
-export const blockStateRegistry = new AutoRegistry<BlockState>();
+export const tileRegistry = new AutoRegistry<string>;
+export const blockStateRegistry = new KeyedRegistry<BlockState, string>;
 for(const block of blockRegistry.values()) {
-    for(const state of block.getStates()) {
-        blockStateRegistry.register(state);
+    for(const state of block.states.values()) {
+        tileRegistry.register(state.getFullId());
+        blockStateRegistry.register(state.getFullId(), state);
     }
 }
 
-blockStateRegistry.lock();
+tileRegistry.lock();

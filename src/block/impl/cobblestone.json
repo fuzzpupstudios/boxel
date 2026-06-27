@@ -1,6 +1,7 @@
 {
-    "states": [
-        {
+    "id": "base:cobblestone",
+    "states": {
+        "default": {
             "model": {
                 "textures": {
                     "cobblestone": "assets/cobblestone.png"
@@ -60,7 +61,7 @@
                 ]
             }
         },
-        {
+        "stair": {
             "model": {
                 "occlude": false,
                 "occludeDown": true,
@@ -150,7 +151,7 @@
                 ]
             }
         },
-        {
+        "slab": {
             "model": {
                 "occlude": false,
                 "occludeDown": true,
@@ -213,5 +214,5 @@
                 ]
             }
         }
-    ]
+    }
 }

@@ -1,7 +1,7 @@
 import { Box3, Vector3 } from "three";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { blockStateRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import { AABB } from "../physics/AABB";
 
 export interface Tickable {
@@ -19,7 +19,12 @@ export abstract class Entity implements Tickable {
 
     public constructor(world: World) {
         this.world = world;
-        const tileColliders = Array.from(blockStateRegistry.values()).map(state => state.collider);
+        const tileColliders = new Array;
+        for(const blockStateKey of tileRegistry.values()) {
+            const blockState = blockStateRegistry.get(blockStateKey)!;
+            
+            tileColliders.push(blockState.collider);
+        }
 
         this.aabb = this.createAABB(world, tileColliders);
     }

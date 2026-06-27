@@ -1,9 +1,10 @@
 {
-    "states": [
-        {
+    "id": "base:air",
+    "states": {
+        "default": {
             "model": {
                 "occlude": false
             }
         }
-    ]
+    }
 }

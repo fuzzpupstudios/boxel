@@ -1,6 +1,7 @@
 {
-    "states": [
-        {
+    "id": "base:axes",
+    "states": {
+        "default": {
             "model": {
                 "textures": {
                     "axes": "assets/axes.png"
@@ -60,5 +61,5 @@
                 ]
             }
         }
-    ]
+    }
 }

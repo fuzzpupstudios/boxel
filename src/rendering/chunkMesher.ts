@@ -1,6 +1,6 @@
 import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
 import type { World } from "../world/world";
-import { blockStateRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 
 
 export interface TileFace {
@@ -40,12 +40,14 @@ export class ChunkMesher {
         public readonly world: World
     ) {
         this.tileMeshes = new Array;
-        for(const blockModel of blockStateRegistry.values()) {
+        for(const blockStateKey of tileRegistry.values()) {
+            const blockState = blockStateRegistry.get(blockStateKey)!;
+            
             try {
-                const compiledModel = blockModel.model.compile();
+                const compiledModel = blockState.model.compile();
                 this.tileMeshes.push(compiledModel);
             } catch(e) {
-                throw new Error("Failed to compile block model " + blockModel, { cause: e });
+                throw new Error("Failed to compile block model " + blockState, { cause: e });
             }
         }
 

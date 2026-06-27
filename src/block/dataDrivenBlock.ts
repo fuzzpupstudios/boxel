@@ -6,10 +6,34 @@ import { BlockModel } from "./blockModel";
 
 
 export class DataDrivenBlock extends Block {
+    public defaultState: BlockState;
+    public id: string;
+
     public constructor(
         private readonly json: DataDrivenJson.Block
     ) {
         super();
+
+        let defaultState;
+
+        this.id = json.id;
+
+        for(const [ stateKey, jsonState ] of Object.entries(this.json.states)) {
+            const model = BlockModel.parseJson(jsonState.model);
+            const collider = DataDrivenBlock.parseJsonCollider(
+                jsonState.collider ?? { hitboxes: [] })
+
+            const blockState = new BlockState(this, stateKey, model, collider);
+
+            this.states.set(stateKey, blockState);
+            defaultState ??= blockState;
+        }
+
+        if(defaultState == null) {
+            throw new ReferenceError("Default state could not be determined (are there states defined?)");
+        } else {
+            this.defaultState = this.states.get("default") ?? defaultState;
+        }
     }
     private static parseJsonCollider(collider: DataDrivenJson.BlockStateCollider): TileCollider {
         return {
@@ -18,21 +42,5 @@ export class DataDrivenBlock extends Block {
                 new Vector3(...to)
             ))
         }
-    }
-
-    protected override buildStates(): BlockState[] {
-        const blockStates = new Array<BlockState>;
-
-        for(const jsonState of this.json.states) {
-            const model = BlockModel.parseJson(jsonState.model);
-            const collider = DataDrivenBlock.parseJsonCollider(
-                jsonState.collider ?? { hitboxes: [] })
-
-            const blockState = new BlockState(model, collider);
-
-            blockStates.push(blockState);
-        }
-
-        return blockStates;
     }
 }
