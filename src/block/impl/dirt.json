@@ -1,0 +1,65 @@
+{
+    "id": "base:dirt",
+    "states": {
+        "default": {
+            "model": {
+                "textures": {
+                    "dirt": "assets/dirt.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

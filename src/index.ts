@@ -1,15 +1,13 @@
-import { AxesHelper, Color, LoadingManager, Mesh, NearestFilter, PerspectiveCamera, Scene, Texture, TextureLoader } from "three";
-import { normalGeometry, texture, uv, vec3, vec4 } from "three/tsl";
-import { MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
+import { AxesHelper, Color, LoadingManager, PerspectiveCamera, Scene, Texture } from "three";
+import { WebGPURenderer } from "three/webgpu";
+import { Assets } from "./assets/assets";
+import { TextureAtlas } from "./assets/textureAtlas";
+import { blockStateRegistry } from "./block/blockRegistry";
 import { Player } from "./entity/player";
-import { ChunkMesher } from "./rendering/chunkMesher";
+import { ControlBinding, Input } from "./input/input";
+import { WorldRenderer } from "./rendering/worldRenderer";
 import type { Time } from "./time";
 import { World } from "./world/world";
-import { ControlBinding, Input } from "./input/input";
-import { blockStateRegistry, tileRegistry } from "./block/blockRegistry";
-import { TextureAtlas } from "./assets/textureAtlas";
-import { Assets } from "./assets/assets";
-import { WorldRenderer } from "./rendering/worldRenderer";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true });
@@ -68,7 +66,7 @@ async function main() {
             Math.floor(Math.random() * 128 - 64),
             Math.floor(Math.random() * 128 - 64),
             Math.floor(Math.random() * 128 - 64),
-            "base:cobblestone[default]"
+            Math.random() > 0.5 ? "base:dirt[default]" : "base:grass[default]"
         )
     }
     for(let x = -4; x < 4; x++) for(let y = -4; y < 4; y++) for(let z = -4; z < 4; z++) {
@@ -105,19 +103,6 @@ async function loadTextures() {
 }
 
 function update(time: Time) {
-    for(let i = 0; i < 512; i++) {
-        const x = Math.floor(Math.random() * 128 - 64);
-        const y = Math.floor(Math.random() * 128 - 64);
-        const z = Math.floor(Math.random() * 128 - 64);
-
-        if(world.getBlockStateKey(x, y, z) != "base:air[default]") {
-            world.setBlockStateKey(
-                x, y, z,
-                "base:axes[default]"
-            )
-        }
-    }
-
     player.walk(
         input.getAnalog(ControlBinding.RIGHT) - input.getAnalog(ControlBinding.LEFT),
         input.getAnalog(ControlBinding.BACKWARD) - input.getAnalog(ControlBinding.FORWARD),

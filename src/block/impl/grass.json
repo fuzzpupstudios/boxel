@@ -1,0 +1,91 @@
+{
+    "id": "base:grass",
+    "states": {
+        "default": {
+            "model": {
+                "textures": {
+                    "dirt": "assets/dirt.png",
+                    "grass_side": "assets/grass_side.png",
+                    "grass": "assets/grass.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    },
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "grass_side"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    },
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "grass_side"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    },
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "grass_side"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    },
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "grass_side"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "grass"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "dirt"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
