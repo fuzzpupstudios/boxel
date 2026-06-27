@@ -18,9 +18,13 @@ export class WorldRenderer {
         private readonly textureAtlas: TextureAtlas
     ) {
         this.chunkMesher = new ChunkMesher(world);
-        this.terrainMaterial = new MeshBasicNodeMaterial({
-            colorNode: vec4(texture(textureAtlas.packedTexture, uv()).rgb.mul(normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1)), 1)
-        });
+
+        {
+            const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
+            const shadow = normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
+            const colorNode = vec4(terrainColor.rgb.mul(shadow), terrainColor.a)
+            this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.5 });
+        }
 
         world.renderer = this;
     }
