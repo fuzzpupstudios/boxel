@@ -116,8 +116,11 @@ function update(time: Time) {
         player.jump();
     }
 
-    if(input.isPressed(ControlBinding.DESTROY)) {
+    if(input.wasPressed(ControlBinding.DESTROY)) {
         player.destroy();
+    }
+    if(input.wasPressed(ControlBinding.USE)) {
+        player.place();
     }
 
     player.rotate(

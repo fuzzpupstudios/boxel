@@ -63,6 +63,17 @@ export class Player extends Entity {
             );
         }
     }
+    public place() {
+        if(this.targetedBlock.hit) {
+            console.log(this.targetedBlock.side);
+            this.world.setBlockStateKey(
+                this.targetedBlock.voxel.x + this.targetedBlock.side.x,
+                this.targetedBlock.voxel.y + this.targetedBlock.side.y,
+                this.targetedBlock.voxel.z + this.targetedBlock.side.z,
+                "base:cobblestone[default]"
+            );
+        }
+    }
 
     public tick(time: Time): void {
         super.tick(time);

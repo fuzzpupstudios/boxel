@@ -164,7 +164,7 @@ export class VoxelRaycaster {
             const t2 = (maxX - origin.x) * invX;
             const tNear = Math.min(t1, t2);
             const tFar = Math.max(t1, t2);
-            const nearSide = t1 < t2 ? (direction.x > 0 ? Side.WEST : Side.EAST) : (direction.x > 0 ? Side.EAST : Side.WEST);
+            const nearSide = direction.x > 0 ? Side.WEST : Side.EAST;
 
             if (tNear > tMin) {
                 tMin = tNear;
@@ -181,7 +181,7 @@ export class VoxelRaycaster {
             const t2 = (maxY - origin.y) * invY;
             const tNear = Math.min(t1, t2);
             const tFar = Math.max(t1, t2);
-            const nearSide = t1 < t2 ? (direction.y > 0 ? Side.DOWN : Side.UP) : (direction.y > 0 ? Side.UP : Side.DOWN);
+            const nearSide = direction.y > 0 ? Side.DOWN : Side.UP;
 
             if (tNear > tMin) {
                 tMin = tNear;
@@ -198,7 +198,7 @@ export class VoxelRaycaster {
             const t2 = (maxZ - origin.z) * invZ;
             const tNear = Math.min(t1, t2);
             const tFar = Math.max(t1, t2);
-            const nearSide = t1 < t2 ? (direction.z > 0 ? Side.NORTH : Side.SOUTH) : (direction.z > 0 ? Side.SOUTH : Side.NORTH);
+            const nearSide = direction.z > 0 ? Side.SOUTH : Side.NORTH;
 
             if (tNear > tMin) {
                 tMin = tNear;
