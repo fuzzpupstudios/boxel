@@ -1,40 +1,51 @@
-import { LoadingManager, Texture, WebGPURenderer } from "three/webgpu";
+import * as PIXI from "pixi.js";
+import * as THREE from "three/webgpu";
+import { Assets } from "./assets/assets";
 import { TextureAtlas } from "./assets/textureAtlas";
+import { blockStateRegistry, registerBlocks } from "./block/blockRegistry";
 import { Input } from "./input/input";
 import type { GameStage } from "./stage/gameStage";
-import { Assets } from "./assets/assets";
-import { blockStateRegistry, registerBlocks } from "./block/blockRegistry";
-import type { Time } from "./time";
 import { PlayingGameStage } from "./stage/impl/playingGameStage";
+import type { Time } from "./time";
+import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 
 export class BoxelGame {
     public static INSTANCE: BoxelGame = null!;
-    public readonly renderer: WebGPURenderer;
-    public textureAtlas: TextureAtlas | null = null;
+
+    public readonly threeRenderer: THREE.WebGPURenderer;
+    public readonly pixiRenderer: PIXI.WebGLRenderer;
+
     public readonly input: Input;
     public readonly assets = new Assets;
+    private uiCanvas: HTMLCanvasElement;
+
+    public textureAtlas: TextureAtlas | null = null;
     public activeStage: GameStage | null = null;
 
     private lastRenderTime = 0;
 
     constructor(root: HTMLElement) {
         BoxelGame.INSTANCE = this;
-
-        this.renderer = new WebGPURenderer({ forceWebGL: true, antialias: false });
-
+        
+        this.threeRenderer = new THREE.WebGPURenderer({ forceWebGL: true, antialias: false, stencil: true });
+        this.pixiRenderer = new PIXI.WebGLRenderer();
+        
         this.input = new Input;
-
-        root.appendChild(this.renderer.domElement);
+        
+        this.uiCanvas = document.createElement("canvas");
+        root.appendChild(this.threeRenderer.domElement);
+        root.appendChild(this.uiCanvas);
 
         this.input.attachKeyboard(root);
-        this.input.attachMouse(this.renderer.domElement);
+        this.input.attachMouse(this.uiCanvas);
     }
 
     public resize(width: number, height: number, pixelRatio: number) {
         this.activeStage?.resize(width, height, pixelRatio);
 
-        this.renderer.setPixelRatio(devicePixelRatio);
-        this.renderer.setSize(innerWidth, innerHeight, true);
+        this.threeRenderer.setPixelRatio(pixelRatio);
+        this.threeRenderer.setSize(width, height, true);
+        this.pixiRenderer.resize(width, height, pixelRatio);
     }
 
     public attachController(gamepad: Gamepad) {
@@ -54,12 +65,20 @@ export class BoxelGame {
     public async start() {
         await registerBlocks();
 
-        await this.renderer.init();
-        const loadingManager = new LoadingManager;
+        await this.threeRenderer.init();
+        await this.pixiRenderer.init({
+            canvas: this.uiCanvas,
+            clearBeforeRender: true,
+            backgroundAlpha: 0,
+            antialias: false,
+            autoDensity: true,
+        });
+
+        const loadingManager = new THREE.LoadingManager;
     
         this.textureAtlas = new TextureAtlas;
         for await(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
-            let loadedTexture: Texture;
+            let loadedTexture: THREE.Texture;
             try {
                 loadedTexture = await textureSource.load(loadingManager);
             } catch(e) {
@@ -75,7 +94,7 @@ export class BoxelGame {
 
         this.queueNextFrame();
 
-        this.activeStage = new PlayingGameStage(this);
+        this.activeStage = new TitleScreenStage(this);
     }
 
     private queueNextFrame() {
@@ -95,7 +114,9 @@ export class BoxelGame {
 
         if(this.activeStage) {
             this.activeStage.tick(time);
-            this.renderer.render(this.activeStage.scene, this.activeStage.camera);
+
+            this.threeRenderer.render(this.activeStage.scene, this.activeStage.camera);
+            this.pixiRenderer.render({ container: this.activeStage.gui, clear: true });
         }
 
         this.queueNextFrame();

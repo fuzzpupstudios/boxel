@@ -1,16 +1,15 @@
-import { PerspectiveCamera, type OrthographicCamera } from "three";
-import type { TextureAtlas } from "../../assets/textureAtlas";
-import { Player } from "../../entity/player";
-import { BlockStateOutline } from "../../rendering/blockStateOutline";
-import { WorldRenderer } from "../../rendering/worldRenderer";
-import { ChunkLoader } from "../../world/chunkLoader";
-import { World } from "../../world/world";
-import { GameStage } from "../gameStage";
-import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
-import type { Time } from "../../time";
-import { ControlBinding } from "../../input/input";
+import { PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
+import { Player } from "../../entity/player";
+import { ControlBinding } from "../../input/input";
+import { BlockStateOutline } from "../../rendering/blockStateOutline";
+import { WorldRenderer } from "../../rendering/worldRenderer";
+import type { Time } from "../../time";
+import { ChunkLoader } from "../../world/chunkLoader";
+import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
+import { World } from "../../world/world";
+import { GameStage } from "../gameStage";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -40,6 +39,7 @@ export class PlayingGameStage extends GameStage {
     public resize(width: number, height: number, pixelRatio: number): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+
     }
 
     public tick(time: Time) {
