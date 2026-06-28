@@ -3,6 +3,7 @@ import type { DataDrivenJson } from "../data/dataDrivenJson";
 import type { TileCollider } from "../entity/entity";
 import { Block, BlockState } from "./block";
 import { BlockModel } from "./blockModel";
+import { BoxelGame } from "../boxel";
 
 
 export class DataDrivenBlock extends Block {
@@ -18,8 +19,10 @@ export class DataDrivenBlock extends Block {
 
         this.id = json.id;
 
+        const game = BoxelGame.INSTANCE;
+
         for(const [ stateKey, jsonState ] of Object.entries(this.json.states)) {
-            const model = BlockModel.parseJson(jsonState.model);
+            const model = BlockModel.parseJson(jsonState.model, game.assets);
             const collider = DataDrivenBlock.parseJsonCollider(
                 jsonState.collider ?? { hitboxes: [] })
 

@@ -76,7 +76,7 @@ export class BlockModel {
     public textureURIs = new Map<string, string>;
     public textureSources = new Map<string, TextureSource>;
 
-    public static parseJson(json: DataDrivenJson.BlockStateModel): BlockModel {
+    public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
         const model = new BlockModel;
 
         model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth,
@@ -95,7 +95,7 @@ export class BlockModel {
 
         for(const [ textureSlot, textureURI ] of Object.entries(json.textures ?? {})) {
             // Gets the texture source or creates it if it doesn't exist
-            const textureSource = Assets.getURLTextureSource(textureURI);
+            const textureSource = assets.getURLTextureSource(textureURI);
             model.textureSources.set(textureSlot, textureSource);
             model.textureURIs.set(textureSlot, textureURI);
         }
