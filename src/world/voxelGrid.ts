@@ -3,7 +3,7 @@ export class VoxelGrid {
     private static readonly CHUNK_SIZE = 1 << VoxelGrid.CHUNK_SIZE_LOG2;
     private static readonly CHUNK_MASK = VoxelGrid.CHUNK_SIZE - 1;
 
-    private chunks = new Map<number, VoxelChunk>();
+    public readonly chunks = new Map<number, VoxelChunk>();
 
     /** Get a tile value at global coordinates */
     public getTile(x: number, y: number, z: number): number {

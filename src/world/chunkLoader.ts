@@ -1,0 +1,170 @@
+import { Vector3, type Sphere } from "three";
+import type { Time } from "../time";
+import type { Chunk, World } from "./world";
+import { VoxelGrid } from "./voxelGrid";
+import { MinPriorityQueue } from "@datastructures-js/priority-queue";
+
+export class ChunkLoader {
+    public maxColumnGenerations = 2;
+    public maxChunkUnloads = 64;
+
+    private readonly origin = new Vector3(Infinity);
+    private radius = 64;
+    private needsUpdate: boolean = true;
+    private readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
+    private readonly chunksToUnload = new Map<number, Chunk>;
+    private readonly chunkGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
+    private updateChunksCooldown: number = 0;
+
+    constructor(
+        private readonly world: World
+    ) {}
+
+    public updateColumnsToUnload() {
+        const radiusSquare = (this.radius + 16) ** 2;
+
+        for(const [ key, chunk ] of this.world.chunks.entries()) {
+            const distanceSquare =
+                ((chunk.x << 4) - this.origin.x) * ((chunk.x << 4) - this.origin.x) +
+                ((chunk.y << 4) - this.origin.y) * ((chunk.y << 4) - this.origin.y) +
+                ((chunk.z << 4) - this.origin.z) * ((chunk.z << 4) - this.origin.z);
+
+            if(distanceSquare > radiusSquare) {
+                this.chunksToUnload.set(key, chunk);
+            }
+        }
+    }
+
+    public updateChunksToLoad() {        
+        const marker = this.origin;
+        const originX = marker.x >> 4;
+        const originY = marker.y >> 4;
+        const originZ = marker.z >> 4;
+        const minX = (marker.x - this.radius) >> 4;
+        const maxX = (marker.x + this.radius) >> 4;
+        const minY = (marker.y - this.radius) >> 4;
+        const maxY = (marker.y + this.radius) >> 4;
+        const minZ = (marker.z - this.radius) >> 4;
+        const maxZ = (marker.z + this.radius) >> 4;
+
+        const radiusSquare = this.radius * this.radius;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let z = minZ; z <= maxZ; z++) {
+                for(let y = minY; y <= maxY; y++) {
+                    const key = VoxelGrid.encodeChunkKey(x, y, z);
+                    if(!this.world.tiles.chunks.has(key)) continue;
+
+                    const distanceSquare =
+                        (x - originX + 0.5) * (x - originX + 0.5) +
+                        (y - originY + 0.5) * (y - originY + 0.5) +
+                        (z - originZ + 0.5) * (z - originZ + 0.5);
+                    
+                    if(distanceSquare > radiusSquare) continue;
+
+                    this.world.markChunkDirty(x, y, z);
+                }
+            }
+        }
+    }
+
+    public updateColumnsToLoad() {        
+        const marker = this.origin;
+        const originX = marker.x >> 4;
+        const originZ = marker.z >> 4;
+        const minX = (marker.x - this.radius) >> 4;
+        const maxX = (marker.x + this.radius) >> 4;
+        const minY = (marker.y - 128) >> 7 << 3;
+        const maxY = (marker.y + 128) >> 7 << 3;
+        const minZ = (marker.z - this.radius) >> 4;
+        const maxZ = (marker.z + this.radius) >> 4;
+
+        const radiusSquare = this.radius * this.radius;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let z = minZ; z <= maxZ; z++) {
+                for(let y = minY; y <= maxY; y += 8) {
+                    const distanceSquare =
+                        (x - originX + 0.5) * (x - originX + 0.5) +
+                        (z - originZ + 0.5) * (z - originZ + 0.5);
+                    
+                    if(distanceSquare > radiusSquare) continue;
+
+                    const key = VoxelGrid.encodeChunkKey(x, y, z);
+                    if(this.columnsToGenerate.has(key)) continue;
+                    if(this.world.tiles.chunks.has(key)) continue;
+
+                    this.columnsToGenerate.set(key, [ x, y, z ]);
+                }
+            }
+        }
+
+        this.chunkGenerationQueue.clear();
+        for(const [key, [ x, y, z ]] of this.columnsToGenerate.entries()) {
+            const distanceSquare =
+                ((x << 4) - this.origin.x) * ((x << 4) - this.origin.x) +
+                ((y << 4) - this.origin.y) * ((y << 4) - this.origin.y) +
+                ((z << 4) - this.origin.z) * ((z << 4) - this.origin.z);
+            
+            this.chunkGenerationQueue.enqueue([ distanceSquare, key, x, y, z ]);
+        }
+    }
+
+    public moveOrigin(origin: Vector3) {
+        if(
+            this.origin.x >> 4 != origin.x >> 4 ||
+            this.origin.y >> 4 != origin.y >> 4 ||
+            this.origin.z >> 4 != origin.z >> 4
+        ) {
+            this.needsUpdate = true;
+        }
+        this.origin.copy(origin);
+    }
+
+    public setRadius(radius: number) {
+        this.radius = radius;
+        this.needsUpdate = true;
+    }
+
+    public update(time: Time) {
+        if(this.needsUpdate) {
+            this.updateColumnsToLoad();
+            this.updateColumnsToUnload();
+            this.updateChunksToLoad();
+            this.needsUpdate = false;
+        }
+
+        this.updateChunksCooldown -= time.deltaTime;
+
+        if(this.updateChunksCooldown < 0) {
+            this.updateChunksCooldown = 10;
+            this.updateChunksToLoad();
+        }
+
+        {
+            const max = Math.min(this.columnsToGenerate.size, this.maxColumnGenerations);
+            for(let i = 0; i < max; i++) {
+                const [ _, key, x, y, z ] = this.chunkGenerationQueue.dequeue()!;
+
+                this.world.generateColumn(x, y, z);
+                this.columnsToGenerate.delete(key);
+            }
+        }
+
+        {
+            const max = Math.min(this.chunksToUnload.size, this.maxChunkUnloads);
+
+            const iterator = this.chunksToUnload.entries();
+            for(let i = 0; i < max; i++) {
+                const next = iterator.next();
+                if(next.done) break;
+
+                const [ key, chunk ] = next.value;
+
+                this.world.unloadChunk(chunk);
+                this.chunksToUnload.delete(key);
+                this.columnsToGenerate.delete(key);
+            }
+        }
+    }
+}

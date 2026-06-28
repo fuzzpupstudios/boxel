@@ -1,4 +1,4 @@
-import { AxesHelper, Color, LoadingManager, PerspectiveCamera, Scene, Texture } from "three";
+import { AxesHelper, Color, LoadingManager, PerspectiveCamera, Scene, Sphere, Texture } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import { Assets } from "./assets/assets";
 import { TextureAtlas } from "./assets/textureAtlas";
@@ -11,6 +11,7 @@ import { World } from "./world/world";
 import { BlockStateOutline } from "./rendering/blockStateOutline";
 import { SimpleTerrainGenerator } from "./world/simpleTerrainGenerator";
 import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
+import { ChunkLoader } from "./world/chunkLoader";
 
 
 const renderer = new WebGPURenderer({ forceWebGL: true, antialias: false });
@@ -21,6 +22,7 @@ let world: World;
 let worldRenderer: WorldRenderer;
 let textureAtlas: TextureAtlas;
 let targetedBlock: BlockStateOutline;
+let chunkLoader: ChunkLoader;
 
 let player: Player;
 
@@ -68,16 +70,12 @@ async function main() {
     targetedBlock = new BlockStateOutline;
 
     world.setTerrainGenerator(new SimpleTerrainGenerator());
-    for(let x = -8; x < 8; x++) {
-        for(let z = -8; z < 8; z++) {
-            world.generateColumn(x, 0, z);
-        }
-    }
+    chunkLoader = new ChunkLoader(world);
 
     scene.add(worldRenderer.root);
     scene.add(new AxesHelper(16));
     scene.add(targetedBlock.mesh);
-    player.aabb.position.set(32, 80, 32);
+    player.aabb.position.set(32, 128, 32);
 
     requestAnimationFrame(render);
 }
@@ -131,6 +129,8 @@ function tick(time: Time) {
     );
 
     player.tick(time);
+    chunkLoader.moveOrigin(player.aabb.position);
+    chunkLoader.update(time);
 
     if(player.targetedBlock.hit) {
         targetedBlock.mesh.visible = true;

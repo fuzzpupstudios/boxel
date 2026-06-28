@@ -17,11 +17,13 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
         const heights = this.heightmapNoise.generateUniformGrid2D(
             columnX * 16, columnZ * 16, 16, 16, 1, 1, world.seed, this.heightmap).values;
         
-        for(let i = 0; i < heights.length; i++) heights[i]! = heights[i]! * 32 + 64;
+        for(let i = 0; i < heights.length; i++) heights[i]! = heights[i]! * 4 + 64;
             
         for(let chunkY = columnY + 7; chunkY >= columnY; chunkY--) {
             this.generate(world, columnX, chunkY, columnZ, heights);
         }
+
+        world.markChunksDirty(columnX - 1, columnY - 1, columnZ - 1, columnX + 1, columnY + 9, columnZ + 1);
     }
     
     public generate(world: World, chunkX: number, chunkY: number, chunkZ: number, heights: Float32Array): void {
@@ -42,10 +44,10 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
                 for(let localY = 15; localY >= 0; localY--, globalY--) {
                     index3d = localX | localY << 4 | localZ << 8;
                     const cave = caves[index3d]!;
-                    if(cave > 0.2 && globalY < height && globalY > height - 1) {
-                        height--;
-                        heights[index2d]! = height;
-                    }
+                    // if(cave > 0.2 && globalY < height && globalY > height - 1) {
+                    //     height--;
+                    //     heights[index2d]! = height;
+                    // }
 
                     let tile = 0;
 
@@ -64,7 +66,5 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
             }
             globalX -= 16;
         }
-
-        world.markChunkDirty(chunkX, chunkY, chunkZ);
     }
 }

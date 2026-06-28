@@ -6,12 +6,20 @@ import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 
 export class Chunk {
+    public readonly key: number;
+
     public constructor(
         public readonly x: number,
         public readonly y: number,
         public readonly z: number,
         public readonly tiles: VoxelChunk,
-    ) {}
+    ) {
+        this.key = VoxelGrid.encodeChunkKey(x, y, z);
+    }
+
+    public toString() {
+        return `{Chunk x=${this.x} y=${this.y} z=${this.z}}`;
+    }
 }
 
 export class World {
@@ -19,7 +27,7 @@ export class World {
     public readonly tickables = new Set<Tickable>;
     public readonly gravity = new Vector3(0, -32, 0);
     public renderer: WorldRenderer | null = null;
-    private readonly chunks = new Map<number, Chunk>;
+    public readonly chunks = new Map<number, Chunk>;
     private terrainGenerator: TerrainGenerator = TerrainGenerator.DEFAULT;
     public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
 
@@ -27,8 +35,19 @@ export class World {
         this.terrainGenerator = terrainGenerator;
     }
 
+    public unloadChunk(chunk: Chunk) {
+        if(this.renderer != null) {
+            this.renderer.removeChunk(chunk);
+        }
+
+        this.chunks.delete(chunk.key);
+    }
+
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
+        for(let y = columnY; y < 8; y++) {
+            this.getChunk(columnX, y, columnZ);
+        }
     }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {
@@ -39,7 +58,7 @@ export class World {
         if(chunk != null) return chunk;
 
         // Otherwise, try to make a new chunk from existing tiles
-        const tileChunk = this.tiles.getChunk(chunkX, chunkY, chunkZ);
+        const tileChunk = this.tiles.chunks.get(chunkKey);
         if(tileChunk != null) {
             chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk);
             this.chunks.set(chunkKey, chunk);
@@ -76,7 +95,7 @@ export class World {
                     const chunk = this.getChunk(chunkX, chunkY, chunkZ);
                     if(chunk == null) continue;
 
-                    this.renderer.markDirty(chunk);
+                    this.renderer.markDirty(chunk, true);
                 }
             }
         }
@@ -84,10 +103,25 @@ export class World {
     
     public markChunkDirty(chunkX: number, chunkY: number, chunkZ: number) {
         if(this.renderer === null) return;
-        
+
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
         if(chunk == null) return;
 
         this.renderer.markDirty(chunk);
+    }
+
+    public markChunksDirty(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number) {
+        if(this.renderer === null) return;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let y = minY; y <= maxY; y++) {
+                for(let z = minZ; z <= maxZ; z++) {
+                    const chunk = this.getChunk(x, y, z);
+                    if(chunk == null) continue;
+
+                    this.renderer.markDirty(chunk);
+                }
+            }
+        }
     }
 }

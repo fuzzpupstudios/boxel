@@ -10,7 +10,9 @@ export class Player extends Entity {
         new Vector3(-0.3, 0, -0.3),
         new Vector3(0.3, 1.9, 0.3),
     );
-    public readonly eyeHeight = 1.8;
+    public readonly eyeHeight = 1.7;
+    public readonly walkSpeed = 50;
+    public readonly jumpHeight = 10;
     public yaw = 0;
     public pitch = 0;
 
@@ -35,8 +37,8 @@ export class Player extends Entity {
 
         const friction = this.onGround ? 0.546 : 0.91;
         const moveSpeed = this.onGround
-            ? 2.5 * (0.16277136 / (friction * friction * friction))
-            : 0.3;
+            ? this.walkSpeed * (0.16277136 / (friction * friction * friction))
+            : this.walkSpeed * 0.15;
         const factor = moveSpeed * time.deltaTime * 20;
 
         this.velocity.x += Math.cos(this.yaw) * dx * factor - Math.sin(this.yaw) * dz * factor;
@@ -48,7 +50,7 @@ export class Player extends Entity {
     }
     public jump(): void {
         if (this.onGround) {
-            this.velocity.y = 8.4;
+            this.velocity.y = 8.4 * Math.sqrt(this.jumpHeight);
             this.onGround = false;
         }
     }

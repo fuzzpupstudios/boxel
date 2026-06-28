@@ -1,4 +1,4 @@
-import { Mesh, Scene } from "three";
+import { MathUtils, Mesh, Scene } from "three";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";
@@ -7,8 +7,11 @@ import { vec4, texture, uv, normalGeometry, vec3 } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 
 export class WorldRenderer {
+    public minChunkUpdates = 4;
+    public maxChunkUpdates = 32;
     public readonly root = new Scene;
     private readonly dirtyChunks = new Set<Chunk>;
+    private readonly priorityDirtyChunks = new Set<Chunk>;
     private readonly renderedChunks = new Map<Chunk, Mesh>;
     private readonly chunkMesher: ChunkMesher;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
@@ -29,12 +32,16 @@ export class WorldRenderer {
         world.renderer = this;
     }
 
-    public markDirty(chunk: Chunk) {
-        this.dirtyChunks.add(chunk);
+    public markDirty(chunk: Chunk, priority: boolean = false) {
+        if(priority) {
+            this.priorityDirtyChunks.add(chunk);
+        } else {
+            this.dirtyChunks.add(chunk);
+        }
     }
 
     public render(time: Time) {
-        const todo = Math.min(128, Math.max(4, this.dirtyChunks.size / 3));
+        const todo = MathUtils.clamp(this.dirtyChunks.size / 3, this.minChunkUpdates, this.maxChunkUpdates);
         if(this.dirtyChunks.size > 0) {
             const iterator = this.dirtyChunks.values();
 
@@ -50,9 +57,41 @@ export class WorldRenderer {
                 i++;
             } while(i < todo);
         }
+
+        for(const priorityDirtyChunk of this.priorityDirtyChunks) {
+            this.renderChunk(priorityDirtyChunk);
+        }
+        this.priorityDirtyChunks.clear();
+    }
+
+    public removeChunk(chunk: Chunk) {
+        this.dirtyChunks.delete(chunk);
+        this.priorityDirtyChunks.delete(chunk);
+        const mesh = this.renderedChunks.get(chunk);
+        if(mesh != null) {
+            mesh.geometry.dispose();
+            mesh.removeFromParent();
+        }
+        this.renderedChunks.delete(chunk);
     }
 
     private renderChunk(chunk: Chunk) {
+        if(!this.renderedChunks.get(chunk)) {
+            let surrounding = 0;
+            for(let dx = -1; dx <= 1; dx++) {
+                for(let dy = -1; dy <= 1; dy++) {
+                    for(let dz = -1; dz <= 1; dz++) {
+                        if(dx == 0 && dy == 0 && dz == 0) continue;
+
+                        if(this.world.tiles.getChunk(chunk.x + dx, chunk.y + dy, chunk.z + dz)) {
+                            surrounding++;
+                        }
+                    }
+                }
+            }
+            if(surrounding != 26) return;
+        }
+
         const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
         const geometrySize = geometry.getAttribute("position").array.byteLength;
 
