@@ -11,8 +11,8 @@ export class Player extends Entity {
         new Vector3(0.3, 1.9, 0.3),
     );
     public readonly eyeHeight = 1.7;
-    public readonly walkSpeed = 50;
-    public readonly jumpHeight = 10;
+    public readonly walkSpeed = 2.5;
+    public readonly jumpHeight = 1;
     public yaw = 0;
     public pitch = 0;
 
