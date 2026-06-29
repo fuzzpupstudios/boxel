@@ -15,4 +15,8 @@ export abstract class GameStage {
 
     public abstract resize(width: number, height: number, pixelRatio: number): void;
     public abstract tick(time: Time): void;
+
+    public isTopmostStage() {
+        return this === this.game.activeStages.at(-1);
+    }
 }

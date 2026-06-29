@@ -9,6 +9,8 @@ import { Input } from "./input/input";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
+import { Settings } from "./settings";
+
 
 export class BoxelGame {
     public static INSTANCE: BoxelGame = null!;
@@ -21,6 +23,7 @@ export class BoxelGame {
 
     public textureAtlas: TextureAtlas | null = null;
     public activeStages = new Array<GameStage>;
+    public settings: Settings;
 
     private lastRenderTime = 0;
     private rootElement: HTMLElement;
@@ -38,7 +41,7 @@ export class BoxelGame {
         this.gui = new PIXI.Application();
         
         this.input = new Input;
-
+        this.settings = Settings.parse({});
 
         PIXI.TextureStyle.defaultOptions.scaleMode = "nearest";
     }
@@ -54,36 +57,50 @@ export class BoxelGame {
         this.gui.renderer.resolution = pixelRatio;
         this.gui.renderer.resize(width, height);
         
-        this.setUiSize(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+        this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
     private closeStage(stage: GameStage) {
         this.gui.stage.removeChild(stage.gui);
-        const index = this.activeStages.indexOf(stage);
-        this.activeStages.splice(index, 1);
     }
 
-    public changeStage(stage: GameStage, savePrevious = true) {
-        if(!savePrevious) {
-            for(const activeStage of this.activeStages) {
-                this.closeStage(activeStage);
-            }
-        }
-
-        this.activeStages.push(stage);
-
+    private openStage(stage: GameStage) {
         this.gui.stage.addChild(stage.gui);
-        this.setUiSize(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+        this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
-    public previousStage() {
-        const stage = this.activeStages.at(-1);
-        if(stage != null) {
-            this.closeStage(stage);
+    public changeStage(stage: GameStage, savePrevious = true, immediate = false) {
+        if(immediate) {
+            if(!savePrevious) {
+                for(const activeStage of this.activeStages) {
+                    this.closeStage(activeStage);
+                }
+                this.activeStages.splice(0);
+            }
+
+            this.activeStages.push(stage);
+            this.openStage(stage);
+        } else {
+            requestAnimationFrame(() => {
+                this.changeStage(stage, savePrevious, true);
+            });
         }
     }
 
-    private setUiSize(width: number, height: number, pixelRatio: number) {
+    public previousStage(immediate = false) {
+        if(immediate) {
+            const stage = this.activeStages.pop();
+            if(stage != null) {
+                this.closeStage(stage);
+            }
+        } else {
+            requestAnimationFrame(() => {
+                this.previousStage(true);
+            })
+        }
+    }
+
+    private updateUiSizes(width: number, height: number, pixelRatio: number) {
         for(const stage of this.activeStages) {
             stage.resize(
                 width / this.guiScale,
@@ -96,7 +113,7 @@ export class BoxelGame {
 
     public setGuiScale(guiScale: number) {
         this.guiScale = guiScale;
-        this.setUiSize(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+        this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
     public attachController(gamepad: Gamepad) {
@@ -148,6 +165,24 @@ export class BoxelGame {
             src: "assets/ui_button.png"
         });
         await PIXI.Assets.load("ui/button");
+
+        PIXI.Assets.add({
+            alias: "ui/slider_background",
+            src: "assets/ui_slider_background.png"
+        });
+        await PIXI.Assets.load("ui/slider_background");
+
+        PIXI.Assets.add({
+            alias: "ui/slider_fill",
+            src: "assets/ui_slider_fill.png"
+        });
+        await PIXI.Assets.load("ui/slider_fill");
+
+        PIXI.Assets.add({
+            alias: "ui/slider_handle",
+            src: "assets/ui_slider_handle.png"
+        });
+        await PIXI.Assets.load("ui/slider_handle");
 
         const loadingManager = new THREE.LoadingManager;
     

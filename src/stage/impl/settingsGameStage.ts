@@ -44,6 +44,8 @@ export class SettingsScreenStage extends GameStage {
     }
 
     public tick(time: Time): void {
-
+        if(this.game.input.wasPressed(ControlBinding.BACK)) {
+            this.game.previousStage();
+        }
     }
 }
