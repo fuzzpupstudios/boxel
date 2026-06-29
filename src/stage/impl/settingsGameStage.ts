@@ -1,14 +1,15 @@
 import { Sprite, Text, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import { GuiButton } from "../../gui/button";
+import { ControlBinding } from "../../input/input";
 import type { Time } from "../../time";
 import { GameStage } from "../gameStage";
-import { PlayingGameStage } from "./playingGameStage";
-import { TitleScreenStage } from "./titleScreenStage";
+import { GuiSlider } from "../../gui/slider";
 
 export class SettingsScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly backButton: GuiButton;
+    private readonly demoSlider: GuiSlider;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -17,6 +18,7 @@ export class SettingsScreenStage extends GameStage {
         this.background = new Sprite(Texture.WHITE);
         this.background.origin.set(0, 0);
         this.background.tint = 0x000000;
+        this.background.interactive = true;
 
         this.titleText = new Text({
             text: "Settings",
@@ -34,12 +36,18 @@ export class SettingsScreenStage extends GameStage {
             this.game.previousStage();
         });
 
-        this.gui.addChild(this.background, this.titleText, this.backButton);
+        this.demoSlider = new GuiSlider(0, 100, 50, 10, 100, 32, "demo");
+        this.demoSlider.addListener("input", () => {
+            this.demoSlider.text = "demo: " + this.demoSlider.value;
+        })
+
+        this.gui.addChild(this.background, this.titleText, this.demoSlider, this.backButton);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
+        this.demoSlider.position.set(width / 2, height / 2);
         this.background.setSize(width, height);
     }
 
