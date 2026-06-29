@@ -106,13 +106,9 @@ export class GuiSlider extends Container {
         const local = event.getLocalPosition(this);
         const mapped = MathUtils.mapLinear(local.x,
             -this._width / 2 + 1.5, this._width / 2 - 1.5, this._min, this._max);
-        const clamped = MathUtils.clamp(mapped, this._min, this._max);
+        const rounded = this.step == 0 ? mapped : Math.round(mapped / this.step) * this.step;
 
-        if(this.step == 0) {
-            this.value = clamped;
-        } else {
-            this.value = Math.round(clamped / this.step) * this.step;
-        }
+        this.value = MathUtils.clamp(rounded, this._min, this._max);
     }
 
     private updateSize() {
