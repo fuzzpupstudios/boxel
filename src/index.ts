@@ -21,4 +21,5 @@ async function main() {
 
     await game.start();
     game.resize(innerWidth, innerHeight, devicePixelRatio);
+    game.setGuiScale(4);
 }

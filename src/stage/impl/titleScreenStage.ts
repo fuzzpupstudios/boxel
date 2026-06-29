@@ -1,72 +1,49 @@
-import { FancyButton } from "@pixi/ui";
-import { Sprite, Texture } from "pixi.js";
+import { ButtonContainer } from "@pixi/ui";
+import { Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import type { Time } from "../../time";
-import { GameStage } from "../gameStage";
 import { PlayingGameStage } from "./playingGameStage";
+import { GameStage } from "../gameStage";
+import { GuiButton } from "../../gui/button";
 
 export class TitleScreenStage extends GameStage {
-    private readonly playButton: FancyButton;
-    private readonly playLabel: Sprite;
+    private readonly titleText: Text;
+    private readonly playButton: GuiButton;
+    private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
         super(game);
 
-        this.playButton = new FancyButton({
-            defaultView: this.createButtonView(0x202020),
-            hoverView: this.createButtonView(0x2d2d2d),
-            pressedView: this.createButtonView(0x141414),
-            anchor: 0.5
-        });
+        this.background = new Sprite(Texture.WHITE);
+        this.background.origin.set(0, 0);
+        this.background.tint = 0x000000;
 
-        this.playLabel = this.createLabelSprite("Play");
-        this.playLabel.anchor.set(0.5);
-        this.playLabel.width = 120;
-        this.playLabel.height = 36;
+        this.titleText = new Text({
+            text: "Boxel",
+            style: new TextStyle({
+                fill: 0xffffff,
+                fontSize: 24,
+                align: "center",
+            }),
+        });
+        this.titleText.anchor.set(0.5);
+
+        this.playButton = new GuiButton("Play", 100, 30);
 
         this.playButton.onPress.connect(() => {
-            this.game.activeStage = new PlayingGameStage(this.game);
-            this.game.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
+            this.game.changeStage(new PlayingGameStage(this.game));
         });
 
-        this.gui.addChild(this.playButton, this.playLabel);
+        this.gui.addChild(this.background, this.titleText, this.playButton);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
-        this.playButton.position.set(width / 2, height / 2);
-        this.playLabel.position.set(width / 2, height / 2);
+        this.titleText.position.set(width / 2, height / 2 - 40);
+        this.playButton.position.set(width / 2, height / 2 + 20);
+        this.background.setSize(width, height);
     }
 
     public tick(time: Time): void {
-        
-    }
 
-    private createButtonView(tint: number) {
-        const view = Sprite.from(Texture.WHITE);
-        view.anchor.set(0.5);
-        view.width = 192;
-        view.height = 60;
-        view.tint = tint;
-        return view;
-    }
-
-    private createLabelSprite(label: string) {
-        const canvas = document.createElement("canvas");
-        canvas.width = 384;
-        canvas.height = 128;
-
-        const context = canvas.getContext("2d");
-        if(context == null) {
-            return Sprite.from(Texture.EMPTY);
-        }
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = "#ffffff";
-        context.font = "700 64px sans-serif";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(label, canvas.width / 2, canvas.height / 2);
-
-        return Sprite.from(canvas);
     }
 }
