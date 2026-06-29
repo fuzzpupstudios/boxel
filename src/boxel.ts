@@ -6,7 +6,7 @@ import { Assets } from "./assets/assets";
 import { TextureAtlas } from "./assets/textureAtlas";
 import { blockStateRegistry, registerBlocks } from "./block/blockRegistry";
 import { Input } from "./input/input";
-import type { GameStage } from "./stage/gameStage";
+import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
 
@@ -20,7 +20,7 @@ export class BoxelGame {
     public readonly assets = new Assets;
 
     public textureAtlas: TextureAtlas | null = null;
-    public activeStage: GameStage | null = null;
+    public activeStages = new Array<GameStage>;
 
     private lastRenderTime = 0;
     private rootElement: HTMLElement;
@@ -57,25 +57,41 @@ export class BoxelGame {
         this.setUiSize(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
-    public changeStage(newStage: GameStage) {
-        if(this.activeStage != null) {
-            this.gui.stage.removeChild(this.activeStage.gui);
-        }
-        this.activeStage = newStage;
+    private closeStage(stage: GameStage) {
+        this.gui.stage.removeChild(stage.gui);
+        const index = this.activeStages.indexOf(stage);
+        this.activeStages.splice(index, 1);
+    }
 
-        this.gui.stage.addChild(this.activeStage.gui);
+    public changeStage(stage: GameStage, savePrevious = true) {
+        if(!savePrevious) {
+            for(const activeStage of this.activeStages) {
+                this.closeStage(activeStage);
+            }
+        }
+
+        this.activeStages.push(stage);
+
+        this.gui.stage.addChild(stage.gui);
         this.setUiSize(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
-    private setUiSize(width: number, height: number, pixelRatio: number) {
-        if(this.activeStage == null) return;
+    public previousStage() {
+        const stage = this.activeStages.at(-1);
+        if(stage != null) {
+            this.closeStage(stage);
+        }
+    }
 
-        this.activeStage.resize(
-            width / this.guiScale,
-            height / this.guiScale,
-            pixelRatio * this.guiScale
-        );
-        this.activeStage.gui.scale.set(this.guiScale);
+    private setUiSize(width: number, height: number, pixelRatio: number) {
+        for(const stage of this.activeStages) {
+            stage.resize(
+                width / this.guiScale,
+                height / this.guiScale,
+                pixelRatio * this.guiScale
+            );
+            stage.gui.scale.set(this.guiScale);
+        }
     }
 
     public setGuiScale(guiScale: number) {
@@ -163,10 +179,10 @@ export class BoxelGame {
             deltaTime: dt / 1000
         }
 
-        if(this.activeStage) {
-            this.activeStage.tick(time);
+        for(const activeStage of this.activeStages) {
+            activeStage.tick(time);
 
-            this.threeRenderer.render(this.activeStage.scene, this.activeStage.camera);
+            this.threeRenderer.render(activeStage.scene, activeStage.camera);
         }
         this.gui.render();
 
