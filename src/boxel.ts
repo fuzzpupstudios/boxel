@@ -187,5 +187,6 @@ export class BoxelGame {
         this.gui.render();
 
         this.queueNextFrame();
+        this.input.update();
     }
 }

@@ -10,7 +10,19 @@ export enum ControlBinding {
 
     ROTATE_CW, ROTATE_CCW,
     ROTATE_UP, ROTATE_DOWN,
-    CHANGE_PERSPECTIVE
+    CHANGE_PERSPECTIVE,
+
+    PAUSE, BACK
+}
+
+export enum GamepadAxis {
+    LEFT_X, LEFT_Y,
+    RIGHT_X, RIGHT_Y,
+}
+
+export enum MouseAxis {
+    X, Y,
+    DELTA_X, DELTA_Y
 }
 
 export class Input {
@@ -34,6 +46,9 @@ export class Input {
 
         [ControlBinding.JUMP]: "space",
         [ControlBinding.CHANGE_PERSPECTIVE]: "g",
+
+        [ControlBinding.PAUSE]: "escape",
+        [ControlBinding.BACK]: "escape"
     };
     public readonly controllerBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.JUMP]: BUTTONS.STANDARD.RC_BOTTOM,
@@ -41,14 +56,13 @@ export class Input {
 
         [ControlBinding.DESTROY]: BUTTONS.STANDARD.TRIGGER_RIGHT,
         [ControlBinding.USE]: BUTTONS.STANDARD.TRIGGER_LEFT,
+
+        [ControlBinding.PAUSE]: BUTTONS.STANDARD.CC_RIGHT,
+        [ControlBinding.BACK]: BUTTONS.STANDARD.RC_RIGHT
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
 
     };
-
-    public readonly settings = {
-        mouseSensitivity: 0.2
-    }
 
     public attachKeyboard(body: HTMLElement) {
         this.keyboard = new Keyboard;
@@ -82,6 +96,50 @@ export class Input {
         }
         return false;
     }
+    public getMouseAxis(axis: MouseAxis, lockedOnly: boolean = false): number {
+        if(this.mouse == null) return 0;
+        if(lockedOnly && !this.mouse.isLocked()) return 0;
+
+        switch(axis) {
+            case MouseAxis.DELTA_X:
+                return this.mouse.getDeltaPosition().x;
+            case MouseAxis.DELTA_Y:
+                return this.mouse.getDeltaPosition().y;
+            case MouseAxis.X:
+                return this.mouse.getPosition().x;
+            case MouseAxis.Y:
+                return this.mouse.getPosition().y;
+        }
+    }
+    public getGamepadAxis(axis: GamepadAxis, deadzone: number, clamp: boolean = true): number {
+        let factor = 0;
+
+        for(const gamepad of this.gamepads.values()) {
+            switch(axis) {
+                case GamepadAxis.LEFT_X:
+                    factor += gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_X);
+                    break;
+                case GamepadAxis.LEFT_Y:
+                    factor -= gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_Y);
+                    break;
+                case GamepadAxis.RIGHT_X:
+                    factor += gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_X);
+                    break;
+                case GamepadAxis.RIGHT_Y:
+                    factor -= gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_Y);
+                    break;
+            }
+        }
+
+        if(Math.abs(factor) < deadzone) return 0;
+
+        if(clamp) {
+            if(factor > 1) return 1;
+            if(factor < -1) return -1;
+        }
+
+        return factor;
+    }
     public getAnalog(binding: ControlBinding, clamp: boolean = true): number {
         let factor = 0;
         if(this.keyboard != null) {
@@ -89,38 +147,8 @@ export class Input {
                 if(this.keyboard.isPressed(this.keyBindings[binding]!)) factor++;
             }
         }
-        if(this.mouse != null) {
-            const { dx, dy } = this.mouse;
-
-            if(this.mouse.isLocked()) {
-                if(binding == ControlBinding.ROTATE_CW && dx > 0) factor += dx * this.settings.mouseSensitivity;
-                if(binding == ControlBinding.ROTATE_CCW && dx < 0) factor += -dx * this.settings.mouseSensitivity;
-                if(binding == ControlBinding.ROTATE_UP && dy < 0) factor += -dy * this.settings.mouseSensitivity;
-                if(binding == ControlBinding.ROTATE_DOWN && dy > 0) factor += dy * this.settings.mouseSensitivity;
-            }
-        }
 
         for(const gamepad of this.gamepads.values()) {
-            let gamepadLX = gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_X);
-            let gamepadLY = gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_Y);
-            let gamepadRX = gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_X);
-            let gamepadRY = gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_Y);
-
-            if(Math.abs(gamepadLX) < 0.1) gamepadLX = 0;
-            if(Math.abs(gamepadLY) < 0.1) gamepadLY = 0;
-            if(Math.abs(gamepadRX) < 0.1) gamepadRX = 0;
-            if(Math.abs(gamepadRY) < 0.1) gamepadRY = 0;
-
-            if(binding == ControlBinding.LEFT && gamepadLX < 0) factor += -gamepadLX;
-            if(binding == ControlBinding.RIGHT && gamepadLX > 0) factor += gamepadLX;
-            if(binding == ControlBinding.FORWARD && gamepadLY < 0) factor += -gamepadLY;
-            if(binding == ControlBinding.BACKWARD && gamepadLY > 0) factor += gamepadLY;
-
-            if(binding == ControlBinding.ROTATE_CW && gamepadRX > 0) factor += gamepadRX;
-            if(binding == ControlBinding.ROTATE_CCW && gamepadRX < 0) factor += -gamepadRX;
-            if(binding == ControlBinding.ROTATE_UP && gamepadRY < 0) factor += -gamepadRY;
-            if(binding == ControlBinding.ROTATE_DOWN && gamepadRY > 0) factor += gamepadRY;
-
             if(binding in this.controllerBindings) {
                 factor += gamepad.getButtonValue(this.controllerBindings[binding]!);
             }

@@ -45,11 +45,18 @@ export class PlayingGameStage extends GameStage {
     public tick(time: Time) {
         const game = this.game;
         
-        this.player.walk(
-            game.input.getAnalog(ControlBinding.RIGHT) - game.input.getAnalog(ControlBinding.LEFT),
-            game.input.getAnalog(ControlBinding.BACKWARD) - game.input.getAnalog(ControlBinding.FORWARD),
-            time
-        );
+        if(!this.paused) {
+            let moveDeltaX = (
+                game.input.getAnalog(ControlBinding.RIGHT)
+                + game.input.getGamepadAxis(GamepadAxis.LEFT_X, game.settings.controllerDeadzone)
+                - game.input.getAnalog(ControlBinding.LEFT)
+            );
+            let moveDeltaZ = (
+                game.input.getAnalog(ControlBinding.BACKWARD)
+                - game.input.getGamepadAxis(GamepadAxis.LEFT_Y, game.settings.controllerDeadzone)
+                - game.input.getAnalog(ControlBinding.FORWARD)
+            );
+            this.player.walk(moveDeltaX, moveDeltaZ, time);
 
         if(game.input.isPressed(ControlBinding.JUMP)) {
             this.player.jump();
@@ -62,10 +69,25 @@ export class PlayingGameStage extends GameStage {
             this.player.place();
         }
 
-        this.player.rotate(
-            (game.input.getAnalog(ControlBinding.ROTATE_CW) - game.input.getAnalog(ControlBinding.ROTATE_CCW)) * time.deltaTime * 2,
-            (game.input.getAnalog(ControlBinding.ROTATE_UP) - game.input.getAnalog(ControlBinding.ROTATE_DOWN)) * time.deltaTime * 2,
-        );
+            let lookDeltaX = (
+                game.input.getAnalog(ControlBinding.ROTATE_CW) -
+                game.input.getAnalog(ControlBinding.ROTATE_CCW) +
+                game.input.getGamepadAxis(GamepadAxis.RIGHT_X,
+                    game.settings.controllerDeadzone) * game.settings.controllerSensitivity * 2 +
+                game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 * game.settings.mouseSensitivity
+            );
+            if(game.settings.invertX) lookDeltaX *= -1;
+
+            let lookDeltaY = (
+                game.input.getAnalog(ControlBinding.ROTATE_UP) -
+                game.input.getAnalog(ControlBinding.ROTATE_DOWN) +
+                game.input.getGamepadAxis(GamepadAxis.RIGHT_Y,
+                    game.settings.controllerDeadzone) * game.settings.controllerSensitivity * 2 -
+                game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 * game.settings.mouseSensitivity
+            );
+            if(game.settings.invertY) lookDeltaY *= -1;
+
+            this.player.rotate(lookDeltaX * time.deltaTime, lookDeltaY * time.deltaTime);
 
         this.player.tick(time);
         this.chunkLoader.moveOrigin(this.player.aabb.position);
@@ -82,6 +104,7 @@ export class PlayingGameStage extends GameStage {
             this.targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
         } else {
             this.targetedBlock.mesh.visible = false;
+            }
         }
 
         this.camera.position.set(
@@ -91,7 +114,6 @@ export class PlayingGameStage extends GameStage {
         );
         this.camera.rotation.set(this.player.pitch, -this.player.yaw, 0, "YZX");
 
-        game.input.update();
         this.worldRenderer.render(time);
     }
 }
