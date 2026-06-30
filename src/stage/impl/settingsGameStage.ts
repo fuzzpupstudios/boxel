@@ -12,16 +12,32 @@ abstract class Setting<T> {
     protected abstract setValue(value: T): void;
 }
 
+abstract class ToggleButtonSetting extends Setting<boolean> {
+    public readonly element: GuiButton;
+
+    public constructor(title: string, width: number, height: number) {
+        super();
+
+        const makeText = () => title + ": " + (this.getValue() ? "on" : "off");
+        this.element = new GuiButton(makeText(), width, height);
+
+        this.element.onPress.connect(() => {
+            this.setValue(!this.getValue());
+            this.element.text = makeText();
+        })
+    }
+}
+
 abstract class SliderSetting extends Setting<number> {
     public readonly element: GuiSlider;
 
-    public constructor(title: string, min: number, max: number, step: number) {
+    public constructor(title: string, min: number, max: number, step: number, width: number, height: number) {
         super();
 
         const decimals = Math.max(0, -Math.floor(Math.log10(step)));
 
         const makeText = () => title + ": " + this.getValue().toLocaleString(navigator.language, { minimumFractionDigits: decimals, useGrouping: false });
-        this.element = new GuiSlider(min, max, this.getValue(), step, 160, 24, makeText());
+        this.element = new GuiSlider(min, max, this.getValue(), step, width, height, makeText());
 
         this.element.addListener("input", () => {
             this.setValue(this.element.value);
@@ -35,6 +51,9 @@ export class SettingsScreenStage extends GameStage {
     private readonly backButton: GuiButton;
     private readonly mouseSensitivity: SliderSetting;
     private readonly controllerSensitivity: SliderSetting;
+    private readonly invertX: ToggleButtonSetting;
+    private readonly invertY: ToggleButtonSetting;
+    private readonly controllerDeadzone: SliderSetting;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -62,31 +81,68 @@ export class SettingsScreenStage extends GameStage {
         });
 
         this.mouseSensitivity = new class extends SliderSetting {
-            protected getValue(): number {
+            protected override getValue() {
                 return game.settings.mouseSensitivity;
             }
-            protected setValue(value: number) {
+            protected override setValue(value: number) {
                 game.settings.mouseSensitivity = value;
             }
-        }("Mouse sensitivity", 0.1, 5.0, 0.1);
+        }("Mouse sensitivity", 0.1, 5.0, 0.1, 160, 24);
 
         this.controllerSensitivity = new class extends SliderSetting {
-            protected getValue(): number {
+            protected override getValue() {
                 return game.settings.controllerSensitivity;
             }
-            protected setValue(value: number) {
+            protected override setValue(value: number) {
                 game.settings.controllerSensitivity = value;
             }
-        }("Controller sensitivity", 0.1, 5.0, 0.1);
+        }("Controller sensitivity", 0.1, 5.0, 0.1, 160, 24);
 
-        this.gui.addChild(this.background, this.titleText, this.mouseSensitivity.element, this.controllerSensitivity.element, this.backButton);
+        this.invertX = new class extends ToggleButtonSetting {
+            protected override getValue() {
+                return game.settings.invertX;
+            }
+            protected override setValue(value: boolean) {
+                game.settings.invertX = value;
+            }
+        }("Invert X", 78, 24);
+
+        this.invertY = new class extends ToggleButtonSetting {
+            protected override getValue() {
+                return game.settings.invertY;
+            }
+            protected override setValue(value: boolean) {
+                game.settings.invertY = value;
+            }
+        }("Invert Y", 78, 24);
+
+        this.controllerDeadzone = new class extends SliderSetting {
+            protected override getValue() {
+                return game.settings.controllerDeadzone;
+            }
+            protected override setValue(value: number) {
+                game.settings.controllerDeadzone = value;
+            }
+        }("Controller deadzone", 0, 1.0, 0.01, 160, 24);
+
+        this.gui.addChild(
+            this.background, this.titleText,
+            this.mouseSensitivity.element,
+            this.controllerSensitivity.element,
+            this.invertX.element,
+            this.invertY.element,
+            this.controllerDeadzone.element,
+            this.backButton);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
-        this.mouseSensitivity.element.position.set(width / 2, height / 2 - 20);
-        this.controllerSensitivity.element.position.set(width / 2, height / 2 + 20);
+        this.mouseSensitivity.element.position.set(width / 2, height / 2 - 40);
+        this.controllerSensitivity.element.position.set(width / 2, height / 2 - 10);
+        this.invertX.element.position.set(width / 2 - 41, height / 2 + 20);
+        this.invertY.element.position.set(width / 2 + 41, height / 2 + 20);
+        this.controllerDeadzone.element.position.set(width / 2, height / 2 + 50);
         this.background.setSize(width, height);
     }
 

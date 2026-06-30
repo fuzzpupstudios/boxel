@@ -1,6 +1,7 @@
 import { AXES, BUTTONS, GamepadWrapper } from "gamepad-wrapper";
 import { Keyboard } from "./keyboard";
 import { Mouse, MouseButton } from "./mouse";
+import { MathUtils } from "three";
 
 export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
@@ -132,6 +133,14 @@ export class Input {
         }
 
         if(Math.abs(factor) < deadzone) return 0;
+
+        if(factor > 0) {
+            factor = MathUtils.mapLinear(factor, deadzone, 1, 0, 1);
+        } else if(factor < 0) {
+            factor = MathUtils.mapLinear(factor, -1, -deadzone, -1, 0);
+        }
+
+        if(isNaN(factor)) factor = 0;
 
         if(clamp) {
             if(factor > 1) return 1;
