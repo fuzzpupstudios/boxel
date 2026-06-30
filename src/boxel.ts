@@ -10,6 +10,8 @@ import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
 import { Settings } from "./settings";
+import { PersistenceManager } from "./persistence/persistenceManager";
+import type { MainStorage } from "./persistence/mainStorage";
 
 
 export class BoxelGame {
@@ -20,6 +22,7 @@ export class BoxelGame {
 
     public readonly input: Input;
     public readonly assets = new Assets;
+    public readonly persistenceManager = new PersistenceManager;
 
     public textureAtlas: TextureAtlas | null = null;
     public activeStages = new Array<GameStage>;
@@ -31,6 +34,7 @@ export class BoxelGame {
     private viewportHeight = 1;
     private viewportPixelRatio = 1;
     public guiScale = 2;
+    public mainStorage: MainStorage | null = null;
 
     constructor(rootElement: HTMLElement) {
         BoxelGame.INSTANCE = this;
@@ -131,6 +135,9 @@ export class BoxelGame {
     }
 
     public async start() {
+        this.mainStorage = this.persistenceManager.openMainStorage();
+        this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
+
         await registerBlocks();
 
         await this.threeRenderer.init();

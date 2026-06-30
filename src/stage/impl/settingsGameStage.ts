@@ -77,7 +77,9 @@ export class SettingsScreenStage extends GameStage {
         this.backButton = new GuiButton("Back", 100, 30);
 
         this.backButton.onPress.connect(() => {
-            this.game.previousStage();
+            this.saveSettings().then(() => {
+                this.game.previousStage();
+            });
         });
 
         this.mouseSensitivity = new class extends SliderSetting {
@@ -133,6 +135,10 @@ export class SettingsScreenStage extends GameStage {
             this.invertY.element,
             this.controllerDeadzone.element,
             this.backButton);
+    }
+
+    public async saveSettings() {
+        await this.game.mainStorage?.set("settings", this.game.settings);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
