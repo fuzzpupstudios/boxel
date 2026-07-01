@@ -1,4 +1,4 @@
-import { Vector3, Box3, Euler } from "three";
+import { Vector3, Box3, Euler, MathUtils } from "three";
 import { Entity, type TileCollider } from "./entity";
 import type { Time } from "../time";
 import { AABB } from "../physics/AABB";
@@ -47,6 +47,7 @@ export class Player extends Entity {
     public rotate(deltaYaw: number, deltaPitch: number) {
         this.yaw += deltaYaw;
         this.pitch += deltaPitch;
+        this.pitch = MathUtils.clamp(this.pitch, Math.PI * -0.5, Math.PI * 0.5);
     }
     public jump(): void {
         if (this.onGround) {
