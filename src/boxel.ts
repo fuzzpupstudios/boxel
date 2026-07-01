@@ -178,29 +178,18 @@ export class BoxelGame {
     }
 
     private async loadAssets() {
-        PIXI.Assets.add({
-            alias: "ui/button",
-            src: "assets/ui_button.png"
-        });
-        await PIXI.Assets.load("ui/button");
+        const textures = {
+            "ui/button": "assets/ui_button.png",
+            "ui/slider_background": "assets/ui_slider_background.png",
+            "ui/slider_fill": "assets/ui_slider_fill.png",
+            "ui/slider_handle": "assets/ui_slider_handle.png",
+            "ui/crosshair": "assets/crosshair.png"
+        }
 
-        PIXI.Assets.add({
-            alias: "ui/slider_background",
-            src: "assets/ui_slider_background.png"
-        });
-        await PIXI.Assets.load("ui/slider_background");
-
-        PIXI.Assets.add({
-            alias: "ui/slider_fill",
-            src: "assets/ui_slider_fill.png"
-        });
-        await PIXI.Assets.load("ui/slider_fill");
-
-        PIXI.Assets.add({
-            alias: "ui/slider_handle",
-            src: "assets/ui_slider_handle.png"
-        });
-        await PIXI.Assets.load("ui/slider_handle");
+        for await(const [ alias, src ] of Object.entries(textures)) {
+            PIXI.Assets.add({ alias, src });
+            await PIXI.Assets.load(alias);
+        }
 
         const loadingManager = new THREE.LoadingManager;
     

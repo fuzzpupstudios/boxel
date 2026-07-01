@@ -1,4 +1,4 @@
-import { Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import { PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
@@ -6,6 +6,7 @@ import { Player } from "../../entity/player";
 import { GuiButton } from "../../gui/button";
 import { ControlBinding, GamepadAxis, MouseAxis } from "../../input/input";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
+import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
 import { BlockStateOutline } from "../../rendering/blockStateOutline";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Time } from "../../time";
@@ -15,10 +16,6 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
-import { ParticleEngine } from "../../rendering/particleEngine";
-import type { TileFace, TileMesh } from "../../rendering/chunkMesher";
-import { Side } from "../../block/direction";
-import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -33,6 +30,8 @@ export class PlayingGameStage extends GameStage {
     private paused: boolean = false;
     private worldLoading: boolean = true;
     private autosaveCooldown: number = 0;
+
+    private readonly crosshairSprite: Sprite;
 
     private readonly pausedContainer: Container;
     private readonly pausedBackground: Sprite;
@@ -53,6 +52,12 @@ export class PlayingGameStage extends GameStage {
         this.init().then(() => {
             this.worldLoading = false;
         });
+
+
+        this.crosshairSprite = new Sprite(Assets.get("ui/crosshair"));
+        this.crosshairSprite.anchor.set(0.5);
+        this.crosshairSprite.scale.set(0.5);
+        this.gui.addChild(this.crosshairSprite);
 
 
         this.pausedContainer = new Container();
@@ -124,6 +129,8 @@ export class PlayingGameStage extends GameStage {
     public resize(width: number, height: number, pixelRatio: number): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+
+        this.crosshairSprite.position.set(width / 2, height / 2);
 
         this.pausedText.position.set(width / 2, 20);
         this.resumeButton.position.set(width / 2, height - 88);
