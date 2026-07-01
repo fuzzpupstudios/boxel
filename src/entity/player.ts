@@ -59,7 +59,7 @@ export class Player extends Entity {
     }
 
     public destroy() {
-        if(this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
         this.world.setBlockStateKey(
             this.targetedBlock.voxel.x,
