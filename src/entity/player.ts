@@ -53,7 +53,7 @@ export class Player extends Entity {
     }
     public jump(): void {
         if (this.onGround) {
-            this.velocity.y = 8.4 * Math.sqrt(this.jumpHeight);
+            this.velocity.y = 9 * Math.sqrt(this.jumpHeight);
             this.onGround = false;
         }
     }
