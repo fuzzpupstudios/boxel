@@ -10,10 +10,10 @@ export class WorldRenderer {
     public minChunkUpdates = 4;
     public maxChunkUpdates = 32;
     public readonly root = new Scene;
+    public readonly chunkMesher: ChunkMesher;
     private readonly dirtyChunks = new Set<Chunk>;
     private readonly priorityDirtyChunks = new Set<Chunk>;
     private readonly renderedChunks = new Map<Chunk, Mesh>;
-    private readonly chunkMesher: ChunkMesher;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
 
     public constructor(

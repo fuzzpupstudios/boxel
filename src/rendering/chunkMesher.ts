@@ -34,7 +34,7 @@ export interface TileMesh {
 }
 
 export class ChunkMesher {
-    private readonly tileMeshes: TileMesh[];
+    public readonly tileMeshes: TileMesh[];
 
     public constructor(
         public readonly world: World

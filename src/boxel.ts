@@ -12,6 +12,7 @@ import type { Time } from "./time";
 import { Settings } from "./settings";
 import { PersistenceManager } from "./persistence/persistenceManager";
 import type { MainStorage } from "./persistence/mainStorage";
+import type { PlayingGameStage } from "./stage/impl/playingGameStage";
 
 
 export class BoxelGame {
@@ -71,6 +72,16 @@ export class BoxelGame {
     private openStage(stage: GameStage) {
         this.gui.stage.addChild(stage.gui);
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+    }
+
+    public getActiveStage<GameStageClass extends GameStage>(StageClass: typeof GameStage): GameStageClass | null {
+        for(let i = this.activeStages.length - 1; i >= 0; i--) {
+            if(this.activeStages[i] instanceof StageClass) {
+                return this.activeStages[i] as GameStageClass;
+            }
+        }
+
+        return null;
     }
 
     public changeStage(stage: GameStage, savePrevious = true, immediate = false) {

@@ -1,24 +1,7 @@
 import { Vector3, type Vector3Like } from "three";
 import type { World } from "../world/world";
 import type { TileCollider } from "../entity/entity";
-
-export class Side {
-    public static NORTH = new Side(0, 0, 1);
-    public static EAST = new Side(1, 0, 0);
-    public static SOUTH = new Side(0, 0, -1);
-    public static WEST = new Side(-1, 0, 0);
-    public static UP = new Side(0, 1, 0);
-    public static DOWN = new Side(0, -1, 0);
-
-    public readonly normal: Readonly<Vector3Like>;
-    private constructor(
-        public readonly x: number,
-        public readonly y: number,
-        public readonly z: number
-    ) {
-        this.normal = { x, y, z };
-    }
-}
+import { Side } from "../block/direction";
 
 export class RaycastResult {
     public hit: boolean = false;

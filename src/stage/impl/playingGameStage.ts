@@ -15,11 +15,16 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
+import { ParticleEngine } from "../../rendering/particleEngine";
+import type { TileFace, TileMesh } from "../../rendering/chunkMesher";
+import { Side } from "../../block/direction";
+import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
     public readonly worldRenderer: WorldRenderer;
     public readonly targetedBlock = new BlockStateOutline;
+    public readonly blockBreakParticles: BlockBreakParticleEngine;
     public readonly chunkLoader: ChunkLoader;
     public override camera = new PerspectiveCamera(90);
     
@@ -43,6 +48,7 @@ export class PlayingGameStage extends GameStage {
         this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
         this.chunkLoader = new ChunkLoader(this.world);
         this.localPlayer = new Player(this.world);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!);
 
         this.init().then(() => {
             this.worldLoading = false;
@@ -103,6 +109,7 @@ export class PlayingGameStage extends GameStage {
 
         this.scene.add(this.worldRenderer.root);
         this.scene.add(this.targetedBlock.mesh);
+        this.scene.add(this.blockBreakParticles.mesh);
 
         await this.world.loadWorld();
         
@@ -232,6 +239,7 @@ export class PlayingGameStage extends GameStage {
         this.camera.rotation.set(this.localPlayer.pitch, -this.localPlayer.yaw, 0, "YZX");
 
         this.worldRenderer.render(time);
+        this.blockBreakParticles.tick(time);
     }
 
     public unload(): void {
