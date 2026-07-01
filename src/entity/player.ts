@@ -17,6 +17,7 @@ export class Player extends Entity {
     public pitch = 0;
 
     public readonly targetedBlock = new RaycastResult;
+    public readonly reachDistance = 5;
 
     protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
         return new AABB(
@@ -57,7 +58,7 @@ export class Player extends Entity {
     }
 
     public destroy() {
-        if(this.targetedBlock.hit) {
+        if(this.targetedBlock.hit && this.targetedBlock.distance < this.reachDistance) {
             this.world.setBlockStateKey(
                 this.targetedBlock.voxel.x,
                 this.targetedBlock.voxel.y,
@@ -67,7 +68,7 @@ export class Player extends Entity {
         }
     }
     public place() {
-        if(this.targetedBlock.hit) {
+        if(this.targetedBlock.hit && this.targetedBlock.distance < this.reachDistance) {
             console.log(this.targetedBlock.side);
             this.world.setBlockStateKey(
                 this.targetedBlock.voxel.x + this.targetedBlock.side.x,

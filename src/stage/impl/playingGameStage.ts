@@ -207,7 +207,10 @@ export class PlayingGameStage extends GameStage {
             this.chunkLoader.moveOrigin(this.localPlayer.aabb.position);
             this.chunkLoader.update(time);
 
-            if(this.localPlayer.targetedBlock.hit) {
+            if(
+                this.localPlayer.targetedBlock.hit &&
+                this.localPlayer.targetedBlock.distance < this.localPlayer.reachDistance
+            ) {
                 this.targetedBlock.mesh.visible = true;
                 this.targetedBlock.mesh.position.copy(this.localPlayer.targetedBlock.voxel)
                 const stateKey = this.world.getBlockStateKey(
