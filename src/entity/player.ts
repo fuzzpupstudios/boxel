@@ -4,6 +4,7 @@ import type { Time } from "../time";
 import { AABB } from "../physics/AABB";
 import type { World } from "../world/world";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
+import { blockStateRegistry } from "../block/blockRegistry";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -58,25 +59,30 @@ export class Player extends Entity {
     }
 
     public destroy() {
-        if(this.targetedBlock.hit && this.targetedBlock.distance < this.reachDistance) {
-            this.world.setBlockStateKey(
-                this.targetedBlock.voxel.x,
-                this.targetedBlock.voxel.y,
-                this.targetedBlock.voxel.z,
-                "base:air[default]"
-            );
-        }
+        if(this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+
+        this.world.setBlockStateKey(
+            this.targetedBlock.voxel.x,
+            this.targetedBlock.voxel.y,
+            this.targetedBlock.voxel.z,
+            "base:air[default]"
+        );
     }
     public place() {
-        if(this.targetedBlock.hit && this.targetedBlock.distance < this.reachDistance) {
-            console.log(this.targetedBlock.side);
-            this.world.setBlockStateKey(
-                this.targetedBlock.voxel.x + this.targetedBlock.side.x,
-                this.targetedBlock.voxel.y + this.targetedBlock.side.y,
-                this.targetedBlock.voxel.z + this.targetedBlock.side.z,
-                "base:cobblestone[default]"
-            );
-        }
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+
+        const selectedBlock = "base:cobblestone[default]";
+
+        const blockState = blockStateRegistry.get(selectedBlock);
+        if(blockState == null) return;
+
+        const targetX = this.targetedBlock.voxel.x + this.targetedBlock.side.x;
+        const targetY = this.targetedBlock.voxel.y + this.targetedBlock.side.y;
+        const targetZ = this.targetedBlock.voxel.z + this.targetedBlock.side.z;
+
+        if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
+        
+        this.world.setBlockStateKey(targetX, targetY, targetZ, selectedBlock);
     }
 
     public tick(time: Time): void {

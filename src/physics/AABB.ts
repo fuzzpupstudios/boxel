@@ -13,6 +13,24 @@ export class AABB {
         private readonly tileColliders: TileCollider[],
     ) {}
 
+    public collidesWithTile(tileCollider: TileCollider, x: number, y: number, z: number) {
+        const hitboxes = tileCollider.hitboxes;
+        if(!hitboxes.length) return false;
+
+        const offsetHitbox = this.hitbox.clone();
+        offsetHitbox.translate(new Vector3(
+            this.position.x - x,
+            this.position.y - y,
+            this.position.z - z
+        ));
+        
+        for(const hitbox of hitboxes) {
+            if(hitbox.intersectsBox(offsetHitbox)) return true;
+        }
+        
+        return false;
+    }
+
     public moveX(deltaX: number): CollisionResult {
         if (deltaX === 0) return 0;
 
