@@ -12,7 +12,7 @@ export class VoxelGrid {
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
         
         const chunk = this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
-        if (!chunk) return 0;
+        if(!chunk) return 0;
 
         const localX = x & VoxelGrid.CHUNK_MASK;
         const localY = y & VoxelGrid.CHUNK_MASK;
@@ -29,7 +29,7 @@ export class VoxelGrid {
 
         const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
-        if (!chunk) {
+        if(!chunk) {
             chunk = new VoxelChunk();
             this.chunks.set(key, chunk);
         }

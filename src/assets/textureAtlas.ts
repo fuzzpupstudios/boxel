@@ -28,12 +28,12 @@ export class TextureAtlas {
 
         const slots: AtlasSlot[] = [];
 
-        for (const [id, texture] of this.textures.entries()) {
+        for(const [id, texture] of this.textures.entries()) {
             const image = texture.image as TexImageSource;
             const width = (image as any).width as number;
             const height = (image as any).height as number;
 
-            if (!width || !height) {
+            if(!width || !height) {
                 throw new Error(`Texture ${id} must have a loaded image with width and height.`);
             }
 
@@ -45,14 +45,14 @@ export class TextureAtlas {
             slots.push({ id, texture, image, width, height, padX, padY, paddedWidth, paddedHeight });
         }
 
-        if (!slots.length) {
+        if(!slots.length) {
             return;
         }
 
         slots.sort((a, b) => {
             const aSize = Math.max(a.paddedWidth, a.paddedHeight);
             const bSize = Math.max(b.paddedWidth, b.paddedHeight);
-            if (bSize !== aSize) return bSize - aSize;
+            if(bSize !== aSize) return bSize - aSize;
             return b.paddedHeight * b.paddedWidth - a.paddedHeight * a.paddedWidth;
         });
 
@@ -68,14 +68,14 @@ export class TextureAtlas {
         canvas.width = atlasSize;
         canvas.height = atlasSize;
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
+        if(!ctx) {
             throw new Error("Failed to create canvas 2D context for texture atlas.");
         }
 
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, atlasSize, atlasSize);
 
-        for (const slot of slots) {
+        for(const slot of slots) {
             const x = slot.x! + slot.padX;
             const y = slot.y! + slot.padY;
 
@@ -126,14 +126,14 @@ export class TextureAtlas {
         let y = 0;
         let rowHeight = 0;
 
-        for (const slot of slots) {
-            if (x + slot.paddedWidth > atlasSize) {
+        for(const slot of slots) {
+            if(x + slot.paddedWidth > atlasSize) {
                 x = 0;
                 y += rowHeight;
                 rowHeight = 0;
             }
 
-            if (y + slot.paddedHeight > atlasSize) {
+            if(y + slot.paddedHeight > atlasSize) {
                 return false;
             }
 
@@ -152,14 +152,14 @@ export class TextureAtlas {
         let prevCanvas = canvas;
 
         const mipmaps = new Array;
-        for (let level = 1; level <= levels; level++) {
+        for(let level = 1; level <= levels; level++) {
             const mipWidth = Math.max(1, width >> level);
             const mipHeight = Math.max(1, height >> level);
             const mipCanvas = document.createElement("canvas") as HTMLCanvasElement;
             mipCanvas.width = mipWidth;
             mipCanvas.height = mipHeight;
             const mipCtx = mipCanvas.getContext("2d");
-            if (!mipCtx) break;
+            if(!mipCtx) break;
 
             mipCtx.imageSmoothingEnabled = true;
             mipCtx.clearRect(0, 0, mipWidth, mipHeight);

@@ -119,7 +119,7 @@ describe('VoxelGrid', () => {
   describe('performance characteristics', () => {
     it('should maintain O(1) access time for repeated operations', () => {
       // Set tiles in various chunks
-      for (let i = 0; i < 100; i++) {
+      for(let i = 0; i < 100; i++) {
         const x = (i * 17) % 512;
         const y = (i * 31) % 512;
         const z = (i * 47) % 512;
@@ -127,7 +127,7 @@ describe('VoxelGrid', () => {
       }
 
       // Verify all tiles are accessible
-      for (let i = 0; i < 100; i++) {
+      for(let i = 0; i < 100; i++) {
         const x = (i * 17) % 512;
         const y = (i * 31) % 512;
         const z = (i * 47) % 512;
@@ -156,9 +156,9 @@ describe('VoxelChunk', () => {
     });
 
     it('should set and get all valid coordinates', () => {
-      for (let x = 0; x < 16; x++) {
-        for (let y = 0; y < 16; y++) {
-          for (let z = 0; z < 16; z++) {
+      for(let x = 0; x < 16; x++) {
+        for(let y = 0; y < 16; y++) {
+          for(let z = 0; z < 16; z++) {
             const value = (x << 10) | (y << 5) | z;
             chunk.set(x, y, z, value);
             expect(chunk.get(x, y, z)).toBe(value);

@@ -20,7 +20,7 @@ export class BlockStateOutline {
     }
 
     public setBlockState(state: BlockState) {
-        if (state === this.currentBlockState) return;
+        if(state === this.currentBlockState) return;
 
         this.currentBlockState = state;
         const outlineGeometry = this.getOutline(state);

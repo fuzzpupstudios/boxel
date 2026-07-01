@@ -32,7 +32,7 @@ export class AABB {
     }
 
     public moveX(deltaX: number): CollisionResult {
-        if (deltaX === 0) return 0;
+        if(deltaX === 0) return 0;
 
         const hb = this.hitbox;
         const eMinX = this.position.x + hb.min.x;
@@ -56,16 +56,15 @@ export class AABB {
 
         let collision = deltaX;
 
-        for (let tx = minTx; tx <= maxTx; tx++) {
-            for (let ty = minTy; ty <= maxTy; ty++) {
-                for (let tz = minTz; tz <= maxTz; tz++) {
+        for(let tx = minTx; tx <= maxTx; tx++) {
+            for(let ty = minTy; ty <= maxTy; ty++) {
+                for(let tz = minTz; tz <= maxTz; tz++) {
                     const tile = this.world.tiles.getTile(tx, ty, tz);
-                    if (tile === 0) continue;
 
                     const hitboxes = this.tileColliders[tile]!.hitboxes;
-                    if (!hitboxes.length) continue;
+                    if(!hitboxes.length) continue;
 
-                    for (const box of hitboxes) {
+                    for(const box of hitboxes) {
                         const tileMinY = ty + box.min.y;
                         const tileMaxY = ty + box.max.y;
                         const tileMinZ = tz + box.min.z;
@@ -73,15 +72,15 @@ export class AABB {
                         const tileMinX = tx + box.min.x;
                         const tileMaxX = tx + box.max.x;
 
-                        if (eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
-                        if (eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
+                        if(eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
+                        if(eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
 
-                        if (deltaX > 0 && eMaxX <= tileMinX) {
+                        if(deltaX > 0 && eMaxX <= tileMinX) {
                             const d = tileMinX - eMaxX;
-                            if (d < collision) collision = d;
-                        } else if (deltaX < 0 && eMinX >= tileMaxX) {
+                            if(d < collision) collision = d;
+                        } else if(deltaX < 0 && eMinX >= tileMaxX) {
                             const d = tileMaxX - eMinX;
-                            if (d > collision) collision = d;
+                            if(d > collision) collision = d;
                         }
                     }
                 }
@@ -93,7 +92,7 @@ export class AABB {
     }
 
     public moveY(deltaY: number): CollisionResult {
-        if (deltaY === 0) return 0;
+        if(deltaY === 0) return 0;
 
         const hb = this.hitbox;
         const eMinX = this.position.x + hb.min.x;
@@ -117,16 +116,15 @@ export class AABB {
 
         let collision = deltaY;
 
-        for (let tx = minTx; tx <= maxTx; tx++) {
-            for (let ty = minTy; ty <= maxTy; ty++) {
-                for (let tz = minTz; tz <= maxTz; tz++) {
+        for(let tx = minTx; tx <= maxTx; tx++) {
+            for(let ty = minTy; ty <= maxTy; ty++) {
+                for(let tz = minTz; tz <= maxTz; tz++) {
                     const tile = this.world.tiles.getTile(tx, ty, tz);
-                    if (tile === 0) continue;
 
                     const hitboxes = this.tileColliders[tile]!.hitboxes;
-                    if (!hitboxes.length) continue;
+                    if(!hitboxes.length) continue;
 
-                    for (const box of hitboxes) {
+                    for(const box of hitboxes) {
                         const tileMinX = tx + box.min.x;
                         const tileMaxX = tx + box.max.x;
                         const tileMinZ = tz + box.min.z;
@@ -134,15 +132,15 @@ export class AABB {
                         const tileMinY = ty + box.min.y;
                         const tileMaxY = ty + box.max.y;
 
-                        if (eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
-                        if (eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
+                        if(eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
+                        if(eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
 
-                        if (deltaY > 0 && eMaxY <= tileMinY) {
+                        if(deltaY > 0 && eMaxY <= tileMinY) {
                             const d = tileMinY - eMaxY;
-                            if (d < collision) collision = d;
-                        } else if (deltaY < 0 && eMinY >= tileMaxY) {
+                            if(d < collision) collision = d;
+                        } else if(deltaY < 0 && eMinY >= tileMaxY) {
                             const d = tileMaxY - eMinY;
-                            if (d > collision) collision = d;
+                            if(d > collision) collision = d;
                         }
                     }
                 }
@@ -154,7 +152,7 @@ export class AABB {
     }
 
     public moveZ(deltaZ: number): CollisionResult {
-        if (deltaZ === 0) return 0;
+        if(deltaZ === 0) return 0;
 
         const hb = this.hitbox;
         const eMinX = this.position.x + hb.min.x;
@@ -178,16 +176,15 @@ export class AABB {
 
         let collision = deltaZ;
 
-        for (let tx = minTx; tx <= maxTx; tx++) {
-            for (let ty = minTy; ty <= maxTy; ty++) {
-                for (let tz = minTz; tz <= maxTz; tz++) {
+        for(let tx = minTx; tx <= maxTx; tx++) {
+            for(let ty = minTy; ty <= maxTy; ty++) {
+                for(let tz = minTz; tz <= maxTz; tz++) {
                     const tile = this.world.tiles.getTile(tx, ty, tz);
-                    if (tile === 0) continue;
 
                     const hitboxes = this.tileColliders[tile]!.hitboxes;
-                    if (!hitboxes.length) continue;
+                    if(!hitboxes.length) continue;
 
-                    for (const box of hitboxes) {
+                    for(const box of hitboxes) {
                         const tileMinX = tx + box.min.x;
                         const tileMaxX = tx + box.max.x;
                         const tileMinY = ty + box.min.y;
@@ -195,15 +192,15 @@ export class AABB {
                         const tileMinZ = tz + box.min.z;
                         const tileMaxZ = tz + box.max.z;
 
-                        if (eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
-                        if (eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
+                        if(eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
+                        if(eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
 
-                        if (deltaZ > 0 && eMaxZ <= tileMinZ) {
+                        if(deltaZ > 0 && eMaxZ <= tileMinZ) {
                             const d = tileMinZ - eMaxZ;
-                            if (d < collision) collision = d;
-                        } else if (deltaZ < 0 && eMinZ >= tileMaxZ) {
+                            if(d < collision) collision = d;
+                        } else if(deltaZ < 0 && eMinZ >= tileMaxZ) {
                             const d = tileMaxZ - eMinZ;
-                            if (d > collision) collision = d;
+                            if(d > collision) collision = d;
                         }
                     }
                 }

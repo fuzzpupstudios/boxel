@@ -43,7 +43,7 @@ export class VoxelRaycaster {
         out.side = Side.UP;
         out.position.copy(origin);
 
-        if (direction.lengthSq() === 0) {
+        if(direction.lengthSq() === 0) {
             return;
         }
 
@@ -76,25 +76,24 @@ export class VoxelRaycaster {
 
         while (traveled <= VoxelRaycaster.MAX_DISTANCE) {
             const tile = this.world.tiles.getTile(voxelX, voxelY, voxelZ);
-            if (tile !== 0) {
-                const collider = this.tileColliders[tile];
-                if (collider?.hitboxes.length) {
-                    const hit = this.intersectTileHitboxes(origin, dir, voxelX, voxelY, voxelZ, collider.hitboxes);
-                    const rayStepDistance = Math.min(tMaxX, tMaxY, tMaxZ);
-                    if (hit !== null && hit.distance <= rayStepDistance + 1e-9 && hit.distance <= VoxelRaycaster.MAX_DISTANCE) {
-                        out.hit = true;
-                        out.distance = hit.distance;
-                        out.side = hit.side;
-                        out.position.copy(dir).multiplyScalar(hit.distance).add(origin);
-                        out.voxel.set(voxelX, voxelY, voxelZ);
-                        out.collider = collider;
-                        return;
-                    }
+
+            const collider = this.tileColliders[tile]!;
+            if(collider.hitboxes.length) {
+                const hit = this.intersectTileHitboxes(origin, dir, voxelX, voxelY, voxelZ, collider.hitboxes);
+                const rayStepDistance = Math.min(tMaxX, tMaxY, tMaxZ);
+                if(hit !== null && hit.distance <= rayStepDistance + 1e-9 && hit.distance <= VoxelRaycaster.MAX_DISTANCE) {
+                    out.hit = true;
+                    out.distance = hit.distance;
+                    out.side = hit.side;
+                    out.position.copy(dir).multiplyScalar(hit.distance).add(origin);
+                    out.voxel.set(voxelX, voxelY, voxelZ);
+                    out.collider = collider;
+                    return;
                 }
             }
 
-            if (tMaxX < tMaxY) {
-                if (tMaxX < tMaxZ) {
+            if(tMaxX < tMaxY) {
+                if(tMaxX < tMaxZ) {
                     voxelX += stepX;
                     traveled = tMaxX;
                     tMaxX += tDeltaX;
@@ -104,7 +103,7 @@ export class VoxelRaycaster {
                     tMaxZ += tDeltaZ;
                 }
             } else {
-                if (tMaxY < tMaxZ) {
+                if(tMaxY < tMaxZ) {
                     voxelY += stepY;
                     traveled = tMaxY;
                     tMaxY += tDeltaY;
@@ -127,7 +126,7 @@ export class VoxelRaycaster {
     ): { distance: number; side: Side } | null {
         let closest: { distance: number; side: Side } | null = null;
 
-        for (const hitbox of hitboxes) {
+        for(const hitbox of hitboxes) {
             const minX = tileX + hitbox.min.x;
             const maxX = tileX + hitbox.max.x;
             const minY = tileY + hitbox.min.y;
@@ -136,7 +135,7 @@ export class VoxelRaycaster {
             const maxZ = tileZ + hitbox.max.z;
 
             const hit = this.intersectBox(origin, direction, minX, minY, minZ, maxX, maxY, maxZ);
-            if (hit !== null && (closest === null || hit.distance < closest.distance)) {
+            if(hit !== null && (closest === null || hit.distance < closest.distance)) {
                 closest = hit;
             }
         }
@@ -158,7 +157,7 @@ export class VoxelRaycaster {
         let tMax = Infinity;
         let entrySide = Side.UP;
 
-        if (direction.x !== 0) {
+        if(direction.x !== 0) {
             const invX = 1 / direction.x;
             const t1 = (minX - origin.x) * invX;
             const t2 = (maxX - origin.x) * invX;
@@ -166,16 +165,16 @@ export class VoxelRaycaster {
             const tFar = Math.max(t1, t2);
             const nearSide = direction.x > 0 ? Side.WEST : Side.EAST;
 
-            if (tNear > tMin) {
+            if(tNear > tMin) {
                 tMin = tNear;
                 entrySide = nearSide;
             }
             tMax = Math.min(tMax, tFar);
-        } else if (origin.x < minX || origin.x > maxX) {
+        } else if(origin.x < minX || origin.x > maxX) {
             return null;
         }
 
-        if (direction.y !== 0) {
+        if(direction.y !== 0) {
             const invY = 1 / direction.y;
             const t1 = (minY - origin.y) * invY;
             const t2 = (maxY - origin.y) * invY;
@@ -183,16 +182,16 @@ export class VoxelRaycaster {
             const tFar = Math.max(t1, t2);
             const nearSide = direction.y > 0 ? Side.DOWN : Side.UP;
 
-            if (tNear > tMin) {
+            if(tNear > tMin) {
                 tMin = tNear;
                 entrySide = nearSide;
             }
             tMax = Math.min(tMax, tFar);
-        } else if (origin.y < minY || origin.y > maxY) {
+        } else if(origin.y < minY || origin.y > maxY) {
             return null;
         }
 
-        if (direction.z !== 0) {
+        if(direction.z !== 0) {
             const invZ = 1 / direction.z;
             const t1 = (minZ - origin.z) * invZ;
             const t2 = (maxZ - origin.z) * invZ;
@@ -200,16 +199,16 @@ export class VoxelRaycaster {
             const tFar = Math.max(t1, t2);
             const nearSide = direction.z > 0 ? Side.SOUTH : Side.NORTH;
 
-            if (tNear > tMin) {
+            if(tNear > tMin) {
                 tMin = tNear;
                 entrySide = nearSide;
             }
             tMax = Math.min(tMax, tFar);
-        } else if (origin.z < minZ || origin.z > maxZ) {
+        } else if(origin.z < minZ || origin.z > maxZ) {
             return null;
         }
 
-        if (tMax < Math.max(tMin, 0)) {
+        if(tMax < Math.max(tMin, 0)) {
             return null;
         }
 

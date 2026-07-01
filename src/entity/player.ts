@@ -32,7 +32,7 @@ export class Player extends Entity {
 
     public walk(dx: number, dz: number, time: Time) {
         const length = Math.sqrt(dx * dx + dz * dz);
-        if (length > 1) {
+        if(length > 1) {
             dx /= length;
             dz /= length;
         }
@@ -52,7 +52,7 @@ export class Player extends Entity {
         this.pitch = MathUtils.clamp(this.pitch, Math.PI * -0.5, Math.PI * 0.5);
     }
     public jump(): void {
-        if (this.onGround) {
+        if(this.onGround) {
             this.velocity.y = 9 * Math.sqrt(this.jumpHeight);
             this.onGround = false;
         }
