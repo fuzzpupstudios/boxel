@@ -1,8 +1,8 @@
-import { Vector3, type Sphere } from "three";
-import type { Time } from "../time";
-import type { Chunk, World } from "./world";
-import { VoxelGrid } from "./voxelGrid";
 import { MinPriorityQueue } from "@datastructures-js/priority-queue";
+import { Vector3 } from "three";
+import type { Time } from "../time";
+import { VoxelGrid } from "./voxelGrid";
+import type { Chunk, World } from "./world";
 
 export class ChunkLoader {
     public maxColumnGenerations = 2;
@@ -62,7 +62,7 @@ export class ChunkLoader {
                     
                     if(distanceSquare > radiusSquare) continue;
 
-                    this.world.markChunkDirty(x, y, z);
+                    this.world.flagChunkForRender(x, y, z);
                 }
             }
         }
@@ -146,7 +146,20 @@ export class ChunkLoader {
             for(let i = 0; i < max; i++) {
                 const [ _, key, x, y, z ] = this.chunkGenerationQueue.dequeue()!;
 
-                this.world.generateColumn(x, y, z);
+                let columnGenerated = false;
+                for(let dy = 0; dy < 8; dy++) {
+                    if(this.world.tiles.getChunk(x, y + dy, z)) {
+                        columnGenerated = true;
+                        continue;
+                    }
+                    const chunkPromise = this.world.loadChunk(x, y + dy, z);
+
+                    if(chunkPromise != null) columnGenerated = true;
+                }
+
+                if(!columnGenerated) {
+                    this.world.generateColumn(x, y, z);
+                }
                 this.columnsToGenerate.delete(key);
             }
         }

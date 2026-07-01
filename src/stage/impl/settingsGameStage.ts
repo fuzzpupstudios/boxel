@@ -157,4 +157,8 @@ export class SettingsScreenStage extends GameStage {
             this.game.previousStage();
         }
     }
+
+    public unload(): void {
+        
+    }
 }

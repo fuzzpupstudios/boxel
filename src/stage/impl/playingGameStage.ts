@@ -1,8 +1,11 @@
+import { Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import { PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
+import { GuiButton } from "../../gui/button";
 import { ControlBinding, GamepadAxis, MouseAxis } from "../../input/input";
+import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { BlockStateOutline } from "../../rendering/blockStateOutline";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Time } from "../../time";
@@ -11,8 +14,6 @@ import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
 import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settingsGameStage";
-import { Sprite, Texture, TextStyle, Text, Container } from "pixi.js";
-import { GuiButton } from "../../gui/button";
 import { TitleScreenStage } from "./titleScreenStage";
 
 export class PlayingGameStage extends GameStage {
@@ -22,8 +23,11 @@ export class PlayingGameStage extends GameStage {
     public readonly chunkLoader: ChunkLoader;
     public override camera = new PerspectiveCamera(90);
     
-    public readonly player: Player;
+    public readonly localPlayer: Player;
+    private persistentWorld: PersistentWorld | null = null;
     private paused: boolean = false;
+    private worldLoading: boolean = true;
+    private autosaveCooldown: number = 0;
 
     private readonly pausedContainer: Container;
     private readonly pausedBackground: Sprite;
@@ -36,16 +40,13 @@ export class PlayingGameStage extends GameStage {
         super(game);
 
         this.world = new World;
-        this.world.setTerrainGenerator(new SimpleTerrainGenerator());
         this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
         this.chunkLoader = new ChunkLoader(this.world);
+        this.localPlayer = new Player(this.world);
 
-        this.player = new Player(this.world);
-
-        this.scene.add(this.worldRenderer.root);
-        this.scene.add(this.targetedBlock.mesh);
-
-        this.player.aabb.position.set(32, 128, 32);
+        this.init().then(() => {
+            this.worldLoading = false;
+        });
 
 
         this.pausedContainer = new Container();
@@ -77,7 +78,7 @@ export class PlayingGameStage extends GameStage {
             this.game.changeStage(new SettingsScreenStage(game));
         });
 
-        this.quitButton = new GuiButton("Quit to Title", 100, 30);
+        this.quitButton = new GuiButton("Save and Quit", 100, 30);
         this.quitButton.onPress.connect(() => {
             this.game.changeStage(new TitleScreenStage(game), false);
         });
@@ -93,6 +94,24 @@ export class PlayingGameStage extends GameStage {
         this.pausedContainer.visible = false;
 
         this.gui.addChild(this.pausedContainer);
+    }
+    private async init() {
+        this.persistentWorld = this.game.persistenceManager.openWorld("demo");
+
+        this.world.setPersistentWorld(this.persistentWorld);
+        this.world.setTerrainGenerator(new SimpleTerrainGenerator());
+
+        this.scene.add(this.worldRenderer.root);
+        this.scene.add(this.targetedBlock.mesh);
+
+        await this.world.loadWorld();
+        
+        const playerSlot = await this.world.loadPlayerSlot("local");
+        this.localPlayer.aabb.position.set(...playerSlot.position);
+        this.localPlayer.velocity.set(...playerSlot.velocity);
+        [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
+
+        this.world.addTickable(this.localPlayer);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
@@ -117,11 +136,24 @@ export class PlayingGameStage extends GameStage {
     }
 
     public tick(time: Time) {
+        if(this.worldLoading) return;
+
         const game = this.game;
+
+        this.autosaveCooldown -= time.deltaTime;
+
+        if(this.autosaveCooldown <= 0) {
+            this.world.saveWorld();
+            this.world.savePlayerSlot("local", this.localPlayer);
+
+            this.autosaveCooldown = 10;
+        }
 
         if(this.isTopmostStage()) {
             if(game.input.wasPressed(ControlBinding.PAUSE)) {
                 this.setPaused(!this.paused);
+                this.world.saveWorld();
+                this.world.savePlayerSlot("local", this.localPlayer);
             }
         }
 
@@ -136,50 +168,52 @@ export class PlayingGameStage extends GameStage {
                 - game.input.getGamepadAxis(GamepadAxis.LEFT_Y, game.settings.controllerDeadzone)
                 - game.input.getAnalog(ControlBinding.FORWARD)
             );
-            this.player.walk(moveDeltaX, moveDeltaZ, time);
+            this.localPlayer.walk(moveDeltaX, moveDeltaZ, time);
 
             if(game.input.isPressed(ControlBinding.JUMP)) {
-                this.player.jump();
+                this.localPlayer.jump();
             }
 
             if(game.input.wasPressed(ControlBinding.DESTROY)) {
-                this.player.destroy();
+                this.localPlayer.destroy();
             }
             if(game.input.wasPressed(ControlBinding.USE)) {
-                this.player.place();
+                this.localPlayer.place();
             }
 
             let lookDeltaX = (
-                game.input.getAnalog(ControlBinding.ROTATE_CW) -
-                game.input.getAnalog(ControlBinding.ROTATE_CCW) +
-                game.input.getGamepadAxis(GamepadAxis.RIGHT_X,
-                    game.settings.controllerDeadzone) * game.settings.controllerSensitivity * 2 +
+                (
+                    game.input.getAnalog(ControlBinding.ROTATE_CW) -
+                    game.input.getAnalog(ControlBinding.ROTATE_CCW) +
+                    game.input.getGamepadAxis(GamepadAxis.RIGHT_X, game.settings.controllerDeadzone)
+                ) * game.settings.controllerSensitivity * 2 +
                 game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 * game.settings.mouseSensitivity
             );
             if(game.settings.invertX) lookDeltaX *= -1;
 
             let lookDeltaY = (
-                game.input.getAnalog(ControlBinding.ROTATE_UP) -
-                game.input.getAnalog(ControlBinding.ROTATE_DOWN) +
-                game.input.getGamepadAxis(GamepadAxis.RIGHT_Y,
-                    game.settings.controllerDeadzone) * game.settings.controllerSensitivity * 2 -
+                (
+                    game.input.getAnalog(ControlBinding.ROTATE_UP) -
+                    game.input.getAnalog(ControlBinding.ROTATE_DOWN) +
+                    game.input.getGamepadAxis(GamepadAxis.RIGHT_Y, game.settings.controllerDeadzone)
+                ) * game.settings.controllerSensitivity * 2 -
                 game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 * game.settings.mouseSensitivity
             );
             if(game.settings.invertY) lookDeltaY *= -1;
 
-            this.player.rotate(lookDeltaX * time.deltaTime, lookDeltaY * time.deltaTime);
+            this.localPlayer.rotate(lookDeltaX * time.deltaTime, lookDeltaY * time.deltaTime);
 
-            this.player.tick(time);
-            this.chunkLoader.moveOrigin(this.player.aabb.position);
+            this.world.tick(time);
+            this.chunkLoader.moveOrigin(this.localPlayer.aabb.position);
             this.chunkLoader.update(time);
 
-            if(this.player.targetedBlock.hit) {
+            if(this.localPlayer.targetedBlock.hit) {
                 this.targetedBlock.mesh.visible = true;
-                this.targetedBlock.mesh.position.copy(this.player.targetedBlock.voxel)
+                this.targetedBlock.mesh.position.copy(this.localPlayer.targetedBlock.voxel)
                 const stateKey = this.world.getBlockStateKey(
-                    this.player.targetedBlock.voxel.x,
-                    this.player.targetedBlock.voxel.y,
-                    this.player.targetedBlock.voxel.z
+                    this.localPlayer.targetedBlock.voxel.x,
+                    this.localPlayer.targetedBlock.voxel.y,
+                    this.localPlayer.targetedBlock.voxel.z
                 );
                 this.targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
             } else {
@@ -188,12 +222,18 @@ export class PlayingGameStage extends GameStage {
         }
 
         this.camera.position.set(
-            this.player.aabb.position.x,
-            this.player.aabb.position.y + this.player.eyeHeight,
-            this.player.aabb.position.z
+            this.localPlayer.aabb.position.x,
+            this.localPlayer.aabb.position.y + this.localPlayer.eyeHeight,
+            this.localPlayer.aabb.position.z
         );
-        this.camera.rotation.set(this.player.pitch, -this.player.yaw, 0, "YZX");
+        this.camera.rotation.set(this.localPlayer.pitch, -this.localPlayer.yaw, 0, "YZX");
 
         this.worldRenderer.render(time);
+    }
+
+    public unload(): void {
+        if(this.persistentWorld != null) {
+            this.game.persistenceManager.closeWorld(this.persistentWorld);
+        }
     }
 }

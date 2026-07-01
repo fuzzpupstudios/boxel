@@ -36,6 +36,12 @@ export abstract class Entity implements Tickable {
     }
 
     public tick(time: Time): void {
+        if(this.world.getChunk(
+            this.aabb.position.x >> 4,
+            this.aabb.position.y >> 4,
+            this.aabb.position.z >> 4
+        ) === null) return;
+
         this.velocity.x += this.world.gravity.x * time.deltaTime;
         this.velocity.y += this.world.gravity.y * time.deltaTime;
         this.velocity.z += this.world.gravity.z * time.deltaTime;

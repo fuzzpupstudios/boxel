@@ -53,4 +53,8 @@ export class TitleScreenStage extends GameStage {
     public tick(time: Time): void {
 
     }
+
+    public unload(): void {
+        
+    }
 }
