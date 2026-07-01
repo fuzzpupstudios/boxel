@@ -9,7 +9,7 @@ export class ChunkLoader {
     public maxChunkUnloads = 64;
 
     private readonly origin = new Vector3(Infinity);
-    private radius = 64;
+    private radius = 128;
     private needsUpdate: boolean = true;
     private readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
     private readonly chunksToUnload = new Map<number, Chunk>;

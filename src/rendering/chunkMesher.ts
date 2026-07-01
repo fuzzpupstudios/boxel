@@ -20,6 +20,7 @@ export interface TileFace {
 
 export interface TileMesh {
     skipRender: boolean;
+    renderAnyWhenCulled: boolean;
 
     occludeNorth: boolean;
     occludeEast: boolean;
@@ -38,13 +39,54 @@ export interface TileMesh {
     down: TileFace[];
 }
 
+class TileCache {
+    public readonly halo = new Uint16Array(18 ** 3);
+    public readonly haloAo = new Float32Array(18 ** 3);
+
+    public constructor(
+        private readonly aoWeights: Float32Array
+    ) {}
+
+    public update(
+        world: World,
+        chunkX: number,
+        chunkY: number,
+        chunkZ: number
+    ) {
+        const chunkOriginX = chunkX << 4;
+        const chunkOriginY = chunkY << 4;
+        const chunkOriginZ = chunkZ << 4;
+
+        let tile;
+        for(let x = -1, i = 0; x < 17; x++) {
+            for(let y = -1; y < 17; y++) {
+                for(let z = -1; z < 17; z++, i++) {
+                    tile = world.tiles.getTile(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
+                    this.halo[i] = tile;
+                    this.haloAo[i] = this.aoWeights[tile]!;
+                }
+            }
+        }
+    }
+
+    public at(x: number, y: number, z: number) {
+        return this.halo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
+    }
+    public aoAt(x: number, y: number, z: number) {
+        return this.haloAo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
+    }
+}
+
 export class ChunkMesher {
     public readonly tileMeshes: TileMesh[];
     private readonly aoWeights: Float32Array;
+    private readonly tileCache: TileCache;
 
     public constructor(
         public readonly world: World
     ) {
+        // Optimize: memoize block models and their AO cast
+        // weights, indexed by their block state's tile id
         this.tileMeshes = new Array;
         for(const blockStateKey of tileRegistry.values()) {
             const blockState = blockStateRegistry.get(blockStateKey)!;
@@ -62,9 +104,7 @@ export class ChunkMesher {
             this.aoWeights[i] = this.tileMeshes[i]!.aoCastWeight;
         }
 
-        console.log(this.aoWeights);
-
-        console.log(this.tileMeshes);
+        this.tileCache = new TileCache(this.aoWeights);
     }
 
     private getMesh(tile: number) {
@@ -72,14 +112,11 @@ export class ChunkMesher {
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {
-        const tiles = this.world.tiles;
-
-        const minBlockX = chunkX << 4;
-        const minBlockY = chunkY << 4;
-        const minBlockZ = chunkZ << 4;
-        const maxBlockX = (chunkX + 1) << 4;
-        const maxBlockY = (chunkY + 1) << 4;
-        const maxBlockZ = (chunkZ + 1) << 4;
+        // Optimize: use an 18x18x18 "halo" tile buffer
+        // to cache tiles and AO, so VoxelGrid#tileAt() isn't
+        // called so frequently
+        const tiles = this.tileCache;
+        tiles.update(this.world, chunkX, chunkY, chunkZ);
 
         // [ pos.x, pos.y, pos.z, uv.x, uv.y, normal.x, normal.y, normal.z, aoFactor ]
         const floatAttributes = new Array;
@@ -88,55 +125,63 @@ export class ChunkMesher {
         let vertexCount = 0;
 
         let ao$nnn = 0, ao$nn_ = 0, ao$nnp = 0;
-        let ao$n_n = 0, ao$n__ = 0, ao$n_p = 0;
+        let ao$n_n = 0,             ao$n_p = 0;
         let ao$npn = 0, ao$np_ = 0, ao$npp = 0;
-        let ao$_nn = 0, ao$_n_ = 0, ao$_np = 0;
-        let ao$__n = 0,            ao$__p = 0;
-        let ao$_pn = 0, ao$_p_ = 0, ao$_pp = 0;
+        let ao$_nn = 0,             ao$_np = 0;
+        let ao$_pn = 0,             ao$_pp = 0;
         let ao$pnn = 0, ao$pn_ = 0, ao$pnp = 0;
-        let ao$p_n = 0, ao$p__ = 0, ao$p_p = 0;
+        let ao$p_n = 0,             ao$p_p = 0;
         let ao$ppn = 0, ao$pp_ = 0, ao$ppp = 0;
 
-        for(let blockX = minBlockX, x = 0; blockX < maxBlockX; blockX++, x++) {
-            for(let blockY = minBlockY, y = 0; blockY < maxBlockY; blockY++, y++) {
-                for(let blockZ = minBlockZ, z = 0; blockZ < maxBlockZ; blockZ++, z++) {
-                    const tile = tiles.getTile(blockX, blockY, blockZ);
+        for(let x = 0; x < 16; x++) {
+            for(let y = 0; y < 16; y++) {
+                for(let z = 0; z < 16; z++) {
+                    const tile = tiles.at(x, y, z);
                     const mesh = this.getMesh(tile);
 
                     if(mesh.skipRender) continue;
 
-                    ao$nnn = this.aoWeights[tiles.getTile(blockX - 1, blockY - 1, blockZ - 1)]!;
-                    ao$nn_ = this.aoWeights[tiles.getTile(blockX - 1, blockY - 1, blockZ)]!;
-                    ao$nnp = this.aoWeights[tiles.getTile(blockX - 1, blockY - 1, blockZ + 1)]!;
-                    ao$n_n = this.aoWeights[tiles.getTile(blockX - 1, blockY, blockZ - 1)]!;
-                    ao$n__ = this.aoWeights[tiles.getTile(blockX - 1, blockY, blockZ)]!;
-                    ao$n_p = this.aoWeights[tiles.getTile(blockX - 1, blockY, blockZ + 1)]!;
-                    ao$npn = this.aoWeights[tiles.getTile(blockX - 1, blockY + 1, blockZ - 1)]!;
-                    ao$np_ = this.aoWeights[tiles.getTile(blockX - 1, blockY + 1, blockZ)]!;
-                    ao$npp = this.aoWeights[tiles.getTile(blockX - 1, blockY + 1, blockZ + 1)]!;
+                    const showNorth = !this.getMesh(tiles.at(x, y, z + 1)).occludeSouth;
+                    const showSouth = !this.getMesh(tiles.at(x, y, z - 1)).occludeNorth;
+                    const showEast = !this.getMesh(tiles.at(x + 1, y, z)).occludeWest;
+                    const showWest = !this.getMesh(tiles.at(x - 1, y, z)).occludeEast;
+                    const showUp = !this.getMesh(tiles.at(x, y + 1, z)).occludeDown;
+                    const showDown = !this.getMesh(tiles.at(x, y - 1, z)).occludeUp;
 
-                    ao$_nn = this.aoWeights[tiles.getTile(blockX, blockY - 1, blockZ - 1)]!;
-                    ao$_n_ = this.aoWeights[tiles.getTile(blockX, blockY - 1, blockZ)]!;
-                    ao$_np = this.aoWeights[tiles.getTile(blockX, blockY - 1, blockZ + 1)]!;
-                    ao$__n = this.aoWeights[tiles.getTile(blockX, blockY, blockZ - 1)]!;
+                    // Optimize: when blocks on all sides cull this block, and this
+                    // block doesn't render anything when all faces are culled, skip
+                    // the rest of the checks (ao tile fetching, face iteration, etc.)
+                    if(!(showNorth || showSouth || showEast || showWest || showUp || showDown)) {
+                        if(!mesh.renderAnyWhenCulled) continue;
+                    }
+
+                    ao$nnn = tiles.aoAt(x - 1, y - 1, z - 1);
+                    ao$nn_ = tiles.aoAt(x - 1, y - 1, z);
+                    ao$nnp = tiles.aoAt(x - 1, y - 1, z + 1);
+                    ao$n_n = tiles.aoAt(x - 1, y, z - 1);
                     
-                    ao$__p = this.aoWeights[tiles.getTile(blockX, blockY, blockZ + 1)]!;
-                    ao$_pn = this.aoWeights[tiles.getTile(blockX, blockY + 1, blockZ - 1)]!;
-                    ao$_p_ = this.aoWeights[tiles.getTile(blockX, blockY + 1, blockZ)]!;
-                    ao$_pp = this.aoWeights[tiles.getTile(blockX, blockY + 1, blockZ + 1)]!;
+                    ao$n_p = tiles.aoAt(x - 1, y, z + 1);
+                    ao$npn = tiles.aoAt(x - 1, y + 1, z - 1);
+                    ao$np_ = tiles.aoAt(x - 1, y + 1, z);
+                    ao$npp = tiles.aoAt(x - 1, y + 1, z + 1);
 
-                    ao$pnn = this.aoWeights[tiles.getTile(blockX + 1, blockY - 1, blockZ - 1)]!;
-                    ao$pn_ = this.aoWeights[tiles.getTile(blockX + 1, blockY - 1, blockZ)]!;
-                    ao$pnp = this.aoWeights[tiles.getTile(blockX + 1, blockY - 1, blockZ + 1)]!;
-                    ao$p_n = this.aoWeights[tiles.getTile(blockX + 1, blockY, blockZ - 1)]!;
-                    ao$p__ = this.aoWeights[tiles.getTile(blockX + 1, blockY, blockZ)]!;
-                    ao$p_p = this.aoWeights[tiles.getTile(blockX + 1, blockY, blockZ + 1)]!;
-                    ao$ppn = this.aoWeights[tiles.getTile(blockX + 1, blockY + 1, blockZ - 1)]!;
-                    ao$pp_ = this.aoWeights[tiles.getTile(blockX + 1, blockY + 1, blockZ)]!;
-                    ao$ppp = this.aoWeights[tiles.getTile(blockX + 1, blockY + 1, blockZ + 1)]!;
+                    ao$_nn = tiles.aoAt(x, y - 1, z - 1);
+                    ao$_np = tiles.aoAt(x, y - 1, z + 1);
+                    
+                    ao$_pn = tiles.aoAt(x, y + 1, z - 1);
+                    ao$_pp = tiles.aoAt(x, y + 1, z + 1);
+
+                    ao$pnn = tiles.aoAt(x + 1, y - 1, z - 1);
+                    ao$pn_ = tiles.aoAt(x + 1, y - 1, z);
+                    ao$pnp = tiles.aoAt(x + 1, y - 1, z + 1);
+                    ao$p_n = tiles.aoAt(x + 1, y, z - 1);
+                    
+                    ao$p_p = tiles.aoAt(x + 1, y, z + 1);
+                    ao$ppn = tiles.aoAt(x + 1, y + 1, z - 1);
+                    ao$pp_ = tiles.aoAt(x + 1, y + 1, z);
+                    ao$ppp = tiles.aoAt(x + 1, y + 1, z + 1);
 
                     // North
-                    const showNorth = !this.getMesh(tiles.getTile(blockX, blockY, blockZ + 1)).occludeWest;
                     for(const face of mesh.north) {
                         if(face.cull && !showNorth) continue;
 
@@ -170,7 +215,6 @@ export class ChunkMesher {
                     }
 
                     // South
-                    const showSouth = !this.getMesh(tiles.getTile(blockX, blockY, blockZ - 1)).occludeNorth;
                     for(const face of mesh.south) {
                         if(face.cull && !showSouth) continue;
 
@@ -204,7 +248,6 @@ export class ChunkMesher {
                     }
 
                     // East
-                    const showEast = !this.getMesh(tiles.getTile(blockX + 1, blockY, blockZ)).occludeEast;
                     for(const face of mesh.east) {
                         if(face.cull && !showEast) continue;
                         
@@ -238,7 +281,6 @@ export class ChunkMesher {
                     }
 
                     // West
-                    const showWest = !this.getMesh(tiles.getTile(blockX - 1, blockY, blockZ)).occludeWest
                     for(const face of mesh.west) {
                         if(face.cull && !showWest) continue;
 
@@ -272,7 +314,6 @@ export class ChunkMesher {
                     }
 
                     // Up
-                    const showUp = !this.getMesh(tiles.getTile(blockX, blockY + 1, blockZ)).occludeDown;
                     for(const face of mesh.up) {
                         if(face.cull && !showUp) continue;
                         
@@ -306,7 +347,6 @@ export class ChunkMesher {
                     }
 
                     // Down
-                    const showDown = !this.getMesh(tiles.getTile(blockX, blockY - 1, blockZ)).occludeUp;
                     for(const face of mesh.down) {
                         if(face.cull && !showDown) continue;
 

@@ -135,8 +135,17 @@ export class BlockModel {
     }
 
     public compile(): TileMesh {
+        let renderAnyWhenCulled = false;
+        for(const face of this.faces()) {
+            if(face.cull) continue;
+
+            renderAnyWhenCulled = true;
+            break;
+        }
+        
         return {
             skipRender: Array.from(this.faces()).length == 0,
+            renderAnyWhenCulled,
 
             aoCastWeight: this.aoCastWeight,
 
