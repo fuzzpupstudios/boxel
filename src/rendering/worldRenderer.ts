@@ -3,7 +3,7 @@ import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";
 import type { TextureAtlas } from "../assets/textureAtlas";
-import { vec4, texture, uv, normalGeometry, vec3 } from "three/tsl";
+import { vec4, texture, uv, normalGeometry, vec3, attribute, float, select, If, mix } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 
 export class WorldRenderer {
@@ -24,8 +24,10 @@ export class WorldRenderer {
 
         {
             const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
-            const shadow = normalGeometry.dot(vec3(0.8, 1.2, 0.5).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
-            const colorNode = vec4(terrainColor.rgb.mul(shadow), terrainColor.a)
+            const c = 2;
+            const aoFactor = float(1).sub(float(c).div((<any>attribute("aoFactor", "float")).add(c)));
+            const shadow = normalGeometry.dot(vec3(0.6, 1.0, 0.2).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
+            const colorNode = vec4(mix(terrainColor.rgb.mul(shadow), vec3(0, 0, 0), aoFactor), terrainColor.a);
             this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.1 });
         }
 

@@ -15,6 +15,7 @@ export class BlockModelFace {
     public uvMaxX = 0;
     public uvMinY = 1;
     public uvMaxY = 1;
+    public aoReceiveWeight = 1;
     public textureSlot = "";
     public texturePosition: Box2 | null = null;
 
@@ -26,6 +27,7 @@ export class BlockModelFace {
         [ face.uvMinX, face.uvMinY, face.uvMaxX, face.uvMaxY ] = json.uv;
         face.textureSlot = json.texture ?? "axes";
         face.cull = json.cull ?? face.cull;
+        face.aoReceiveWeight = json.aoReceiveWeight ?? face.aoReceiveWeight;
 
         return face;
     }
@@ -42,6 +44,8 @@ export class BlockModelFace {
             x: this.x, y: this.y, z: this.z,
             width: this.width, height: this.height,
             cull: this.cull,
+
+            aoReceiveWeight: this.aoReceiveWeight,
 
             // Map the local uv coordinates of the face to the
             // position passed in via setTexturePosition()
@@ -65,6 +69,7 @@ export class BlockModel {
     public occludeWest = true;
     public occludeUp = true;
     public occludeDown = true;
+    public aoCastWeight = 1;
 
     public north = new Array<BlockModelFace>;
     public east = new Array<BlockModelFace>;
@@ -85,6 +90,8 @@ export class BlockModel {
         model.occludeWest = json.occludeWest ?? json.occlude ?? model.occludeWest,
         model.occludeUp = json.occludeUp ?? json.occlude ?? model.occludeUp,
         model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown,
+
+        model.aoCastWeight = json.aoCastWeight ?? model.aoCastWeight;
 
         model.north.push(...(json.north ?? []).map(BlockModelFace.parseJson));
         model.east.push(...(json.east ?? []).map(BlockModelFace.parseJson));
@@ -130,6 +137,8 @@ export class BlockModel {
     public compile(): TileMesh {
         return {
             skipRender: Array.from(this.faces()).length == 0,
+
+            aoCastWeight: this.aoCastWeight,
 
             occludeNorth: this.occludeNorth,
             occludeEast: this.occludeEast,

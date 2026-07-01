@@ -18,6 +18,7 @@ export namespace DataDrivenJson {
         occludeWest?: boolean,
         occludeUp?: boolean,
         occludeDown?: boolean,
+        aoCastWeight?: number;
         textures?: Record<string, string>,
         north?: BlockStateModelFace[],
         east?: BlockStateModelFace[],
@@ -31,6 +32,7 @@ export namespace DataDrivenJson {
         pos: [ number, number, number ],
         size: [ number, number ],
         uv: [ number, number, number, number ],
+        aoReceiveWeight?: number;
         texture?: string,
         cull?: boolean
     }
