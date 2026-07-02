@@ -38,6 +38,9 @@ export class PlayingGameStage extends GameStage {
         "base:cobblestone[stair]",
         "base:grass[default]",
         "base:dirt[default]",
+        "base:planks[default]",
+        "base:planks[slab]",
+        "base:planks[stair]",
     ];
 
     private readonly crosshairSprite: Sprite;

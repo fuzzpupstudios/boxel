@@ -23,6 +23,9 @@ export async function registerBlocks() {
     blockRegistry.register("grass", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/grass.json")));
 
+    blockRegistry.register("planks", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/planks.json")));
+
     blockRegistry.lock();
 
     for(const block of blockRegistry.values()) {
