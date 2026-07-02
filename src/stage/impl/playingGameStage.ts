@@ -277,6 +277,14 @@ export class PlayingGameStage extends GameStage {
                 this.placeBlockCooldown = 0;
             }
 
+            if(game.input.wasPressed(ControlBinding.PICK_BLOCK)) {
+                if(this.localPlayer.targetedBlock.hit) {
+                    const voxelPos = this.localPlayer.targetedBlock.voxel;
+                    const blockStateId = this.world.getBlockStateKey(voxelPos.x, voxelPos.y, voxelPos.z);
+                    this.localPlayer.holdingBlock = blockStateId;
+                }
+            }
+
             let lookDeltaX = (
                 (
                     game.input.getAnalog(ControlBinding.ROTATE_CW) -

@@ -28,6 +28,7 @@ export class Mouse {
         
         element.addEventListener("mousedown", event => {
             const changed = this.updatePointerLock();
+            event.preventDefault();
 
             if(!changed) {
                 this.pressingButtons.add(event.button);

@@ -7,7 +7,7 @@ export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
     JUMP, CROUCH, TOGGLE_CROUCH, SPRINT,
 
-    DESTROY, USE,
+    DESTROY, USE, PICK_BLOCK,
 
     ROTATE_CW, ROTATE_CCW,
     ROTATE_UP, ROTATE_DOWN,
@@ -72,7 +72,8 @@ export class Input {
         [ControlBinding.NEXT_ITEM]: BUTTONS.STANDARD.BUMPER_RIGHT,
         [ControlBinding.PREVIOUS_ITEM]: BUTTONS.STANDARD.BUMPER_LEFT,
 
-        [ControlBinding.TOGGLE_CROUCH]: BUTTONS.STANDARD.THUMBSTICK_LEFT
+        [ControlBinding.TOGGLE_CROUCH]: BUTTONS.STANDARD.THUMBSTICK_LEFT,
+        [ControlBinding.PICK_BLOCK]: BUTTONS.STANDARD.THUMBSTICK_RIGHT
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
@@ -80,6 +81,7 @@ export class Input {
         [ControlBinding.PAUSE]: MouseButton.UNLOCK,
         [ControlBinding.NEXT_ITEM]: MouseButton.SCROLL_UP,
         [ControlBinding.PREVIOUS_ITEM]: MouseButton.SCROLL_DOWN,
+        [ControlBinding.PICK_BLOCK]: MouseButton.MIDDLE,
     };
 
     public attachKeyboard(body: HTMLElement) {
