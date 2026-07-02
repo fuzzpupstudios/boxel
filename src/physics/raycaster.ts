@@ -2,6 +2,7 @@ import { Vector3, type Vector3Like } from "three";
 import type { World } from "../world/world";
 import type { TileCollider } from "../entity/entity";
 import { Side } from "../block/direction";
+import { tileRegistry, getUnknownBlockState } from "../block/blockRegistry";
 
 export class RaycastResult {
     public hit: boolean = false;
@@ -17,7 +18,7 @@ export class VoxelRaycaster {
 
     public constructor(
         public readonly world: World,
-        private readonly tileColliders: TileCollider[],
+        private readonly tileColliders: Map<string, TileCollider>,
     ) {}
 
     public cast(origin: Vector3, direction: Vector3, out: RaycastResult) {
@@ -58,9 +59,9 @@ export class VoxelRaycaster {
         let traveled = 0;
 
         while (traveled <= VoxelRaycaster.MAX_DISTANCE) {
-            const tile = this.world.tiles.getTile(voxelX, voxelY, voxelZ);
+            const tile = this.world.tiles.getBlockStateId(voxelX, voxelY, voxelZ);
 
-            const collider = this.tileColliders[tile]!;
+            const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
             if(collider.hitboxes.length) {
                 const hit = this.intersectTileHitboxes(origin, dir, voxelX, voxelY, voxelZ, collider.hitboxes);
                 const rayStepDistance = Math.min(tMaxX, tMaxY, tMaxZ);

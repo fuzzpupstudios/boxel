@@ -3,12 +3,15 @@ import { Chunk } from "../world/world";
 import { VoxelChunk } from "../world/voxelGrid";
 import z from "zod";
 import { Player } from "../entity/player";
+import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
 
-interface SerializedChunk {
+export interface SerializedChunk {
+    version: number,
     x: number,
     y: number,
     z: number,
-    tiles: ArrayBuffer
+    tiles: ArrayBuffer,
+    palette: string[]
 }
 
 export type WorldMeta = z.infer<typeof WorldMeta>;
@@ -175,14 +178,29 @@ export class PersistentWorld {
 
     private serializeChunk(chunk: Chunk): SerializedChunk {
         return {
+            version: CHUNK_SCHEMA_VERSION,
             x: chunk.x, y: chunk.y, z: chunk.z,
-            tiles: chunk.tiles.tiles.buffer
+            tiles: chunk.tiles.tiles.buffer,
+            palette: chunk.tiles.palette
         }
     }
 
     private deserializeChunk(serialized: SerializedChunk): Chunk {
+        // perform chunk schema upgrades
+        if(serialized.version == null) serialized.version = -1;
+        for(let i = serialized.version + 1; i < chunkUpgrades.length; i++) {
+            console.log("upgraded chunk " + serialized.x + ", " +
+                serialized.y + ", " + serialized.z + " to version " + i);
+            chunkUpgrades[i]!(serialized);
+        }
+
         const voxelChunk = new VoxelChunk;
-        voxelChunk.tiles.set(new Uint16Array(serialized.tiles));
+        
+        voxelChunk.tiles.set(new Uint8Array(serialized.tiles));
+        for(let i = 0; i < serialized.palette.length; i++) {
+            voxelChunk.palette[i] = serialized.palette[i]!;
+            voxelChunk.paletteMap.set(serialized.palette[i]!, i);
+        }
         const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk);
         return chunk;
     }

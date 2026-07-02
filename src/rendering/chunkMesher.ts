@@ -1,6 +1,6 @@
 import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
 import type { World } from "../world/world";
-import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 
 
 export interface TileFace {
@@ -40,11 +40,11 @@ export interface TileMesh {
 }
 
 class TileCache {
-    public readonly halo = new Uint16Array(18 ** 3);
+    public readonly halo = new Array<string>(18 ** 3);
     public readonly haloAo = new Float32Array(18 ** 3);
 
     public constructor(
-        private readonly aoWeights: Float32Array
+        private readonly aoWeights: Map<string, number>
     ) {}
 
     public update(
@@ -57,13 +57,13 @@ class TileCache {
         const chunkOriginY = chunkY << 4;
         const chunkOriginZ = chunkZ << 4;
 
-        let tile;
+        let tile: string;
         for(let x = -1, i = 0; x < 17; x++) {
             for(let y = -1; y < 17; y++) {
                 for(let z = -1; z < 17; z++, i++) {
-                    tile = world.tiles.getTile(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
+                    tile = world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
                     this.halo[i] = tile;
-                    this.haloAo[i] = this.aoWeights[tile]!;
+                    this.haloAo[i] = this.aoWeights.get(tile) || 0;
                 }
             }
         }
@@ -78,37 +78,40 @@ class TileCache {
 }
 
 export class ChunkMesher {
-    public readonly tileMeshes: TileMesh[];
-    private readonly aoWeights: Float32Array;
+    public readonly tileMeshes: Map<string, TileMesh>;
+    private readonly aoWeights: Map<string, number>;
     private readonly tileCache: TileCache;
+    private readonly defaultMesh: TileMesh;
 
     public constructor(
         public readonly world: World
     ) {
         // Optimize: memoize block models and their AO cast
         // weights, indexed by their block state's tile id
-        this.tileMeshes = new Array;
-        for(const blockStateKey of tileRegistry.values()) {
-            const blockState = blockStateRegistry.get(blockStateKey)!;
+        this.tileMeshes = new Map;
+        for(const blockStateId of tileRegistry.values()) {
+            const blockState = blockStateRegistry.get(blockStateId)!;
             
             try {
                 const compiledModel = blockState.model.compile();
-                this.tileMeshes.push(compiledModel);
+                this.tileMeshes.set(blockStateId, compiledModel);
             } catch(e) {
                 throw new Error("Failed to compile block model " + blockState, { cause: e });
             }
         }
 
-        this.aoWeights = new Float32Array(this.tileMeshes.length);
-        for(let i = 0; i < this.tileMeshes.length; i++) {
-            this.aoWeights[i] = this.tileMeshes[i]!.aoCastWeight;
+        this.defaultMesh = getUnknownBlockState().model.compile();
+
+        this.aoWeights = new Map();
+        for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
+            this.aoWeights.set(blockStateId, tileMesh!.aoCastWeight);
         }
 
         this.tileCache = new TileCache(this.aoWeights);
     }
 
-    private getMesh(tile: number) {
-        return this.tileMeshes[tile]!;
+    private getMesh(tile: string) {
+        return this.tileMeshes.get(tile) || this.defaultMesh;
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {

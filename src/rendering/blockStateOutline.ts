@@ -2,6 +2,7 @@ import { BoxGeometry, EdgesGeometry, LineSegments, Vector2, Vector3 } from "thre
 import { BufferGeometryUtils, LineMaterial } from "three/examples/jsm/Addons.js";
 import { BlockState } from "../block/block";
 import { LineBasicNodeMaterial } from "three/webgpu";
+import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 
 export class BlockStateOutline {
     public readonly mesh: LineSegments;
@@ -21,6 +22,7 @@ export class BlockStateOutline {
 
     public setBlockState(state: BlockState) {
         if(state === this.currentBlockState) return;
+        if(state == null) state = getUnknownBlockState();
 
         this.currentBlockState = state;
         const outlineGeometry = this.getOutline(state);

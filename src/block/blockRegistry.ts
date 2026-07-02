@@ -7,15 +7,24 @@ export const blockRegistry = new KeyedRegistry<Block, string>();
 export const tileRegistry = new AutoRegistry<string>;
 export const blockStateRegistry = new KeyedRegistry<BlockState, string>;
 
+let unknownBlockState: BlockState;
+
+export function getUnknownBlockState() {
+    return unknownBlockState;
+}
+
 export async function registerBlocks() {
+    const axesBlock = new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/axes.json"));
+
+    blockRegistry.register("axes", axesBlock);
+    unknownBlockState = axesBlock.states.get("default")!;
+
     blockRegistry.register("air", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/air.json")));
 
     blockRegistry.register("cobblestone", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone.json")));
-
-    blockRegistry.register("axes", new DataDrivenBlock(
-        <DataDrivenJson.Block> <unknown> await import("./impl/axes.json")));
 
     blockRegistry.register("dirt", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/dirt.json")));

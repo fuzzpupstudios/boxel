@@ -4,25 +4,26 @@ export class VoxelGrid {
     private static readonly CHUNK_MASK = VoxelGrid.CHUNK_SIZE - 1;
 
     public readonly chunks = new Map<number, VoxelChunk>();
+    public defaultBlockState = "base:air[default]";
 
     /** Get a tile value at global coordinates */
-    public getTile(x: number, y: number, z: number): number {
+    public getBlockStateId(x: number, y: number, z: number): string {
         const chunkX = x >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
         
         const chunk = this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
-        if(!chunk) return 0;
+        if(!chunk) return this.defaultBlockState;
 
         const localX = x & VoxelGrid.CHUNK_MASK;
         const localY = y & VoxelGrid.CHUNK_MASK;
         const localZ = z & VoxelGrid.CHUNK_MASK;
 
-        return chunk.get(localX, localY, localZ);
+        return chunk.getBlockStateId(localX, localY, localZ);
     }
 
     /** Set a tile value at global coordinates, creating chunk if needed */
-    public setTile(x: number, y: number, z: number, value: number): void {
+    public setBlockStateId(x: number, y: number, z: number, value: string): void {
         const chunkX = x >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
@@ -31,6 +32,7 @@ export class VoxelGrid {
         let chunk = this.chunks.get(key);
         if(!chunk) {
             chunk = new VoxelChunk();
+            chunk.getPaletteValue(this.defaultBlockState);
             this.chunks.set(key, chunk);
         }
 
@@ -38,7 +40,7 @@ export class VoxelGrid {
         const localY = y & VoxelGrid.CHUNK_MASK;
         const localZ = z & VoxelGrid.CHUNK_MASK;
 
-        chunk.set(localX, localY, localZ, value);
+        chunk.setBlockStateId(localX, localY, localZ, value);
     }
 
     /** Get a VoxelChunk by chunk coordinates */
@@ -54,6 +56,7 @@ export class VoxelGrid {
         
         if(chunk == null) {
             chunk = new VoxelChunk();
+            chunk.getPaletteValue(this.defaultBlockState);
             this.chunks.set(key, chunk);
         }
 
@@ -69,12 +72,30 @@ export class VoxelGrid {
 }
 
 export class VoxelChunk {
-    public readonly tiles = new Uint16Array(4096);
+    public readonly tiles = new Uint8Array(4096);
+    public readonly palette = new Array<string>;
+    public readonly paletteMap = new Map<string, number>;
+    
+    public getPaletteValue(item: string): number {
+        const paletteItem = this.paletteMap.get(item);
+        if(paletteItem != null) return paletteItem;
 
-    public get(x: number, y: number, z: number): number {
+        this.paletteMap.set(item, this.palette.length);
+        this.palette.push(item);
+
+        return this.palette.length - 1;
+    }
+
+    public getBlockStateId(x: number, y: number, z: number): string {
+        return this.palette[this.tiles[x << 8 | y << 4 | z]!]!;
+    }
+    public getTile(x: number, y: number, z: number) {
         return this.tiles[x << 8 | y << 4 | z]!;
     }
-    public set(x: number, y: number, z: number, value: number) {
+    public setBlockStateId(x: number, y: number, z: number, blockStateId: string) {
+        this.tiles[x << 8 | y << 4 | z] = this.getPaletteValue(blockStateId);
+    }
+    public setTile(x: number, y: number, z: number, value: number) {
         this.tiles[x << 8 | y << 4 | z] = value;
     }
 }

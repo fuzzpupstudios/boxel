@@ -4,7 +4,7 @@ import type { Time } from "../time";
 import { AABB } from "../physics/AABB";
 import type { World } from "../world/world";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
-import { blockStateRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { BoxelGame } from "../boxel";
 import { PlayingGameStage } from "../stage/impl/playingGameStage";
 
@@ -27,7 +27,7 @@ export class Player extends Entity {
     public crouching: boolean = false;
     public sprinting: boolean = false;
 
-    protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
+    protected override createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB {
         return new AABB(
             new Box3(
                 new Vector3(-0.3, 0, -0.3),
@@ -97,7 +97,7 @@ export class Player extends Entity {
             this.targetedBlock.voxel.z,
         )
 
-        this.world.setBlockStateKey(
+        this.world.setBlockState(
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
@@ -107,8 +107,7 @@ export class Player extends Entity {
     public place() {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
-        const blockState = blockStateRegistry.get(this.holdingBlock);
-        if(blockState == null) return;
+        const blockState = blockStateRegistry.get(this.holdingBlock) || getUnknownBlockState();
 
         const targetX = this.targetedBlock.voxel.x + this.targetedBlock.side.x;
         const targetY = this.targetedBlock.voxel.y + this.targetedBlock.side.y;
@@ -116,27 +115,29 @@ export class Player extends Entity {
 
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
         
-        this.world.setBlockStateKey(targetX, targetY, targetZ, this.holdingBlock);
+        this.world.setBlockState(targetX, targetY, targetZ, this.holdingBlock);
     }
 
     public tick(time: Time): void {
-        if(this.onGround && this.crouching) {
+        {
             const dy = -0.501;
-            if(!this.aabb.collidesAtOffset(
-                this.velocity.x * time.deltaTime, dy, 0
-            )) {
-                this.velocity.x = 0;
-            }
-            if(!this.aabb.collidesAtOffset(
-                0, dy, this.velocity.z * time.deltaTime
-            )) {
-                this.velocity.z = 0;
-            }
-            if(!this.aabb.collidesAtOffset(
-                this.velocity.x * time.deltaTime, dy, this.velocity.z * time.deltaTime
-            )) {
-                this.velocity.x = 0;
-                this.velocity.z = 0;
+            if(this.aabb.collidesAtOffset(0, dy, 0) && this.crouching) {
+                if(!this.aabb.collidesAtOffset(
+                    this.velocity.x * time.deltaTime, dy, 0
+                )) {
+                    this.velocity.x = 0;
+                }
+                if(!this.aabb.collidesAtOffset(
+                    0, dy, this.velocity.z * time.deltaTime
+                )) {
+                    this.velocity.z = 0;
+                }
+                if(!this.aabb.collidesAtOffset(
+                    this.velocity.x * time.deltaTime, dy, this.velocity.z * time.deltaTime
+                )) {
+                    this.velocity.x = 0;
+                    this.velocity.z = 0;
+                }
             }
         }
         super.tick(time);

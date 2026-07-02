@@ -1,6 +1,7 @@
 import { Vector3, type Box3 } from "three";
 import type { World } from "../world/world";
 import type { TileCollider } from "../entity/entity";
+import { getUnknownBlockState } from "../block/blockRegistry";
 
 type CollisionResult = -1 | 0 | 1;
 
@@ -10,7 +11,7 @@ export class AABB {
     public constructor(
         public readonly hitbox: Box3,
         public readonly world: World,
-        private readonly tileColliders: TileCollider[],
+        private readonly tileColliders: Map<string, TileCollider>,
     ) {}
 
     public collidesWithTile(tileCollider: TileCollider, x: number, y: number, z: number) {
@@ -57,8 +58,12 @@ export class AABB {
         for(let tx = minTx; tx <= maxTx; tx++) {
             for(let ty = minTy; ty <= maxTy; ty++) {
                 for(let tz = minTz; tz <= maxTz; tz++) {
-                    const tile = this.world.tiles.getTile(tx, ty, tz);
-                    const hitboxes = this.tileColliders[tile]!.hitboxes;
+                    const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
+
+                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    if(!collider) continue;
+
+                    const hitboxes = collider.hitboxes;
                     if(!hitboxes.length) continue;
 
                     for(const box of hitboxes) {
@@ -110,9 +115,12 @@ export class AABB {
         for(let tx = minTx; tx <= maxTx; tx++) {
             for(let ty = minTy; ty <= maxTy; ty++) {
                 for(let tz = minTz; tz <= maxTz; tz++) {
-                    const tile = this.world.tiles.getTile(tx, ty, tz);
+                    const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
+                    
+                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    if(!collider) continue;
 
-                    const hitboxes = this.tileColliders[tile]!.hitboxes;
+                    const hitboxes = collider.hitboxes;
                     if(!hitboxes.length) continue;
 
                     for(const box of hitboxes) {
@@ -170,9 +178,12 @@ export class AABB {
         for(let tx = minTx; tx <= maxTx; tx++) {
             for(let ty = minTy; ty <= maxTy; ty++) {
                 for(let tz = minTz; tz <= maxTz; tz++) {
-                    const tile = this.world.tiles.getTile(tx, ty, tz);
+                    const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
+                    
+                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    if(!collider) continue;
 
-                    const hitboxes = this.tileColliders[tile]!.hitboxes;
+                    const hitboxes = collider.hitboxes;
                     if(!hitboxes.length) continue;
 
                     for(const box of hitboxes) {
@@ -230,9 +241,12 @@ export class AABB {
         for(let tx = minTx; tx <= maxTx; tx++) {
             for(let ty = minTy; ty <= maxTy; ty++) {
                 for(let tz = minTz; tz <= maxTz; tz++) {
-                    const tile = this.world.tiles.getTile(tx, ty, tz);
+                    const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
+                    
+                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    if(!collider) continue;
 
-                    const hitboxes = this.tileColliders[tile]!.hitboxes;
+                    const hitboxes = collider.hitboxes;
                     if(!hitboxes.length) continue;
 
                     for(const box of hitboxes) {

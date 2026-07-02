@@ -22,17 +22,18 @@ export abstract class Entity implements Tickable {
 
     public constructor(world: World) {
         this.world = world;
-        const tileColliders = new Array;
-        for(const blockStateKey of tileRegistry.values()) {
-            const blockState = blockStateRegistry.get(blockStateKey)!;
+        const tileColliders = new Map<string, TileCollider>;
+
+        for(const blockStateId of blockStateRegistry.keys()) {
+            const blockState = blockStateRegistry.get(blockStateId)!;
             
-            tileColliders.push(blockState.collider);
+            tileColliders.set(blockStateId, blockState.collider);
         }
 
         this.aabb = this.createAABB(world, tileColliders);
     }
 
-    protected abstract createAABB(world: World, tileColliders: TileCollider[]): AABB;
+    protected abstract createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB;
     
     public setWorld(world: World) {
         this.world = world;

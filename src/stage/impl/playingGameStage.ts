@@ -39,8 +39,9 @@ export class PlayingGameStage extends GameStage {
         "base:grass[default]",
         "base:dirt[default]",
         "base:planks[default]",
-        "base:planks[slab]",
-        "base:planks[stair]",
+        "base:planks_slab[half=bottom]",
+        "base:planks_slab[half=top]",
+        "base:planks_stair[direction=south]",
     ];
 
     private sprintFlickCooldown = 0;
@@ -280,7 +281,7 @@ export class PlayingGameStage extends GameStage {
             if(game.input.wasPressed(ControlBinding.PICK_BLOCK)) {
                 if(this.localPlayer.targetedBlock.hit) {
                     const voxelPos = this.localPlayer.targetedBlock.voxel;
-                    const blockStateId = this.world.getBlockStateKey(voxelPos.x, voxelPos.y, voxelPos.z);
+                    const blockStateId = this.world.getBlockState(voxelPos.x, voxelPos.y, voxelPos.z);
                     this.localPlayer.holdingBlock = blockStateId;
                 }
             }
@@ -317,7 +318,7 @@ export class PlayingGameStage extends GameStage {
             ) {
                 this.targetedBlock.mesh.visible = true;
                 this.targetedBlock.mesh.position.copy(this.localPlayer.targetedBlock.voxel)
-                const stateKey = this.world.getBlockStateKey(
+                const stateKey = this.world.getBlockState(
                     this.localPlayer.targetedBlock.voxel.x,
                     this.localPlayer.targetedBlock.voxel.y,
                     this.localPlayer.targetedBlock.voxel.z
@@ -330,13 +331,13 @@ export class PlayingGameStage extends GameStage {
             let selectedItemIndex = this.selectableItems.indexOf(this.localPlayer.holdingBlock);
             if(game.input.wasPressed(ControlBinding.NEXT_ITEM)) {
                 selectedItemIndex++;
+                this.localPlayer.holdingBlock = this.selectableItems[Math.min(this.selectableItems.length - 1, selectedItemIndex)]!;
             }
             if(game.input.wasPressed(ControlBinding.PREVIOUS_ITEM)) {
                 selectedItemIndex--;
+                this.localPlayer.holdingBlock = this.selectableItems[Math.max(0, selectedItemIndex)]!;
             }
-            selectedItemIndex = MathUtils.clamp(selectedItemIndex, 0, this.selectableItems.length - 1);
 
-            this.localPlayer.holdingBlock = this.selectableItems[selectedItemIndex]!;
             this.holdingBlockPreview.blockStateId = this.localPlayer.holdingBlock;
 
             this.camera.fov = MathUtils.lerp(

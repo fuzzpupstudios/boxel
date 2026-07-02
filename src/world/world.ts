@@ -142,9 +142,7 @@ export class World {
             if(chunk == null) throw new Error("Failed to load chunk @ " +
                 chunkX + ", " + chunkY + ", " + chunkZ);
             
-            const voxelChunk = this.tiles.getChunkOrCreate(chunkX, chunkY, chunkZ);
-            voxelChunk.tiles.set(chunk.tiles.tiles);
-            (<any>chunk).tiles = voxelChunk;
+            this.tiles.chunks.set(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ), chunk.tiles);
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
@@ -157,22 +155,12 @@ export class World {
         return promise;
     }
 
-    public getBlockStateKey(x: number, y: number, z: number): string {
-        const tile = this.tiles.getTile(x, y, z);
-        const stateKey = tileRegistry.get(tile);
-
-        if(stateKey == null) throw new ReferenceError(
-            "Block state for tile " + tile + " does not exist");
-
-        return stateKey;
+    public getBlockState(x: number, y: number, z: number): string {
+        return this.tiles.getBlockStateId(x, y, z);
     }
 
-    public setBlockStateKey(x: number, y: number, z: number, stateKey: string, markDirty = true) {
-        const tile = tileRegistry.findKey(stateKey);
-        if(tile == null) throw new ReferenceError(
-            "Block state " + stateKey + " is not registered");
-        
-        this.tiles.setTile(x, y, z, tile);
+    public setBlockState(x: number, y: number, z: number, blockStateId: string, markDirty = true) {        
+        this.tiles.setBlockStateId(x, y, z, blockStateId);
 
         if(!markDirty) return;
         this.markChunkDirty(x >> 4, y >> 4, z >> 4);

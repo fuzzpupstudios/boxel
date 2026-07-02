@@ -1,13 +1,8 @@
-import { tileRegistry } from "../block/blockRegistry";
 import { FastNoiseNode } from "../fastnoise/fastnoise2";
 import { TerrainGenerator } from "./terrainGenerator";
 import type { World } from "./world";
 
 export class SimpleTerrainGenerator extends TerrainGenerator {
-    private readonly air = tileRegistry.findKey("base:air[default]")!;
-    private readonly stone = tileRegistry.findKey("base:cobblestone[default]")!;
-    private readonly dirt = tileRegistry.findKey("base:dirt[default]")!;
-    private readonly grass = tileRegistry.findKey("base:grass[default]")!;
     private readonly heightmap = new Float32Array(16 * 16);
     private readonly cavemap = new Float32Array(16 * 16 * 16);
     private readonly heightmapNoise = FastNoiseNode.fromEncodedNodeTree("DQkGDA==");
@@ -49,18 +44,18 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
                     //     heights[index2d]! = height;
                     // }
 
-                    let tile = 0;
+                    let tile: string;
 
                     if(globalY > height) {
-                        tile = this.air;
+                        tile = "base:air[default]";
                     } else if(globalY > height - 1) {
-                        tile = this.grass;
+                        tile = "base:grass[default]";
                     } else if(globalY > height - 4) {
-                        tile = this.dirt;
+                        tile = "base:dirt[default]";
                     } else {
-                        tile = this.stone;
+                        tile = "base:cobblestone[default]";
                     }
-                    chunk.set(localX, localY, localZ, tile);
+                    chunk.setBlockStateId(localX, localY, localZ, tile);
                 }
                 globalY += 16;
             }

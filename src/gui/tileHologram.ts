@@ -74,7 +74,8 @@ export class TileHologramProvider {
     }
 
     public createBlockStateMesh(blockStateId: string) {
-        const geometry = this.tileGeometries.get(blockStateId);
+        let geometry = this.tileGeometries.get(blockStateId);
+        geometry ||= this.tileGeometries.get("base:axes[default]");
         if(geometry == null) return null;
 
         const shader = this.shader;

@@ -21,8 +21,8 @@ export class ParticleEngine {
      */
      private readonly physics = new Float32Array(ParticleEngine.MAX_PARTICLES * 6);
 
-    private readonly tileColliders: TileCollider[];
-    private readonly colliderCounts: Uint8Array;
+    private readonly tileColliders: Map<string, TileCollider>;
+    private readonly colliderCounts: Map<string, number>;
     private readonly geometry: InstancedBufferGeometry;
     public readonly mesh: Mesh;
 
@@ -46,17 +46,17 @@ export class ParticleEngine {
             }
         }
 
-        this.tileColliders = new Array;
+        this.tileColliders = new Map;
         for(const blockStateKey of tileRegistry.values()) {
             const blockState = blockStateRegistry.get(blockStateKey)!;
             
-            this.tileColliders.push(blockState.collider);
+            this.tileColliders.set(blockStateKey, blockState.collider);
         }
 
-        this.colliderCounts = new Uint8Array(this.tileColliders.length);
+        this.colliderCounts = new Map();
 
-        for(let i = 0; i < this.tileColliders.length; i++) {
-            this.colliderCounts[i] = this.tileColliders[i]!.hitboxes.length;
+        for(const [ blockStateId, tileCollider ] of this.tileColliders) {
+            this.colliderCounts.set(blockStateId, tileCollider.hitboxes.length);
         }
 
         this.geometry = new InstancedBufferGeometry();
@@ -153,7 +153,7 @@ export class ParticleEngine {
     public tick(time: Time) {
         let positionIndex = 0;
         let physicsIndex = 0;
-        let tile = 0;
+        let tile: string;
         let x = 0, y = 0, z = 0;
 
         const dt = time.deltaTime;
@@ -177,11 +177,11 @@ export class ParticleEngine {
             z = this.positions[positionIndex + 2]! += this.physics[physicsIndex + 2]! * dt;
 
             // Velocity & tile fetching
-            tile = worldTiles.getTile(x | 0, y | 0, z | 0);
+            tile = worldTiles.getBlockStateId(x | 0, y | 0, z | 0);
 
             // Check if particle collides with any tiles
-            if(this.colliderCounts[tile]) {
-                const hitboxes = this.tileColliders[tile]!.hitboxes;
+            if(this.colliderCounts.get(tile)) {
+                const hitboxes = this.tileColliders.get(tile)!.hitboxes;
 
                 for(let j = 0; j < hitboxes.length; j++) {
                     if(x - (x | 0) > hitboxes[j]!.max.x) continue;

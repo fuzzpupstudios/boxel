@@ -6,8 +6,8 @@ import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";
 
 export class BlockBreakParticleEngine extends ParticleEngine {
-    private readonly tileMeshes: TileMesh[];
-    private readonly tileMeshUvRects: Box2[][] = new Array;
+    private readonly tileMeshes: Map<string, TileMesh>;
+    private readonly tileMeshUvRects: Map<string, Box2[]> = new Map;
 
     public constructor(
         public readonly world: World,
@@ -16,7 +16,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         super(world, textureAtlas.packedTexture);
 
         this.tileMeshes = this.world.renderer!.chunkMesher.tileMeshes;
-        for(const tileMesh of this.tileMeshes) {
+        for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
             const uvRects = new Set([
                 ...tileMesh.north,
                 ...tileMesh.east,
@@ -30,7 +30,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
                 new Vector2(face.uvMaxX, face.uvMaxY)
             )));
 
-            this.tileMeshUvRects.push(Array.from(uvRects));
+            this.tileMeshUvRects.set(blockStateId, Array.from(uvRects));
         }
     }
 
@@ -51,9 +51,9 @@ export class BlockBreakParticleEngine extends ParticleEngine {
 
     public blockDestructionParticles(
         x: number, y: number, z: number,
-        tile: number = this.world.tiles.getTile(x, y, z)
+        tile: string = this.world.tiles.getBlockStateId(x, y, z)
     ) {
-        const uvRects = this.tileMeshUvRects[tile];
+        const uvRects = this.tileMeshUvRects.get(tile);
         if(uvRects == null) return;
 
         for(let dx = 0.125; dx <= 0.875; dx += 0.25) {
@@ -86,8 +86,8 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         face: Side, tileMesh?: TileMesh
     ) {
         if(tileMesh == null) {
-            const tile = this.world.tiles.getTile(x | 0, y | 0, z | 0);
-            tileMesh = this.tileMeshes[tile];
+            const tile = this.world.tiles.getBlockStateId(x | 0, y | 0, z | 0);
+            tileMesh = this.tileMeshes.get(tile);
 
             if(tileMesh == null) return;
         }
