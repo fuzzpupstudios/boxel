@@ -115,7 +115,7 @@ export class TileHologramProvider {
         }
 
         // North
-        for(const face of model.north) {
+        for(const face of model.north.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
@@ -126,7 +126,7 @@ export class TileHologramProvider {
         }
 
         // South
-        for(const face of model.south) {
+        for(const face of model.south.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
@@ -137,7 +137,7 @@ export class TileHologramProvider {
         }
 
         // East
-        for(const face of model.east) {
+        for(const face of model.east.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
@@ -148,7 +148,7 @@ export class TileHologramProvider {
         }
 
         // West
-        for(const face of model.west) {
+        for(const face of model.west.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
@@ -159,7 +159,7 @@ export class TileHologramProvider {
         }
 
         // Up
-        for(const face of model.up) {
+        for(const face of model.up.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y, face.z - face.height,
@@ -170,7 +170,7 @@ export class TileHologramProvider {
         }
 
         // Down
-        for(const face of model.down) {
+        for(const face of model.down.toReversed()) {
             positions.push(
                 face.x, face.y, face.z,
                 face.x, face.y, face.z + face.height,
