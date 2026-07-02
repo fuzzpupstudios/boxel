@@ -181,28 +181,39 @@ export class World {
 
         this.flagChunksForRender(
             (x - 1) >> 4, (y - 1) >> 4, (z - 1) >> 4,
-            (x + 1) >> 4, (y + 1) >> 4, (z + 1) >> 4
+            (x + 1) >> 4, (y + 1) >> 4, (z + 1) >> 4,
+            true
         );
     }
 
-    public flagChunkForRender(chunkX: number, chunkY: number, chunkZ: number) {
+    public flagChunkForRender(
+        chunkX: number, chunkY: number, chunkZ: number,
+        priority: boolean = false
+    ) {
         if(this.renderer === null) return;
 
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
         if(chunk === null) return;
 
-        this.renderer.markDirty(chunk);
+        this.renderer.markDirty(chunk, priority);
     }
     
-    public markChunkDirty(chunkX: number, chunkY: number, chunkZ: number) {
+    public markChunkDirty(
+        chunkX: number, chunkY: number, chunkZ: number,
+        priority: boolean = false
+    ) {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
         if(chunk === null) return;
 
-        this.renderer?.markDirty(chunk);
+        this.renderer?.markDirty(chunk, priority);
         this.chunksToSave.add(chunk);
     }
 
-    public flagChunksForRender(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number) {
+    public flagChunksForRender(
+        minX: number, minY: number, minZ: number,
+        maxX: number, maxY: number, maxZ: number,
+        priority: boolean = false
+    ) {
         if(this.renderer === null) return;
 
         for(let x = minX; x <= maxX; x++) {
@@ -211,20 +222,24 @@ export class World {
                     const chunk = this.getChunk(x, y, z);
                     if(chunk === null) continue;
 
-                    this.renderer.markDirty(chunk);
+                    this.renderer.markDirty(chunk, priority);
                 }
             }
         }
     }
 
-    public markChunksDirty(minX: number, minY: number, minZ: number, maxX: number, maxY: number, maxZ: number) {
+    public markChunksDirty(
+        minX: number, minY: number, minZ: number,
+        maxX: number, maxY: number, maxZ: number,
+        priority: boolean = false
+    ) {
         for(let x = minX; x <= maxX; x++) {
             for(let y = minY; y <= maxY; y++) {
                 for(let z = minZ; z <= maxZ; z++) {
                     const chunk = this.getChunk(x, y, z);
                     if(chunk === null) continue;
 
-                    this.renderer?.markDirty(chunk);
+                    this.renderer?.markDirty(chunk, priority);
                     this.chunksToSave.add(chunk);
                 }
             }
