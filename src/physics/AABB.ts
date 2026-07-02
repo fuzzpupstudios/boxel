@@ -25,7 +25,14 @@ export class AABB {
         ));
         
         for(const hitbox of hitboxes) {
-            if(hitbox.intersectsBox(offsetHitbox)) return true;
+            if(hitbox.min.x + x >= this.hitbox.max.x + this.position.x) continue;
+            if(hitbox.max.x + x <= this.hitbox.min.x + this.position.x) continue;
+            if(hitbox.min.y + y >= this.hitbox.max.y + this.position.y) continue;
+            if(hitbox.max.y + y <= this.hitbox.min.y + this.position.y) continue;
+            if(hitbox.min.z + z >= this.hitbox.max.z + this.position.z) continue;
+            if(hitbox.max.z + z <= this.hitbox.min.z + this.position.z) continue;
+
+            return true;
         }
         
         return false;
