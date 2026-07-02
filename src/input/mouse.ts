@@ -7,7 +7,9 @@ export enum MouseButton {
     RIGHT = 2,
     MOUSE4 = 3,
     MOUSE5 = 4,
-    UNLOCK = 100
+    UNLOCK = 100,
+    SCROLL_UP = 101,
+    SCROLL_DOWN = 102
 };
 
 export class Mouse {
@@ -38,6 +40,10 @@ export class Mouse {
         element.addEventListener("mousemove", event => {
             this.position.set(event.clientX, event.clientY);
             this.deltaPosition.set(event.movementX, event.movementY);
+        });
+        element.addEventListener("wheel", event => {
+            if(event.deltaY > 0) this.wasPressedButtons.add(MouseButton.SCROLL_UP);
+            if(event.deltaY < 0) this.wasPressedButtons.add(MouseButton.SCROLL_DOWN);
         });
         element.addEventListener("focusout", () => {
             this.pressingButtons.clear();

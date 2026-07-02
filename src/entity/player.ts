@@ -21,6 +21,7 @@ export class Player extends Entity {
 
     public readonly targetedBlock = new RaycastResult;
     public readonly reachDistance = 5;
+    public holdingBlock: string = "base:air[default]";
 
     protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
         return new AABB(
@@ -80,9 +81,7 @@ export class Player extends Entity {
     public place() {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
-        const selectedBlock = "base:cobblestone[default]";
-
-        const blockState = blockStateRegistry.get(selectedBlock);
+        const blockState = blockStateRegistry.get(this.holdingBlock);
         if(blockState == null) return;
 
         const targetX = this.targetedBlock.voxel.x + this.targetedBlock.side.x;
@@ -91,7 +90,7 @@ export class Player extends Entity {
 
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
         
-        this.world.setBlockStateKey(targetX, targetY, targetZ, selectedBlock);
+        this.world.setBlockStateKey(targetX, targetY, targetZ, this.holdingBlock);
     }
 
     public tick(time: Time): void {

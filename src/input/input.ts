@@ -13,6 +13,8 @@ export enum ControlBinding {
     ROTATE_UP, ROTATE_DOWN,
     CHANGE_PERSPECTIVE,
 
+    NEXT_ITEM, PREVIOUS_ITEM,
+
     PAUSE, BACK
 }
 
@@ -48,6 +50,9 @@ export class Input {
         [ControlBinding.JUMP]: "space",
         [ControlBinding.CHANGE_PERSPECTIVE]: "g",
 
+        [ControlBinding.NEXT_ITEM]: "]",
+        [ControlBinding.PREVIOUS_ITEM]: "[",
+
         [ControlBinding.PAUSE]: "escape",
         [ControlBinding.BACK]: "escape"
     };
@@ -59,12 +64,17 @@ export class Input {
         [ControlBinding.USE]: BUTTONS.STANDARD.TRIGGER_LEFT,
 
         [ControlBinding.PAUSE]: BUTTONS.STANDARD.CC_RIGHT,
-        [ControlBinding.BACK]: BUTTONS.STANDARD.RC_RIGHT
+        [ControlBinding.BACK]: BUTTONS.STANDARD.RC_RIGHT,
+
+        [ControlBinding.NEXT_ITEM]: BUTTONS.STANDARD.BUMPER_RIGHT,
+        [ControlBinding.PREVIOUS_ITEM]: BUTTONS.STANDARD.BUMPER_LEFT,
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
         [ControlBinding.USE]: MouseButton.RIGHT,
-        [ControlBinding.PAUSE]: MouseButton.UNLOCK
+        [ControlBinding.PAUSE]: MouseButton.UNLOCK,
+        [ControlBinding.NEXT_ITEM]: MouseButton.SCROLL_UP,
+        [ControlBinding.PREVIOUS_ITEM]: MouseButton.SCROLL_DOWN,
     };
 
     public attachKeyboard(body: HTMLElement) {

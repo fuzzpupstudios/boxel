@@ -24,7 +24,7 @@ void main() {
     float depth = -(aPosition.x + aPosition.y + aPosition.z) * 0.001;
 
     mat3 mvp = uProjectionMatrix * uWorldTransformMatrix * uTransformMatrix;
-    gl_Position = vec4((mvp * vec3(projectedPosition, 0.0)).xy, depth, 1.0);
+    gl_Position = vec4((mvp * vec3(projectedPosition, 1.0)).xy, depth, 1.0);
     vUv = aUv;
     vNormal = aNormal;
 }

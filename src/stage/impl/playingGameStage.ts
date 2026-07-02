@@ -1,5 +1,5 @@
 import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
-import { PerspectiveCamera } from "three";
+import { MathUtils, PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
@@ -16,12 +16,14 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
+import { TileHologram, TileHologramProvider } from "../../gui/tileHologram";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
     public readonly worldRenderer: WorldRenderer;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
+    public readonly holdingBlockPreview: TileHologram;
     public readonly chunkLoader: ChunkLoader;
     public override camera = new PerspectiveCamera(90);
     
@@ -30,6 +32,13 @@ export class PlayingGameStage extends GameStage {
     private paused: boolean = false;
     private worldLoading: boolean = true;
     private autosaveCooldown: number = 0;
+    private selectableItems = [
+        "base:cobblestone[default]",
+        "base:cobblestone[slab]",
+        "base:cobblestone[stair]",
+        "base:grass[default]",
+        "base:dirt[default]",
+    ];
 
     private readonly crosshairSprite: Sprite;
 
@@ -54,6 +63,10 @@ export class PlayingGameStage extends GameStage {
             this.setPaused(false);
         });
 
+        const hologramProvider = new TileHologramProvider(game.textureAtlas!);
+        this.holdingBlockPreview = new TileHologram(hologramProvider);
+        this.holdingBlockPreview.scale.set(16);
+        this.gui.addChild(this.holdingBlockPreview);
 
         this.crosshairSprite = new Sprite(Assets.get("ui/crosshair"));
         this.crosshairSprite.anchor.set(0.5);
@@ -131,6 +144,7 @@ export class PlayingGameStage extends GameStage {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
 
+        this.holdingBlockPreview.position.set(24, 24);
         this.crosshairSprite.position.set(width / 2, height / 2);
 
         this.pausedText.position.set(width / 2, 20);
@@ -248,6 +262,18 @@ export class PlayingGameStage extends GameStage {
             } else {
                 this.targetedBlock.mesh.visible = false;
             }
+
+            let selectedItemIndex = this.selectableItems.indexOf(this.localPlayer.holdingBlock);
+            if(game.input.wasPressed(ControlBinding.NEXT_ITEM)) {
+                selectedItemIndex++;
+            }
+            if(game.input.wasPressed(ControlBinding.PREVIOUS_ITEM)) {
+                selectedItemIndex--;
+            }
+            selectedItemIndex = MathUtils.clamp(selectedItemIndex, 0, this.selectableItems.length - 1);
+
+            this.localPlayer.holdingBlock = this.selectableItems[selectedItemIndex]!;
+            this.holdingBlockPreview.blockStateId = this.localPlayer.holdingBlock;
         }
 
         this.camera.position.set(
