@@ -45,6 +45,8 @@ export class PlayingGameStage extends GameStage {
 
     private sprintFlickCooldown = 0;
     private walkForwardCheckSucceeded = false;
+    private placeBlockCooldown = 0;
+    private destroyBlockCooldown = 0;
 
     private readonly crosshairSprite: Sprite;
 
@@ -254,11 +256,25 @@ export class PlayingGameStage extends GameStage {
                 this.localPlayer.setCrouching(!this.localPlayer.crouching);
             }
 
-            if(game.input.wasPressed(ControlBinding.DESTROY)) {
-                this.localPlayer.destroy();
+            if(game.input.isPressed(ControlBinding.DESTROY)) {
+                this.destroyBlockCooldown -= time.deltaTime;
+
+                if(this.destroyBlockCooldown <= 0) {
+                    this.localPlayer.destroy();
+                    this.destroyBlockCooldown = 0.2;
+                }
+            } else {
+                this.destroyBlockCooldown = 0;
             }
-            if(game.input.wasPressed(ControlBinding.USE)) {
-                this.localPlayer.place();
+            if(game.input.isPressed(ControlBinding.USE)) {
+                this.placeBlockCooldown -= time.deltaTime;
+
+                if(this.placeBlockCooldown <= 0) {
+                    this.localPlayer.place();
+                    this.placeBlockCooldown = 0.2;
+                }
+            } else {
+                this.placeBlockCooldown = 0;
             }
 
             let lookDeltaX = (
