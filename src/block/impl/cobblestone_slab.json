@@ -1,0 +1,131 @@
+{
+    "id": "base:cobblestone_slab",
+    "states": {
+        "half=bottom": {
+            "model": {
+                "occlude": false,
+                "occludeDown": true,
+                "textures": {
+                    "cobblestone": "assets/cobblestone.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 0.5, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "cobblestone",
+                        "cull": false
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] }
+                ]
+            }
+        },
+        "half=top": {
+            "model": {
+                "occlude": false,
+                "occludeUp": true,
+                "textures": {
+                    "cobblestone": "assets/cobblestone.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0.5, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0.5, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0.5, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0.5, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "cobblestone"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0.5, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "cobblestone",
+                        "cull": false
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

@@ -34,8 +34,9 @@ export class PlayingGameStage extends GameStage {
     private autosaveCooldown: number = 0;
     private selectableItems = [
         "base:cobblestone[default]",
-        "base:cobblestone[slab]",
-        "base:cobblestone[stair]",
+        "base:cobblestone_slab[half=bottom]",
+        "base:cobblestone_slab[half=top]",
+        "base:cobblestone_stair[direction=south]",
         "base:grass[default]",
         "base:dirt[default]",
         "base:planks[default]",

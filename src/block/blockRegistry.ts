@@ -26,6 +26,12 @@ export async function registerBlocks() {
     blockRegistry.register("cobblestone", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone.json")));
 
+    blockRegistry.register("cobblestone_slab", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone_slab.json")));
+
+    blockRegistry.register("cobblestone_stair", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone_stair.json")));
+
     blockRegistry.register("dirt", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/dirt.json")));
 
@@ -34,6 +40,12 @@ export async function registerBlocks() {
 
     blockRegistry.register("planks", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/planks.json")));
+
+    blockRegistry.register("planks_slab", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/planks_slab.json")));
+
+    blockRegistry.register("planks_stair", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/planks_stair.json")));
 
     blockRegistry.lock();
 
