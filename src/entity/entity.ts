@@ -16,6 +16,9 @@ export abstract class Entity implements Tickable {
     public readonly velocity = new Vector3;
     public aabb: AABB;
     protected onGround = false;
+    public lastCollisionX = 0;
+    public lastCollisionY = 0;
+    public lastCollisionZ = 0;
 
     public constructor(world: World) {
         this.world = world;
@@ -49,12 +52,15 @@ export abstract class Entity implements Tickable {
         const collisionY = this.aabb.moveY(this.velocity.y * time.deltaTime);
         if(collisionY !== 0) this.velocity.y = 0;
         this.onGround = collisionY === -1;
+        this.lastCollisionY = collisionY;
 
         const collisionX = this.aabb.moveX(this.velocity.x * time.deltaTime);
         if(collisionX !== 0) this.velocity.x = 0;
+        this.lastCollisionX = collisionX;
 
         const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime);
         if(collisionZ !== 0) this.velocity.z = 0;
+        this.lastCollisionZ = collisionZ;
 
         const friction = this.onGround ? 0.546 : 0.91;
         const drag = Math.pow(friction, time.deltaTime * 20);

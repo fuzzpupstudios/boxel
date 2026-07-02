@@ -1,10 +1,13 @@
 export class Keyboard {
     private readonly pressingKeys: Set<string> = new Set;
     private readonly wasPressedKeys: Set<string> = new Set;
+    private readonly wasUnpressedKeys: Set<string> = new Set;
     private locked = false;
 
     public addListeners(element: HTMLElement) {
         element.addEventListener("keydown", event => {
+            if(event.repeat) return;
+            
             this.pressingKeys.add(this.translateKey(event.code));
             this.wasPressedKeys.add(this.translateKey(event.code));
 
@@ -12,6 +15,7 @@ export class Keyboard {
         });
         element.addEventListener("keyup", event => {
             this.pressingKeys.delete(this.translateKey(event.code));
+            this.wasUnpressedKeys.add(this.translateKey(event.code));
         });
         element.addEventListener("focusout", () => {
             this.pressingKeys.clear();
@@ -37,12 +41,17 @@ export class Keyboard {
         return this.wasPressedKeys.has(this.translateKey(key));
     }
 
+    public wasUnpressed(key: string) {
+        return this.wasUnpressedKeys.has(this.translateKey(key));
+    }
+
     public translateKey(key: string): string {
         if(key == " ") return "space";
         return key.toLowerCase();
     }
 
     public update() {
+        this.wasUnpressedKeys.clear();
         this.wasPressedKeys.clear();
     }
 }

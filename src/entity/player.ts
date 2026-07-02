@@ -13,15 +13,19 @@ export class Player extends Entity {
         new Vector3(-0.3, 0, -0.3),
         new Vector3(0.3, 1.9, 0.3),
     );
-    public readonly eyeHeight = 1.7;
-    public readonly walkSpeed = 2.5;
-    public readonly jumpHeight = 1;
+    public eyeHeight = 1.7;
+    public walkSpeed = 2.5;
+    public crouchSpeedModifier = 0.3;
+    public sprintSpeedModifier = 1.3;
+    public jumpHeight = 1;
     public yaw = 0;
     public pitch = 0;
 
     public readonly targetedBlock = new RaycastResult;
     public readonly reachDistance = 5;
     public holdingBlock: string = "base:air[default]";
+    public crouching: boolean = false;
+    public sprinting: boolean = false;
 
     protected override createAABB(world: World, tileColliders: TileCollider[]): AABB {
         return new AABB(
@@ -41,13 +45,20 @@ export class Player extends Entity {
         }
 
         const friction = this.onGround ? 0.546 : 0.91;
+        let walkSpeed = this.walkSpeed;
+        if(this.crouching) walkSpeed *= this.crouchSpeedModifier;
+        if(this.sprinting) walkSpeed *= this.sprintSpeedModifier;
         const moveSpeed = this.onGround
-            ? this.walkSpeed * (0.16277136 / (friction * friction * friction))
-            : this.walkSpeed * 0.15;
+            ? walkSpeed * (0.16277136 / (friction * friction * friction))
+            : walkSpeed * 0.15;
         const factor = moveSpeed * time.deltaTime * 20;
 
         this.velocity.x += Math.cos(this.yaw) * dx * factor - Math.sin(this.yaw) * dz * factor;
         this.velocity.z += Math.sin(this.yaw) * dx * factor + Math.cos(this.yaw) * dz * factor;
+
+        if(this.lastCollisionX !== 0 || this.lastCollisionZ !== 0 && this.sprinting) {
+            this.setSprinting(false);
+        }
     }
     public rotate(deltaYaw: number, deltaPitch: number) {
         this.yaw += deltaYaw;
@@ -59,6 +70,21 @@ export class Player extends Entity {
             this.velocity.y = 9 * Math.sqrt(this.jumpHeight);
             this.onGround = false;
         }
+    }
+
+    public setCrouching(crouching: boolean) {
+        if(this.crouching === crouching) return;
+
+        this.crouching = crouching;
+        if(crouching) {
+            this.eyeHeight = 1.4;
+        } else {
+            this.eyeHeight = 1.7;
+        }
+    }
+
+    public setSprinting(sprinting: boolean) {
+        this.sprinting = sprinting;
     }
 
     public destroy() {
@@ -94,6 +120,25 @@ export class Player extends Entity {
     }
 
     public tick(time: Time): void {
+        if(this.onGround && this.crouching) {
+            const dy = -0.501;
+            if(!this.aabb.collidesAtOffset(
+                this.velocity.x * time.deltaTime, dy, 0
+            )) {
+                this.velocity.x = 0;
+            }
+            if(!this.aabb.collidesAtOffset(
+                0, dy, this.velocity.z * time.deltaTime
+            )) {
+                this.velocity.z = 0;
+            }
+            if(!this.aabb.collidesAtOffset(
+                this.velocity.x * time.deltaTime, dy, this.velocity.z * time.deltaTime
+            )) {
+                this.velocity.x = 0;
+                this.velocity.z = 0;
+            }
+        }
         super.tick(time);
 
         const raycaster = new VoxelRaycaster(this.world, (<any><unknown>this.aabb).tileColliders);

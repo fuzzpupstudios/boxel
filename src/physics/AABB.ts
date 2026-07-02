@@ -38,6 +38,50 @@ export class AABB {
         return false;
     }
 
+    public collidesAtOffset(deltaX: number, deltaY: number, deltaZ: number): boolean {
+        const hb = this.hitbox;
+        const eMinX = this.position.x + deltaX + hb.min.x;
+        const eMaxX = this.position.x + deltaX + hb.max.x;
+        const eMinY = this.position.y + deltaY + hb.min.y;
+        const eMaxY = this.position.y + deltaY + hb.max.y;
+        const eMinZ = this.position.z + deltaZ + hb.min.z;
+        const eMaxZ = this.position.z + deltaZ + hb.max.z;
+
+        const minTx = Math.floor(eMinX);
+        const maxTx = Math.floor(eMaxX);
+        const minTy = Math.floor(eMinY);
+        const maxTy = Math.floor(eMaxY);
+        const minTz = Math.floor(eMinZ);
+        const maxTz = Math.floor(eMaxZ);
+
+        for(let tx = minTx; tx <= maxTx; tx++) {
+            for(let ty = minTy; ty <= maxTy; ty++) {
+                for(let tz = minTz; tz <= maxTz; tz++) {
+                    const tile = this.world.tiles.getTile(tx, ty, tz);
+                    const hitboxes = this.tileColliders[tile]!.hitboxes;
+                    if(!hitboxes.length) continue;
+
+                    for(const box of hitboxes) {
+                        const tileMinX = tx + box.min.x;
+                        const tileMaxX = tx + box.max.x;
+                        const tileMinY = ty + box.min.y;
+                        const tileMaxY = ty + box.max.y;
+                        const tileMinZ = tz + box.min.z;
+                        const tileMaxZ = tz + box.max.z;
+
+                        if(eMaxX <= tileMinX || eMinX >= tileMaxX) continue;
+                        if(eMaxY <= tileMinY || eMinY >= tileMaxY) continue;
+                        if(eMaxZ <= tileMinZ || eMinZ >= tileMaxZ) continue;
+
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     public moveX(deltaX: number): CollisionResult {
         if(deltaX === 0) return 0;
 

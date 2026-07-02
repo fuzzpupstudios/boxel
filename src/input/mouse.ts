@@ -15,6 +15,7 @@ export enum MouseButton {
 export class Mouse {
     private readonly pressingButtons: Set<MouseButton> = new Set;
     private readonly wasPressedButtons: Set<MouseButton> = new Set;
+    private readonly wasUnpressedButtons: Set<MouseButton> = new Set;
 
     private readonly position = new Vector2;
     private readonly deltaPosition = new Vector2;
@@ -36,6 +37,7 @@ export class Mouse {
         element.addEventListener("contextmenu", event => event.preventDefault());
         element.addEventListener("mouseup", event => {
             this.pressingButtons.delete(event.button);
+            this.wasUnpressedButtons.add(event.button);
         });
         element.addEventListener("mousemove", event => {
             this.position.set(event.clientX, event.clientY);
@@ -87,6 +89,10 @@ export class Mouse {
         return this.wasPressedButtons.has(button);
     }
 
+    public wasUnpressed(button: MouseButton) {
+        return this.wasUnpressedButtons.has(button);
+    }
+
     public get x() {
         return this.position.x;
     }
@@ -127,6 +133,7 @@ export class Mouse {
     }
 
     public update() {
+        this.wasUnpressedButtons.clear();
         this.wasPressedButtons.clear();
         this.deltaPosition.set(0, 0);
     }

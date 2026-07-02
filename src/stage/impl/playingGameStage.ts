@@ -43,6 +43,9 @@ export class PlayingGameStage extends GameStage {
         "base:planks[stair]",
     ];
 
+    private sprintFlickCooldown = 0;
+    private walkForwardCheckSucceeded = false;
+
     private readonly crosshairSprite: Sprite;
 
     private readonly pausedContainer: Container;
@@ -145,7 +148,6 @@ export class PlayingGameStage extends GameStage {
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
 
         this.holdingBlockPreview.position.set(24, 24);
         this.crosshairSprite.position.set(width / 2, height / 2);
@@ -213,8 +215,43 @@ export class PlayingGameStage extends GameStage {
             );
             this.localPlayer.walk(moveDeltaX, moveDeltaZ, time);
 
+            if(moveDeltaZ < -0.9) {
+                if(!this.walkForwardCheckSucceeded) {
+                    this.walkForwardCheckSucceeded = true;
+
+                    if(this.sprintFlickCooldown > 0 && !this.localPlayer.crouching) {
+                        if(!this.localPlayer.sprinting) {
+                            this.localPlayer.setSprinting(true);
+                        }
+                    }
+                    this.sprintFlickCooldown = 0.25;
+                }
+            } else {
+                this.walkForwardCheckSucceeded = false;
+                if(this.localPlayer.sprinting) {
+                    this.localPlayer.setSprinting(false);
+                }
+            }
+            if(game.input.isPressed(ControlBinding.SPRINT) && !this.localPlayer.crouching) {
+                if(!this.localPlayer.sprinting) {
+                    this.localPlayer.setSprinting(true);
+                }
+            }
+
+            this.sprintFlickCooldown -= time.deltaTime;
+
             if(game.input.isPressed(ControlBinding.JUMP)) {
                 this.localPlayer.jump();
+            }
+
+            if(game.input.wasPressed(ControlBinding.CROUCH)) {
+                this.localPlayer.setCrouching(true);
+            }
+            if(game.input.wasUnpressed(ControlBinding.CROUCH)) {
+                this.localPlayer.setCrouching(false);
+            }
+            if(game.input.wasPressed(ControlBinding.TOGGLE_CROUCH)) {
+                this.localPlayer.setCrouching(!this.localPlayer.crouching);
             }
 
             if(game.input.wasPressed(ControlBinding.DESTROY)) {
@@ -277,15 +314,21 @@ export class PlayingGameStage extends GameStage {
 
             this.localPlayer.holdingBlock = this.selectableItems[selectedItemIndex]!;
             this.holdingBlockPreview.blockStateId = this.localPlayer.holdingBlock;
+
+            this.camera.fov = MathUtils.lerp(
+                this.camera.fov,
+                this.localPlayer.sprinting ? 100 : 90,
+                1 - 0.5 ** (time.deltaTime * 20)
+            );
+            this.camera.position.set(
+                this.localPlayer.aabb.position.x,
+                this.localPlayer.aabb.position.y + this.localPlayer.eyeHeight,
+                this.localPlayer.aabb.position.z
+            );
+            this.camera.rotation.set(this.localPlayer.pitch, -this.localPlayer.yaw, 0, "YZX");
         }
 
-        this.camera.position.set(
-            this.localPlayer.aabb.position.x,
-            this.localPlayer.aabb.position.y + this.localPlayer.eyeHeight,
-            this.localPlayer.aabb.position.z
-        );
-        this.camera.rotation.set(this.localPlayer.pitch, -this.localPlayer.yaw, 0, "YZX");
-
+        this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
         this.blockBreakParticles.tick(time);
     }

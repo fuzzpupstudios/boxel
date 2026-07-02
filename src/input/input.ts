@@ -5,7 +5,7 @@ import { MathUtils } from "three";
 
 export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
-    JUMP,
+    JUMP, CROUCH, TOGGLE_CROUCH, SPRINT,
 
     DESTROY, USE,
 
@@ -46,6 +46,9 @@ export class Input {
         [ControlBinding.ROTATE_CCW]: "ArrowLeft",
         [ControlBinding.ROTATE_UP]: "ArrowUp",
         [ControlBinding.ROTATE_DOWN]: "ArrowDown",
+        
+        [ControlBinding.CROUCH]: "ShiftLeft",
+        [ControlBinding.SPRINT]: "ControlLeft",
 
         [ControlBinding.JUMP]: "Space",
         [ControlBinding.CHANGE_PERSPECTIVE]: "G",
@@ -68,6 +71,8 @@ export class Input {
 
         [ControlBinding.NEXT_ITEM]: BUTTONS.STANDARD.BUMPER_RIGHT,
         [ControlBinding.PREVIOUS_ITEM]: BUTTONS.STANDARD.BUMPER_LEFT,
+
+        [ControlBinding.TOGGLE_CROUCH]: BUTTONS.STANDARD.THUMBSTICK_LEFT
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
@@ -110,6 +115,24 @@ export class Input {
         for(const gamepad of this.gamepads.values()) {
             if(binding in this.controllerBindings) {
                 if(gamepad.getButtonDown(this.controllerBindings[binding]!)) return true;
+            }
+        }
+        return false;
+    }
+    public wasUnpressed(binding: ControlBinding): boolean {
+        if(this.keyboard != null) {
+            if(binding in this.keyBindings) {
+                if(this.keyboard.wasUnpressed(this.keyBindings[binding]!)) return true;
+            }
+        }
+        if(this.mouse != null) {
+            if(binding in this.mouseBindings) {
+                if(this.mouse.wasUnpressed(this.mouseBindings[binding]!)) return true;
+            }
+        }
+        for(const gamepad of this.gamepads.values()) {
+            if(binding in this.controllerBindings) {
+                if(gamepad.getButtonUp(this.controllerBindings[binding]!)) return true;
             }
         }
         return false;
