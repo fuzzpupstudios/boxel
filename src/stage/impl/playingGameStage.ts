@@ -148,6 +148,7 @@ export class PlayingGameStage extends GameStage {
         [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
 
         this.world.addTickable(this.localPlayer);
+        this.updateSettings();
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
@@ -172,12 +173,19 @@ export class PlayingGameStage extends GameStage {
 
             this.game.input.mouse?.unlock();
             this.game.input.keyboard?.unlock();
+            this.updateSettings();
         } else {
             this.pausedContainer.visible = false;
             
             this.game.input.mouse?.lock();
             this.game.input.keyboard?.lock();
+            this.updateSettings();
         }
+    }
+
+    public updateSettings() {
+        this.chunkLoader.setRadius(this.game.settings.renderDistance);
+        this.worldRenderer.fogDistance.value = this.game.settings.renderDistance - 16;
     }
 
     public tick(time: Time) {
@@ -343,7 +351,7 @@ export class PlayingGameStage extends GameStage {
 
             this.camera.fov = MathUtils.lerp(
                 this.camera.fov,
-                this.localPlayer.sprinting ? 100 : 90,
+                game.settings.fov + (this.localPlayer.sprinting ? 10 : 0),
                 1 - 0.5 ** (time.deltaTime * 20)
             );
             this.camera.position.set(

@@ -49,6 +49,8 @@ abstract class SliderSetting extends Setting<number> {
 export class SettingsScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly backButton: GuiButton;
+    private readonly fov: SliderSetting;
+    private readonly renderDistance: SliderSetting;
     private readonly mouseSensitivity: SliderSetting;
     private readonly controllerSensitivity: SliderSetting;
     private readonly invertX: ToggleButtonSetting;
@@ -81,6 +83,24 @@ export class SettingsScreenStage extends GameStage {
                 this.game.previousStage();
             });
         });
+
+        this.fov = new class extends SliderSetting {
+            protected override getValue() {
+                return game.settings.fov;
+            }
+            protected override setValue(value: number) {
+                game.settings.fov = value;
+            }
+        }("FOV", 10, 160, 1, 160, 24);
+
+        this.renderDistance = new class extends SliderSetting {
+            protected override getValue() {
+                return game.settings.renderDistance;
+            }
+            protected override setValue(value: number) {
+                game.settings.renderDistance = value;
+            }
+        }("Render distance", 24, 512, 16, 160, 24);
 
         this.mouseSensitivity = new class extends SliderSetting {
             protected override getValue() {
@@ -129,6 +149,8 @@ export class SettingsScreenStage extends GameStage {
 
         this.gui.addChild(
             this.background, this.titleText,
+            this.fov.element,
+            this.renderDistance.element,
             this.mouseSensitivity.element,
             this.controllerSensitivity.element,
             this.invertX.element,
@@ -144,11 +166,15 @@ export class SettingsScreenStage extends GameStage {
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
-        this.mouseSensitivity.element.position.set(width / 2, height / 2 - 40);
-        this.controllerSensitivity.element.position.set(width / 2, height / 2 - 10);
-        this.invertX.element.position.set(width / 2 - 41, height / 2 + 20);
-        this.invertY.element.position.set(width / 2 + 41, height / 2 + 20);
-        this.controllerDeadzone.element.position.set(width / 2, height / 2 + 50);
+
+        this.fov.element.position.set(width / 2, height / 2 - 65);
+        this.renderDistance.element.position.set(width / 2, height / 2 - 40);
+        this.mouseSensitivity.element.position.set(width / 2, height / 2 - 15);
+        this.controllerSensitivity.element.position.set(width / 2, height / 2 + 10);
+        this.invertX.element.position.set(width / 2 - 41, height / 2 + 35);
+        this.invertY.element.position.set(width / 2 + 41, height / 2 + 35);
+        this.controllerDeadzone.element.position.set(width / 2, height / 2 + 60);
+
         this.background.setSize(width, height);
     }
 

@@ -126,6 +126,10 @@ export class ChunkLoader {
         this.needsUpdate = true;
     }
 
+    public getRadius() {
+        return this.radius;
+    }
+
     public update(time: Time) {
         if(this.needsUpdate) {
             this.updateColumnsToLoad();

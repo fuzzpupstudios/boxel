@@ -3,12 +3,13 @@ import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";
 import type { TextureAtlas } from "../assets/textureAtlas";
-import { vec4, texture, uv, normalGeometry, vec3, attribute, float, select, If, mix } from "three/tsl";
+import { vec4, texture, uv, normalGeometry, vec3, attribute, float, select, If, mix, positionWorld, cameraPosition, uniform } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
     public maxChunkUpdates = 32;
+    public readonly fogDistance = uniform(64);
     public readonly root = new Scene;
     public readonly chunkMesher: ChunkMesher;
     private readonly dirtyChunks = new Set<Chunk>;
@@ -27,7 +28,19 @@ export class WorldRenderer {
             const c = 2;
             const aoFactor = float(1).sub(float(c).div((<any>attribute("aoFactor", "float")).add(c)));
             const shadow = normalGeometry.dot(vec3(0.6, 1.0, 0.2).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
-            const colorNode = vec4(mix(terrainColor.rgb.mul(shadow), vec3(0, 0, 0), aoFactor), terrainColor.a);
+            const playerDistanceNode = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+            const colorNode = vec4(
+                mix(
+                    mix(
+                        terrainColor.rgb.mul(shadow),
+                        vec3(0, 0, 0),
+                        aoFactor
+                    ),
+                    vec3(1, 1, 1),
+                    playerDistanceNode
+                ),
+                terrainColor.a
+            );
             this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.1 });
         }
 
