@@ -5,13 +5,13 @@ export class Keyboard {
 
     public addListeners(element: HTMLElement) {
         element.addEventListener("keydown", event => {
-            this.pressingKeys.add(this.translateKey(event.key));
-            this.wasPressedKeys.add(this.translateKey(event.key));
+            this.pressingKeys.add(this.translateKey(event.code));
+            this.wasPressedKeys.add(this.translateKey(event.code));
 
             if(this.locked) event.preventDefault();
         });
         element.addEventListener("keyup", event => {
-            this.pressingKeys.delete(this.translateKey(event.key));
+            this.pressingKeys.delete(this.translateKey(event.code));
         });
         element.addEventListener("focusout", () => {
             this.pressingKeys.clear();

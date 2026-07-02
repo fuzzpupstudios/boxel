@@ -34,27 +34,27 @@ export class Input {
     public readonly gamepads: Map<Gamepad, GamepadWrapper> = new Map;
 
     public readonly keyBindings: Partial<Record<ControlBinding, string>> = {
-        [ControlBinding.RIGHT]: "d",
-        [ControlBinding.LEFT]: "a",
-        [ControlBinding.FORWARD]: "w",
-        [ControlBinding.BACKWARD]: "s",
+        [ControlBinding.RIGHT]: "KeyD",
+        [ControlBinding.LEFT]: "KeyA",
+        [ControlBinding.FORWARD]: "KeyW",
+        [ControlBinding.BACKWARD]: "KeyS",
 
-        [ControlBinding.DESTROY]: "r",
-        [ControlBinding.USE]: "f",
+        [ControlBinding.DESTROY]: "KeyR",
+        [ControlBinding.USE]: "KeyF",
 
-        [ControlBinding.ROTATE_CW]: "arrowright",
-        [ControlBinding.ROTATE_CCW]: "arrowleft",
-        [ControlBinding.ROTATE_UP]: "arrowup",
-        [ControlBinding.ROTATE_DOWN]: "arrowdown",
+        [ControlBinding.ROTATE_CW]: "ArrowRight",
+        [ControlBinding.ROTATE_CCW]: "ArrowLeft",
+        [ControlBinding.ROTATE_UP]: "ArrowUp",
+        [ControlBinding.ROTATE_DOWN]: "ArrowDown",
 
-        [ControlBinding.JUMP]: "space",
-        [ControlBinding.CHANGE_PERSPECTIVE]: "g",
+        [ControlBinding.JUMP]: "Space",
+        [ControlBinding.CHANGE_PERSPECTIVE]: "G",
 
-        [ControlBinding.NEXT_ITEM]: "]",
-        [ControlBinding.PREVIOUS_ITEM]: "[",
+        [ControlBinding.NEXT_ITEM]: "BracketRight",
+        [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
-        [ControlBinding.PAUSE]: "escape",
-        [ControlBinding.BACK]: "escape"
+        [ControlBinding.PAUSE]: "Escape",
+        [ControlBinding.BACK]: "Escape"
     };
     public readonly controllerBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.JUMP]: BUTTONS.STANDARD.RC_BOTTOM,
