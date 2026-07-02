@@ -5,7 +5,8 @@
             "model": {
                 "occlude": false,
                 "aoCastWeight": 0
-            }
+            },
+            "tags": [ "replaceable" ]
         }
     }
 }

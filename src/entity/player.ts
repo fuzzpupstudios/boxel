@@ -1,12 +1,12 @@
-import { Vector3, Box3, Euler, MathUtils } from "three";
-import { Entity, type TileCollider } from "./entity";
-import type { Time } from "../time";
-import { AABB } from "../physics/AABB";
-import type { World } from "../world/world";
-import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
+import { Box3, Euler, MathUtils, Vector3 } from "three";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { BoxelGame } from "../boxel";
+import { AABB } from "../physics/AABB";
+import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/impl/playingGameStage";
+import type { Time } from "../time";
+import type { World } from "../world/world";
+import { Entity, type TileCollider } from "./entity";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -109,9 +109,23 @@ export class Player extends Entity {
 
         const blockState = blockStateRegistry.get(this.holdingBlock) || getUnknownBlockState();
 
-        const targetX = this.targetedBlock.voxel.x + this.targetedBlock.side.x;
-        const targetY = this.targetedBlock.voxel.y + this.targetedBlock.side.y;
-        const targetZ = this.targetedBlock.voxel.z + this.targetedBlock.side.z;
+        let targetX = this.targetedBlock.voxel.x;
+        let targetY = this.targetedBlock.voxel.y;
+        let targetZ = this.targetedBlock.voxel.z;
+
+        let previousStateId = this.world.getBlockState(targetX, targetY, targetZ);
+        let previousState = blockStateRegistry.get(previousStateId) || getUnknownBlockState();
+
+        if(!previousState.tags.has("replaceable")) {
+            targetX += this.targetedBlock.side.x;
+            targetY += this.targetedBlock.side.y;
+            targetZ += this.targetedBlock.side.z;
+        }
+        
+        previousStateId = this.world.getBlockState(targetX, targetY, targetZ);
+        previousState = blockStateRegistry.get(previousStateId) || getUnknownBlockState();
+
+        if(!previousState.tags.has("replaceable")) return;
 
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
         
