@@ -24,9 +24,10 @@ export class DataDrivenBlock extends Block {
         for(const [ stateKey, jsonState ] of Object.entries(this.json.states)) {
             const model = BlockModel.parseJson(jsonState.model, game.assets);
             const collider = DataDrivenBlock.parseJsonCollider(
-                jsonState.collider ?? { hitboxes: [] })
+                jsonState.collider ?? { hitboxes: [] });
 
-            const blockState = new BlockState(this, stateKey, model, collider);
+            const tags = new Set<string>(jsonState.tags ?? []);
+            const blockState = new BlockState(this, stateKey, model, collider, tags);
 
             this.states.set(stateKey, blockState);
             defaultState ??= blockState;

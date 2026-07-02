@@ -17,6 +17,7 @@ export class BlockState {
         public readonly stateKey: string,
         public readonly model: BlockModel,
         public readonly collider: TileCollider,
+        public readonly tags: Set<string>
     ) {}
 
     public getFullId() {

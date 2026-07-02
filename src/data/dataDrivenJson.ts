@@ -6,7 +6,8 @@ export namespace DataDrivenJson {
 
     export interface BlockState {
         model: BlockStateModel,
-        collider?: BlockStateCollider
+        collider?: BlockStateCollider,
+        tags?: string[]
     }
 
     export interface BlockStateModel {
