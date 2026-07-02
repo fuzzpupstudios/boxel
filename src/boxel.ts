@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import "pixi.js/text";
 import "pixi.js/sprite-nine-slice";
+import "pixi.js/mesh";
 import * as THREE from "three/webgpu";
 import { Assets } from "./assets/assets";
 import { TextureAtlas } from "./assets/textureAtlas";
