@@ -51,6 +51,7 @@ export class PlayingGameStage extends GameStage {
 
         this.init().then(() => {
             this.worldLoading = false;
+            this.setPaused(false);
         });
 
 
@@ -141,11 +142,18 @@ export class PlayingGameStage extends GameStage {
     }
 
     public setPaused(paused: boolean) {
+        console.log("set paused ", paused);
         this.paused = paused;
         if(paused) {
             this.pausedContainer.visible = true;
+
+            this.game.input.mouse?.unlock();
+            this.game.input.keyboard?.unlock();
         } else {
             this.pausedContainer.visible = false;
+            
+            this.game.input.mouse?.lock();
+            this.game.input.keyboard?.lock();
         }
     }
 
@@ -165,9 +173,13 @@ export class PlayingGameStage extends GameStage {
 
         if(this.isTopmostStage()) {
             if(game.input.wasPressed(ControlBinding.PAUSE)) {
-                this.setPaused(!this.paused);
-                this.world.saveWorld();
-                this.world.savePlayerSlot("local", this.localPlayer);
+                if(this.paused) {
+                    this.setPaused(false);
+                } else {
+                    this.setPaused(true);
+                    this.world.saveWorld();
+                    this.world.savePlayerSlot("local", this.localPlayer);
+                }
             }
         }
 
@@ -253,5 +265,7 @@ export class PlayingGameStage extends GameStage {
         if(this.persistentWorld != null) {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
         }
+        this.game.input.keyboard?.unlock();
+        this.game.input.mouse?.unlock();
     }
 }

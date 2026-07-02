@@ -62,7 +62,9 @@ export class Input {
         [ControlBinding.BACK]: BUTTONS.STANDARD.RC_RIGHT
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
-
+        [ControlBinding.DESTROY]: MouseButton.LEFT,
+        [ControlBinding.USE]: MouseButton.RIGHT,
+        [ControlBinding.PAUSE]: MouseButton.UNLOCK
     };
 
     public attachKeyboard(body: HTMLElement) {
@@ -90,6 +92,11 @@ export class Input {
                 if(this.keyboard.wasPressed(this.keyBindings[binding]!)) return true;
             }
         }
+        if(this.mouse != null) {
+            if(binding in this.mouseBindings) {
+                if(this.mouse.wasPressed(this.mouseBindings[binding]!)) return true;
+            }
+        }
         for(const gamepad of this.gamepads.values()) {
             if(binding in this.controllerBindings) {
                 if(gamepad.getButtonDown(this.controllerBindings[binding]!)) return true;
@@ -99,7 +106,7 @@ export class Input {
     }
     public getMouseAxis(axis: MouseAxis, lockedOnly: boolean = false): number {
         if(this.mouse == null) return 0;
-        if(lockedOnly && !this.mouse.isLocked()) return 0;
+        if(lockedOnly && !this.mouse.isCurrentlyLocked()) return 0;
 
         switch(axis) {
             case MouseAxis.DELTA_X:
@@ -156,7 +163,11 @@ export class Input {
                 if(this.keyboard.isPressed(this.keyBindings[binding]!)) factor++;
             }
         }
-
+        if(this.mouse != null) {
+            if(binding in this.mouseBindings) {
+                if(this.mouse.isPressed(this.mouseBindings[binding]!)) factor++;
+            }
+        }
         for(const gamepad of this.gamepads.values()) {
             if(binding in this.controllerBindings) {
                 factor += gamepad.getButtonValue(this.controllerBindings[binding]!);

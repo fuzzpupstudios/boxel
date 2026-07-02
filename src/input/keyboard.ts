@@ -1,11 +1,14 @@
 export class Keyboard {
     private readonly pressingKeys: Set<string> = new Set;
     private readonly wasPressedKeys: Set<string> = new Set;
+    private locked = false;
 
     public addListeners(element: HTMLElement) {
         element.addEventListener("keydown", event => {
             this.pressingKeys.add(this.translateKey(event.key));
             this.wasPressedKeys.add(this.translateKey(event.key));
+
+            if(this.locked) event.preventDefault();
         });
         element.addEventListener("keyup", event => {
             this.pressingKeys.delete(this.translateKey(event.key));
@@ -13,7 +16,17 @@ export class Keyboard {
         element.addEventListener("focusout", () => {
             this.pressingKeys.clear();
             this.wasPressedKeys.clear();
-        })
+        });
+    }
+
+    public lock() {
+        (<any>navigator)?.keyboard?.lock?.();
+        this.locked = true;
+    }
+
+    public unlock() {
+        (<any>navigator)?.keyboard?.unlock?.();
+        this.locked = false;
     }
 
     public isPressed(key: string) {

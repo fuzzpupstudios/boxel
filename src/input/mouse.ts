@@ -1,11 +1,13 @@
 import { Vector2 } from "three";
+import { el } from "zod/locales";
 
 export enum MouseButton {
     LEFT = 0,
     MIDDLE = 1,
     RIGHT = 2,
     MOUSE4 = 3,
-    MOUSE5 = 4
+    MOUSE5 = 4,
+    UNLOCK = 100
 };
 
 export class Mouse {
@@ -15,23 +17,60 @@ export class Mouse {
     private readonly position = new Vector2;
     private readonly deltaPosition = new Vector2;
     private locked: boolean = false;
+    private element?: HTMLElement;
+    private requestingPointerLock: boolean = false;
 
     public addListeners(element: HTMLElement) {
+        this.element = element;
+        
         element.addEventListener("mousedown", event => {
-            this.pressingButtons.add(event.button);
-            this.wasPressedButtons.add(event.button);
+            const changed = this.updatePointerLock();
+
+            if(!changed) {
+                this.pressingButtons.add(event.button);
+                this.wasPressedButtons.add(event.button);
+            }
         });
+        element.addEventListener("contextmenu", event => event.preventDefault());
         element.addEventListener("mouseup", event => {
             this.pressingButtons.delete(event.button);
         });
         element.addEventListener("mousemove", event => {
             this.position.set(event.clientX, event.clientY);
             this.deltaPosition.set(event.movementX, event.movementY);
-        })
+        });
         element.addEventListener("focusout", () => {
             this.pressingButtons.clear();
             this.wasPressedButtons.clear();
+
+            this.locked = false;
+        });
+        document.addEventListener("pointerlockchange", () => {
+            if(!this.isCurrentlyLocked()) {
+                this.wasPressedButtons.add(MouseButton.UNLOCK);
+                this.locked = false;
+            }
         })
+    }
+
+    private updatePointerLock(): boolean {
+        if(this.locked) {
+            if(!this.isCurrentlyLocked() && !this.requestingPointerLock) {
+                this.requestingPointerLock = true;
+                this.element!.requestPointerLock().then(() => {
+                    this.requestingPointerLock = false;
+                }).catch(() => {
+                    this.locked = false;
+                });
+                return true;
+            }
+        } else {
+            if(this.isCurrentlyLocked()) {
+                document.exitPointerLock();
+                return true;
+            }
+        }
+        return false;
     }
 
     public isPressed(button: MouseButton) {
@@ -61,21 +100,24 @@ export class Mouse {
         return out.copy(this.deltaPosition);
     }
 
+    public isCurrentlyLocked() {
+        return this.element != null && document.pointerLockElement == this.element;
+    }
     public isLocked() {
         return this.locked;
     }
 
-    public async lock(element: HTMLElement) {
-        if(this.locked) return;
-
-        await element.requestPointerLock({
-            unadjustedMovement: true
-        });
-
+    public async lock() {
+        console.log("lock mouse");
         this.locked = true;
+
+        this.updatePointerLock();
     }
-    public pointerLockChange(active: boolean) {
-        this.locked = active;
+    public async unlock() {
+        console.log("unlock mouse");
+        this.locked = false;
+        
+        this.updatePointerLock();
     }
 
     public update() {
