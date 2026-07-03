@@ -6,11 +6,13 @@ import { PlayingGameStage } from "./playingGameStage";
 import { GameStage } from "../gameStage";
 import { GuiButton } from "../../gui/button";
 import { SettingsScreenStage } from "./settingsGameStage";
+import { CreditsScreenStage } from "./creditsGameStage";
 
 export class TitleScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly playButton: GuiButton;
     private readonly settingsButton: GuiButton;
+    private readonly creditsButton: GuiButton;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -31,22 +33,29 @@ export class TitleScreenStage extends GameStage {
         this.titleText.anchor.set(0.5);
 
         this.playButton = new GuiButton("Play", 100, 30);
-        this.settingsButton = new GuiButton("Settings", 100, 30);
-
         this.playButton.onPress.connect(() => {
             this.game.changeStage(new PlayingGameStage(this.game), false);
         });
+
+        this.settingsButton = new GuiButton("Settings", 100, 30);
         this.settingsButton.onPress.connect(() => {
             this.game.changeStage(new SettingsScreenStage(this.game));
         });
 
-        this.gui.addChild(this.background, this.titleText, this.playButton, this.settingsButton);
+        this.creditsButton = new GuiButton("Credits", 100, 30);
+        this.creditsButton.onPress.connect(() => {
+            this.game.changeStage(new CreditsScreenStage(this.game));
+        });
+
+
+        this.gui.addChild(this.background, this.titleText, this.playButton, this.settingsButton, this.creditsButton);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, height / 2 - 40);
         this.playButton.position.set(width / 2, height / 2 + 10);
         this.settingsButton.position.set(width / 2, height / 2 + 42);
+        this.creditsButton.position.set(width / 2, height / 2 + 74);
         this.background.setSize(width, height);
     }
 

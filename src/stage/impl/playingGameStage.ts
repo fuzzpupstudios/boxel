@@ -259,8 +259,22 @@ export class PlayingGameStage extends GameStage {
             this.sprintFlickCooldown -= time.deltaTime;
 
             if(game.input.isPressed(ControlBinding.JUMP)) {
+
+                if(!this.jumpCheckSucceeded) {
+                    console.log("jump", this.flyCheckCooldown);
+                    this.jumpCheckSucceeded = true;
+
+                    if(this.flyCheckCooldown > 0) {
+                        this.localPlayer.setGliding(!this.localPlayer.gliding);
+                    }
+                    this.flyCheckCooldown = 0.25;
+                }
+
                 this.localPlayer.jump();
+            } else {
+                this.jumpCheckSucceeded = false;
             }
+            this.flyCheckCooldown -= time.deltaTime;
 
             if(game.input.wasPressed(ControlBinding.CROUCH)) {
                 this.localPlayer.setCrouching(true);
