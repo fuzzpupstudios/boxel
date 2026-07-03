@@ -15,7 +15,7 @@
     "test": "vitest"
   },
   "author": "lexifuzzpup",
-  "license": "ISC",
+  "license": "POLYFORM",
   "devDependencies": {
     "@types/pixi.js": "^4.8.9",
     "@types/three": "^0.184.1",
