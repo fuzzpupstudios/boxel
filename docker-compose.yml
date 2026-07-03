@@ -1,0 +1,8 @@
+services:
+  boxel:
+    image: boxel_client
+    build:
+      context: .
+    ports:
+      - "8081:80"
+    restart: unless-stopped
