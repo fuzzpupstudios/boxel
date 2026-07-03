@@ -4,7 +4,7 @@
         "default": {
             "model": {
                 "textures": {
-                    "planks": "assets/planks.png"
+                    "planks": "assets/textures/planks.png"
                 },
                 "north": [
                     {

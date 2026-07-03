@@ -4,9 +4,9 @@
         "default": {
             "model": {
                 "textures": {
-                    "dirt": "assets/dirt.png",
-                    "grass_side": "assets/grass_side.png",
-                    "grass": "assets/grass.png"
+                    "dirt": "assets/textures/dirt.png",
+                    "grass_side": "assets/textures/grass_side.png",
+                    "grass": "assets/textures/grass.png"
                 },
                 "north": [
                     {

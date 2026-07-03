@@ -7,7 +7,7 @@
                 "occludeDown": true,
                 "occludeNorth": true,
                 "textures": {
-                    "planks": "assets/planks.png"
+                    "planks": "assets/textures/planks.png"
                 },
                 "north": [
                     {

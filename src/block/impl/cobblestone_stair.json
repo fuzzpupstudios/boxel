@@ -7,7 +7,7 @@
                 "occludeDown": true,
                 "occludeNorth": true,
                 "textures": {
-                    "cobblestone": "assets/cobblestone.png"
+                    "cobblestone": "assets/textures/cobblestone.png"
                 },
                 "north": [
                     {

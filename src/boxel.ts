@@ -180,11 +180,11 @@ export class BoxelGame {
 
     private async loadAssets() {
         const textures = {
-            "ui/button": "assets/ui_button.png",
-            "ui/slider_background": "assets/ui_slider_background.png",
-            "ui/slider_fill": "assets/ui_slider_fill.png",
-            "ui/slider_handle": "assets/ui_slider_handle.png",
-            "ui/crosshair": "assets/crosshair.png"
+            "ui/button": "assets/textures/ui_button.png",
+            "ui/slider_background": "assets/textures/ui_slider_background.png",
+            "ui/slider_fill": "assets/textures/ui_slider_fill.png",
+            "ui/slider_handle": "assets/textures/ui_slider_handle.png",
+            "ui/crosshair": "assets/textures/crosshair.png"
         }
 
         for await(const [ alias, src ] of Object.entries(textures)) {

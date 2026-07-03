@@ -4,7 +4,7 @@
         "default": {
             "model": {
                 "textures": {
-                    "dirt": "assets/dirt.png"
+                    "dirt": "assets/textures/dirt.png"
                 },
                 "north": [
                     {
