@@ -12,6 +12,11 @@ lexifuzzpup
 === Game Art ===
 lexifuzzpup
 AvariceDerg
+
+
+Code licensed under PolyForm Noncommercial 1.0.0
+Assets/content licensed under CC BY-NC 4.0
+Third-party libraries licensed separately under their own licensing agreement
 `
 
 export class CreditsScreenStage extends GameStage {
@@ -42,7 +47,7 @@ export class CreditsScreenStage extends GameStage {
             text: CREDITS,
             style: new TextStyle({
                 fill: 0xffffff,
-                fontSize: 12,
+                fontSize: 10,
                 align: "center",
             }),
         });
