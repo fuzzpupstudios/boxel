@@ -38,6 +38,8 @@ export class Player extends Entity {
     }
 
     public walk(dx: number, dz: number, time: Time) {
+        if(this.gliding) return;
+
         const length = Math.sqrt(dx * dx + dz * dz);
         if(length > 1) {
             dx /= length;
@@ -85,6 +87,9 @@ export class Player extends Entity {
 
     public setSprinting(sprinting: boolean) {
         this.sprinting = sprinting;
+    }
+    public setGliding(gliding: boolean) {
+        this.gliding = gliding;
     }
 
     public destroy() {
@@ -156,11 +161,16 @@ export class Player extends Entity {
         }
         super.tick(time);
 
+        const direction = new Vector3(0, 0, -1).applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
+        
+        if(this.gliding) {
+            this.velocity.add(direction.clone().add(new Vector3(0, 0.5, 0)).normalize().multiplyScalar(time.deltaTime * 50));
+        }
+
         const raycaster = new VoxelRaycaster(this.world, (<any><unknown>this.aabb).tileColliders);
 
         const origin = this.aabb.position.clone();
         origin.y += this.eyeHeight;
-        const direction = new Vector3(0, 0, -1).applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
 
         raycaster.cast(origin, direction, this.targetedBlock);
     }

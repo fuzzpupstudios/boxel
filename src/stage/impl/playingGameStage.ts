@@ -47,6 +47,8 @@ export class PlayingGameStage extends GameStage {
 
     private sprintFlickCooldown = 0;
     private walkForwardCheckSucceeded = false;
+    private flyCheckCooldown = 0;
+    private jumpCheckSucceeded = false;
     private placeBlockCooldown = 0;
     private destroyBlockCooldown = 0;
 

@@ -15,10 +15,11 @@ export abstract class Entity implements Tickable {
     public world: World;
     public readonly velocity = new Vector3;
     public aabb: AABB;
-    protected onGround = false;
+    public onGround = false;
     public lastCollisionX = 0;
     public lastCollisionY = 0;
     public lastCollisionZ = 0;
+    public gliding = false;
 
     public constructor(world: World) {
         this.world = world;
@@ -46,9 +47,12 @@ export abstract class Entity implements Tickable {
             this.aabb.position.z >> 4
         ) === null) return;
 
-        this.velocity.x += this.world.gravity.x * time.deltaTime;
-        this.velocity.y += this.world.gravity.y * time.deltaTime;
-        this.velocity.z += this.world.gravity.z * time.deltaTime;
+        let gravityInfluence = 1;
+        if(this.gliding) gravityInfluence = 0.2;
+
+        this.velocity.x += this.world.gravity.x * time.deltaTime * gravityInfluence;
+        this.velocity.y += this.world.gravity.y * time.deltaTime * gravityInfluence;
+        this.velocity.z += this.world.gravity.z * time.deltaTime * gravityInfluence;
 
         const collisionY = this.aabb.moveY(this.velocity.y * time.deltaTime);
         if(collisionY !== 0) this.velocity.y = 0;
@@ -63,9 +67,17 @@ export abstract class Entity implements Tickable {
         if(collisionZ !== 0) this.velocity.z = 0;
         this.lastCollisionZ = collisionZ;
 
-        const friction = this.onGround ? 0.546 : 0.91;
+        if(this.onGround) this.gliding = false;
+
+        const friction = this.gliding ? 0.92 : (this.onGround ? 0.546 : 0.91);
         const drag = Math.pow(friction, time.deltaTime * 20);
-        this.velocity.x *= drag;
-        this.velocity.z *= drag;
+        if(this.gliding) {
+            this.velocity.x *= drag;
+            this.velocity.y *= drag;
+            this.velocity.z *= drag;
+        } else {
+            this.velocity.x *= drag;
+            this.velocity.z *= drag;
+        }
     }
 }

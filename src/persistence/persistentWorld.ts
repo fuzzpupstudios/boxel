@@ -36,6 +36,7 @@ export const WorldPlayer = z.object({
         z.number(),
         z.number()
     ]).default([ 0, 0 ]),
+    gliding: z.boolean().default(false)
 });
 
 interface PersistentWorldSchema extends DBSchema {
@@ -103,7 +104,8 @@ export class PersistentWorld {
             id,
             position: player.aabb.position.toArray(),
             velocity: player.velocity.toArray(),
-            rotation: [ player.yaw, player.pitch ]
+            rotation: [ player.yaw, player.pitch ],
+            gliding: player.gliding
         });
     }
 
