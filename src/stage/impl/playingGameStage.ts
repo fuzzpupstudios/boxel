@@ -43,6 +43,10 @@ export class PlayingGameStage extends GameStage {
         "base:planks_slab[half=bottom]",
         "base:planks_slab[half=top]",
         "base:planks_stair[direction=south]",
+        "base:bricks[default]",
+        "base:bricks_slab[half=bottom]",
+        "base:bricks_slab[half=top]",
+        "base:bricks_stair[direction=south]",
     ];
 
     private sprintFlickCooldown = 0;

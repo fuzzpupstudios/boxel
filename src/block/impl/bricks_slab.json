@@ -1,0 +1,131 @@
+{
+    "id": "base:bricks_slab",
+    "states": {
+        "half=bottom": {
+            "model": {
+                "occlude": false,
+                "occludeDown": true,
+                "textures": {
+                    "bricks": "assets/textures/bricks.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0, 1, 0.5 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 0.5, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "bricks",
+                        "cull": false
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] }
+                ]
+            }
+        },
+        "half=top": {
+            "model": {
+                "occlude": false,
+                "occludeUp": true,
+                "textures": {
+                    "bricks": "assets/textures/bricks.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0.5, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0.5, 1 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0.5, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0.5, 0 ],
+                        "size": [ 1, 0.5 ],
+                        "uv": [ 0, 0.5, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "bricks"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0.5, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "bricks",
+                        "cull": false
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
