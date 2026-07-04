@@ -1,56 +1,15 @@
 import { Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
-import type { BoxelGame } from "../../boxel";
-import { GuiButton } from "../../gui/button";
-import { ControlBinding } from "../../input/input";
-import type { Time } from "../../time";
-import { GameStage } from "../gameStage";
-import { GuiSlider } from "../../gui/slider";
+import type { BoxelGame } from "../../../boxel";
+import { GuiButton } from "../../../gui/button";
+import { ControlBinding } from "../../../input/input";
+import type { Time } from "../../../time";
+import { GameStage } from "../../gameStage";
+import { GuiSlider } from "../../../gui/slider";
+import { SliderSetting, ToggleButtonSetting } from "./elements";
 
-abstract class Setting<T> {
-    public abstract element: Container;
-    protected abstract getValue(): T;
-    protected abstract setValue(value: T): void;
-}
-
-abstract class ToggleButtonSetting extends Setting<boolean> {
-    public readonly element: GuiButton;
-
-    public constructor(title: string, width: number, height: number) {
-        super();
-
-        const makeText = () => title + ": " + (this.getValue() ? "on" : "off");
-        this.element = new GuiButton(makeText(), width, height);
-
-        this.element.onPress.connect(() => {
-            this.setValue(!this.getValue());
-            this.element.text = makeText();
-        })
-    }
-}
-
-abstract class SliderSetting extends Setting<number> {
-    public readonly element: GuiSlider;
-
-    public constructor(title: string, min: number, max: number, step: number, width: number, height: number) {
-        super();
-
-        const decimals = Math.max(0, -Math.floor(Math.log10(step)));
-
-        const makeText = () => title + ": " + this.getValue().toLocaleString(navigator.language, { minimumFractionDigits: decimals, useGrouping: false });
-        this.element = new GuiSlider(min, max, this.getValue(), step, width, height, makeText());
-
-        this.element.addListener("input", () => {
-            this.setValue(this.element.value);
-            this.element.text = makeText();
-        })
-    }
-}
-
-export class SettingsScreenStage extends GameStage {
+export class ControlSettingsScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly backButton: GuiButton;
-    private readonly fov: SliderSetting;
-    private readonly renderDistance: SliderSetting;
     private readonly mouseSensitivity: SliderSetting;
     private readonly controllerSensitivity: SliderSetting;
     private readonly invertX: ToggleButtonSetting;
@@ -67,7 +26,7 @@ export class SettingsScreenStage extends GameStage {
         this.background.interactive = true;
 
         this.titleText = new Text({
-            text: "Settings",
+            text: "Control Settings",
             style: new TextStyle({
                 fill: 0xffffff,
                 fontSize: 24,
@@ -81,26 +40,9 @@ export class SettingsScreenStage extends GameStage {
         this.backButton.onPress.connect(() => {
             this.saveSettings().then(() => {
                 this.game.previousStage();
+                this.game.updateSettings();
             });
         });
-
-        this.fov = new class extends SliderSetting {
-            protected override getValue() {
-                return game.settings.fov;
-            }
-            protected override setValue(value: number) {
-                game.settings.fov = value;
-            }
-        }("FOV", 10, 160, 1, 160, 24);
-
-        this.renderDistance = new class extends SliderSetting {
-            protected override getValue() {
-                return game.settings.renderDistance;
-            }
-            protected override setValue(value: number) {
-                game.settings.renderDistance = value;
-            }
-        }("Render distance", 24, 512, 16, 160, 24);
 
         this.mouseSensitivity = new class extends SliderSetting {
             protected override getValue() {
@@ -149,8 +91,6 @@ export class SettingsScreenStage extends GameStage {
 
         this.gui.addChild(
             this.background, this.titleText,
-            this.fov.element,
-            this.renderDistance.element,
             this.mouseSensitivity.element,
             this.controllerSensitivity.element,
             this.invertX.element,
@@ -167,13 +107,11 @@ export class SettingsScreenStage extends GameStage {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
 
-        this.fov.element.position.set(width / 2, height / 2 - 65);
-        this.renderDistance.element.position.set(width / 2, height / 2 - 40);
-        this.mouseSensitivity.element.position.set(width / 2, height / 2 - 15);
-        this.controllerSensitivity.element.position.set(width / 2, height / 2 + 10);
-        this.invertX.element.position.set(width / 2 - 41, height / 2 + 35);
-        this.invertY.element.position.set(width / 2 + 41, height / 2 + 35);
-        this.controllerDeadzone.element.position.set(width / 2, height / 2 + 60);
+        this.mouseSensitivity.element.position.set(width / 2, 50);
+        this.controllerSensitivity.element.position.set(width / 2, 80);
+        this.invertX.element.position.set(width / 2 - 41, 110);
+        this.invertY.element.position.set(width / 2 + 41, 110);
+        this.controllerDeadzone.element.position.set(width / 2, 140);
 
         this.background.setSize(width, height);
     }

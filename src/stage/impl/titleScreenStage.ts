@@ -5,7 +5,7 @@ import type { Time } from "../../time";
 import { PlayingGameStage } from "./playingGameStage";
 import { GameStage } from "../gameStage";
 import { GuiButton } from "../../gui/button";
-import { SettingsScreenStage } from "./settingsGameStage";
+import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { CreditsScreenStage } from "./creditsGameStage";
 
 export class TitleScreenStage extends GameStage {
