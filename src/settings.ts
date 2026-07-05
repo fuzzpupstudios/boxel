@@ -10,5 +10,6 @@ export const Settings = z.object({
     fov: z.number().default(90),
     mouseSensitivity: z.number().default(1),
     controllerSensitivity: z.number().default(1),
+    controllerGuiSensitivity: z.number().default(1),
     controllerDeadzone: z.number().default(0.1),
 });

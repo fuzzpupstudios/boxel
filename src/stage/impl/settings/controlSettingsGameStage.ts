@@ -12,6 +12,7 @@ export class ControlSettingsScreenStage extends GameStage {
     private readonly backButton: GuiButton;
     private readonly mouseSensitivity: SliderSetting;
     private readonly controllerSensitivity: SliderSetting;
+    private readonly controllerGuiSensitivity: SliderSetting;
     private readonly invertX: ToggleButtonSetting;
     private readonly invertY: ToggleButtonSetting;
     private readonly controllerDeadzone: SliderSetting;
@@ -62,6 +63,15 @@ export class ControlSettingsScreenStage extends GameStage {
             }
         }("Controller sensitivity", 0.1, 5.0, 0.1, 160, 24);
 
+        this.controllerGuiSensitivity = new class extends SliderSetting {
+            protected override getValue() {
+                return game.settings.controllerGuiSensitivity;
+            }
+            protected override setValue(value: number) {
+                game.settings.controllerGuiSensitivity = value;
+            }
+        }("Controller GUI sensitivity", 0.1, 5.0, 0.1, 160, 24);
+
         this.invertX = new class extends ToggleButtonSetting {
             protected override getValue() {
                 return game.settings.invertX;
@@ -87,16 +97,18 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.controllerDeadzone = value;
             }
-        }("Controller deadzone", 0, 1.0, 0.01, 160, 24);
+        }("Controller deadzone", 0, 0.9, 0.01, 160, 24);
 
         this.gui.addChild(
             this.background, this.titleText,
             this.mouseSensitivity.element,
             this.controllerSensitivity.element,
+            this.controllerGuiSensitivity.element,
             this.invertX.element,
             this.invertY.element,
             this.controllerDeadzone.element,
-            this.backButton);
+            this.backButton
+        );
     }
 
     public async saveSettings() {
@@ -109,9 +121,10 @@ export class ControlSettingsScreenStage extends GameStage {
 
         this.mouseSensitivity.element.position.set(width / 2, 50);
         this.controllerSensitivity.element.position.set(width / 2, 80);
-        this.invertX.element.position.set(width / 2 - 41, 110);
-        this.invertY.element.position.set(width / 2 + 41, 110);
-        this.controllerDeadzone.element.position.set(width / 2, 140);
+        this.controllerGuiSensitivity.element.position.set(width / 2, 110);
+        this.invertX.element.position.set(width / 2 - 41, 140);
+        this.invertY.element.position.set(width / 2 + 41, 140);
+        this.controllerDeadzone.element.position.set(width / 2, 170);
 
         this.background.setSize(width, height);
     }

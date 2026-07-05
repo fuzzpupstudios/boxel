@@ -4,7 +4,7 @@ import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
 import { GuiButton } from "../../gui/button";
-import { ControlBinding, GamepadAxis, MouseAxis, TouchAxis } from "../../input/input";
+import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
 import { BlockStateOutline } from "../../rendering/blockStateOutline";
@@ -22,6 +22,7 @@ import type { Settings } from "../../settings";
 import { MobileController } from "../../input/mobileController";
 import { GuiDPadRight } from "../../gui/mobile/dPadRight";
 import { Topbar } from "../../gui/mobile/topbar";
+import { ControllerAxis } from "../../input/controller";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -205,23 +206,30 @@ export class PlayingGameStage extends GameStage {
     }
 
     public setPaused(paused: boolean) {
-        console.log("set paused ", paused);
         this.paused = paused;
-        if(paused) {
-            this.pausedContainer.visible = true;
+        requestAnimationFrame(() => {
+            if(paused) {
+                this.pausedContainer.visible = true;
 
-            if(this.game.isDesktop) {
-                this.game.input.mouse?.unlock();
-                this.game.input.keyboard?.unlock();
+                if(this.game.isDesktop) {
+                    this.game.input.mouse?.unlock();
+                    this.game.input.keyboard?.unlock();
+                }
+                if(this.game.controllerCrosshair != null) {
+                    this.game.controllerCrosshair.crosshairPosition
+                        .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
+                    this.game.controllerCrosshair.enable();
+                }
+            } else {
+                this.pausedContainer.visible = false;
+                
+                if(this.game.isDesktop) {
+                    this.game.input.mouse?.lock();
+                    this.game.input.keyboard?.lock();
+                }
+                this.game.controllerCrosshair?.disable();
             }
-        } else {
-            this.pausedContainer.visible = false;
-            
-            if(this.game.isDesktop) {
-                this.game.input.mouse?.lock();
-                this.game.input.keyboard?.lock();
-            }
-        }
+        })
     }
 
     public updateSettings(settings: Settings) {
@@ -260,18 +268,21 @@ export class PlayingGameStage extends GameStage {
                     this.world.savePlayerSlot("local", this.localPlayer);
                 }
             }
+            if(game.input.wasPressed(ControlBinding.BACK) && this.paused) {
+                this.setPaused(false);
+            }
         }
 
         if(!this.paused) {
             let moveDeltaX = (
                 game.input.getAnalog(ControlBinding.RIGHT)
-                + game.input.getGamepadAxis(GamepadAxis.LEFT_X, game.settings.controllerDeadzone)
+                + game.input.getControllerAxis(ControllerAxis.LEFT_X)
                 + game.input.getDpadStrafe()
                 - game.input.getAnalog(ControlBinding.LEFT)
             );
             let moveDeltaZ = (
                 game.input.getAnalog(ControlBinding.BACKWARD)
-                - game.input.getGamepadAxis(GamepadAxis.LEFT_Y, game.settings.controllerDeadzone)
+                + game.input.getControllerAxis(ControllerAxis.LEFT_Y)
                 - game.input.getAnalog(ControlBinding.FORWARD)
             );
             this.localPlayer.walk(moveDeltaX, moveDeltaZ, time);
@@ -306,15 +317,12 @@ export class PlayingGameStage extends GameStage {
             }
 
             if(game.input.wasPressed(ControlBinding.CROUCH)) {
-                console.log("crouch down");
                 this.localPlayer.setCrouching(true);
             }
             if(game.input.wasUnpressed(ControlBinding.CROUCH)) {
-                console.log("crouch up");
                 this.localPlayer.setCrouching(false);
             }
             if(game.input.wasPressed(ControlBinding.TOGGLE_CROUCH)) {
-                console.log("toggle crouch");
                 this.localPlayer.setCrouching(!this.localPlayer.crouching);
             }
 
@@ -387,7 +395,7 @@ export class PlayingGameStage extends GameStage {
                 (
                     game.input.getAnalog(ControlBinding.ROTATE_CW) -
                     game.input.getAnalog(ControlBinding.ROTATE_CCW) +
-                    game.input.getGamepadAxis(GamepadAxis.RIGHT_X, game.settings.controllerDeadzone)
+                    game.input.getControllerAxis(ControllerAxis.RIGHT_X)
                 ) * game.settings.controllerSensitivity * 2 +
                 (
                     game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 +
@@ -399,8 +407,8 @@ export class PlayingGameStage extends GameStage {
             let lookDeltaY = (
                 (
                     game.input.getAnalog(ControlBinding.ROTATE_UP) -
-                    game.input.getAnalog(ControlBinding.ROTATE_DOWN) +
-                    game.input.getGamepadAxis(GamepadAxis.RIGHT_Y, game.settings.controllerDeadzone)
+                    game.input.getAnalog(ControlBinding.ROTATE_DOWN) -
+                    game.input.getControllerAxis(ControllerAxis.RIGHT_Y)
                 ) * game.settings.controllerSensitivity * 2 -
                 (
                     game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 +
@@ -466,10 +474,9 @@ export class PlayingGameStage extends GameStage {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
         }
 
-        if(this.game.isDesktop) {
-            this.game.input.keyboard?.unlock();
-            this.game.input.mouse?.unlock();
-        } else {
+        this.setPaused(true);
+
+        if(!this.game.isDesktop) {
             this.game.input.detachMobileController();
         }
     }

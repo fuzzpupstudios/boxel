@@ -11,6 +11,7 @@ import { GuiDPadRight } from "../../../gui/mobile/dPadRight";
 export class GuiSettingsScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly backButton: GuiButton;
+    private readonly applyButton: GuiButton;
     private readonly guiScale: SliderSetting;
     private readonly dpadScale: SliderSetting;
     private readonly background: Sprite;
@@ -36,42 +37,51 @@ export class GuiSettingsScreenStage extends GameStage {
         });
         this.titleText.anchor.set(0.5);
 
-        this.backButton = new GuiButton("Back", 100, 30);
+        this.backButton = new GuiButton("Close", 100, 30);
 
         this.backButton.on("pointerdown", () => {
-            this.saveSettings().then(() => {
-                this.game.previousStage();
-                this.game.updateSettings();
-            });
+            this.game.previousStage();
         });
+
+        this.applyButton = new GuiButton("Apply", 100, 30);
+
+        this.applyButton.on("pointerdown", () => {
+            game.settings.dPadScale = dPadScale;
+            game.settings.guiScale = guiScale;
+            this.game.updateSettings();
+        });
+
+
+        let guiScale = game.settings.guiScale;
+        let dPadScale = game.settings.dPadScale;
 
         this.guiScale = new class extends SliderSetting {
             protected override getValue() {
-                return game.settings.guiScale;
+                return guiScale;
             }
             protected override setValue(value: number) {
-                game.settings.guiScale = value;
+                guiScale = value;
             }
         }("GUI Scale", 1, 8, 1, 160, 24);
 
         const dpadLeftPreview = this.dpadLeftPreview = new GuiDPadLeft;
-        this.dpadLeftPreview.scale.set(game.settings.dPadScale);
+        this.dpadLeftPreview.scale.set(dPadScale);
         dpadLeftPreview.interactive = false;
         dpadLeftPreview.alpha = 0.5;
 
         const dpadRightPreview = this.dpadRightPreview = new GuiDPadRight;
-        this.dpadRightPreview.scale.set(game.settings.dPadScale);
+        this.dpadRightPreview.scale.set(dPadScale);
         dpadRightPreview.interactive = false;
         dpadRightPreview.alpha = 0.5;
 
         this.dpadScale = new class extends SliderSetting {
             protected override getValue() {
-                return game.settings.dPadScale;
+                return dPadScale;
             }
             protected override setValue(value: number) {
-                game.settings.dPadScale = value;
-                dpadLeftPreview.scale.set(game.settings.dPadScale);
-                dpadRightPreview.scale.set(game.settings.dPadScale);
+                dPadScale = value;
+                dpadLeftPreview.scale.set(dPadScale);
+                dpadRightPreview.scale.set(dPadScale);
             }
         }("D-Pad Scale", 0.5, 4, 0.25, 160, 24);
 
@@ -82,7 +92,8 @@ export class GuiSettingsScreenStage extends GameStage {
             this.titleText,
             this.guiScale.element,
             this.dpadScale.element,
-            this.backButton
+            this.applyButton,
+            this.backButton,
         );
     }
 
@@ -92,7 +103,8 @@ export class GuiSettingsScreenStage extends GameStage {
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, 20);
-        this.backButton.position.set(width / 2, height - 20);
+        this.applyButton.position.set(width / 2 - 60, height - 20);
+        this.backButton.position.set(width / 2 + 60, height - 20);
 
         this.guiScale.element.position.set(width / 2, 80);
         this.dpadScale.element.position.set(width / 2, 110);

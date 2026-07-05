@@ -120,13 +120,11 @@ export class Mouse {
     }
 
     public async lock() {
-        console.log("lock mouse");
         this.locked = true;
 
         this.updatePointerLock();
     }
     public async unlock() {
-        console.log("unlock mouse");
         this.locked = false;
         
         this.updatePointerLock();

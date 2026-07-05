@@ -1,8 +1,7 @@
-import { AXES, BUTTONS, GamepadWrapper } from "gamepad-wrapper";
+import { Controller, ControllerAxis, ControllerButton } from "./controller";
 import { Keyboard } from "./keyboard";
-import { Mouse, MouseButton } from "./mouse";
-import { MathUtils } from "three";
 import { MobileButton, MobileController } from "./mobileController";
+import { Mouse, MouseButton } from "./mouse";
 import { TouchController } from "./touch";
 
 export enum ControlBinding {
@@ -21,11 +20,6 @@ export enum ControlBinding {
     FULLSCREEN
 }
 
-export enum GamepadAxis {
-    LEFT_X, LEFT_Y,
-    RIGHT_X, RIGHT_Y,
-}
-
 export enum MouseAxis {
     X, Y,
     DELTA_X, DELTA_Y
@@ -42,7 +36,7 @@ export class Input {
     public mouse: Mouse | null = null;
     public touch: TouchController | null = null;
     public mobile: MobileController | null = null;
-    public readonly gamepads: Map<Gamepad, GamepadWrapper> = new Map;
+    public readonly controllers: Map<Gamepad, Controller> = new Map;
 
     public readonly keyBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.RIGHT]: "KeyD",
@@ -72,21 +66,21 @@ export class Input {
 
         [ControlBinding.FULLSCREEN]: "F11"
     };
-    public readonly controllerBindings: Partial<Record<ControlBinding, string>> = {
-        [ControlBinding.JUMP]: BUTTONS.STANDARD.RC_BOTTOM,
-        [ControlBinding.CHANGE_PERSPECTIVE]: BUTTONS.STANDARD.LC_TOP,
+    public readonly controllerBindings: Partial<Record<ControlBinding, ControllerButton>> = {
+        [ControlBinding.JUMP]: ControllerButton.A,
+        [ControlBinding.CHANGE_PERSPECTIVE]: ControllerButton.DPAD_UP,
 
-        [ControlBinding.DESTROY]: BUTTONS.STANDARD.TRIGGER_RIGHT,
-        [ControlBinding.USE]: BUTTONS.STANDARD.TRIGGER_LEFT,
+        [ControlBinding.DESTROY]: ControllerButton.RIGHT_TRIGGER,
+        [ControlBinding.USE]: ControllerButton.LEFT_TRIGGER,
 
-        [ControlBinding.PAUSE]: BUTTONS.STANDARD.CC_RIGHT,
-        [ControlBinding.BACK]: BUTTONS.STANDARD.RC_RIGHT,
+        [ControlBinding.PAUSE]: ControllerButton.START,
+        [ControlBinding.BACK]: ControllerButton.B,
 
-        [ControlBinding.NEXT_ITEM]: BUTTONS.STANDARD.BUMPER_RIGHT,
-        [ControlBinding.PREVIOUS_ITEM]: BUTTONS.STANDARD.BUMPER_LEFT,
+        [ControlBinding.NEXT_ITEM]: ControllerButton.RIGHT_BUMPER,
+        [ControlBinding.PREVIOUS_ITEM]: ControllerButton.LEFT_BUMPER,
 
-        [ControlBinding.TOGGLE_CROUCH]: BUTTONS.STANDARD.THUMBSTICK_LEFT,
-        [ControlBinding.PICK_BLOCK]: BUTTONS.STANDARD.THUMBSTICK_RIGHT
+        [ControlBinding.TOGGLE_CROUCH]: ControllerButton.LEFT_STICK,
+        [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
@@ -116,12 +110,14 @@ export class Input {
         this.keyboard = new Keyboard;
         this.keyboard.addListeners(body);
     }
-    public attachController(controller: Gamepad) {
-        const wrapper = new GamepadWrapper(controller);
-        this.gamepads.set(controller, wrapper);
+    public attachController(gamepad: Gamepad) {
+        const controller = new Controller;
+        controller.setGamepad(gamepad);
+        this.controllers.set(gamepad, controller);
+        return controller;
     }
-    public detachController(controller: Gamepad) {
-        this.gamepads.delete(controller);
+    public detachController(gamepad: Gamepad) {
+        this.controllers.delete(gamepad);
     }
     public attachMouse(body: HTMLElement) {
         this.mouse = new Mouse;
@@ -157,9 +153,9 @@ export class Input {
                 if(this.mobile.wasPressed(this.mobileBindings[binding]!)) return true;
             }
         }
-        for(const gamepad of this.gamepads.values()) {
+        for(const controller of this.controllers.values()) {
             if(binding in this.controllerBindings) {
-                if(gamepad.getButtonDown(this.controllerBindings[binding]!)) return true;
+                if(controller.wasPressed(this.controllerBindings[binding]!)) return true;
             }
         }
         return false;
@@ -180,9 +176,9 @@ export class Input {
                 if(this.mobile.wasUnpressed(this.mobileBindings[binding]!)) return true;
             }
         }
-        for(const gamepad of this.gamepads.values()) {
+        for(const controller of this.controllers.values()) {
             if(binding in this.controllerBindings) {
-                if(gamepad.getButtonUp(this.controllerBindings[binding]!)) return true;
+                if(controller.wasPressed(this.controllerBindings[binding]!)) return true;
             }
         }
         return false;
@@ -221,35 +217,12 @@ export class Input {
     public getDpadStrafe() {
         return this.mobile?.strafe ?? 0;
     }
-    public getGamepadAxis(axis: GamepadAxis, deadzone: number, clamp: boolean = true): number {
+    public getControllerAxis(axis: ControllerAxis, clamp: boolean = true): number {
         let factor = 0;
 
-        for(const gamepad of this.gamepads.values()) {
-            switch(axis) {
-                case GamepadAxis.LEFT_X:
-                    factor += gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_X);
-                    break;
-                case GamepadAxis.LEFT_Y:
-                    factor -= gamepad.getAxis(AXES.STANDARD.THUMBSTICK_LEFT_Y);
-                    break;
-                case GamepadAxis.RIGHT_X:
-                    factor += gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_X);
-                    break;
-                case GamepadAxis.RIGHT_Y:
-                    factor -= gamepad.getAxis(AXES.STANDARD.THUMBSTICK_RIGHT_Y);
-                    break;
-            }
+        for(const controller of this.controllers.values()) {
+            factor += controller.getAxis(axis);
         }
-
-        if(Math.abs(factor) < deadzone) return 0;
-
-        if(factor > 0) {
-            factor = MathUtils.mapLinear(factor, deadzone, 1, 0, 1);
-        } else if(factor < 0) {
-            factor = MathUtils.mapLinear(factor, -1, -deadzone, -1, 0);
-        }
-
-        if(isNaN(factor)) factor = 0;
 
         if(clamp) {
             if(factor > 1) return 1;
@@ -275,9 +248,9 @@ export class Input {
                 if(this.mobile.isPressed(this.mobileBindings[binding]!)) factor++;
             }
         }
-        for(const gamepad of this.gamepads.values()) {
+        for(const controller of this.controllers.values()) {
             if(binding in this.controllerBindings) {
-                factor += gamepad.getButtonValue(this.controllerBindings[binding]!);
+                factor += controller.getButtonValue(this.controllerBindings[binding]!);
             }
         }
 
@@ -302,8 +275,10 @@ export class Input {
         if(this.mobile != null) {
             this.mobile.update();
         }
-        for(const gamepad of this.gamepads.values()) {
-            gamepad.update();
+        for(const controller of this.controllers.values()) {
+            controller.update();
         }
     }
 }
+
+let p = false;

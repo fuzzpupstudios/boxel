@@ -14,6 +14,7 @@ import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
+import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
 
 
 export class BoxelGame {
@@ -22,6 +23,7 @@ export class BoxelGame {
     public readonly threeRenderer: THREE.WebGPURenderer;
     public readonly gui: PIXI.Application;
     public guiBackground?: PIXI.Sprite;
+    public controllerCrosshair: GuiControllerCrosshair | null = null;
 
     public readonly input: Input;
     public readonly assets = new Assets;
@@ -40,6 +42,8 @@ export class BoxelGame {
     private viewportHeight = 1;
     private viewportPixelRatio = 1;
     public mainStorage: MainStorage | null = null;
+    public guiWidth: number = 0;
+    public guiHeight: number = 0;
 
 
     constructor(
@@ -149,13 +153,29 @@ export class BoxelGame {
             );
             stage.gui.scale.set(scale);
         }
+
+        this.guiWidth = width / scale;
+        this.guiHeight = height / scale;
+
+        if(this.controllerCrosshair != null) {
+            this.controllerCrosshair.resize(
+                width / scale,
+                height / scale
+            );
+            this.controllerCrosshair.scale.set(scale);
+        }
     }
 
     public attachController(gamepad: Gamepad) {
         console.log(`%cGamepad ${gamepad.index} connected`,
             "color: cornflowerblue; font-family: system-ui; font-size: 2rem; text-stroke: 0.25rem black; font-weight:bold;");
         console.log(gamepad.id);
-        this.input.attachController(gamepad);
+        const controller = this.input.attachController(gamepad);
+        controller.setDeadzone(this.settings.controllerDeadzone);
+
+        if(this.controllerCrosshair != null) {
+            this.controllerCrosshair.visible = true;
+        }
     }
 
     public detachController(gamepad: Gamepad) {
@@ -163,11 +183,19 @@ export class BoxelGame {
             "color: pink; font-family: system-ui; font-size: 2rem; text-stroke: 0.25rem black; font-weight:bold;");
         console.log(gamepad.id);
         this.input.detachController(gamepad);
+
+        if(this.controllerCrosshair != null && this.input.controllers.size == 0) {
+            this.controllerCrosshair.visible = false;
+        }
     }
 
     public updateSettings() {
         this.settings.guiScale = this.settings.guiScale;
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+        
+        for(const controller of this.input.controllers.values()) {
+            controller.setDeadzone(this.settings.controllerDeadzone);
+        }
 
         for(const activeStage of this.activeStages) {
             activeStage.updateSettings(this.settings);
@@ -179,6 +207,8 @@ export class BoxelGame {
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
         await registerBlocks();
+
+        await this.loadAssets();
 
         await this.threeRenderer.init();
         this.threeRenderer.setClearColor(0xffffff);
@@ -198,6 +228,11 @@ export class BoxelGame {
         this.guiBackground.anchor.set(0);
         this.gui.stage.addChild(this.guiBackground);
 
+        this.controllerCrosshair = new GuiControllerCrosshair(this);
+        this.controllerCrosshair.zIndex = 100;
+        this.gui.stage.addChild(this.controllerCrosshair);
+        this.controllerCrosshair.visible = false;
+
         this.input.attachKeyboard(this.rootElement);
         this.input.attachMouse(this.rootElement);
 
@@ -216,8 +251,6 @@ export class BoxelGame {
             const target = this.gui.renderer.events.rootBoundary.hitTest(localX, localY);
             return target == null || target === this.guiBackground;
         });
-
-        await this.loadAssets();
     
         for(const blockState of blockStateRegistry.values()) {
             blockState.model.setTextureAtlas(this.textureAtlas!);
@@ -236,7 +269,8 @@ export class BoxelGame {
             "ui/slider_handle": "assets/textures/ui_slider_handle.png",
             "ui/crosshair": "assets/textures/crosshair.png",
             "ui/d_pad": "assets/textures/d_pad.png",
-            "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png"
+            "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png",
+            "ui/controller_crosshair": "assets/textures/controller_crosshair.png"
         }
 
         for await(const [ alias, src ] of Object.entries(textures)) {
@@ -290,8 +324,9 @@ export class BoxelGame {
             this.threeRenderer.render(activeStage.scene, activeStage.camera);
         }
         this.gui.render();
+        this.controllerCrosshair?.update(time);
+        this.input.update();
 
         this.queueNextFrame();
-        this.input.update();
     }
 }
