@@ -14,6 +14,7 @@ export class SettingsScreenStage extends GameStage {
     private readonly backButton: GuiButton;
     private readonly videoButton: GuiButton;
     private readonly controlsButton: GuiButton;
+    private readonly guiSettingsButton: GuiButton;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -35,18 +36,23 @@ export class SettingsScreenStage extends GameStage {
         this.titleText.anchor.set(0.5);
 
         this.backButton = new GuiButton("Back", 100, 30);
-        this.backButton.onPress.connect(() => {
+        this.backButton.on("pointerdown", () => {
             this.game.previousStage();
         });
 
         this.videoButton = new GuiButton("Video", 160, 24);
-        this.videoButton.onPress.connect(() => {
+        this.videoButton.on("pointerdown", () => {
             this.game.changeStage(new VideoSettingsScreenStage(game));
         });
 
         this.controlsButton = new GuiButton("Control", 160, 24);
-        this.controlsButton.onPress.connect(() => {
+        this.controlsButton.on("pointerdown", () => {
             this.game.changeStage(new ControlSettingsScreenStage(game));
+        });
+
+        this.guiSettingsButton = new GuiButton("GUI", 160, 24);
+        this.guiSettingsButton.on("pointerdown", () => {
+            this.game.changeStage(new GuiSettingsScreenStage(game));
         });
 
 
@@ -54,6 +60,7 @@ export class SettingsScreenStage extends GameStage {
             this.background, this.titleText,
             this.videoButton,
             this.controlsButton,
+            this.guiSettingsButton,
             this.backButton
         );
     }
@@ -68,6 +75,7 @@ export class SettingsScreenStage extends GameStage {
 
         this.videoButton.position.set(width / 2, height / 2 - 30);
         this.controlsButton.position.set(width / 2, height / 2);
+        this.guiSettingsButton.position.set(width / 2, height / 2 + 30);
 
         this.background.setSize(width, height);
     }

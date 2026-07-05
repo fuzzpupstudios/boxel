@@ -55,7 +55,7 @@ export class CreditsScreenStage extends GameStage {
 
         this.backButton = new GuiButton("Back", 100, 30);
 
-        this.backButton.onPress.connect(() => {
+        this.backButton.on("pointerdown", () => {
             this.saveSettings().then(() => {
                 this.game.previousStage();
             });

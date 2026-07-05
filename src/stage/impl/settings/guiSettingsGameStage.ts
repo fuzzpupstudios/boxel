@@ -5,13 +5,18 @@ import { ControlBinding } from "../../../input/input";
 import type { Time } from "../../../time";
 import { GameStage } from "../../gameStage";
 import { SliderSetting } from "./elements";
+import { GuiDPadLeft } from "../../../gui/mobile/dPadLeft";
+import { GuiDPadRight } from "../../../gui/mobile/dPadRight";
 
-export class VideoSettingsScreenStage extends GameStage {
+export class GuiSettingsScreenStage extends GameStage {
     private readonly titleText: Text;
     private readonly backButton: GuiButton;
-    private readonly fov: SliderSetting;
-    private readonly renderDistance: SliderSetting;
+    private readonly guiScale: SliderSetting;
+    private readonly dpadScale: SliderSetting;
     private readonly background: Sprite;
+
+    private readonly dpadLeftPreview: GuiDPadLeft;
+    private readonly dpadRightPreview: GuiDPadRight;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -22,7 +27,7 @@ export class VideoSettingsScreenStage extends GameStage {
         this.background.interactive = true;
 
         this.titleText = new Text({
-            text: Math.random() > 0.999 ? "Hideo Settings" : "Video Settings",
+            text: "Gui Settings",
             style: new TextStyle({
                 fill: 0xffffff,
                 fontSize: 24,
@@ -40,29 +45,45 @@ export class VideoSettingsScreenStage extends GameStage {
             });
         });
 
-        this.fov = new class extends SliderSetting {
+        this.guiScale = new class extends SliderSetting {
             protected override getValue() {
-                return game.settings.fov;
+                return game.settings.guiScale;
             }
             protected override setValue(value: number) {
-                game.settings.fov = value;
+                game.settings.guiScale = value;
             }
-        }("FOV", 10, 160, 1, 160, 24);
+        }("GUI Scale", 1, 8, 1, 160, 24);
 
-        this.renderDistance = new class extends SliderSetting {
+        const dpadLeftPreview = this.dpadLeftPreview = new GuiDPadLeft;
+        this.dpadLeftPreview.scale.set(game.settings.dPadScale);
+        dpadLeftPreview.interactive = false;
+        dpadLeftPreview.alpha = 0.5;
+
+        const dpadRightPreview = this.dpadRightPreview = new GuiDPadRight;
+        this.dpadRightPreview.scale.set(game.settings.dPadScale);
+        dpadRightPreview.interactive = false;
+        dpadRightPreview.alpha = 0.5;
+
+        this.dpadScale = new class extends SliderSetting {
             protected override getValue() {
-                return game.settings.renderDistance;
+                return game.settings.dPadScale;
             }
             protected override setValue(value: number) {
-                game.settings.renderDistance = value;
+                game.settings.dPadScale = value;
+                dpadLeftPreview.scale.set(game.settings.dPadScale);
+                dpadRightPreview.scale.set(game.settings.dPadScale);
             }
-        }("Render distance", 24, 512, 16, 160, 24);
+        }("D-Pad Scale", 0.5, 4, 0.25, 160, 24);
 
         this.gui.addChild(
-            this.background, this.titleText,
-            this.fov.element,
-            this.renderDistance.element,
-            this.backButton);
+            this.background,
+            this.dpadLeftPreview,
+            this.dpadRightPreview,
+            this.titleText,
+            this.guiScale.element,
+            this.dpadScale.element,
+            this.backButton
+        );
     }
 
     public async saveSettings() {
@@ -73,8 +94,11 @@ export class VideoSettingsScreenStage extends GameStage {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
 
-        this.fov.element.position.set(width / 2, 80);
-        this.renderDistance.element.position.set(width / 2, 110);
+        this.guiScale.element.position.set(width / 2, 80);
+        this.dpadScale.element.position.set(width / 2, 110);
+
+        this.dpadLeftPreview.position.set(0, height);
+        this.dpadRightPreview.position.set(width, height);
 
         this.background.setSize(width, height);
     }

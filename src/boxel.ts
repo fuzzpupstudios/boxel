@@ -1,19 +1,19 @@
 import * as PIXI from "pixi.js";
-import "pixi.js/text";
-import "pixi.js/sprite-nine-slice";
 import "pixi.js/mesh";
+import "pixi.js/sprite-nine-slice";
+import "pixi.js/text";
+import "pixi.js/events";
 import * as THREE from "three/webgpu";
 import { Assets } from "./assets/assets";
 import { TextureAtlas } from "./assets/textureAtlas";
 import { blockStateRegistry, registerBlocks } from "./block/blockRegistry";
-import { Input } from "./input/input";
+import { ControlBinding, Input } from "./input/input";
+import type { MainStorage } from "./persistence/mainStorage";
+import { PersistenceManager } from "./persistence/persistenceManager";
+import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
-import { Settings } from "./settings";
-import { PersistenceManager } from "./persistence/persistenceManager";
-import type { MainStorage } from "./persistence/mainStorage";
-import type { PlayingGameStage } from "./stage/impl/playingGameStage";
 
 
 export class BoxelGame {
@@ -21,6 +21,7 @@ export class BoxelGame {
 
     public readonly threeRenderer: THREE.WebGPURenderer;
     public readonly gui: PIXI.Application;
+    public guiBackground?: PIXI.Sprite;
 
     public readonly input: Input;
     public readonly assets = new Assets;
@@ -35,15 +36,20 @@ export class BoxelGame {
     private viewportWidth = 1;
     private viewportHeight = 1;
     private viewportPixelRatio = 1;
-    public guiScale = 2;
     public mainStorage: MainStorage | null = null;
 
-    constructor(rootElement: HTMLElement) {
+    constructor(
+        rootElement: HTMLElement,
+        private isDesktop: boolean
+    ) {
         BoxelGame.INSTANCE = this;
 
         this.rootElement = rootElement;
         
-        this.threeRenderer = new THREE.WebGPURenderer({ forceWebGL: true, antialias: false, stencil: true });
+        this.threeRenderer = new THREE.WebGPURenderer({
+            forceWebGL: true,
+            antialias: false
+        });
         this.gui = new PIXI.Application();
         
         this.input = new Input;
@@ -73,6 +79,7 @@ export class BoxelGame {
     private openStage(stage: GameStage) {
         this.gui.stage.addChild(stage.gui);
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+        this.updateSettings();
     }
 
     public getActiveStage<GameStageClass extends GameStage>(StageClass: typeof GameStage): GameStageClass | null {
@@ -117,19 +124,21 @@ export class BoxelGame {
     }
 
     private updateUiSizes(width: number, height: number, pixelRatio: number) {
+        const scale = this.settings.guiScale;
+
+        this.guiBackground!.setSize(
+            width / scale,
+            height / scale
+        );
+
         for(const stage of this.activeStages) {
             stage.resize(
-                width / this.guiScale,
-                height / this.guiScale,
-                pixelRatio * this.guiScale
+                width / scale,
+                height / scale,
+                pixelRatio * scale
             );
-            stage.gui.scale.set(this.guiScale);
+            stage.gui.scale.set(scale);
         }
-    }
-
-    public setGuiScale(guiScale: number) {
-        this.guiScale = guiScale;
-        this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
     public attachController(gamepad: Gamepad) {
@@ -146,6 +155,15 @@ export class BoxelGame {
         this.input.detachController(gamepad);
     }
 
+    public updateSettings() {
+        this.settings.guiScale = this.settings.guiScale;
+        this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+
+        for(const activeStage of this.activeStages) {
+            activeStage.updateSettings(this.settings);
+        }
+    }
+
     public async start() {
         this.mainStorage = this.persistenceManager.openMainStorage();
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
@@ -153,6 +171,7 @@ export class BoxelGame {
         await registerBlocks();
 
         await this.threeRenderer.init();
+        this.threeRenderer.setClearColor(0xffffff);
         await this.gui.init({
             backgroundAlpha: 0,
             antialias: false,
@@ -164,8 +183,29 @@ export class BoxelGame {
         this.rootElement.appendChild(this.threeRenderer.domElement);
         this.rootElement.appendChild(this.gui.canvas);
 
+        this.guiBackground = new PIXI.Sprite(PIXI.Texture.EMPTY);
+        this.guiBackground.interactive = true;
+        this.guiBackground.anchor.set(0);
+        this.gui.stage.addChild(this.guiBackground);
+
         this.input.attachKeyboard(this.rootElement);
-        this.input.attachMouse(this.gui.canvas);
+        this.input.attachMouse(this.rootElement);
+
+        // Callback is necessary because PIXI.js hasn't implemented
+        // touch events for elements yet:
+        // https://github.com/pixijs/pixijs/issues/10181
+        this.input.attachTouch(this.rootElement, (x, y) => {
+            const bounds = this.gui.canvas.getBoundingClientRect();
+            const localX = x - bounds.left;
+            const localY = y - bounds.top;
+
+            if(localX < 0 || localY < 0 || localX > bounds.width || localY > bounds.height) {
+                return true;
+            }
+
+            const target = this.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+            return target == null || target === this.guiBackground;
+        });
 
         await this.loadAssets();
     
@@ -184,7 +224,9 @@ export class BoxelGame {
             "ui/slider_background": "assets/textures/ui_slider_background.png",
             "ui/slider_fill": "assets/textures/ui_slider_fill.png",
             "ui/slider_handle": "assets/textures/ui_slider_handle.png",
-            "ui/crosshair": "assets/textures/crosshair.png"
+            "ui/crosshair": "assets/textures/crosshair.png",
+            "ui/d_pad": "assets/textures/d_pad.png",
+            "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png"
         }
 
         for await(const [ alias, src ] of Object.entries(textures)) {
@@ -211,6 +253,14 @@ export class BoxelGame {
         requestAnimationFrame(time => this.render(time));
     }
 
+    public toggleFullscreen() {
+        if(document.fullscreenElement !== document.body) {
+            document.body.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
     public render(miliseconds: number) {
         const dt = Math.min(miliseconds - this.lastRenderTime, 500);
         this.lastRenderTime = miliseconds;
@@ -222,6 +272,8 @@ export class BoxelGame {
             deltaTime: dt / 1000
         }
 
+        if(this.input.wasPressed(ControlBinding.FULLSCREEN)) this.toggleFullscreen();
+
         for(const activeStage of this.activeStages) {
             activeStage.tick(time);
 
@@ -231,5 +283,9 @@ export class BoxelGame {
 
         this.queueNextFrame();
         this.input.update();
+    }
+
+    public isOnDesktop() {
+        return this.isDesktop;
     }
 }

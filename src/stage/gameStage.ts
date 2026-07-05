@@ -2,6 +2,7 @@ import { Camera, OrthographicCamera, Scene } from "three";
 import type { BoxelGame } from "../boxel";
 import type { Time } from "../time";
 import { Container } from "pixi.js";
+import type { Settings } from "../settings";
 
 export abstract class GameStage {
     public scene: Scene = new Scene;
@@ -19,5 +20,8 @@ export abstract class GameStage {
 
     public isTopmostStage() {
         return this === this.game.activeStages.at(-1);
+    }
+    public updateSettings(settings: Settings) {
+        
     }
 }

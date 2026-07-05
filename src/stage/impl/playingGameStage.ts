@@ -4,7 +4,7 @@ import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
 import { GuiButton } from "../../gui/button";
-import { ControlBinding, GamepadAxis, MouseAxis } from "../../input/input";
+import { ControlBinding, GamepadAxis, MouseAxis, TouchAxis } from "../../input/input";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
 import { BlockStateOutline } from "../../rendering/blockStateOutline";
@@ -14,9 +14,14 @@ import { ChunkLoader } from "../../world/chunkLoader";
 import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
 import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
-import { SettingsScreenStage } from "./settingsGameStage";
+import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
 import { TileHologram, TileHologramProvider } from "../../gui/tileHologram";
+import { GuiDPadLeft } from "../../gui/mobile/dPadLeft";
+import type { Settings } from "../../settings";
+import { MobileController } from "../../input/mobileController";
+import { GuiDPadRight } from "../../gui/mobile/dPadRight";
+import { Topbar } from "../../gui/mobile/topbar";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -55,6 +60,8 @@ export class PlayingGameStage extends GameStage {
     private jumpCheckSucceeded = false;
     private placeBlockCooldown = 0;
     private destroyBlockCooldown = 0;
+    private touchStationaryTime = 0;
+    private touchPlaceEligible = false;
 
     private readonly crosshairSprite: Sprite;
 
@@ -64,6 +71,11 @@ export class PlayingGameStage extends GameStage {
     private readonly resumeButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly quitButton: GuiButton;
+
+    private readonly mobileController: MobileController | null = null;
+    private readonly dPadLeft: GuiDPadLeft | null = null;
+    private readonly dPadRight: GuiDPadRight | null = null;
+    private readonly topbar: Topbar | null = null;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -89,6 +101,16 @@ export class PlayingGameStage extends GameStage {
         this.crosshairSprite.scale.set(0.5);
         this.gui.addChild(this.crosshairSprite);
 
+        
+        if(!this.game.isOnDesktop()) {
+            this.dPadLeft = new GuiDPadLeft;
+            this.dPadRight = new GuiDPadRight;
+            this.topbar = new Topbar;
+            this.gui.addChild(this.dPadLeft, this.dPadRight, this.topbar);
+
+            this.mobileController = new MobileController(this.dPadLeft, this.dPadRight, this.topbar);
+            game.input.attachMobileController(this.mobileController);
+        }
 
         this.pausedContainer = new Container();
         this.pausedContainer.origin.set(0, 0);
@@ -110,17 +132,17 @@ export class PlayingGameStage extends GameStage {
         this.pausedText.anchor.set(0.5);
 
         this.resumeButton = new GuiButton("Resume", 100, 30);
-        this.resumeButton.onPress.connect(() => {
+        this.resumeButton.on("pointerdown", () => {
             this.setPaused(false);
         });
 
         this.settingsButton = new GuiButton("Settings", 100, 30);
-        this.settingsButton.onPress.connect(() => {
+        this.settingsButton.on("pointerdown", () => {
             this.game.changeStage(new SettingsScreenStage(game));
         });
 
         this.quitButton = new GuiButton("Save and Quit", 100, 30);
-        this.quitButton.onPress.connect(() => {
+        this.quitButton.on("pointerdown", () => {
             this.game.changeStage(new TitleScreenStage(game), false);
         });
 
@@ -154,7 +176,6 @@ export class PlayingGameStage extends GameStage {
         [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
 
         this.world.addTickable(this.localPlayer);
-        this.updateSettings();
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
@@ -162,6 +183,18 @@ export class PlayingGameStage extends GameStage {
 
         this.holdingBlockPreview.position.set(24, 24);
         this.crosshairSprite.position.set(width / 2, height / 2);
+
+
+        if(this.dPadLeft != null) {
+            this.dPadLeft.position.set(0, height);
+        }
+        if(this.dPadRight != null) {
+            this.dPadRight.position.set(width, height);
+        }
+        if(this.topbar != null) {
+            this.topbar.position.set(width / 2, 0);
+            this.topbar.setTopbarSize(width);
+        }
 
         this.pausedText.position.set(width / 2, 20);
         this.resumeButton.position.set(width / 2, height - 88);
@@ -177,21 +210,30 @@ export class PlayingGameStage extends GameStage {
         if(paused) {
             this.pausedContainer.visible = true;
 
-            this.game.input.mouse?.unlock();
-            this.game.input.keyboard?.unlock();
-            this.updateSettings();
+            if(this.game.isOnDesktop()) {
+                this.game.input.mouse?.unlock();
+                this.game.input.keyboard?.unlock();
+            }
         } else {
             this.pausedContainer.visible = false;
             
-            this.game.input.mouse?.lock();
-            this.game.input.keyboard?.lock();
-            this.updateSettings();
+            if(this.game.isOnDesktop()) {
+                this.game.input.mouse?.lock();
+                this.game.input.keyboard?.lock();
+            }
         }
     }
 
-    public updateSettings() {
-        this.chunkLoader.setRadius(this.game.settings.renderDistance);
-        this.worldRenderer.fogDistance.value = this.game.settings.renderDistance - 16;
+    public updateSettings(settings: Settings) {
+        this.chunkLoader.setRadius(settings.renderDistance);
+        this.worldRenderer.fogDistance.value = settings.renderDistance - 16;
+
+        if(this.dPadLeft != null) {
+            this.dPadLeft.scale.set(settings.dPadScale);
+        }
+        if(this.dPadRight != null) {
+            this.dPadRight.scale.set(settings.dPadScale);
+        }
     }
 
     public tick(time: Time) {
@@ -224,6 +266,7 @@ export class PlayingGameStage extends GameStage {
             let moveDeltaX = (
                 game.input.getAnalog(ControlBinding.RIGHT)
                 + game.input.getGamepadAxis(GamepadAxis.LEFT_X, game.settings.controllerDeadzone)
+                + game.input.getDpadStrafe()
                 - game.input.getAnalog(ControlBinding.LEFT)
             );
             let moveDeltaZ = (
@@ -259,52 +302,77 @@ export class PlayingGameStage extends GameStage {
             this.sprintFlickCooldown -= time.deltaTime;
 
             if(game.input.isPressed(ControlBinding.JUMP)) {
-
-                if(!this.jumpCheckSucceeded) {
-                    console.log("jump", this.flyCheckCooldown);
-                    this.jumpCheckSucceeded = true;
-
-                    if(this.flyCheckCooldown > 0) {
-                        this.localPlayer.setGliding(!this.localPlayer.gliding);
-                    }
-                    this.flyCheckCooldown = 0.25;
-                }
-
                 this.localPlayer.jump();
-            } else {
-                this.jumpCheckSucceeded = false;
             }
-            this.flyCheckCooldown -= time.deltaTime;
 
             if(game.input.wasPressed(ControlBinding.CROUCH)) {
+                console.log("crouch down");
                 this.localPlayer.setCrouching(true);
             }
             if(game.input.wasUnpressed(ControlBinding.CROUCH)) {
+                console.log("crouch up");
                 this.localPlayer.setCrouching(false);
             }
             if(game.input.wasPressed(ControlBinding.TOGGLE_CROUCH)) {
+                console.log("toggle crouch");
                 this.localPlayer.setCrouching(!this.localPlayer.crouching);
             }
 
-            if(game.input.isPressed(ControlBinding.DESTROY)) {
-                this.destroyBlockCooldown -= time.deltaTime;
 
-                if(this.destroyBlockCooldown <= 0) {
-                    this.localPlayer.destroy();
-                    this.destroyBlockCooldown = 0.2;
-                }
-            } else {
-                this.destroyBlockCooldown = 0;
-            }
-            if(game.input.isPressed(ControlBinding.USE)) {
-                this.placeBlockCooldown -= time.deltaTime;
+            {
+                let destroy = false;
+                let place = false;
+                if(this.game.isOnDesktop()) {
+                    destroy = game.input.isPressed(ControlBinding.DESTROY);
+                    place = game.input.isPressed(ControlBinding.USE);
+                } else if(game.input.touch != null) {
+                    const touch = game.input.touch;
+                    const justEnded = touch.justEndedTouches.at(-1);
 
-                if(this.placeBlockCooldown <= 0) {
-                    this.localPlayer.place();
-                    this.placeBlockCooldown = 0.2;
+                    if(touch.justStartedTouches.length) {
+                        this.touchStationaryTime = 0;
+                        this.touchPlaceEligible = true;
+                    }
+
+                    if(justEnded != null) {
+                        if(justEnded.duration < 0.25 && this.touchPlaceEligible) {
+                            place = true;
+                        }
+                    } else {
+                        if(this.touchStationaryTime < 0.25) {
+                            if(Math.abs(touch.dx) + Math.abs(touch.dy) > 3) {
+                                this.touchStationaryTime = -0.75;
+                                this.touchPlaceEligible = false;
+                            } else {
+                                this.touchStationaryTime += time.deltaTime;
+                            }
+                        }
+                        if(touch.touching && this.touchStationaryTime >= 0.25) {
+                            destroy = true;
+                        }
+                    }
                 }
-            } else {
-                this.placeBlockCooldown = 0;
+
+                if(destroy) {
+                    this.destroyBlockCooldown -= time.deltaTime;
+
+                    if(this.destroyBlockCooldown <= 0) {
+                        this.localPlayer.destroy();
+                        this.destroyBlockCooldown = 0.2;
+                    }
+                } else {
+                    this.destroyBlockCooldown = 0;
+                }
+                if(place) {
+                    this.placeBlockCooldown -= time.deltaTime;
+
+                    if(this.placeBlockCooldown <= 0) {
+                        this.localPlayer.place();
+                        this.placeBlockCooldown = 0.2;
+                    }
+                } else {
+                    this.placeBlockCooldown = 0;
+                }
             }
 
             if(game.input.wasPressed(ControlBinding.PICK_BLOCK)) {
@@ -321,7 +389,10 @@ export class PlayingGameStage extends GameStage {
                     game.input.getAnalog(ControlBinding.ROTATE_CCW) +
                     game.input.getGamepadAxis(GamepadAxis.RIGHT_X, game.settings.controllerDeadzone)
                 ) * game.settings.controllerSensitivity * 2 +
-                game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 * game.settings.mouseSensitivity
+                (
+                    game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 +
+                    game.input.getTouchAxis(TouchAxis.DELTA_X)
+                ) * game.settings.mouseSensitivity
             );
             if(game.settings.invertX) lookDeltaX *= -1;
 
@@ -331,7 +402,10 @@ export class PlayingGameStage extends GameStage {
                     game.input.getAnalog(ControlBinding.ROTATE_DOWN) +
                     game.input.getGamepadAxis(GamepadAxis.RIGHT_Y, game.settings.controllerDeadzone)
                 ) * game.settings.controllerSensitivity * 2 -
-                game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 * game.settings.mouseSensitivity
+                (
+                    game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 +
+                    game.input.getTouchAxis(TouchAxis.DELTA_Y)
+                ) * game.settings.mouseSensitivity
             );
             if(game.settings.invertY) lookDeltaY *= -1;
 
@@ -391,7 +465,12 @@ export class PlayingGameStage extends GameStage {
         if(this.persistentWorld != null) {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
         }
-        this.game.input.keyboard?.unlock();
-        this.game.input.mouse?.unlock();
+
+        if(this.game.isOnDesktop()) {
+            this.game.input.keyboard?.unlock();
+            this.game.input.mouse?.unlock();
+        } else {
+            this.game.input.detachMobileController();
+        }
     }
 }

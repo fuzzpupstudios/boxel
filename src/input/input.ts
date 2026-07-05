@@ -2,6 +2,8 @@ import { AXES, BUTTONS, GamepadWrapper } from "gamepad-wrapper";
 import { Keyboard } from "./keyboard";
 import { Mouse, MouseButton } from "./mouse";
 import { MathUtils } from "three";
+import { MobileButton, MobileController } from "./mobileController";
+import { TouchController } from "./touch";
 
 export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
@@ -15,7 +17,8 @@ export enum ControlBinding {
 
     NEXT_ITEM, PREVIOUS_ITEM,
 
-    PAUSE, BACK
+    PAUSE, BACK,
+    FULLSCREEN
 }
 
 export enum GamepadAxis {
@@ -28,9 +31,17 @@ export enum MouseAxis {
     DELTA_X, DELTA_Y
 }
 
+export enum TouchAxis {
+    X, Y,
+    DELTA_X, DELTA_Y,
+    DURATION
+}
+
 export class Input {
     public keyboard: Keyboard | null = null;
     public mouse: Mouse | null = null;
+    public touch: TouchController | null = null;
+    public mobile: MobileController | null = null;
     public readonly gamepads: Map<Gamepad, GamepadWrapper> = new Map;
 
     public readonly keyBindings: Partial<Record<ControlBinding, string>> = {
@@ -57,7 +68,9 @@ export class Input {
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
         [ControlBinding.PAUSE]: "Escape",
-        [ControlBinding.BACK]: "Escape"
+        [ControlBinding.BACK]: "Escape",
+
+        [ControlBinding.FULLSCREEN]: "F11"
     };
     public readonly controllerBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.JUMP]: BUTTONS.STANDARD.RC_BOTTOM,
@@ -83,6 +96,21 @@ export class Input {
         [ControlBinding.PREVIOUS_ITEM]: MouseButton.SCROLL_DOWN,
         [ControlBinding.PICK_BLOCK]: MouseButton.MIDDLE,
     };
+    public readonly mobileBindings: Partial<Record<ControlBinding, MobileButton>> = {
+        [ControlBinding.RIGHT]: MobileButton.RIGHT,
+        [ControlBinding.LEFT]: MobileButton.LEFT,
+        [ControlBinding.FORWARD]: MobileButton.FORWARD,
+        [ControlBinding.BACKWARD]: MobileButton.BACKWARD,
+
+        [ControlBinding.JUMP]: MobileButton.JUMP,
+
+        [ControlBinding.CROUCH]: MobileButton.CROUCH,
+        [ControlBinding.TOGGLE_CROUCH]: MobileButton.TOGGLE_CROUCH,
+
+        [ControlBinding.NEXT_ITEM]: MobileButton.NEXT_ITEM,
+        [ControlBinding.PREVIOUS_ITEM]: MobileButton.PREVIOUS_ITEM,
+        [ControlBinding.PAUSE]: MobileButton.PAUSE,
+    };
 
     public attachKeyboard(body: HTMLElement) {
         this.keyboard = new Keyboard;
@@ -99,6 +127,16 @@ export class Input {
         this.mouse = new Mouse;
         this.mouse.addListeners(body);
     }
+    public attachTouch(body: HTMLElement, touchValidator: (x: number, y: number) => boolean) {
+        this.touch = new TouchController(touchValidator);
+        this.touch.addListeners(body);
+    }
+    public attachMobileController(mobile: MobileController) {
+        this.mobile = mobile;
+    }
+    public detachMobileController() {
+        this.mobile = null;
+    }
 
     public isPressed(binding: ControlBinding): boolean {
         return this.getAnalog(binding) > 0.5;
@@ -112,6 +150,11 @@ export class Input {
         if(this.mouse != null) {
             if(binding in this.mouseBindings) {
                 if(this.mouse.wasPressed(this.mouseBindings[binding]!)) return true;
+            }
+        }
+        if(this.mobile != null) {
+            if(binding in this.mobileBindings) {
+                if(this.mobile.wasPressed(this.mobileBindings[binding]!)) return true;
             }
         }
         for(const gamepad of this.gamepads.values()) {
@@ -132,6 +175,11 @@ export class Input {
                 if(this.mouse.wasUnpressed(this.mouseBindings[binding]!)) return true;
             }
         }
+        if(this.mobile != null) {
+            if(binding in this.mobileBindings) {
+                if(this.mobile.wasUnpressed(this.mobileBindings[binding]!)) return true;
+            }
+        }
         for(const gamepad of this.gamepads.values()) {
             if(binding in this.controllerBindings) {
                 if(gamepad.getButtonUp(this.controllerBindings[binding]!)) return true;
@@ -145,14 +193,33 @@ export class Input {
 
         switch(axis) {
             case MouseAxis.DELTA_X:
-                return this.mouse.getDeltaPosition().x;
+                return this.mouse.dx;
             case MouseAxis.DELTA_Y:
-                return this.mouse.getDeltaPosition().y;
+                return this.mouse.dy;
             case MouseAxis.X:
-                return this.mouse.getPosition().x;
+                return this.mouse.x;
             case MouseAxis.Y:
-                return this.mouse.getPosition().y;
+                return this.mouse.y;
         }
+    }
+    public getTouchAxis(axis: TouchAxis, id?: number): number {
+        if(this.touch == null) return -1;
+
+        switch(axis) {
+            case TouchAxis.DELTA_X:
+                return id == null ? this.touch.dx : this.touch.dxAt(id);
+            case TouchAxis.DELTA_Y:
+                return id == null ? this.touch.dy : this.touch.dyAt(id);
+            case TouchAxis.X:
+                return id == null ? this.touch.x : this.touch.xAt(id);
+            case TouchAxis.Y:
+                return id == null ? this.touch.y : this.touch.yAt(id);
+            case TouchAxis.DURATION:
+                return id == null ? this.touch.duration : this.touch.durationAt(id);
+        }
+    }
+    public getDpadStrafe() {
+        return this.mobile?.strafe ?? 0;
     }
     public getGamepadAxis(axis: GamepadAxis, deadzone: number, clamp: boolean = true): number {
         let factor = 0;
@@ -203,6 +270,11 @@ export class Input {
                 if(this.mouse.isPressed(this.mouseBindings[binding]!)) factor++;
             }
         }
+        if(this.mobile != null) {
+            if(binding in this.mobileBindings) {
+                if(this.mobile.isPressed(this.mobileBindings[binding]!)) factor++;
+            }
+        }
         for(const gamepad of this.gamepads.values()) {
             if(binding in this.controllerBindings) {
                 factor += gamepad.getButtonValue(this.controllerBindings[binding]!);
@@ -223,6 +295,12 @@ export class Input {
         }
         if(this.mouse != null) {
             this.mouse.update();
+        }
+        if(this.touch != null) {
+            this.touch.update();
+        }
+        if(this.mobile != null) {
+            this.mobile.update();
         }
         for(const gamepad of this.gamepads.values()) {
             gamepad.update();

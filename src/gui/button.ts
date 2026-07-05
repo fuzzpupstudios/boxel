@@ -1,5 +1,5 @@
 import { ButtonContainer } from "@pixi/ui";
-import { Assets, Color, Container, NineSliceSprite, Text, TextStyle, Texture } from "pixi.js";
+import { Assets, Color, Container, NineSliceSprite, Text, TextStyle } from "pixi.js";
 
 export class GuiButton extends ButtonContainer {
     private _text: string;

@@ -1,5 +1,4 @@
 import { Vector2 } from "three";
-import { el } from "zod/locales";
 
 export enum MouseButton {
     LEFT = 0,
@@ -114,7 +113,7 @@ export class Mouse {
     }
 
     public isCurrentlyLocked() {
-        return this.element != null && document.pointerLockElement == this.element;
+        return this.element != null && document.pointerLockElement === this.element;
     }
     public isLocked() {
         return this.locked;

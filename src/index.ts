@@ -1,3 +1,4 @@
+import { isMobile } from "pixi.js";
 import { BoxelGame } from "./boxel";
 import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
 
@@ -6,7 +7,7 @@ main();
 async function main() {
     await preloadFastNoise2Module();
 
-    const game = new BoxelGame(document.body);
+    const game = new BoxelGame(document.body, !isMobile.any);
 
     window.addEventListener("resize", () => {
         game.resize(innerWidth, innerHeight, devicePixelRatio);
@@ -21,5 +22,4 @@ async function main() {
 
     await game.start();
     game.resize(innerWidth, innerHeight, devicePixelRatio);
-    game.setGuiScale(4);
 }
