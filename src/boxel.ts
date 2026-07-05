@@ -30,6 +30,9 @@ export class BoxelGame {
     public textureAtlas: TextureAtlas | null = null;
     public activeStages = new Array<GameStage>;
     public settings: Settings;
+    
+    public readonly isDesktop: boolean;
+    public readonly version: string;
 
     private lastRenderTime = 0;
     private rootElement: HTMLElement;
@@ -38,10 +41,17 @@ export class BoxelGame {
     private viewportPixelRatio = 1;
     public mainStorage: MainStorage | null = null;
 
+
     constructor(
         rootElement: HTMLElement,
-        private isDesktop: boolean
+        options?: {
+            isDesktop?: boolean,
+            version?: string
+        }
     ) {
+        this.isDesktop = options?.isDesktop ?? true;
+        this.version = options?.version ?? "unknown version";
+
         BoxelGame.INSTANCE = this;
 
         this.rootElement = rootElement;
@@ -283,9 +293,5 @@ export class BoxelGame {
 
         this.queueNextFrame();
         this.input.update();
-    }
-
-    public isOnDesktop() {
-        return this.isDesktop;
     }
 }

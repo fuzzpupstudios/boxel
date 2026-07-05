@@ -102,7 +102,7 @@ export class PlayingGameStage extends GameStage {
         this.gui.addChild(this.crosshairSprite);
 
         
-        if(!this.game.isOnDesktop()) {
+        if(!this.game.isDesktop) {
             this.dPadLeft = new GuiDPadLeft;
             this.dPadRight = new GuiDPadRight;
             this.topbar = new Topbar;
@@ -210,14 +210,14 @@ export class PlayingGameStage extends GameStage {
         if(paused) {
             this.pausedContainer.visible = true;
 
-            if(this.game.isOnDesktop()) {
+            if(this.game.isDesktop) {
                 this.game.input.mouse?.unlock();
                 this.game.input.keyboard?.unlock();
             }
         } else {
             this.pausedContainer.visible = false;
             
-            if(this.game.isOnDesktop()) {
+            if(this.game.isDesktop) {
                 this.game.input.mouse?.lock();
                 this.game.input.keyboard?.lock();
             }
@@ -322,7 +322,7 @@ export class PlayingGameStage extends GameStage {
             {
                 let destroy = false;
                 let place = false;
-                if(this.game.isOnDesktop()) {
+                if(this.game.isDesktop) {
                     destroy = game.input.isPressed(ControlBinding.DESTROY);
                     place = game.input.isPressed(ControlBinding.USE);
                 } else if(game.input.touch != null) {
@@ -466,7 +466,7 @@ export class PlayingGameStage extends GameStage {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
         }
 
-        if(this.game.isOnDesktop()) {
+        if(this.game.isDesktop) {
             this.game.input.keyboard?.unlock();
             this.game.input.mouse?.unlock();
         } else {

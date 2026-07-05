@@ -7,7 +7,10 @@ main();
 async function main() {
     await preloadFastNoise2Module();
 
-    const game = new BoxelGame(document.body, !isMobile.any);
+    const game = new BoxelGame(document.body, {
+        isDesktop: !isMobile.any,
+        version: (await import("../package.json")).version
+    });
 
     window.addEventListener("resize", () => {
         game.resize(innerWidth, innerHeight, devicePixelRatio);

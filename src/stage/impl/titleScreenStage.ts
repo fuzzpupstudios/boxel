@@ -11,6 +11,8 @@ import { IconButton } from "../../gui/iconButton";
 
 export class TitleScreenStage extends GameStage {
     private readonly titleText: Text;
+    private readonly versionText: Text;
+    private readonly watermark: Text;
     private readonly playButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly creditsButton: GuiButton;
@@ -34,6 +36,38 @@ export class TitleScreenStage extends GameStage {
         });
         this.titleText.anchor.set(0.5);
 
+        this.versionText = new Text({
+            text: "Version " + game.version,
+            style: new TextStyle({
+                fill: 0xffffff,
+                fontSize: 10,
+                align: "right",
+            }),
+        });
+        this.versionText.anchor.set(1, 1);
+
+        this.watermark = new Text({
+            text: "Fuzzpup Studios 2026",
+            style: new TextStyle({
+                fill: 0xffffff,
+                fontSize: 10,
+                align: "left",
+            }),
+            interactive: true
+        });
+        this.watermark.cursor = "pointer";
+        this.watermark.anchor.set(0, 1);
+
+        this.watermark.on("pointerdown", () => {
+            window.open("https://github.com/fuzzpupstudios", "_blank")
+        })
+        this.watermark.on("pointerover", () => {
+            this.watermark.style.fill = 0x8888ff;
+        });
+        this.watermark.on("pointerout", () => {
+            this.watermark.style.fill = 0xffffff;
+        });
+
         this.playButton = new GuiButton("Play", 100, 30);
         this.playButton.on("pointerdown", () => {
             this.game.changeStage(new PlayingGameStage(this.game), false);
@@ -55,7 +89,7 @@ export class TitleScreenStage extends GameStage {
         this.fullscreenButton.on("pointerdown", () => {
             game.toggleFullscreen();
         });
-        if(game.isOnDesktop()) {
+        if(game.isDesktop) {
             this.fullscreenButton.visible = false;
         }
 
@@ -63,6 +97,7 @@ export class TitleScreenStage extends GameStage {
         this.gui.addChild(
             this.background, this.titleText,
             this.playButton, this.settingsButton, this.creditsButton,
+            this.watermark, this.versionText,
             this.fullscreenButton
         );
     }
@@ -74,6 +109,8 @@ export class TitleScreenStage extends GameStage {
         this.creditsButton.position.set(width / 2, height / 2 + 74);
         this.fullscreenButton.position.set(width - 10, 10);
         this.background.setSize(width, height);
+        this.watermark.position.set(0, height);
+        this.versionText.position.set(width, height);
     }
 
     public tick(time: Time): void {
