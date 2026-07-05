@@ -328,12 +328,10 @@ export class PlayingGameStage extends GameStage {
 
 
             {
-                let destroy = false;
-                let place = false;
-                if(this.game.isDesktop) {
-                    destroy = game.input.isPressed(ControlBinding.DESTROY);
-                    place = game.input.isPressed(ControlBinding.USE);
-                } else if(game.input.touch != null) {
+                let destroy = game.input.isPressed(ControlBinding.DESTROY);
+                let place = game.input.isPressed(ControlBinding.USE);
+                
+                if(game.input.touch != null) {
                     const touch = game.input.touch;
                     const justEnded = touch.justEndedTouches.at(-1);
 
