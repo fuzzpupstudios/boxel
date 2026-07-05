@@ -267,10 +267,12 @@ export class BoxelGame {
             "ui/slider_background": "assets/textures/ui_slider_background.png",
             "ui/slider_fill": "assets/textures/ui_slider_fill.png",
             "ui/slider_handle": "assets/textures/ui_slider_handle.png",
+            "ui/input": "assets/textures/ui_input.png",
             "ui/crosshair": "assets/textures/crosshair.png",
             "ui/d_pad": "assets/textures/d_pad.png",
             "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png",
-            "ui/controller_crosshair": "assets/textures/controller_crosshair.png"
+            "ui/controller_crosshair": "assets/textures/controller_crosshair.png",
+            "ui/world_buttons": "assets/textures/ui_world_buttons.png",
         }
 
         for await(const [ alias, src ] of Object.entries(textures)) {

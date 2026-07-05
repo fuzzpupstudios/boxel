@@ -87,11 +87,6 @@ export class PlayingGameStage extends GameStage {
         this.localPlayer = new Player(this.world);
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!);
 
-        this.init().then(() => {
-            this.worldLoading = false;
-            this.setPaused(false);
-        });
-
         const hologramProvider = new TileHologramProvider(game.textureAtlas!);
         this.holdingBlockPreview = new TileHologram(hologramProvider);
         this.holdingBlockPreview.scale.set(16);
@@ -159,8 +154,8 @@ export class PlayingGameStage extends GameStage {
 
         this.gui.addChild(this.pausedContainer);
     }
-    private async init() {
-        this.persistentWorld = this.game.persistenceManager.openWorld("demo");
+    public async openWorld(worldId: string) {
+        this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
 
         this.world.setPersistentWorld(this.persistentWorld);
         this.world.setTerrainGenerator(new SimpleTerrainGenerator());
@@ -177,6 +172,9 @@ export class PlayingGameStage extends GameStage {
         [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
 
         this.world.addTickable(this.localPlayer);
+
+        this.worldLoading = false;
+        this.setPaused(false);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
@@ -330,7 +328,7 @@ export class PlayingGameStage extends GameStage {
             {
                 let destroy = game.input.isPressed(ControlBinding.DESTROY);
                 let place = game.input.isPressed(ControlBinding.USE);
-                
+
                 if(game.input.touch != null) {
                     const touch = game.input.touch;
                     const justEnded = touch.justEndedTouches.at(-1);

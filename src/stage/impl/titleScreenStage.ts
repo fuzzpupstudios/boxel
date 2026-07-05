@@ -8,6 +8,7 @@ import { GuiButton } from "../../gui/button";
 import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { CreditsScreenStage } from "./creditsGameStage";
 import { IconButton } from "../../gui/iconButton";
+import { WorldSelectStage } from "./worldSelectStage";
 
 export class TitleScreenStage extends GameStage {
     private readonly titleText: Text;
@@ -70,7 +71,7 @@ export class TitleScreenStage extends GameStage {
 
         this.playButton = new GuiButton("Play", 100, 30);
         this.playButton.on("pointerdown", () => {
-            this.game.changeStage(new PlayingGameStage(this.game), false);
+            this.game.changeStage(new WorldSelectStage(this.game));
         });
 
         this.settingsButton = new GuiButton("Settings", 100, 30);
