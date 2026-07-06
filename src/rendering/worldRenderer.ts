@@ -1,16 +1,17 @@
 import { MathUtils, Mesh, Scene } from "three";
-import { attribute, cameraPosition, float, mix, normalGeometry, positionWorld, texture, uint, uniform, uv, varying, vec3, vec4, vertexStage } from "three/tsl";
+import { attribute, cameraPosition, float, luminance, mix, normalGeometry, positionWorld, texture, uint, uniform, uv, varying, vec3, vec4, vertexStage } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 import type { TextureAtlas } from "../assets/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";
-import { lightUnpack } from "./lightUnpack";
+import { lightMix, lightUnpack } from "./lightUtils";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
     public maxChunkUpdates = 32;
     public readonly fogDistance = uniform(64);
+    public readonly skyColor = uniform(vec3(1.0, 1.0, 1.0));
     public readonly root = new Scene;
     public readonly chunkMesher: ChunkMesher;
     private readonly dirtyChunks = new Set<Chunk>;
@@ -35,7 +36,7 @@ export class WorldRenderer {
             
             const colorNode = vec4(
                 mix(
-                    terrainColor.rgb.mul(shadow).mul(lightColor),
+                    terrainColor.rgb.mul(lightMix(this.skyColor, shadow, lightColor)),
                     vec3(1, 1, 1),
                     playerDistanceNode
                 ),

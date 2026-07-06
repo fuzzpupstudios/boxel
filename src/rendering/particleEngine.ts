@@ -1,11 +1,11 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
-import { attribute, billboarding, positionGeometry, texture, uint, uv, varying, vertexStage } from "three/tsl";
-import { IntType, MeshBasicNodeMaterial } from "three/webgpu";
+import { attribute, billboarding, float, positionGeometry, texture, uint, uv, varying, vertexStage } from "three/tsl";
+import { IntType, MeshBasicNodeMaterial, UniformNode, Vector3 } from "three/webgpu";
 import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { lightUnpack } from "./lightUnpack";
+import { lightMix, lightUnpack } from "./lightUtils";
 
 export class ParticleEngine {
     public static readonly MAX_PARTICLES = 65535;
@@ -39,6 +39,7 @@ export class ParticleEngine {
     public constructor(
         public readonly world: World,
         private readonly particleTexture: Texture,
+        private readonly skyColor: UniformNode<"vec3", Vector3>,
         options?: Partial<{
             drag: number
         }>
@@ -106,7 +107,8 @@ export class ParticleEngine {
             const particleUv = particleUvRect.xy.add(
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
             ).toVar("particleUv");
-            const particleColor = texture(this.particleTexture, particleUv).mul(lightColor).toVar("particleColor");
+            const particleColor = texture(this.particleTexture, particleUv)
+                .mul(lightMix(this.skyColor, float(1), lightColor)).toVar("particleColor");
 
             this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
                 vertexNode: billboarding({

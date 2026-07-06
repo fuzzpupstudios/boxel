@@ -89,7 +89,7 @@ export class PlayingGameStage extends GameStage {
         this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
         this.chunkLoader = new ChunkLoader(this.world);
         this.localPlayer = new Player(this.world);
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!, this.worldRenderer.skyColor);
 
         const hologramProvider = new TileHologramProvider(game.textureAtlas!);
         this.holdingBlockPreview = new TileHologram(hologramProvider);
