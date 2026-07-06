@@ -26,6 +26,7 @@ export interface TileFace {
     uvMaxX: number;
     uvMinY: number;
     uvMaxY: number;
+    lit: boolean;
 }
 
 export interface TileMesh {
@@ -208,12 +209,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 0, 1,
                         );
-                        lighting.push(
-                            averageLight(light$__p, light$n_p, light$_np, light$nnp),
-                            averageLight(light$__p, light$n_p, light$_pp, light$npp),
-                            averageLight(light$__p, light$p_p, light$_pp, light$ppp),
-                            averageLight(light$__p, light$p_p, light$_np, light$pnp)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$__p, light$n_p, light$_np, light$nnp),
+                                averageLight(light$__p, light$n_p, light$_pp, light$npp),
+                                averageLight(light$__p, light$p_p, light$_pp, light$ppp),
+                                averageLight(light$__p, light$p_p, light$_np, light$pnp)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -242,12 +247,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 0, -1,
                         );
-                        lighting.push(
-                            averageLight(light$__n, light$p_n, light$_nn, light$pnn),
-                            averageLight(light$__n, light$p_n, light$_pn, light$ppn),
-                            averageLight(light$__n, light$n_n, light$_pn, light$npn),
-                            averageLight(light$__n, light$n_n, light$_nn, light$nnn)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$__n, light$p_n, light$_nn, light$pnn),
+                                averageLight(light$__n, light$p_n, light$_pn, light$ppn),
+                                averageLight(light$__n, light$n_n, light$_pn, light$npn),
+                                averageLight(light$__n, light$n_n, light$_nn, light$nnn)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -276,12 +285,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  1, 0, 0,
                         );
-                        lighting.push(
-                            averageLight(light$p_p, light$p__, light$pnp, light$pn_),
-                            averageLight(light$p_p, light$p__, light$ppp, light$pp_),
-                            averageLight(light$p_n, light$p__, light$ppn, light$pp_),
-                            averageLight(light$p_n, light$p__, light$pnn, light$pn_)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$p_p, light$p__, light$pnp, light$pn_),
+                                averageLight(light$p_p, light$p__, light$ppp, light$pp_),
+                                averageLight(light$p_n, light$p__, light$ppn, light$pp_),
+                                averageLight(light$p_n, light$p__, light$pnn, light$pn_)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -310,12 +323,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  -1, 0, 0,
                         );
-                        lighting.push(
-                            averageLight(light$n_n, light$n__, light$nnn, light$nn_),
-                            averageLight(light$n_n, light$n__, light$npn, light$np_),
-                            averageLight(light$n_p, light$n__, light$npp, light$np_),
-                            averageLight(light$n_p, light$n__, light$nnp, light$nn_)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$n_n, light$n__, light$nnn, light$nn_),
+                                averageLight(light$n_n, light$n__, light$npn, light$np_),
+                                averageLight(light$n_p, light$n__, light$npp, light$np_),
+                                averageLight(light$n_p, light$n__, light$nnp, light$nn_)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -344,12 +361,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 1, 0,
                         );
-                        lighting.push(
-                            averageLight(light$_p_, light$np_, light$_pp, light$npp),
-                            averageLight(light$_p_, light$np_, light$_pn, light$npn),
-                            averageLight(light$_p_, light$pp_, light$_pn, light$ppn),
-                            averageLight(light$_p_, light$pp_, light$_pp, light$ppp)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$_p_, light$np_, light$_pp, light$npp),
+                                averageLight(light$_p_, light$np_, light$_pn, light$npn),
+                                averageLight(light$_p_, light$pp_, light$_pn, light$ppn),
+                                averageLight(light$_p_, light$pp_, light$_pp, light$ppp)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -378,12 +399,16 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, -1, 0,
                         );
-                        lighting.push(
-                            averageLight(light$_n_, light$nn_, light$_nn, light$nnn),
-                            averageLight(light$_n_, light$nn_, light$_np, light$nnp),
-                            averageLight(light$_n_, light$pn_, light$_np, light$pnp),
-                            averageLight(light$_n_, light$pn_, light$_nn, light$pnn)
-                        );
+                        if(face.lit) {
+                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
+                        } else {
+                            lighting.push(
+                                averageLight(light$_n_, light$nn_, light$_nn, light$nnn),
+                                averageLight(light$_n_, light$nn_, light$_np, light$nnp),
+                                averageLight(light$_n_, light$pn_, light$_np, light$pnp),
+                                averageLight(light$_n_, light$pn_, light$_nn, light$pnn)
+                            );
+                        }
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0

@@ -15,6 +15,7 @@ export class BlockModelFace {
     public uvMaxX = 0;
     public uvMinY = 1;
     public uvMaxY = 1;
+    public lit = false;
     public textureSlot = "";
     public texturePosition: Box2 | null = null;
 
@@ -26,6 +27,7 @@ export class BlockModelFace {
         [ face.uvMinX, face.uvMinY, face.uvMaxX, face.uvMaxY ] = json.uv;
         face.textureSlot = json.texture ?? "axes";
         face.cull = json.cull ?? face.cull;
+        face.lit = json.lit ?? face.lit;
 
         return face;
     }
@@ -42,6 +44,7 @@ export class BlockModelFace {
             x: this.x, y: this.y, z: this.z,
             width: this.width, height: this.height,
             cull: this.cull,
+            lit: this.lit,
 
             // Map the local uv coordinates of the face to the
             // position passed in via setTexturePosition()

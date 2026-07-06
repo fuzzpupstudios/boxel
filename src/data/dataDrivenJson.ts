@@ -35,7 +35,8 @@ export namespace DataDrivenJson {
         size: [ number, number ],
         uv: [ number, number, number, number ],
         texture?: string,
-        cull?: boolean
+        cull?: boolean,
+        lit?: boolean
     }
     
     export interface BlockStateCollider {
