@@ -20,6 +20,7 @@ export abstract class Entity implements Tickable {
     public lastCollisionY = 0;
     public lastCollisionZ = 0;
     public gliding = false;
+    public stepHeight = 0.5;
 
     public constructor(world: World) {
         this.world = world;
@@ -59,11 +60,11 @@ export abstract class Entity implements Tickable {
         this.onGround = collisionY === -1;
         this.lastCollisionY = collisionY;
 
-        const collisionX = this.aabb.moveX(this.velocity.x * time.deltaTime);
+        const collisionX = this.aabb.moveX(this.velocity.x * time.deltaTime, this.stepHeight);
         if(collisionX !== 0) this.velocity.x = 0;
         this.lastCollisionX = collisionX;
 
-        const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime);
+        const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime, this.stepHeight);
         if(collisionZ !== 0) this.velocity.z = 0;
         this.lastCollisionZ = collisionZ;
 
