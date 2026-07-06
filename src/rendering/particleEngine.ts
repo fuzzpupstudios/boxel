@@ -125,9 +125,9 @@ export class ParticleEngine {
 
     private updateLight(index: number) {
         this.lighting[index] = this.world.lighting.values.getRaw(
-            this.positions[index * 3]! | 0,
-            this.positions[index * 3 + 1]! | 0,
-            this.positions[index * 3 + 2]! | 0,
+            Math.floor(this.positions[index * 3]!),
+            Math.floor(this.positions[index * 3 + 1]!),
+            Math.floor(this.positions[index * 3 + 2]!),
         )
     }
 
@@ -194,10 +194,6 @@ export class ParticleEngine {
             }
 
             this.updateLight(i);
-            if(this.lighting[i] === 0) {
-                this.killParticle(i);
-                continue;
-            }
 
             if(this.physics[physicsIndex + 5]) continue;
 
@@ -206,19 +202,19 @@ export class ParticleEngine {
             z = this.positions[positionIndex + 2]! += this.physics[physicsIndex + 2]! * dt;
 
             // Velocity & tile fetching
-            tile = worldTiles.getBlockStateId(x | 0, y | 0, z | 0);
+            tile = worldTiles.getBlockStateId(Math.floor(x), Math.floor(y), Math.floor(z));
 
             // Check if particle collides with any tiles
             if(this.colliderCounts.get(tile)) {
                 const hitboxes = this.tileColliders.get(tile)!.hitboxes;
 
                 for(let j = 0; j < hitboxes.length; j++) {
-                    if(x - (x | 0) > hitboxes[j]!.max.x) continue;
-                    if(y - (y | 0) > hitboxes[j]!.max.y) continue;
-                    if(z - (z | 0) > hitboxes[j]!.max.z) continue;
-                    if(x - (x | 0) < hitboxes[j]!.min.x) continue;
-                    if(y - (y | 0) < hitboxes[j]!.min.y) continue;
-                    if(z - (z | 0) < hitboxes[j]!.min.z) continue;
+                    if(x - Math.floor(x) > hitboxes[j]!.max.x) continue;
+                    if(y - Math.floor(y) > hitboxes[j]!.max.y) continue;
+                    if(z - Math.floor(z) > hitboxes[j]!.max.z) continue;
+                    if(x - Math.floor(x) < hitboxes[j]!.min.x) continue;
+                    if(y - Math.floor(y) < hitboxes[j]!.min.y) continue;
+                    if(z - Math.floor(z) < hitboxes[j]!.min.z) continue;
 
                     this.positions[positionIndex + 0]! -= this.physics[physicsIndex + 0]! * dt;
                     this.positions[positionIndex + 1]! -= this.physics[physicsIndex + 1]! * dt;

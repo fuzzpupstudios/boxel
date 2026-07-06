@@ -86,7 +86,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         face: Side, tileMesh?: TileMesh
     ) {
         if(tileMesh == null) {
-            const tile = this.world.tiles.getBlockStateId(x | 0, y | 0, z | 0);
+            const tile = this.world.tiles.getBlockStateId(Math.floor(x), Math.floor(y), Math.floor(z));
             tileMesh = this.tileMeshes.get(tile);
 
             if(tileMesh == null) return;
