@@ -1,5 +1,5 @@
 import { Vector3 } from "three";
-import { tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 import { type Tickable } from "../entity/entity";
 import type { Player } from "../entity/player";
 import type { PersistentWorld } from "../persistence/persistentWorld";
@@ -7,6 +7,8 @@ import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
 import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
+import { LightingEngine } from "./lightingEngine";
+import type { LightingChunk } from "./lighting/lightingGrid";
 
 export class Chunk {
     public readonly key: number;
@@ -16,6 +18,7 @@ export class Chunk {
         public readonly y: number,
         public readonly z: number,
         public readonly tiles: VoxelChunk,
+        public readonly lighting: LightingChunk,
     ) {
         this.key = VoxelGrid.encodeChunkKey(x, y, z);
     }
@@ -36,6 +39,7 @@ export class World {
     public persistentWorld: PersistentWorld | null = null;
     private readonly chunksToSave = new Set<Chunk>;
     private readonly loadingChunks = new Map<number, Promise<Chunk>>;
+    public readonly lighting = new LightingEngine(this);
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {
         this.persistentWorld = persistentWorld;
@@ -43,6 +47,10 @@ export class World {
 
     public setTerrainGenerator(terrainGenerator: TerrainGenerator) {
         this.terrainGenerator = terrainGenerator;
+    }
+
+    public setRenderer(renderer: WorldRenderer) {
+        this.renderer = renderer;
     }
 
     public async loadWorld() {
@@ -102,8 +110,24 @@ export class World {
 
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
-        for(let y = columnY; y < 8; y++) {
+
+        if(columnY >= 0) {
+            const minX = columnX << 4;
+            const minZ = columnZ << 4;
+            const maxX = (columnX + 1) << 4;
+            const maxZ = (columnZ + 1) << 4;
+            const maxY = (columnY + 8) << 4;
+
+            for(let x = minX; x < maxX; x++) {
+                for(let z = minZ; z < maxZ; z++) {
+                    this.lighting.sun.set(x, maxY - 1, z, 15);
+                }
+            }
+        }
+        
+        for(let y = columnY + 7; y >= columnY; y--) {
             this.getChunk(columnX, y, columnZ);
+            this.lighting.updateChunk(columnX, y, columnZ, false);
         }
     }
 
@@ -117,7 +141,8 @@ export class World {
         // Otherwise, try to make a new chunk from existing tiles
         const tileChunk = this.tiles.chunks.get(chunkKey);
         if(tileChunk != null) {
-            chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk);
+            const lightingChunk = this.lighting.values.getChunkOrCreate(chunkX, chunkY, chunkZ);
+            chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk, lightingChunk);
             this.chunks.set(chunkKey, chunk);
             return chunk;
         }
@@ -143,6 +168,7 @@ export class World {
                 chunkX + ", " + chunkY + ", " + chunkZ);
             
             this.tiles.chunks.set(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ), chunk.tiles);
+            this.lighting.values.chunks.set(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ), chunk.lighting);
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
@@ -164,6 +190,7 @@ export class World {
 
         if(!markDirty) return;
         this.markChunkDirty(x >> 4, y >> 4, z >> 4);
+        this.lighting.updateLight(x, y, z, true);
 
         if(this.renderer === null) return;
 

@@ -7,6 +7,8 @@ export namespace DataDrivenJson {
     export interface BlockState {
         model: BlockStateModel,
         collider?: BlockStateCollider,
+        emission?: [ number, number, number ],
+        attenuation?: [ number, number, number ],
         tags?: string[]
     }
 
@@ -19,7 +21,7 @@ export namespace DataDrivenJson {
         occludeWest?: boolean,
         occludeUp?: boolean,
         occludeDown?: boolean,
-        aoCastWeight?: number;
+        aoCastWeight?: number,
         textures?: Record<string, string>,
         north?: BlockStateModelFace[],
         east?: BlockStateModelFace[],

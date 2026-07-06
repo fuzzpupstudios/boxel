@@ -65,6 +65,7 @@ export class BoxelGame {
             antialias: false
         });
         this.gui = new PIXI.Application();
+        (<any>globalThis).__PIXI_APP__ = this.gui;
         
         this.input = new Input;
         this.settings = Settings.parse({});

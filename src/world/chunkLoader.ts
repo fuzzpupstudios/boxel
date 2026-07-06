@@ -5,7 +5,7 @@ import { VoxelGrid } from "./voxelGrid";
 import type { Chunk, World } from "./world";
 
 export class ChunkLoader {
-    public maxColumnGenerations = 2;
+    public maxColumnGenerations = 1;
     public maxChunkUnloads = 64;
 
     private readonly origin = new Vector3(Infinity);
@@ -35,7 +35,9 @@ export class ChunkLoader {
         }
     }
 
-    public updateChunksToLoad() {        
+    public updateChunksToLoad() {
+        if(this.world.renderer === null) return;
+
         const marker = this.origin;
         const originX = marker.x >> 4;
         const originY = marker.y >> 4;
@@ -54,6 +56,7 @@ export class ChunkLoader {
                 for(let y = minY; y <= maxY; y++) {
                     const key = VoxelGrid.encodeChunkKey(x, y, z);
                     if(!this.world.tiles.chunks.has(key)) continue;
+                    if(this.world.renderer.renderedChunkKeyList.has(key)) continue;
 
                     const distanceSquare =
                         (x - originX + 0.5) * (x - originX + 0.5) +

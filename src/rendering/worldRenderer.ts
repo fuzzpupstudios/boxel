@@ -1,10 +1,11 @@
 import { MathUtils, Mesh, Scene } from "three";
+import { attribute, cameraPosition, float, mix, normalGeometry, positionWorld, texture, uint, uniform, uv, varying, vec3, vec4, vertexStage } from "three/tsl";
+import { MeshBasicNodeMaterial } from "three/webgpu";
+import type { TextureAtlas } from "../assets/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";
-import type { TextureAtlas } from "../assets/textureAtlas";
-import { vec4, texture, uv, normalGeometry, vec3, attribute, float, select, If, mix, positionWorld, cameraPosition, uniform } from "three/tsl";
-import { MeshBasicNodeMaterial } from "three/webgpu";
+import { lightUnpack } from "./lightUnpack";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
@@ -14,8 +15,9 @@ export class WorldRenderer {
     public readonly chunkMesher: ChunkMesher;
     private readonly dirtyChunks = new Set<Chunk>;
     private readonly priorityDirtyChunks = new Set<Chunk>;
-    private readonly renderedChunks = new Map<Chunk, Mesh>;
+    private readonly renderedChunks = new Map<Chunk, Mesh | null>;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
+    public readonly renderedChunkKeyList = new Set<number>;
 
     public constructor(
         public readonly world: World,
@@ -24,15 +26,19 @@ export class WorldRenderer {
         this.chunkMesher = new ChunkMesher(world);
 
         {
+            const light = uint(attribute("lighting") as any);
+            const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
+
             const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
             const c = 2;
             const aoFactor = float(1).sub(float(c).div((<any>attribute("aoFactor", "float")).add(c)));
             const shadow = normalGeometry.dot(vec3(0.6, 1.0, 0.2).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
             const playerDistanceNode = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+            
             const colorNode = vec4(
                 mix(
                     mix(
-                        terrainColor.rgb.mul(shadow),
+                        terrainColor.rgb.mul(shadow).mul(lightColor),
                         vec3(0, 0, 0),
                         aoFactor
                     ),
@@ -44,7 +50,7 @@ export class WorldRenderer {
             this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.1 });
         }
 
-        world.renderer = this;
+        world.setRenderer(this);
     }
 
     public markDirty(chunk: Chunk, priority: boolean = false) {
@@ -88,6 +94,7 @@ export class WorldRenderer {
             mesh.removeFromParent();
         }
         this.renderedChunks.delete(chunk);
+        this.renderedChunkKeyList.delete(chunk.key);
     }
 
     private renderChunk(chunk: Chunk) {
@@ -113,14 +120,19 @@ export class WorldRenderer {
         let mesh = this.renderedChunks.get(chunk);
 
         if(mesh == null) {
+            this.renderedChunkKeyList.add(chunk.key);
+            
             if(geometrySize > 0) {
                 mesh = new Mesh(geometry, this.terrainMaterial);
-                this.renderedChunks.set(chunk, mesh);
                 mesh.matrixAutoUpdate = false;
+                
+                this.renderedChunks.set(chunk, mesh);
 
                 mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
                 mesh.updateMatrix();
                 this.root.add(mesh);
+            } else {
+                this.renderedChunks.set(chunk, null);
             }
         } else {
             mesh.geometry.dispose();

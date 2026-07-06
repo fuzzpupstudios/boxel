@@ -1,0 +1,310 @@
+{
+    "id": "base:lamp",
+    "states": {
+        "color=white": {
+            "model": {
+                "textures": {
+                    "lamp": "assets/textures/lamp.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 15, 15, 15, 0 ]
+        },
+        "color=red": {
+            "model": {
+                "textures": {
+                    "lamp": "assets/textures/red_lamp.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 15, 0, 0, 0 ]
+        },
+        "color=green": {
+            "model": {
+                "textures": {
+                    "lamp": "assets/textures/green_lamp.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 15, 0, 0 ]
+        },
+        "color=blue": {
+            "model": {
+                "textures": {
+                    "lamp": "assets/textures/blue_lamp.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 0, 15, 0 ]
+        },
+        "color=sky": {
+            "model": {
+                "textures": {
+                    "lamp": "assets/textures/sun_lamp.png"
+                },
+                "north": [
+                    {
+                        "pos": [ 0, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "east": [
+                    {
+                        "pos": [ 1, 0, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "south": [
+                    {
+                        "pos": [ 1, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "west": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "up": [
+                    {
+                        "pos": [ 0, 1, 1 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ],
+                "down": [
+                    {
+                        "pos": [ 0, 0, 0 ],
+                        "size": [ 1, 1 ],
+                        "uv": [ 0, 0, 1, 1 ],
+                        "texture": "lamp"
+                    }
+                ]
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 0, 0, 15 ]
+        }
+    }
+}

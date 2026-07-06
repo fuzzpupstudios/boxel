@@ -25,4 +25,6 @@ async function main() {
 
     await game.start();
     game.resize(innerWidth, innerHeight, devicePixelRatio);
+    
+    (<any>window).game = game;
 }

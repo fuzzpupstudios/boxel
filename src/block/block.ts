@@ -1,3 +1,4 @@
+import { MathUtils } from "three";
 import type { TileCollider } from "../entity/entity";
 import type { BlockModel } from "./blockModel";
 
@@ -17,8 +18,15 @@ export class BlockState {
         public readonly stateKey: string,
         public readonly model: BlockModel,
         public readonly collider: TileCollider,
-        public readonly tags: Set<string>
-    ) {}
+        public readonly tags: Set<string>,
+        public readonly emission: [ number, number, number, number ],
+        public readonly attenuation: [ number, number, number, number ]
+    ) {
+        for(let i = 0; i < 4; i++) {
+            emission[i] = MathUtils.clamp(emission[i]!, 0, 15);
+            attenuation[i] = MathUtils.clamp(attenuation[i]!, 1, 15);
+        }
+    }
 
     public getFullId() {
         return this.block.id + "[" + this.stateKey + "]";

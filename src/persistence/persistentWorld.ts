@@ -4,6 +4,7 @@ import { VoxelChunk } from "../world/voxelGrid";
 import z from "zod";
 import { Player } from "../entity/player";
 import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
+import { LightingChunk } from "../world/lighting/lightingGrid";
 
 export interface SerializedChunk {
     version: number,
@@ -11,6 +12,7 @@ export interface SerializedChunk {
     y: number,
     z: number,
     tiles: ArrayBuffer,
+    lighting: ArrayBuffer,
     palette: string[]
 }
 
@@ -173,7 +175,22 @@ export class PersistentWorld {
         const serializedChunk = await db.get("chunks", [ x, y, z ]);
         if(serializedChunk == null) return null;
 
+        // perform chunk schema upgrades
+        let upgraded = false;
+        
+        if(serializedChunk.version == null) serializedChunk.version = -1;
+        for(let i = serializedChunk.version + 1; i < chunkUpgrades.length; i++) {
+            console.log("upgraded chunk " + serializedChunk.x + ", " +
+                serializedChunk.y + ", " + serializedChunk.z + " to version " + i);
+            upgraded = true;
+            chunkUpgrades[i]!(serializedChunk);
+        }
+
         const chunk = this.deserializeChunk(serializedChunk);
+        
+        if(upgraded) {
+            await this.saveChunk(chunk);
+        }
 
         return chunk;
     }
@@ -183,27 +200,23 @@ export class PersistentWorld {
             version: CHUNK_SCHEMA_VERSION,
             x: chunk.x, y: chunk.y, z: chunk.z,
             tiles: chunk.tiles.tiles.buffer,
-            palette: chunk.tiles.palette
+            palette: chunk.tiles.palette,
+            lighting: chunk.lighting.values.buffer
         }
     }
 
     private deserializeChunk(serialized: SerializedChunk): Chunk {
-        // perform chunk schema upgrades
-        if(serialized.version == null) serialized.version = -1;
-        for(let i = serialized.version + 1; i < chunkUpgrades.length; i++) {
-            console.log("upgraded chunk " + serialized.x + ", " +
-                serialized.y + ", " + serialized.z + " to version " + i);
-            chunkUpgrades[i]!(serialized);
-        }
-
         const voxelChunk = new VoxelChunk;
+        const lightingChunk = new LightingChunk;
         
         voxelChunk.tiles.set(new Uint8Array(serialized.tiles));
+        lightingChunk.values.set(new Uint16Array(serialized.lighting));
         for(let i = 0; i < serialized.palette.length; i++) {
             voxelChunk.palette[i] = serialized.palette[i]!;
             voxelChunk.paletteMap.set(serialized.palette[i]!, i);
         }
-        const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk);
+        const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk, lightingChunk);
+
         return chunk;
     }
 }

@@ -27,7 +27,11 @@ export class DataDrivenBlock extends Block {
                 jsonState.collider ?? { hitboxes: [] });
 
             const tags = new Set<string>(jsonState.tags ?? []);
-            const blockState = new BlockState(this, stateKey, model, collider, tags);
+            const emission = jsonState.emission ?? [ 0, 0, 0, 0 ];
+            if(emission.length != 4) throw new Error("Emission must have 4 numbers");
+            const attenuation = jsonState.attenuation ?? [ 15, 15, 15, 15 ];
+            if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
+            const blockState = new BlockState(this, stateKey, model, collider, tags, emission, attenuation);
 
             this.states.set(stateKey, blockState);
             defaultState ??= blockState;

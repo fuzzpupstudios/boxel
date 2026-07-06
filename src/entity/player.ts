@@ -95,18 +95,24 @@ export class Player extends Entity {
     public destroy() {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
-        const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
-        gameStage?.blockBreakParticles.blockDestructionParticles(
+        const previousState = this.world.getBlockState(
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
-        )
+        );
 
         this.world.setBlockState(
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
             "base:air[default]"
+        );
+        const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
+        gameStage?.blockBreakParticles.blockDestructionParticles(
+            this.targetedBlock.voxel.x,
+            this.targetedBlock.voxel.y,
+            this.targetedBlock.voxel.z,
+            previousState
         );
     }
     public place() {

@@ -32,6 +32,9 @@ export async function registerBlocks() {
     blockRegistry.register("cobblestone_stair", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone_stair.json")));
 
+    blockRegistry.register("lamp", new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/lamp.json")));
+
     blockRegistry.register("dirt", new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/dirt.json")));
 

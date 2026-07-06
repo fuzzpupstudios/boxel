@@ -1,4 +1,4 @@
-import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute } from "three";
+import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
 import type { World } from "../world/world";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 
@@ -42,6 +42,7 @@ export interface TileMesh {
 class TileCache {
     public readonly halo = new Array<string>(18 ** 3);
     public readonly haloAo = new Float32Array(18 ** 3);
+    public readonly haloLighting = new Uint16Array(18 ** 3);
 
     public constructor(
         private readonly aoWeights: Map<string, number>
@@ -64,6 +65,7 @@ class TileCache {
                     tile = world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
                     this.halo[i] = tile;
                     this.haloAo[i] = this.aoWeights.get(tile) || 0;
+                    this.haloLighting[i] = world.lighting.values.getRaw(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
                 }
             }
         }
@@ -74,6 +76,9 @@ class TileCache {
     }
     public aoAt(x: number, y: number, z: number) {
         return this.haloAo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
+    }
+    public lightingAt(x: number, y: number, z: number) {
+        return this.haloLighting[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
     }
 }
 
@@ -123,6 +128,7 @@ export class ChunkMesher {
 
         // [ pos.x, pos.y, pos.z, uv.x, uv.y, normal.x, normal.y, normal.z, aoFactor ]
         const floatAttributes = new Array;
+        const lighting = new Array;
         const indices = new Array;
 
         let vertexCount = 0;
@@ -208,7 +214,12 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 0, 1,
             /* aoFactor */  (ao$pnp + ao$p_p + ao$_np) * face.aoReceiveWeight,
-
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x, y, z + 1),
+                            tiles.lightingAt(x, y, z + 1),
+                            tiles.lightingAt(x, y, z + 1),
+                            tiles.lightingAt(x, y, z + 1)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -241,7 +252,12 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 0, -1,
             /* aoFactor */  (ao$nnn + ao$n_n + ao$_nn) * face.aoReceiveWeight,
-
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x, y, z - 1),
+                            tiles.lightingAt(x, y, z - 1),
+                            tiles.lightingAt(x, y, z - 1),
+                            tiles.lightingAt(x, y, z - 1)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -274,7 +290,12 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  1, 0, 0,
             /* aoFactor */  (ao$pnn + ao$p_n + ao$pn_) * face.aoReceiveWeight,
-
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x + 1, y, z),
+                            tiles.lightingAt(x + 1, y, z),
+                            tiles.lightingAt(x + 1, y, z),
+                            tiles.lightingAt(x + 1, y, z)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -307,7 +328,12 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  -1, 0, 0,
             /* aoFactor */  (ao$nnp + ao$n_p + ao$nn_) * face.aoReceiveWeight,
-
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x - 1, y, z),
+                            tiles.lightingAt(x - 1, y, z),
+                            tiles.lightingAt(x - 1, y, z),
+                            tiles.lightingAt(x - 1, y, z)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -339,8 +365,13 @@ export class ChunkMesher {
             /* pos      */  x + face.x + face.width, y + face.y, z + face.z,
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, 1, 0,
-            /* aoFactor */  (ao$ppp + ao$pp_ + ao$_pp) * face.aoReceiveWeight,
-
+            /* aoFactor */  (ao$ppp + ao$pp_ + ao$_pp) * face.aoReceiveWeight
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x, y + 1, z),
+                            tiles.lightingAt(x, y + 1, z),
+                            tiles.lightingAt(x, y + 1, z),
+                            tiles.lightingAt(x, y + 1, z)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -373,7 +404,12 @@ export class ChunkMesher {
             /* uv       */  face.uvMaxX, face.uvMinY,
             /* normal   */  0, -1, 0,
             /* aoFactor */  (ao$pnn + ao$pn_ + ao$_nn) * face.aoReceiveWeight,
-
+                        );
+                        lighting.push(
+                            tiles.lightingAt(x, y - 1, z),
+                            tiles.lightingAt(x, y - 1, z),
+                            tiles.lightingAt(x, y - 1, z),
+                            tiles.lightingAt(x, y - 1, z)
                         );
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -390,12 +426,17 @@ export class ChunkMesher {
         // Copy float data to Float32Array and make it an InterleavedBuffer
         const interleavedFloatAttributes = new InterleavedBuffer(
             new Float32Array(floatAttributes), 9);
+
+        // Copy lighting data to Uint16Array and make it a Uint16BufferAttribute
+        const lightingAttribute = new Uint16BufferAttribute(lighting, 1);
+        lightingAttribute.gpuType = IntType;
         
         // Use interleaved buffer data to set vertex attributes
         geometry.setAttribute("position", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 0));
         geometry.setAttribute("uv", new InterleavedBufferAttribute(interleavedFloatAttributes, 2, 3));
         geometry.setAttribute("normal", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 5));
         geometry.setAttribute("aoFactor", new InterleavedBufferAttribute(interleavedFloatAttributes, 1, 8));
+        geometry.setAttribute("lighting", lightingAttribute);
 
         // Set indices
         geometry.setIndex(indices);
