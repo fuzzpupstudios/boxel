@@ -30,18 +30,12 @@ export class WorldRenderer {
             const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
 
             const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
-            const c = 2;
-            const aoFactor = float(1).sub(float(c).div((<any>attribute("aoFactor", "float")).add(c)));
             const shadow = normalGeometry.dot(vec3(0.6, 1.0, 0.2).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
             const playerDistanceNode = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
             
             const colorNode = vec4(
                 mix(
-                    mix(
-                        terrainColor.rgb.mul(shadow).mul(lightColor),
-                        vec3(0, 0, 0),
-                        aoFactor
-                    ),
+                    terrainColor.rgb.mul(shadow).mul(lightColor),
                     vec3(1, 1, 1),
                     playerDistanceNode
                 ),

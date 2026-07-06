@@ -32,12 +32,12 @@ export class LightingEngine {
         
         if(markDirty) {
             this.world.markChunksDirty(
-                affectedExtent.min.x >> 4,
-                affectedExtent.min.y >> 4,
-                affectedExtent.min.z >> 4,
-                affectedExtent.max.x >> 4,
-                affectedExtent.max.y >> 4,
-                affectedExtent.max.z >> 4
+                (affectedExtent.min.x - 1) >> 4,
+                (affectedExtent.min.y - 1) >> 4,
+                (affectedExtent.min.z - 1) >> 4,
+                (affectedExtent.max.x + 1) >> 4,
+                (affectedExtent.max.y + 1) >> 4,
+                (affectedExtent.max.z + 1) >> 4
             );
         }
     }
@@ -51,12 +51,12 @@ export class LightingEngine {
         this.blue.updateLight(x, y, z, affectedExtent);
         
         this.world.markChunksDirty(
-            affectedExtent.min.x >> 4,
-            affectedExtent.min.y >> 4,
-            affectedExtent.min.z >> 4,
-            affectedExtent.max.x >> 4,
-            affectedExtent.max.y >> 4,
-            affectedExtent.max.z >> 4,
+            (affectedExtent.min.x - 1) >> 4,
+            (affectedExtent.min.y - 1) >> 4,
+            (affectedExtent.min.z - 1) >> 4,
+            (affectedExtent.max.x + 1) >> 4,
+            (affectedExtent.max.y + 1) >> 4,
+            (affectedExtent.max.z + 1) >> 4,
             priority
         )
     }

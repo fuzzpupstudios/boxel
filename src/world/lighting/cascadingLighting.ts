@@ -94,7 +94,8 @@ export class CascadingLighting extends Lighting {
             for(let z = minZ; z <= maxZ; z++) {
                 for(let y = maxY; y >= minY; y--) {
                     const current = this.lightingGrid.get(x, y, z, this.offset);
-                    const next = Math.max(current, this.getPropagatedIntensity(x, y, z));
+                    const propagated = this.getPropagatedIntensity(x, y, z);
+                    const next = y === maxY ? Math.max(current, propagated) : propagated;
 
                     if(current === next) continue;
 
