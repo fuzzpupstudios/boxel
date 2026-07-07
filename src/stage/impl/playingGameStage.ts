@@ -356,7 +356,7 @@ export class PlayingGameStage extends GameStage {
             }
         }
 
-        if(game.input.mouse != null && game.input.controllers.size == 0) {
+        if(game.input.mouse != null && game.input.controllers.size == 0 && game.isDesktop) {
             if(game.input.mouse.isCurrentlyLocked() || this.pointerUnlockers > 0) {
                 this.unlockTime = 0;
             } else {
