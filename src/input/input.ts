@@ -16,8 +16,12 @@ export enum ControlBinding {
 
     NEXT_ITEM, PREVIOUS_ITEM,
 
+    INVENTORY,
+
     PAUSE, BACK,
-    FULLSCREEN
+    FULLSCREEN,
+
+    SPLIT_STACK, DROP_ONE, SWAP_STACK, QUICK_MOVE
 }
 
 export enum MouseAxis {
@@ -61,6 +65,8 @@ export class Input {
         [ControlBinding.NEXT_ITEM]: "BracketRight",
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
+        [ControlBinding.INVENTORY]: "KeyE",
+
         [ControlBinding.PAUSE]: "Escape",
         [ControlBinding.BACK]: "Escape",
 
@@ -79,16 +85,25 @@ export class Input {
         [ControlBinding.NEXT_ITEM]: ControllerButton.RIGHT_BUMPER,
         [ControlBinding.PREVIOUS_ITEM]: ControllerButton.LEFT_BUMPER,
 
+        [ControlBinding.INVENTORY]: ControllerButton.X,
+
         [ControlBinding.TOGGLE_CROUCH]: ControllerButton.LEFT_STICK,
-        [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK
+        [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK,
+
+        [ControlBinding.SPLIT_STACK]: ControllerButton.X,
+        [ControlBinding.DROP_ONE]: ControllerButton.X,
+        [ControlBinding.SWAP_STACK]: ControllerButton.A,
+        [ControlBinding.QUICK_MOVE]: ControllerButton.Y,
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
         [ControlBinding.USE]: MouseButton.RIGHT,
-        [ControlBinding.PAUSE]: MouseButton.UNLOCK,
         [ControlBinding.NEXT_ITEM]: MouseButton.SCROLL_UP,
         [ControlBinding.PREVIOUS_ITEM]: MouseButton.SCROLL_DOWN,
         [ControlBinding.PICK_BLOCK]: MouseButton.MIDDLE,
+        [ControlBinding.SWAP_STACK]: MouseButton.LEFT,
+        [ControlBinding.SPLIT_STACK]: MouseButton.RIGHT,
+        [ControlBinding.DROP_ONE]: MouseButton.RIGHT,
     };
     public readonly mobileBindings: Partial<Record<ControlBinding, MobileButton>> = {
         [ControlBinding.RIGHT]: MobileButton.RIGHT,

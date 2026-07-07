@@ -45,4 +45,19 @@ export namespace DataDrivenJson {
             to: [ number, number, number ]
         }[]
     }
+
+    export interface InventoryGuiSlotType {
+        id: number;
+        pos: [ number, number ],
+        size?: number,
+        insert?: boolean;
+        extract?: boolean;
+    }
+
+    export interface InventoryGuiType {
+        id: string;
+        texture: string;
+        slots: InventoryGuiSlotType[];
+        interactive?: boolean;
+    }
 }

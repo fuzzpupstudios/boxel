@@ -1,0 +1,17 @@
+{
+    "id": "base:hotbar",
+    "texture": "assets/textures/ui_hotbar.png",
+    "interactive": false,
+    "slots": [
+        { "id": 0, "pos": [15, 10], "size": 20 },
+        { "id": 1, "pos": [38, 10], "size": 20 },
+        { "id": 2, "pos": [61, 10], "size": 20 },
+        { "id": 3, "pos": [84, 10], "size": 20 },
+        { "id": 4, "pos": [107, 10], "size": 20 },
+        { "id": 5, "pos": [130, 10], "size": 20 },
+        { "id": 6, "pos": [153, 10], "size": 20 },
+        { "id": 7, "pos": [176, 10], "size": 20 },
+        { "id": 8, "pos": [199, 10], "size": 20 },
+        { "id": 9, "pos": [222, 10], "size": 20 }
+    ]
+}

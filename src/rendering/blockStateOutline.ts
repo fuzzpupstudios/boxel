@@ -1,7 +1,7 @@
 import { BoxGeometry, EdgesGeometry, LineSegments, Vector2, Vector3 } from "three";
 import { BufferGeometryUtils, LineMaterial } from "three/examples/jsm/Addons.js";
 import { BlockState } from "../block/block";
-import { LineBasicNodeMaterial } from "three/webgpu";
+import { BufferGeometry, LineBasicNodeMaterial } from "three/webgpu";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 
 export class BlockStateOutline {
@@ -50,7 +50,8 @@ export class BlockStateOutline {
 
             boxGeometries.push(boxGeometry);
         }
-        
+
+        if(boxGeometries.length === 0) boxGeometries.push(new BoxGeometry);
         outlineGeometry = new EdgesGeometry(BufferGeometryUtils.mergeGeometries(boxGeometries));
         this.outlines.set(state, outlineGeometry);
 

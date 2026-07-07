@@ -18,8 +18,8 @@ uniform mat3 uTransformMatrix;
 
 void main() {
     vec2 projectedPosition = vec2(
-        aPosition.x - aPosition.z,
-        aPosition.y * -1.25 + (aPosition.x + aPosition.z) * 0.5
+        (aPosition.x - aPosition.z) * 0.5 + 0.5,
+        (aPosition.y * -1.25 + (aPosition.x + aPosition.z) * 0.5) * 0.5 + 0.565656
     );
     float depth = -(aPosition.x + aPosition.y + aPosition.z) * 0.001;
 
@@ -69,8 +69,10 @@ export class TileHologramProvider {
         });
 
         this.meshState = State.for2d();
-        this.meshState.depthTest = true;
-        this.meshState.depthMask = true;
+        // Let PIXI draw order/zIndex determine stacking between hologram meshes.
+        // Depth testing here causes separate previews to clip into each other.
+        this.meshState.depthTest = false;
+        this.meshState.depthMask = false;
     }
 
     public createBlockStateMesh(blockStateId: string) {
@@ -93,7 +95,55 @@ export class TileHologramProvider {
         const uvs = new Array<number>;
         const indices = new Array<number>;
 
+        type FaceData = {
+            readonly uv: TileFace,
+            readonly normalX: number,
+            readonly normalY: number,
+            readonly normalZ: number,
+            readonly order: number,
+            readonly vertices: readonly [
+                number, number, number,
+                number, number, number,
+                number, number, number,
+                number, number, number
+            ],
+            readonly depthKey: number
+        };
+        const faces = new Array<FaceData>;
+
         let vertexCount = 0;
+        let faceOrder = 0;
+
+        const getDepthKey = (
+            x0: number, y0: number, z0: number,
+            x1: number, y1: number, z1: number,
+            x2: number, y2: number, z2: number,
+            x3: number, y3: number, z3: number,
+        ) => (
+            x0 + y0 + z0 +
+            x1 + y1 + z1 +
+            x2 + y2 + z2 +
+            x3 + y3 + z3
+        ) * 0.25;
+
+        const addFace = (
+            face: TileFace,
+            normalX: number,
+            normalY: number,
+            normalZ: number,
+            vertices: FaceData["vertices"]
+        ) => {
+            const depthKey = getDepthKey(...vertices);
+            faces.push({
+                uv: face,
+                normalX,
+                normalY,
+                normalZ,
+                order: faceOrder++,
+                vertices,
+                depthKey
+            });
+        };
 
         const addData = (face: TileFace, normalX: number, normalY: number, normalZ: number) => {
             normals.push(
@@ -116,69 +166,78 @@ export class TileHologramProvider {
         }
 
         // North
-        for(const face of model.north.toReversed()) {
-            positions.push(
+        for(const face of model.north) {
+            addFace(face, 0, 0, 1, [
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
                 face.x + face.width, face.y + face.height, face.z,
                 face.x + face.width, face.y, face.z,
-            );
-            addData(face, 0, 0, 1);
+            ]);
         }
 
         // South
-        for(const face of model.south.toReversed()) {
-            positions.push(
+        for(const face of model.south) {
+            addFace(face, 0, 0, -1, [
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
                 face.x - face.width, face.y + face.height, face.z,
                 face.x - face.width, face.y, face.z,
-            );
-            addData(face, 0, 0, -1);
+            ]);
         }
 
         // East
-        for(const face of model.east.toReversed()) {
-            positions.push(
+        for(const face of model.east) {
+            addFace(face, 1, 0, 0, [
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
                 face.x, face.y + face.height, face.z - face.width,
                 face.x, face.y, face.z - face.width,
-            );
-            addData(face, 1, 0, 0);
+            ]);
         }
 
         // West
-        for(const face of model.west.toReversed()) {
-            positions.push(
+        for(const face of model.west) {
+            addFace(face, -1, 0, 0, [
                 face.x, face.y, face.z,
                 face.x, face.y + face.height, face.z,
                 face.x, face.y + face.height, face.z + face.width,
                 face.x, face.y, face.z + face.width,
-            );
-            addData(face, -1, 0, 0);
+            ]);
         }
 
         // Up
-        for(const face of model.up.toReversed()) {
-            positions.push(
+        for(const face of model.up) {
+            addFace(face, 0, 1, 0, [
                 face.x, face.y, face.z,
                 face.x, face.y, face.z - face.height,
                 face.x + face.width, face.y, face.z - face.height,
                 face.x + face.width, face.y, face.z,
-            );
-            addData(face, 0, 1, 0);
+            ]);
         }
 
         // Down
-        for(const face of model.down.toReversed()) {
-            positions.push(
+        for(const face of model.down) {
+            addFace(face, 0, -1, 0, [
                 face.x, face.y, face.z,
                 face.x, face.y, face.z + face.height,
                 face.x + face.width, face.y, face.z + face.height,
                 face.x + face.width, face.y, face.z,
-            );
-            addData(face, 0, -1, 0);
+            ]);
+        }
+
+        // Render from far to near so tile faces overlap correctly without depth testing.
+        faces.sort((a, b) => {
+            const depthDiff = a.depthKey - b.depthKey;
+            if(Math.abs(depthDiff) > 1e-6) return depthDiff;
+
+            // For coplanar/equal-depth quads, preserve creation order so later
+            // faces take precedence and are drawn last.
+            return a.order - b.order;
+        });
+
+        for(const face of faces) {
+            positions.push(...face.vertices);
+            addData(face.uv, face.normalX, face.normalY, face.normalZ);
         }
 
         const geometry = new Geometry;
@@ -198,6 +257,10 @@ export class TileHologram extends Container {
         private readonly hologramProvider: TileHologramProvider
     ) {
         super();
+
+        this.on("added", () => {
+            if(this.parent != null) this.parent.sortableChildren = true;
+        });
     }
 
     public get blockStateId() {

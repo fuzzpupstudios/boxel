@@ -15,6 +15,7 @@ import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
 import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
+import { registerInventoryGuiTypes } from "./item/inventoryGuiTypeRegistry";
 
 
 export class BoxelGame {
@@ -208,6 +209,7 @@ export class BoxelGame {
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
         await registerBlocks();
+        await registerInventoryGuiTypes();
 
         await this.loadAssets();
 
@@ -274,6 +276,7 @@ export class BoxelGame {
             "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png",
             "ui/controller_crosshair": "assets/textures/controller_crosshair.png",
             "ui/world_buttons": "assets/textures/ui_world_buttons.png",
+            "ui/hotbar_selection": "assets/textures/ui_hotbar_selection.png",
         }
 
         for await(const [ alias, src ] of Object.entries(textures)) {

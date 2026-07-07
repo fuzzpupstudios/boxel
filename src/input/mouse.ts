@@ -20,7 +20,6 @@ export class Mouse {
     private readonly deltaPosition = new Vector2;
     private locked: boolean = false;
     private element?: HTMLElement;
-    private requestingPointerLock: boolean = false;
 
     public addListeners(element: HTMLElement) {
         this.element = element;
@@ -61,13 +60,10 @@ export class Mouse {
         })
     }
 
-    private updatePointerLock(): boolean {
+    public updatePointerLock(): boolean {
         if(this.locked) {
-            if(!this.isCurrentlyLocked() && !this.requestingPointerLock) {
-                this.requestingPointerLock = true;
-                this.element!.requestPointerLock().then(() => {
-                    this.requestingPointerLock = false;
-                }).catch(() => {
+            if(!this.isCurrentlyLocked()) {
+                this.element!.requestPointerLock().catch(() => {
                     this.locked = false;
                 });
                 return true;

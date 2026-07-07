@@ -38,6 +38,7 @@
     "objectregistry": "^1.0.3",
     "pixi.js": "^8.14.1",
     "three": "^0.184.0",
+    "typed-signals": "^3.0.0",
     "zod": "^4.4.3"
   }
 }

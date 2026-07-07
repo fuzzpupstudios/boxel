@@ -3,7 +3,7 @@ import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { Block, BlockState } from "./block";
 import { DataDrivenBlock } from "./dataDrivenBlock";
 
-export const blockRegistry = new KeyedRegistry<Block, string>();
+export const blockRegistry = new AutoRegistry<Block>();
 export const tileRegistry = new AutoRegistry<string>;
 export const blockStateRegistry = new KeyedRegistry<BlockState, string>;
 
@@ -17,46 +17,46 @@ export async function registerBlocks() {
     const axesBlock = new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/axes.json"));
 
-    blockRegistry.register("axes", axesBlock);
+    blockRegistry.register(axesBlock);
     unknownBlockState = axesBlock.states.get("default")!;
 
-    blockRegistry.register("air", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/air.json")));
 
-    blockRegistry.register("cobblestone", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone.json")));
 
-    blockRegistry.register("cobblestone_slab", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone_slab.json")));
 
-    blockRegistry.register("cobblestone_stair", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/cobblestone_stair.json")));
 
-    blockRegistry.register("lamp", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/lamp.json")));
 
-    blockRegistry.register("dirt", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/dirt.json")));
 
-    blockRegistry.register("grass", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/grass.json")));
 
-    blockRegistry.register("planks", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/planks.json")));
 
-    blockRegistry.register("planks_slab", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/planks_slab.json")));
 
-    blockRegistry.register("planks_stair", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/planks_stair.json")));
 
-    blockRegistry.register("bricks", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/bricks.json")));
 
-    blockRegistry.register("bricks_slab", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/bricks_slab.json")));
 
-    blockRegistry.register("bricks_stair", new DataDrivenBlock(
+    blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/bricks_stair.json")));
 
     blockRegistry.lock();

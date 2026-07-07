@@ -5,6 +5,7 @@ import z from "zod";
 import { Player } from "../entity/player";
 import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
 import { LightingChunk } from "../world/lighting/lightingGrid";
+import { SerializedInventory } from "../item/inventory";
 
 export interface SerializedChunk {
     version: number,
@@ -38,7 +39,8 @@ export const WorldPlayer = z.object({
         z.number(),
         z.number()
     ]).default([ 0, 0 ]),
-    gliding: z.boolean().default(false)
+    gliding: z.boolean().default(false),
+    inventory: SerializedInventory.optional()
 });
 
 interface PersistentWorldSchema extends DBSchema {
@@ -107,7 +109,8 @@ export class PersistentWorld {
             position: player.aabb.position.toArray(),
             velocity: player.velocity.toArray(),
             rotation: [ player.yaw, player.pitch ],
-            gliding: player.gliding
+            gliding: player.gliding,
+            inventory: player.inventory.serialize()
         });
     }
 

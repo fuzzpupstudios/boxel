@@ -5,8 +5,9 @@ import { AABB } from "../physics/AABB";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/impl/playingGameStage";
 import type { Time } from "../time";
-import type { World } from "../world/world";
+import { World } from "../world/world";
 import { Entity, type TileCollider } from "./entity";
+import { Inventory } from "../item/inventory";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -23,9 +24,15 @@ export class Player extends Entity {
 
     public readonly targetedBlock = new RaycastResult;
     public readonly reachDistance = 5;
-    public holdingBlock: string = "base:air[default]";
     public crouching: boolean = false;
     public sprinting: boolean = false;
+    public selectedSlot: number = 0;
+    public readonly inventory = new Inventory;
+
+    public constructor(world: World) {
+        super(world);
+        this.inventory.setSlotCount(50);
+    }
 
     protected override createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB {
         return new AABB(
@@ -118,7 +125,10 @@ export class Player extends Entity {
     public place() {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
-        const blockState = blockStateRegistry.get(this.holdingBlock) || getUnknownBlockState();
+        const holdingStack = this.inventory.stacks[this.selectedSlot];
+        if(holdingStack == null) return;
+
+        const blockState = blockStateRegistry.get(holdingStack.item) || getUnknownBlockState();
 
         let targetX = this.targetedBlock.voxel.x;
         let targetY = this.targetedBlock.voxel.y;
@@ -140,7 +150,7 @@ export class Player extends Entity {
 
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
         
-        this.world.setBlockState(targetX, targetY, targetZ, this.holdingBlock);
+        this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
     }
 
     public tick(time: Time): void {
