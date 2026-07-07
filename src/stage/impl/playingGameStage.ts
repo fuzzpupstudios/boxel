@@ -544,10 +544,10 @@ export class PlayingGameStage extends GameStage {
                         game.input.getAnalog(ControlBinding.ROTATE_CW) -
                         game.input.getAnalog(ControlBinding.ROTATE_CCW) +
                         game.input.getControllerAxis(ControllerAxis.RIGHT_X)
-                    ) * game.settings.controllerSensitivity * 2 +
+                    ) * game.settings.controllerSensitivity * 2 * time.deltaTime +
                     (
-                        game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.3 +
-                        game.input.getTouchAxis(TouchAxis.DELTA_X)
+                        game.input.getMouseAxis(MouseAxis.DELTA_X, true) * 0.003 +
+                        game.input.getTouchAxis(TouchAxis.DELTA_X) * 0.01
                     ) * game.settings.mouseSensitivity
                 );
                 if(game.settings.invertX) lookDeltaX *= -1;
@@ -557,15 +557,15 @@ export class PlayingGameStage extends GameStage {
                         game.input.getAnalog(ControlBinding.ROTATE_UP) -
                         game.input.getAnalog(ControlBinding.ROTATE_DOWN) -
                         game.input.getControllerAxis(ControllerAxis.RIGHT_Y)
-                    ) * game.settings.controllerSensitivity * 2 -
+                    ) * game.settings.controllerSensitivity * 2 * time.deltaTime -
                     (
-                        game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.3 +
-                        game.input.getTouchAxis(TouchAxis.DELTA_Y)
+                        game.input.getMouseAxis(MouseAxis.DELTA_Y, true) * 0.003 +
+                        game.input.getTouchAxis(TouchAxis.DELTA_Y) * 0.01
                     ) * game.settings.mouseSensitivity
                 );
                 if(game.settings.invertY) lookDeltaY *= -1;
 
-                this.localPlayer.rotate(lookDeltaX * time.deltaTime, lookDeltaY * time.deltaTime);
+                this.localPlayer.rotate(lookDeltaX, lookDeltaY);
 
                 if(
                     this.localPlayer.targetedBlock.hit &&
