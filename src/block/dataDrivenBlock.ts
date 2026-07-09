@@ -4,6 +4,7 @@ import type { TileCollider } from "../entity/entity";
 import { Block, BlockState } from "./block";
 import { BlockModel } from "./blockModel";
 import { BoxelGame } from "../boxel";
+import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
 
 
 export class DataDrivenBlock extends Block {
@@ -31,7 +32,17 @@ export class DataDrivenBlock extends Block {
             if(emission.length != 4) throw new Error("Emission must have 4 numbers");
             const attenuation = jsonState.attenuation ?? [ 15, 15, 15, 15 ];
             if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
-            const blockState = new BlockState(this, stateKey, model, collider, tags, emission, attenuation);
+
+            const eventSheet = new DataDrivenEventSheet(jsonState.events ?? { triggers: {} });
+            const blockState = new BlockState(
+                this, stateKey,
+                model,
+                eventSheet,
+                collider,
+                tags,
+                emission,
+                attenuation
+            );
 
             this.states.set(stateKey, blockState);
             defaultState ??= blockState;

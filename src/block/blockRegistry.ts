@@ -59,6 +59,9 @@ export async function registerBlocks() {
     blockRegistry.register(new DataDrivenBlock(
         <DataDrivenJson.Block> <unknown> await import("./impl/bricks_stair.json")));
 
+    blockRegistry.register(new DataDrivenBlock(
+        <DataDrivenJson.Block> <unknown> await import("./impl/antiblock.json")));
+
     blockRegistry.lock();
 
     for(const block of blockRegistry.values()) {

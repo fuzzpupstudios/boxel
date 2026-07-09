@@ -513,7 +513,13 @@ export class PlayingGameStage extends GameStage {
                         this.placeBlockCooldown -= time.deltaTime;
 
                         if(this.placeBlockCooldown <= 0) {
-                            this.localPlayer.place();
+                            const holdingStack = this.localPlayer.inventory.stacks[this.localPlayer.selectedSlot];
+
+                            if(holdingStack == null || holdingStack.isEmpty()) {
+                                this.localPlayer.use();
+                            } else {
+                                this.localPlayer.place();
+                            }
                             this.placeBlockCooldown = 0.2;
                         }
                     } else {

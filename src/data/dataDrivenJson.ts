@@ -6,6 +6,7 @@ export namespace DataDrivenJson {
 
     export interface BlockState {
         model: BlockStateModel,
+        events?: EventSheet,
         collider?: BlockStateCollider,
         emission?: [ number, number, number ],
         attenuation?: [ number, number, number ],
@@ -37,6 +38,15 @@ export namespace DataDrivenJson {
         texture?: string,
         cull?: boolean,
         lit?: boolean
+    }
+
+    export interface EventSheet {
+        triggers: Record<string, EventAction[]>
+    }
+
+    export interface EventAction {
+        id: string;
+        args?: {}
     }
     
     export interface BlockStateCollider {

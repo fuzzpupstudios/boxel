@@ -153,6 +153,25 @@ export class Player extends Entity {
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
     }
 
+    public use() {
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+
+        const blockStateId = this.world.getBlockState(
+            this.targetedBlock.voxel.x,
+            this.targetedBlock.voxel.y,
+            this.targetedBlock.voxel.z,
+        );
+
+        const blockState = blockStateRegistry.get(blockStateId);
+
+        blockState?.events.runTrigger("base:interact", {
+            world: this.world,
+            x: this.targetedBlock.voxel.x,
+            y: this.targetedBlock.voxel.y,
+            z: this.targetedBlock.voxel.z,
+        });
+    }
+
     public tick(time: Time): void {
         {
             const dy = -0.501;
