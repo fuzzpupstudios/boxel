@@ -1,0 +1,62 @@
+{
+    "id": "base:full_block_lit",
+    
+    "textures": {
+        "block": "base:block/axes.png"
+    },
+    
+    "north": [
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ],
+    "east": [
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ],
+    "south": [
+        {
+            "pos": [ 1, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ],
+    "west": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ],
+    "up": [
+        {
+            "pos": [ 0, 1, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ],
+    "down": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "lit": true
+        }
+    ]
+}

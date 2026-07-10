@@ -3,7 +3,7 @@
     "states": {
         "color=white": {
             "model": {
-                "parent": "base:full_block",
+                "parent": "base:full_block_lit",
                 "textures": {
                     "block": "base:block/lamp.png"
                 }
@@ -17,7 +17,7 @@
         },
         "color=red": {
             "model": {
-                "parent": "base:full_block",
+                "parent": "base:full_block_lit",
                 "textures": {
                     "block": "base:block/red_lamp.png"
                 }
@@ -31,7 +31,7 @@
         },
         "color=green": {
             "model": {
-                "parent": "base:full_block",
+                "parent": "base:full_block_lit",
                 "textures": {
                     "block": "base:block/green_lamp.png"
                 }
@@ -45,7 +45,7 @@
         },
         "color=blue": {
             "model": {
-                "parent": "base:full_block",
+                "parent": "base:full_block_lit",
                 "textures": {
                     "block": "base:block/blue_lamp.png"
                 }
@@ -59,7 +59,7 @@
         },
         "color=sky": {
             "model": {
-                "parent": "base:full_block",
+                "parent": "base:full_block_lit",
                 "textures": {
                     "block": "base:block/sun_lamp.png"
                 }
