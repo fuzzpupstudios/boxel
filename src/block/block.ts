@@ -2,6 +2,7 @@ import { MathUtils } from "three";
 import type { TileCollider } from "../entity/entity";
 import type { BlockModel } from "./blockModel";
 import type { EventSheet } from "../events/eventSheet";
+import type { EventPredicate } from "../events/eventPredicate";
 
 export abstract class Block {
     public states: Map<string, BlockState> = new Map;
@@ -19,6 +20,7 @@ export class BlockState {
         public readonly stateKey: string,
         public readonly model: BlockModel,
         public readonly events: EventSheet,
+        public readonly canPlacePredicate: EventPredicate,
         public readonly collider: TileCollider,
         public readonly tags: Set<string>,
         public readonly emission: [ number, number, number, number ],

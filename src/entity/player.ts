@@ -8,6 +8,8 @@ import type { Time } from "../time";
 import { World } from "../world/world";
 import { Entity, type TileCollider } from "./entity";
 import { Inventory } from "../item/inventory";
+import { EventAction } from "../events/eventAction";
+import { EventCursor } from "../events/eventSheet";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -102,24 +104,25 @@ export class Player extends Entity {
     public destroy() {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
 
-        const previousState = this.world.getBlockState(
-            this.targetedBlock.voxel.x,
-            this.targetedBlock.voxel.y,
-            this.targetedBlock.voxel.z,
-        );
+        let targetX = this.targetedBlock.voxel.x;
+        let targetY = this.targetedBlock.voxel.y;
+        let targetZ = this.targetedBlock.voxel.z;
 
-        this.world.setBlockState(
-            this.targetedBlock.voxel.x,
-            this.targetedBlock.voxel.y,
-            this.targetedBlock.voxel.z,
-            "base:air[default]"
-        );
+        const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
+        const blockState = blockStateRegistry.get(previousBlockStateId);
+
+        this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
+        if(blockState == null) return;
+
+        const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        blockState.events.runTrigger("base:on_destroy", cursor);
+        
         const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
         gameStage?.blockBreakParticles.blockDestructionParticles(
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
-            previousState
+            previousBlockStateId
         );
     }
     public place() {
@@ -146,11 +149,13 @@ export class Player extends Entity {
         previousStateId = this.world.getBlockState(targetX, targetY, targetZ);
         previousState = blockStateRegistry.get(previousStateId) || getUnknownBlockState();
 
-        if(!previousState.tags.has("replaceable")) return;
-
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
+
+        const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        if(!blockState.canPlacePredicate.test(cursor)) return;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
+        blockState.events.runTrigger("base:on_place", cursor);
     }
 
     public use() {
@@ -164,12 +169,12 @@ export class Player extends Entity {
 
         const blockState = blockStateRegistry.get(blockStateId);
 
-        blockState?.events.runTrigger("base:interact", {
-            world: this.world,
-            x: this.targetedBlock.voxel.x,
-            y: this.targetedBlock.voxel.y,
-            z: this.targetedBlock.voxel.z,
-        });
+        blockState?.events.runTrigger("base:interact", new EventCursor(
+            this.world,
+            this.targetedBlock.voxel.x,
+            this.targetedBlock.voxel.y,
+            this.targetedBlock.voxel.z,
+        ));
     }
 
     public tick(time: Time): void {

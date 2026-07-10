@@ -7,6 +7,7 @@ export namespace DataDrivenJson {
     export interface BlockState {
         model: BlockStateModel,
         events?: EventSheet,
+        canPlace?: EventActionPredicateTree | boolean;
         collider?: BlockStateCollider,
         emission?: [ number, number, number ],
         attenuation?: [ number, number, number ],
@@ -41,13 +42,21 @@ export namespace DataDrivenJson {
     }
 
     export interface EventSheet {
-        triggers: Record<string, EventAction[]>
+        triggers: Record<string, EventAction[] | EventAction>
     }
 
     export interface EventAction {
         id: string;
         args?: {}
     }
+
+    export interface EventActionWithPredicate {
+        if: EventActionPredicateTree,
+        then: EventAction[] | EventAction,
+        else?: EventAction[] | EventAction,
+    }
+
+    export type EventActionPredicateTree = Record<string, EventActionPredicateTree[] | {}>
     
     export interface BlockStateCollider {
         hitboxes: {

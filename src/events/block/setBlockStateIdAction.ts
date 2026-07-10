@@ -14,7 +14,7 @@ export class SetBlockStateIdAction extends EventAction<SetBlockStateIdActionPara
     public constructor(eventSheet: EventSheet, args: SetBlockStateIdActionParameters) {
         super(eventSheet, SetBlockStateIdActionParameters.parse(args));
     }
-    public run(cursor: EventCursor): void {
+    public override run(cursor: EventCursor): void {
         cursor.world.setBlockState(
             cursor.x + this.args.xOffset,
             cursor.y + this.args.yOffset,

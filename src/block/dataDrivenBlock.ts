@@ -5,6 +5,7 @@ import { Block, BlockState } from "./block";
 import { BlockModel } from "./blockModel";
 import { BoxelGame } from "../boxel";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
+import { ConstantPredicate } from "../events/eventPredicate";
 
 
 export class DataDrivenBlock extends Block {
@@ -34,10 +35,15 @@ export class DataDrivenBlock extends Block {
             if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
 
             const eventSheet = new DataDrivenEventSheet(jsonState.events ?? { triggers: {} });
+            const canPlacePredicate = typeof jsonState.canPlace == "boolean"
+                ? new ConstantPredicate(jsonState.canPlace)
+                : DataDrivenEventSheet.parsePredicate(jsonState.canPlace ?? {});
+
             const blockState = new BlockState(
                 this, stateKey,
                 model,
                 eventSheet,
+                canPlacePredicate,
                 collider,
                 tags,
                 emission,
