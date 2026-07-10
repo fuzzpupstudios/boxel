@@ -9,7 +9,7 @@ ENV EM_CONFIG=/emsdk/.emscripten
 ENV PATH="/emsdk:/emsdk/upstream/emscripten:${PATH}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  bash ca-certificates cmake curl git tar make python3 \
+  bash ca-certificates cmake curl git tar make python3 zip \
   && rm -rf /var/lib/apt/lists/*
 
 RUN ln -sf /emsdk/upstream/emscripten/emcmake /usr/local/bin/emcmake
