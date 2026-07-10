@@ -11,7 +11,7 @@ export class Topbar extends Container {
     public readonly onPauseUp: Signal<() => void> = new Signal();
 
     public constructor() {
-        const asset = Assets.get("ui/d_pad");
+        const asset = Assets.get("base:ui/d_pad.png");
         
         const pause = new IconButton(new Texture({
             source: asset,

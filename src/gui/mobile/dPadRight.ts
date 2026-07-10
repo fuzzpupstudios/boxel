@@ -23,7 +23,7 @@ export class GuiDPadRight extends Container {
     public readonly onPreviousItemUp: Signal<() => void> = new Signal();
 
     public constructor() {
-        const asset = Assets.get("ui/d_pad");
+        const asset = Assets.get("base:ui/d_pad.png");
 
         const jump = new IconButton(new Texture({
             source: asset,

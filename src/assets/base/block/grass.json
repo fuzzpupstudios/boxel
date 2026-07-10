@@ -1,0 +1,20 @@
+{
+    "id": "base:grass",
+    "states": {
+        "default": {
+            "model": {
+                "parent": "base:foliage",
+                "textures": {
+                    "base": "base:block/dirt.png",
+                    "side": "base:block/grass_side.png",
+                    "top": "base:block/grass.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

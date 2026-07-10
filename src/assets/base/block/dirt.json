@@ -1,0 +1,18 @@
+{
+    "id": "base:dirt",
+    "states": {
+        "default": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/dirt.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

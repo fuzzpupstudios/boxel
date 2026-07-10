@@ -1,7 +1,7 @@
 import { MathUtils, Mesh, Scene } from "three";
 import { attribute, cameraPosition, float, luminance, mix, normalGeometry, positionWorld, texture, uint, uniform, uv, varying, vec3, vec4, vertexStage } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
-import type { TextureAtlas } from "../assets/textureAtlas";
+import type { TextureAtlas } from "../textures/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { ChunkMesher } from "./chunkMesher";

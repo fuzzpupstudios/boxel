@@ -1,6 +1,7 @@
 import { isMobile } from "pixi.js";
 import { BoxelGame } from "./boxel";
 import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
+import { blockStateRegistry } from "./block/blockRegistry";
 
 main();
 
@@ -25,6 +26,4 @@ async function main() {
 
     await game.start();
     game.resize(innerWidth, innerHeight, devicePixelRatio);
-    
-    (<any>window).game = game;
 }

@@ -4,9 +4,9 @@ import "pixi.js/sprite-nine-slice";
 import "pixi.js/text";
 import "pixi.js/events";
 import * as THREE from "three/webgpu";
-import { Assets } from "./assets/assets";
-import { TextureAtlas } from "./assets/textureAtlas";
-import { blockStateRegistry, registerBlocks } from "./block/blockRegistry";
+import { Assets } from "./textures/assets";
+import { TextureAtlas } from "./textures/textureAtlas";
+import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./block/blockRegistry";
 import { ControlBinding, Input } from "./input/input";
 import type { MainStorage } from "./persistence/mainStorage";
 import { PersistenceManager } from "./persistence/persistenceManager";
@@ -15,7 +15,11 @@ import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import type { Time } from "./time";
 import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
-import { registerInventoryGuiTypes } from "./item/inventoryGuiTypeRegistry";
+import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
+import { BlobReader, ZipReader } from "@zip.js/zip.js";
+import { DataDrivenBlock } from "./block/dataDrivenBlock";
+import { DataDrivenInventoryGuiType } from "./item/dataDrivenInventoryGuiType";
+import type { DataDrivenJson } from "./data/dataDrivenJson";
 
 
 export class BoxelGame {
@@ -204,14 +208,27 @@ export class BoxelGame {
         }
     }
 
+    private registerGameData() {
+        for(const [ id, json ] of this.assets.blockRegistry.entries()) {
+            blockRegistry.register(id, DataDrivenBlock.parseJson(json));
+        }
+        blockRegistry.lock();
+        for(const [ id, json ] of this.assets.inventoryGuiTypeRegistry.entries()) {
+            inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json));
+        }
+        inventoryGuiTypeRegistry.lock();
+    }
+
     public async start() {
         this.mainStorage = this.persistenceManager.openMainStorage();
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
-        await registerBlocks();
-        await registerInventoryGuiTypes();
+        const blob = await fetch("assets/base.zip").then(v => v.blob());
+        await this.assets.loadPack(blob);
 
-        await this.loadAssets();
+        this.loadAssets();
+        this.registerGameData();
+        registerAllBlockStates();
 
         await this.threeRenderer.init();
         this.threeRenderer.setClearColor(0xffffff);
@@ -264,36 +281,16 @@ export class BoxelGame {
         this.changeStage(new TitleScreenStage(this));
     }
 
-    private async loadAssets() {
-        const textures = {
-            "ui/button": "assets/textures/ui_button.png",
-            "ui/slider_background": "assets/textures/ui_slider_background.png",
-            "ui/slider_fill": "assets/textures/ui_slider_fill.png",
-            "ui/slider_handle": "assets/textures/ui_slider_handle.png",
-            "ui/input": "assets/textures/ui_input.png",
-            "ui/crosshair": "assets/textures/crosshair.png",
-            "ui/d_pad": "assets/textures/d_pad.png",
-            "ui/fullscreen_button": "assets/textures/ui_fullscreen_button.png",
-            "ui/controller_crosshair": "assets/textures/controller_crosshair.png",
-            "ui/world_buttons": "assets/textures/ui_world_buttons.png",
-            "ui/hotbar_selection": "assets/textures/ui_hotbar_selection.png",
+    private loadAssets() {
+        for(const [ alias, bitmap ] of this.assets.textureRegistry.entries()) {
+            PIXI.Assets.cache.set(alias, PIXI.Texture.from(bitmap));
         }
-
-        for await(const [ alias, src ] of Object.entries(textures)) {
-            PIXI.Assets.add({ alias, src });
-            await PIXI.Assets.load(alias);
-        }
-
-        const loadingManager = new THREE.LoadingManager;
     
         this.textureAtlas = new TextureAtlas;
-        for await(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
-            let loadedTexture: THREE.Texture;
-            try {
-                loadedTexture = await textureSource.load(loadingManager);
-            } catch(e) {
-                throw new Error("Failed to load texture " + textureSource, { cause: e });
-            }
+        for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
+            if(textureId.split(":")[1]?.startsWith("ui/")) continue;
+            
+            const loadedTexture = new THREE.Texture(textureSource);
             this.textureAtlas.addTexture(textureId, loadedTexture);
         }
         this.textureAtlas.pack();

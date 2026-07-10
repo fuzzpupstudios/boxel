@@ -1,10 +1,10 @@
 import { Box2, Vector2, Vector3 } from "three";
-import type { TextureAtlas } from "../assets/textureAtlas";
+import type { UniformNode } from "three/webgpu";
 import { Side } from "../block/direction";
+import type { TextureAtlas } from "../textures/textureAtlas";
 import type { World } from "../world/world";
 import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";
-import type { UniformNode } from "three/webgpu";
 
 export class BlockBreakParticleEngine extends ParticleEngine {
     private readonly tileMeshes: Map<string, TileMesh>;
@@ -32,6 +32,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
                 new Vector2(face.uvMaxX, face.uvMaxY)
             )));
 
+            if(uvRects.size == 0) continue;
             this.tileMeshUvRects.set(blockStateId, Array.from(uvRects));
         }
     }

@@ -1,0 +1,82 @@
+{
+    "id": "base:foliage",
+    
+    "textures": {
+        "base": "base:block/axes.png",
+        "side": "base:block/axes.png",
+        "top": "base:block/axes.png"
+    },
+
+    "north": [
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "base"
+        },
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "side"
+        }
+    ],
+    "east": [
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "base"
+        },
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "side"
+        }
+    ],
+    "south": [
+        {
+            "pos": [ 1, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "base"
+        },
+        {
+            "pos": [ 1, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "side"
+        }
+    ],
+    "west": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "base"
+        },
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "side"
+        }
+    ],
+    "up": [
+        {
+            "pos": [ 0, 1, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "top"
+        }
+    ],
+    "down": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "base"
+        }
+    ]
+}

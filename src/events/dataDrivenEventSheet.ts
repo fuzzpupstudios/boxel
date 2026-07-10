@@ -1,4 +1,5 @@
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { Assets } from "../textures/assets";
 import type { EventAction } from "./eventAction";
 import { eventActionRegistry, eventPredicateRegistry } from "./eventActionRegistry";
 import { EventBranch } from "./eventBranch";
@@ -13,18 +14,39 @@ function isEventActionWithPredicate(obj: any): obj is DataDrivenJson.EventAction
 }
 
 export class DataDrivenEventSheet extends EventSheet {
-    public constructor(json: DataDrivenJson.EventSheet) {
-        super();
+    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets) {
+        const parentJson = json.parent != null ? assets.eventSheetRegistry.get(json.parent) : null;
 
-        for(const [triggerId, eventActions] of Object.entries(json.triggers)) {
-            this.addTriggerAction(
-                triggerId,
-                ...(eventActions instanceof Array ? eventActions.map(action => this.parseAction(action)) : [ this.parseAction(eventActions) ])
-            );
+        let eventSheet: EventSheet;
+
+        if(parentJson == null) {
+            eventSheet = new DataDrivenEventSheet;
+        } else {
+            try {
+                eventSheet = DataDrivenEventSheet.parseJson(parentJson, assets);
+            } catch(e) {
+                throw new Error("Failed to parse parent " + json.parent, { cause: e });
+            }
         }
+
+        if(json.triggers != null) {
+            for(const [triggerId, eventActions] of Object.entries(json.triggers)) {
+                eventSheet.addTriggerAction(
+                    triggerId,
+                    ...(
+                        eventActions instanceof Array
+                         ? eventActions.map(action => this.parseAction(eventSheet, action))
+                         : [ this.parseAction(eventSheet, eventActions) ]
+                    )
+                );
+            }
+        }
+
+        return eventSheet;
     }
 
-    private parseAction(
+    private static parseAction(
+        eventSheet: EventSheet,
         action: DataDrivenJson.EventAction | DataDrivenJson.EventActionWithPredicate
     ): EventAction {
         if(isEventAction(action)) {
@@ -34,13 +56,19 @@ export class DataDrivenEventSheet extends EventSheet {
                 throw new ReferenceError("Action " + action.id + " cannot be found");
             }
 
-            return new EventActionConstructor(this, action.args);
+            return new EventActionConstructor(eventSheet, action.args);
         }
         if(isEventActionWithPredicate(action)) {
             const branch = new EventBranch(
                 DataDrivenEventSheet.parsePredicate(action.if),
-                action.then instanceof Array ? action.then.map(action => this.parseAction(action)) : [ this.parseAction(action.then) ],
-                action.else ? action.else instanceof Array ? action.else.map(action => this.parseAction(action)) : [ this.parseAction(action.else) ] : [],
+                action.then instanceof Array
+                 ? action.then.map(action => this.parseAction(eventSheet, action))
+                 : [ this.parseAction(eventSheet, action.then) ],
+                action.else
+                 ? action.else instanceof Array
+                    ? action.else.map(action => this.parseAction(eventSheet, action))
+                    : [ this.parseAction(eventSheet, action.else) ]
+                 : [],
             );
 
             return branch;
@@ -74,8 +102,6 @@ export class DataDrivenEventSheet extends EventSheet {
 
         for(const tree of (trees instanceof Array ? trees : [trees])) {
             for(const [ predicateId, json ] of Object.entries(tree)) {
-                console.trace("parse", predicateId, json);
-
                 const EventPredicateConstructor = eventPredicateRegistry.get(predicateId);
 
                 if(EventPredicateConstructor == null) {

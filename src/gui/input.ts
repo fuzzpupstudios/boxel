@@ -4,7 +4,7 @@ import { Assets, TextStyle, Texture } from "pixi.js";
 export class GuiInput extends Input {
     public constructor(placeholder: string, width: number, height: number) {
         super({
-            bg: Assets.get("ui/input"),
+            bg: Assets.get("base:ui/input.png"),
             nineSliceSprite: [3, 3, 3, 3],
             placeholder,
             padding: 3,

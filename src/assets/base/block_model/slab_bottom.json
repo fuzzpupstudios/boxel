@@ -1,0 +1,60 @@
+{
+    "id": "base:slab_bottom",
+    
+    "occlude": false,
+    "occludeDown": true,
+
+    "textures": {
+        "block": "base:block/axes.png"
+    },
+
+    "north": [
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "block"
+        }
+    ],
+    "east": [
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "block"
+        }
+    ],
+    "south": [
+        {
+            "pos": [ 1, 0, 0 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "block"
+        }
+    ],
+    "west": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "block"
+        }
+    ],
+    "up": [
+        {
+            "pos": [ 0, 0.5, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block",
+            "cull": false
+        }
+    ],
+    "down": [
+        {
+            "pos": [ 0, 0, 0 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "block"
+        }
+    ]
+}

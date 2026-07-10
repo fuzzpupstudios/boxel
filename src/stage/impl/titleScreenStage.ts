@@ -85,7 +85,7 @@ export class TitleScreenStage extends GameStage {
         });
 
         this.fullscreenButton = new IconButton(
-            new Texture(Assets.get("ui/fullscreen_button"))
+            new Texture(Assets.get("base:ui/fullscreen_button.png"))
         );
         this.fullscreenButton.on("pointerdown", () => {
             game.toggleFullscreen();

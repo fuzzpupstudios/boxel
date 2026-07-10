@@ -1,5 +1,5 @@
 import { Container, Geometry, Mesh, Shader, State, Texture } from "pixi.js";
-import type { TextureAtlas } from "../assets/textureAtlas";
+import type { TextureAtlas } from "../textures/textureAtlas";
 import { blockStateRegistry } from "../block/blockRegistry";
 import type { TileFace, TileMesh } from "../rendering/chunkMesher";
 

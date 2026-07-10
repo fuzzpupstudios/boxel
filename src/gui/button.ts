@@ -10,7 +10,7 @@ export class GuiButton extends ButtonContainer {
 
     public constructor(text: string, width: number, height: number) {
         const background = new NineSliceSprite({
-            texture: Assets.get("ui/button"),
+            texture: Assets.get("base:ui/button.png"),
             leftWidth: 3,
             topHeight: 3,
             rightWidth: 3,

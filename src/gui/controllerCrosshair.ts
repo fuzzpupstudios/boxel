@@ -17,7 +17,7 @@ export class GuiControllerCrosshair extends Container {
     constructor(
         private readonly game: BoxelGame
     ) {
-        const sprite = new Sprite(new Texture(Assets.get("ui/controller_crosshair")));
+        const sprite = new Sprite(Assets.get("base:ui/controller_crosshair.png"));
         sprite.anchor.set(0.5);
 
         super({

@@ -1,8 +1,9 @@
 import { MathUtils, type Box2 } from "three";
-import type { TextureAtlas } from "../assets/textureAtlas";
+import type { TextureAtlas } from "../textures/textureAtlas";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import type { TileFace, TileMesh } from "../rendering/chunkMesher";
-import { Assets, type TextureSource } from "../assets/assets";
+import { Assets } from "../textures/assets";
+import { BoxelGame } from "../boxel";
 
 export class BlockModelFace {
     public x = 0;
@@ -25,7 +26,7 @@ export class BlockModelFace {
         [ face.x, face.y, face.z ] = json.pos;
         [ face.width, face.height ] = json.size;
         [ face.uvMinX, face.uvMinY, face.uvMaxX, face.uvMaxY ] = json.uv;
-        face.textureSlot = json.texture ?? "axes";
+        face.textureSlot = json.texture;
         face.cull = json.cull ?? face.cull;
         face.lit = json.lit ?? face.lit;
 
@@ -77,10 +78,22 @@ export class BlockModel {
     public down = new Array<BlockModelFace>;
 
     public textureURIs = new Map<string, string>;
-    public textureSources = new Map<string, TextureSource>;
+    public textureSources = new Map<string, ImageBitmap>;
 
     public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
-        const model = new BlockModel;
+        const parentJson = json.parent != null ? assets.blockModelRegistry.get(json.parent) : null;
+
+        let model: BlockModel;
+
+        if(parentJson == null) {
+            model = new BlockModel;
+        } else {
+            try {
+                model = BlockModel.parseJson(parentJson, assets);
+            } catch(e) {
+                throw new Error("Failed to parse parent " + json.parent, { cause: e });
+            }
+        }
 
         model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth,
         model.occludeEast = json.occludeEast ?? json.occlude ?? model.occludeEast,
@@ -97,8 +110,11 @@ export class BlockModel {
         model.down.push(...(json.down ?? []).map(BlockModelFace.parseJson));
 
         for(const [ textureSlot, textureURI ] of Object.entries(json.textures ?? {})) {
-            // Gets the texture source or creates it if it doesn't exist
-            const textureSource = assets.getURLTextureSource(textureURI);
+            const textureSource = assets.textureRegistry.get(textureURI);
+            if(textureSource == null) {
+                throw new ReferenceError("Texture " + textureURI + " doesn't exist");
+            }
+
             model.textureSources.set(textureSlot, textureSource);
             model.textureURIs.set(textureSlot, textureURI);
         }
@@ -118,7 +134,7 @@ export class BlockModel {
     public setTextureAtlas(atlas: TextureAtlas) {
         for(const face of this.faces()) {
             // Look up the URI of the face's texture
-            const textureURI = this.textureURIs.get(face.textureSlot) ?? "axes";
+            const textureURI = this.textureURIs.get(face.textureSlot) ?? "base:block/axes.png";
 
             // Find the position of the URI on the atlas
             const uv = atlas.positions.get(textureURI);

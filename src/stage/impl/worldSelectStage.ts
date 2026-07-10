@@ -37,7 +37,7 @@ class WorldCard extends Container {
 
     public constructor(world: SavedWorld) {
         const background = new NineSliceSprite({
-            texture: Assets.get("ui/button"),
+            texture: Assets.get("base:ui/button.png"),
             leftWidth: 3,
             topHeight: 3,
             rightWidth: 3,
@@ -66,20 +66,21 @@ class WorldCard extends Container {
         });
         lastPlayed.position.set(40, 18);
 
+        const worldButtonsImage = Assets.get("base:ui/world_buttons.png");
         const playButton = new IconButton(new Texture({
-            source: Assets.get("ui/world_buttons"),
+            source: worldButtonsImage,
             frame: new Rectangle(0, 0, 32, 32)
         }));
         playButton.position.set(19, 19);
 
         const deleteButton = new IconButton(new Texture({
-            source: Assets.get("ui/world_buttons"),
+            source: worldButtonsImage,
             frame: new Rectangle(32, 16, 16, 16)
         }));
         deleteButton.position.set(WorldCard.WIDTH - 12, 11);
 
         const editButton = new IconButton(new Texture({
-            source: Assets.get("ui/world_buttons"),
+            source: worldButtonsImage,
             frame: new Rectangle(32, 0, 16, 16)
         }));
         editButton.position.set(WorldCard.WIDTH - 12, 27);

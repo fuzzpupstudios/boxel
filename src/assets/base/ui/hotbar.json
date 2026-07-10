@@ -1,6 +1,6 @@
 {
     "id": "base:hotbar",
-    "texture": "assets/textures/ui_hotbar.png",
+    "texture": "base:ui/hotbar.png",
     "interactive": false,
     "slots": [
         { "id": 0, "pos": [15, 10], "size": 20 },

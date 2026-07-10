@@ -113,7 +113,7 @@ export class PlayingGameStage extends GameStage {
         this.holdingBlockPreview.scale.set(32);
         this.gui.addChild(this.holdingBlockPreview);
 
-        this.crosshairSprite = new Sprite(Assets.get("ui/crosshair"));
+        this.crosshairSprite = new Sprite(Assets.get("base:ui/crosshair.png"));
         this.crosshairSprite.anchor.set(0.5);
         this.crosshairSprite.scale.set(0.5);
         this.gui.addChild(this.crosshairSprite);
@@ -137,7 +137,7 @@ export class PlayingGameStage extends GameStage {
         console.log(this.hotbar);
         this.gui.addChild(this.hotbar);
 
-        this.hotbarSelection = new Sprite(Assets.get("ui/hotbar_selection"));
+        this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
         this.hotbar.addChild(this.hotbarSelection);
 
         this.itemGivePanel = new Container;

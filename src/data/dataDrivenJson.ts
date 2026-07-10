@@ -5,7 +5,7 @@ export namespace DataDrivenJson {
     }
 
     export interface BlockState {
-        model: BlockStateModel,
+        model: BlockStateModel | string,
         events?: EventSheet,
         canPlace?: EventActionPredicateTree | boolean;
         collider?: BlockStateCollider,
@@ -15,6 +15,9 @@ export namespace DataDrivenJson {
     }
 
     export interface BlockStateModel {
+        id?: string;
+        parent?: string;
+
         skipRender?: boolean;
         occlude?: boolean;
         occludeNorth?: boolean,
@@ -36,13 +39,15 @@ export namespace DataDrivenJson {
         pos: [ number, number, number ],
         size: [ number, number ],
         uv: [ number, number, number, number ],
-        texture?: string,
+        texture: string,
         cull?: boolean,
         lit?: boolean
     }
 
     export interface EventSheet {
-        triggers: Record<string, EventAction[] | EventAction>
+        id?: string;
+        parent?: string;
+        triggers?: Record<string, EventAction[] | EventAction>
     }
 
     export interface EventAction {

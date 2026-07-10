@@ -19,7 +19,7 @@ export class GuiSlider extends Container {
 
     public constructor(min: number, max: number, value: number, step: number, width: number, height: number, text: string) {
         const background = new NineSliceSprite({
-            texture: Assets.get("ui/slider_background"),
+            texture: Assets.get("base:ui/slider_background.png"),
             leftWidth: 3,
             topHeight: 3,
             rightWidth: 3,
@@ -30,7 +30,7 @@ export class GuiSlider extends Container {
         background.anchor.set(0.5);
 
         const fill = new NineSliceSprite({
-            texture: Assets.get("ui/slider_fill"),
+            texture: Assets.get("base:ui/slider_fill.png"),
             leftWidth: 3,
             topHeight: 3,
             rightWidth: 3,
@@ -41,7 +41,7 @@ export class GuiSlider extends Container {
         fill.anchor.set(0, 0.5);
 
         const handle = new NineSliceSprite({
-            texture: Assets.get("ui/slider_handle"),
+            texture: Assets.get("base:ui/slider_handle.png"),
             leftWidth: 1,
             topHeight: 1,
             rightWidth: 1,

@@ -33,7 +33,7 @@ export abstract class EventSheet {
         }
     }
 
-    protected addTriggerAction(name: string, ...action: EventAction[]) {
+    public addTriggerAction(name: string, ...action: EventAction[]) {
         const triggers = this.triggers.getOrInsert(name, []);
         triggers.push(...action);
     }

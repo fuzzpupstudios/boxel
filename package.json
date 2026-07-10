@@ -7,9 +7,10 @@
     "fastnoise:build": "node ./scripts/build-fastnoise2.mjs",
     "postinstall": "npm run fastnoise:build",
     "prestart": "npm run fastnoise:build",
+    "package-assets": "rm ./assets/base.zip && cd src && zip -r ../assets/base.zip assets",
     "start": "webpack-dev-server --open",
     "prebuild": "npm run fastnoise:build",
-    "build": "webpack",
+    "build": "npm run package-assets && webpack",
     "prewatch": "npm run fastnoise:build",
     "watch": "webpack --watch",
     "test": "vitest"
@@ -33,8 +34,10 @@
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.5",
     "@pixi/ui": "^2.2.7",
+    "@zip.js/zip.js": "^2.8.26",
     "idb": "^8.0.3",
     "javascript-time-ago": "^2.6.4",
+    "jsonh-ts": "^3.8.0",
     "objectregistry": "^1.0.3",
     "pixi.js": "^8.14.1",
     "three": "^0.184.0",

@@ -1,0 +1,75 @@
+{
+    "id": "base:lamp",
+    "states": {
+        "color=white": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/lamp.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 15, 15, 15, 0 ]
+        },
+        "color=red": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/red_lamp.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 15, 0, 0, 0 ]
+        },
+        "color=green": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/green_lamp.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 15, 0, 0 ]
+        },
+        "color=blue": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/blue_lamp.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 0, 15, 0 ]
+        },
+        "color=sky": {
+            "model": {
+                "parent": "base:full_block",
+                "textures": {
+                    "block": "base:block/sun_lamp.png"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": [ 0, 0, 0, 15 ]
+        }
+    }
+}
