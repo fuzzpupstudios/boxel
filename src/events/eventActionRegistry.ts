@@ -5,11 +5,15 @@ import type { EventSheet } from "./eventSheet";
 import { RunTriggerAction } from "./block/runTriggerAction";
 import type { EventPredicate } from "./eventPredicate";
 import { BlockEventPredicate } from "./predicate/blockEventPredicate";
+import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
+import { CloneBlockAction } from "./block/cloneBlockAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
 eventActionRegistry.register("base:set_block_state_id", SetBlockStateIdAction);
 eventActionRegistry.register("base:run_trigger", RunTriggerAction);
+eventActionRegistry.register("base:set_block_state_parameter", SetBlockStateParameterAction);
+eventActionRegistry.register("base:clone_block", CloneBlockAction);
 
 eventActionRegistry.lock();
 

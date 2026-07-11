@@ -1,0 +1,53 @@
+{
+    "id": "base:door_top",
+    
+    "textures": {
+        "front": "base:block/axes.png",
+        "back": "base:block/axes.png",
+        "side": "base:block/axes.png",
+        "hinge": "base:block/axes.png",
+        "top": "base:block/axes.png"
+    },
+    "occlude": false,
+    "north": [
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0.5, 1, 1 ],
+            "texture": "front"
+        }
+    ],
+    "east": [
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 0.125, 1 ],
+            "uv": [ 0, 0.5, 1, 1 ],
+            "texture": "hinge"
+        }
+    ],
+    "south": [
+        {
+            "pos": [ 1, 0, 0.875 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0.5, 1, 1 ],
+            "texture": "back"
+        }
+    ],
+    "west": [
+        {
+            "pos": [ 0, 0, 0.875 ],
+            "size": [ 0.125, 1 ],
+            "uv": [ 0, 0.5, 1, 1 ],
+            "texture": "side"
+        }
+    ],
+    "up": [
+        {
+            "pos": [ 0, 1, 1 ],
+            "size": [ 1, 0.125 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "top"
+        }
+    ],
+    "down": []
+}

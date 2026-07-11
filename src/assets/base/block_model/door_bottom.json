@@ -1,0 +1,56 @@
+{
+    "id": "base:door_bottom",
+    
+    "textures": {
+        "front": "base:block/axes.png",
+        "back": "base:block/axes.png",
+        "side": "base:block/axes.png",
+        "hinge": "base:block/axes.png",
+        "bottom": "base:block/axes.png"
+    },
+
+    "occlude": false,
+    "occludeNorth": true,
+    
+    "north": [
+        {
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "front"
+        }
+    ],
+    "east": [
+        {
+            "pos": [ 1, 0, 1 ],
+            "size": [ 0.125, 1 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "hinge"
+        }
+    ],
+    "south": [
+        {
+            "pos": [ 1, 0, 0.875 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "back"
+        }
+    ],
+    "west": [
+        {
+            "pos": [ 0, 0, 0.875 ],
+            "size": [ 0.125, 1 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "side"
+        }
+    ],
+    "up": [],
+    "down": [
+        {
+            "pos": [ 0, 0, 0.875 ],
+            "size": [ 1, 0.125 ],
+            "uv": [ 0, 0, 1, 1 ],
+            "texture": "bottom"
+        }
+    ]
+}

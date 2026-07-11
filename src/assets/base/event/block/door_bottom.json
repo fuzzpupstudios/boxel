@@ -1,0 +1,103 @@
+{
+    "id": "base:door_bottom",
+    
+    "triggers": {
+        "base:destroy": [
+            {
+                "if": {
+                    "block": {
+                        "at": [ 0, 1, 0 ],
+                        "has_tag": "base:door"
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_id",
+                    "args": {
+                        "yOffset": 1,
+                        "blockStateId": "base:air[default]"
+                    }
+                }
+            }
+        ],
+        "base:place": [
+            {
+                "id": "base:clone_block",
+                "args": {
+                    "to": [ 0, 1, 0 ]
+                }
+            },
+            {
+                "id": "base:set_block_state_parameter",
+                "args": {
+                    "yOffset": 1,
+                    "parameters": {
+                        "half": "top"
+                    }
+                }
+            }
+        ],
+        "base:interact": [
+            {
+                "if": {
+                    "block": {
+                        "has_tag": "base:door/open"
+                    }
+                },
+                "then": [
+                    {
+                        "id": "base:set_block_state_parameter",
+                        "args": {
+                            "parameters": {
+                                "open": "false"
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "block": {
+                                "at": [ 0, 1, 0 ],
+                                "has_tag": "base:door"
+                            }
+                        },
+                        "then": {
+                            "id": "base:set_block_state_parameter",
+                            "args": {
+                                "yOffset": 1,
+                                "parameters": {
+                                    "open": "false"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "else": [
+                    {
+                        "id": "base:set_block_state_parameter",
+                        "args": {
+                            "parameters": {
+                                "open": "true"
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "block": {
+                                "at": [ 0, 1, 0 ],
+                                "has_tag": "base:door"
+                            }
+                        },
+                        "then": {
+                            "id": "base:set_block_state_parameter",
+                            "args": {
+                                "yOffset": 1,
+                                "parameters": {
+                                    "open": "true"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
