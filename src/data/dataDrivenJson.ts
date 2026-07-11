@@ -1,12 +1,13 @@
 export namespace DataDrivenJson {
     export interface Block {
-        id: string;
+        id: string,
+        defaultStateProperties?: BlockState,
         states: Record<string, BlockState>
     }
 
     export interface BlockState {
         model: BlockStateModel | string,
-        events?: EventSheet,
+        events?: EventSheet | string,
         canPlace?: EventActionPredicateTree | boolean;
         collider?: BlockStateCollider,
         emission?: [ number, number, number ],
@@ -33,6 +34,8 @@ export namespace DataDrivenJson {
         west?: BlockStateModelFace[],
         up?: BlockStateModelFace[],
         down?: BlockStateModelFace[],
+
+        transforms?: Record<string, any>[] | Record<string, any>
     }
 
     export interface BlockStateModelFace {
@@ -40,6 +43,7 @@ export namespace DataDrivenJson {
         size: [ number, number ],
         uv: [ number, number, number, number ],
         texture: string,
+        rotation?: number;
         cull?: boolean,
         lit?: boolean
     }
@@ -83,5 +87,18 @@ export namespace DataDrivenJson {
         texture: string;
         slots: InventoryGuiSlotType[];
         interactive?: boolean;
+    }
+
+    export interface TemplateApplicable {
+        template?: {
+            id: string;
+            arguments: Record<string, any>;
+        };
+    }
+
+    export interface JsonTemplate {
+        id: string;
+        parameters: Record<string, string>;
+        json: any;
     }
 }

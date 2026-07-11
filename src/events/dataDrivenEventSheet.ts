@@ -14,7 +14,7 @@ function isEventActionWithPredicate(obj: any): obj is DataDrivenJson.EventAction
 }
 
 export class DataDrivenEventSheet extends EventSheet {
-    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets) {
+    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets, defaultSheet?: EventSheet) {
         const parentJson = json.parent != null ? assets.eventSheetRegistry.get(json.parent) : null;
 
         let eventSheet: EventSheet;
@@ -29,16 +29,26 @@ export class DataDrivenEventSheet extends EventSheet {
             }
         }
 
+        if(defaultSheet != null) {
+            for(const [ triggerId, eventActions ] of defaultSheet.triggers) {
+                eventSheet.addTriggerAction(triggerId, ...eventActions);
+            }
+        }
+
         if(json.triggers != null) {
-            for(const [triggerId, eventActions] of Object.entries(json.triggers)) {
-                eventSheet.addTriggerAction(
-                    triggerId,
-                    ...(
-                        eventActions instanceof Array
-                         ? eventActions.map(action => this.parseAction(eventSheet, action))
-                         : [ this.parseAction(eventSheet, eventActions) ]
-                    )
-                );
+            for(const [ triggerId, eventActions ] of Object.entries(json.triggers)) {
+                try {
+                    eventSheet.addTriggerAction(
+                        triggerId,
+                        ...(
+                            eventActions instanceof Array
+                            ? eventActions.map(action => this.parseAction(eventSheet, action))
+                            : [ this.parseAction(eventSheet, eventActions) ]
+                        )
+                    );
+                } catch(e) {
+                    throw new Error("Failed to parse action in " + triggerId, { cause: e });
+                }
             }
         }
 
@@ -56,7 +66,11 @@ export class DataDrivenEventSheet extends EventSheet {
                 throw new ReferenceError("Action " + action.id + " cannot be found");
             }
 
-            return new EventActionConstructor(eventSheet, action.args);
+            try {
+                return new EventActionConstructor(eventSheet, action.args);
+            } catch(e) {
+                throw new Error("Failed to create action " + action.id, { cause: e });
+            }
         }
         if(isEventActionWithPredicate(action)) {
             const branch = new EventBranch(

@@ -1,0 +1,127 @@
+{
+    "id": "base:stair",
+
+    "parameters": {
+        "texture": "string",
+        "id": "string"
+    },
+    "json": {
+        "id": "${id}",
+
+        "defaultStateProperties": {
+            "model": {
+                "parent": "base:stair",
+                "textures": {
+                    "block": "${texture}"
+                }
+            }
+        },
+
+        "states": {
+            "direction=south,half=bottom": {
+                "model": {},
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
+                        { "from": [ 0, 0.5, 0.5 ], "to": [ 1, 1, 1 ] }
+                    ]
+                }
+            },
+            "direction=west,half=bottom": {
+                "model": {
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
+                        { "from": [ 0, 0.5, 0 ], "to": [ 0.5, 1, 1 ] }
+                    ]
+                }
+            },
+            "direction=north,half=bottom": {
+                "model": {
+                    "transforms": [
+                        { "rotateY": { "angle": 2, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 0.5 ] }
+                    ]
+                }
+            },
+            "direction=east,half=bottom": {
+                "model": {
+                    "transforms": [
+                        { "rotateY": { "angle": 3, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
+                        { "from": [ 0.5, 0.5, 0 ], "to": [ 1, 1, 1 ] }
+                    ]
+                }
+            },
+
+            "direction=south,half=top": {
+                "model": {
+                    "transforms": [
+                        { "rotateZ": { "angle": 2, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
+                        { "from": [ 0, 0, 0.5 ], "to": [ 1, 0.5, 1 ] }
+                    ]
+                }
+            },
+            "direction=west,half=top": {
+                "model": {
+                    "transforms": [
+                        { "rotateZ": { "angle": 2, "transformUVs": true } },
+                        { "rotateY": { "angle": 1, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
+                        { "from": [ 0, 0, 0 ], "to": [ 0.5, 0.5, 1 ] }
+                    ]
+                }
+            },
+            "direction=north,half=top": {
+                "model": {
+                    "transforms": [
+                        { "rotateZ": { "angle": 2, "transformUVs": true } },
+                        { "rotateY": { "angle": 2, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 0.5 ] }
+                    ]
+                }
+            },
+            "direction=east,half=top": {
+                "model": {
+                    "transforms": [
+                        { "rotateZ": { "angle": 2, "transformUVs": true } },
+                        { "rotateY": { "angle": 3, "transformUVs": true } }
+                    ]
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
+                        { "from": [ 0.5, 0, 0 ], "to": [ 1, 0.5, 1 ] }
+                    ]
+                }
+            }
+        }
+    }
+}

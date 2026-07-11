@@ -16,16 +16,15 @@ function averageLight(a: number, b: number, c: number, d: number) {
 
 
 export interface TileFace {
-    x: number;
-    y: number;
-    z: number;
-    width: number;
-    height: number;
+    x0: number, y0: number, z0: number;
+    x1: number, y1: number, z1: number;
+    x2: number, y2: number, z2: number;
+    x3: number, y3: number, z3: number;
+    u0: number, v0: number;
+    u1: number, v1: number;
+    u2: number, v2: number;
+    u3: number, v3: number;
     cull: boolean;
-    uvMinX: number;
-    uvMaxX: number;
-    uvMinY: number;
-    uvMaxY: number;
     lit: boolean;
 }
 
@@ -193,20 +192,20 @@ export class ChunkMesher {
                         if(face.cull && !showNorth) continue;
 
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  0, 0, 1,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  0, 0, 1,
 
-            /* pos      */  x + face.x + face.width, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  0, 0, 1,
 
-            /* pos      */  x + face.x + face.width, y + face.y, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  0, 0, 1,
                         );
                         if(face.lit) {
@@ -231,20 +230,20 @@ export class ChunkMesher {
                         if(face.cull && !showSouth) continue;
 
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  0, 0, -1,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  0, 0, -1,
 
-            /* pos      */  x + face.x - face.width, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  0, 0, -1,
 
-            /* pos      */  x + face.x - face.width, y + face.y, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  0, 0, -1,
                         );
                         if(face.lit) {
@@ -269,20 +268,20 @@ export class ChunkMesher {
                         if(face.cull && !showEast) continue;
                         
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z - face.width,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y, z + face.z - face.width,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  1, 0, 0,
                         );
                         if(face.lit) {
@@ -307,20 +306,20 @@ export class ChunkMesher {
                         if(face.cull && !showWest) continue;
 
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  -1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  -1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y + face.height, z + face.z + face.width,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  -1, 0, 0,
 
-            /* pos      */  x + face.x, y + face.y, z + face.z + face.width,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  -1, 0, 0,
                         );
                         if(face.lit) {
@@ -345,20 +344,20 @@ export class ChunkMesher {
                         if(face.cull && !showUp) continue;
                         
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  0, 1, 0,
 
-            /* pos      */  x + face.x, y + face.y, z + face.z - face.height,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  0, 1, 0,
 
-            /* pos      */  x + face.x + face.width, y + face.y, z + face.z - face.height,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  0, 1, 0,
 
-            /* pos      */  x + face.x + face.width, y + face.y, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  0, 1, 0,
                         );
                         if(face.lit) {
@@ -383,20 +382,20 @@ export class ChunkMesher {
                         if(face.cull && !showDown) continue;
 
                         floatAttributes.push(
-            /* pos      */  x + face.x, y + face.y, z + face.z,
-            /* uv       */  face.uvMinX, face.uvMinY,
+            /* pos      */  x + face.x0, y + face.y0, z + face.z0,
+            /* uv       */  face.u0, face.v0,
             /* normal   */  0, -1, 0,
 
-            /* pos      */  x + face.x, y + face.y, z + face.z + face.height,
-            /* uv       */  face.uvMinX, face.uvMaxY,
+            /* pos      */  x + face.x1, y + face.y1, z + face.z1,
+            /* uv       */  face.u1, face.v1,
             /* normal   */  0, -1, 0,
 
-            /* pos      */  x + face.x + face.width, y + face.y, z + face.z + face.height,
-            /* uv       */  face.uvMaxX, face.uvMaxY,
+            /* pos      */  x + face.x2, y + face.y2, z + face.z2,
+            /* uv       */  face.u2, face.v2,
             /* normal   */  0, -1, 0,
 
-            /* pos      */  x + face.x + face.width, y + face.y, z + face.z,
-            /* uv       */  face.uvMaxX, face.uvMinY,
+            /* pos      */  x + face.x3, y + face.y3, z + face.z3,
+            /* uv       */  face.u3, face.v3,
             /* normal   */  0, -1, 0,
                         );
                         if(face.lit) {

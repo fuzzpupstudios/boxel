@@ -115,7 +115,7 @@ export class Player extends Entity {
         if(blockState == null) return;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
-        blockState.events.runTrigger("base:on_destroy", cursor);
+        blockState.events.runTrigger("base:destroy", cursor);
         
         const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
         gameStage?.blockBreakParticles.blockDestructionParticles(
@@ -155,7 +155,7 @@ export class Player extends Entity {
         if(!blockState.canPlacePredicate.test(cursor)) return;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
-        blockState.events.runTrigger("base:on_place", cursor);
+        blockState.events.runTrigger("base:place", cursor);
     }
 
     public use() {

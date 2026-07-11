@@ -7,8 +7,8 @@ import { AABB } from "../physics/AABB";
 export interface Tickable {
     tick(time: Time): void;
 }
-export interface TileCollider {
-    hitboxes: Box3[]
+export class TileCollider {
+    public readonly hitboxes = new Array<Box3>;
 }
 
 export abstract class Entity implements Tickable {

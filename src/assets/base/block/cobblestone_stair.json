@@ -1,19 +1,10 @@
 {
     "id": "base:cobblestone_stair",
-    "states": {
-        "direction=south": {
-            "model": {
-                "parent": "base:stair",
-                "textures": {
-                    "block": "base:block/cobblestone.png"
-                }
-            },
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
-                    { "from": [ 0, 0.5, 0.5 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+    "template": {
+        "id": "base:stair",
+        "arguments": {
+            "texture": "base:block/cobblestone.png",
+            "id": "base:cobblestone_stair"
         }
     }
 }

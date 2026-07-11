@@ -28,8 +28,14 @@ export class BlockBreakParticleEngine extends ParticleEngine {
                 ...tileMesh.down
             ]
             .map(face => new Box2(
-                new Vector2(face.uvMinX, face.uvMinY),
-                new Vector2(face.uvMaxX, face.uvMaxY)
+                new Vector2(
+                    Math.min(face.u0, face.u1, face.u2, face.u3),
+                    Math.min(face.v0, face.v1, face.v2, face.v3)
+                ),
+                new Vector2(
+                    Math.max(face.u0, face.u1, face.u2, face.u3),
+                    Math.max(face.v0, face.v1, face.v2, face.v3)
+                )
             )));
 
             if(uvRects.size == 0) continue;
@@ -122,8 +128,10 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         this.addParticle(
             x, y, z, vx, vy, vz,
             ...this.randomUvPosition(
-                tileFace.uvMinX, tileFace.uvMinY,
-                tileFace.uvMaxX, tileFace.uvMaxY,
+                Math.min(tileFace.u0, tileFace.u1, tileFace.u2, tileFace.u3),
+                Math.min(tileFace.v0, tileFace.v1, tileFace.v2, tileFace.v3),
+                Math.max(tileFace.u0, tileFace.u1, tileFace.u2, tileFace.u3),
+                Math.max(tileFace.v0, tileFace.v1, tileFace.v2, tileFace.v3),
                 0.25
             ),
             0.1 + Math.random() * 0.05, // size

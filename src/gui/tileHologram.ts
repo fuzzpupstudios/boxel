@@ -153,10 +153,10 @@ export class TileHologramProvider {
                 normalX, normalY, normalZ
             );
             uvs.push(
-                face.uvMinX, 1 - face.uvMinY,
-                face.uvMinX, 1 - face.uvMaxY,
-                face.uvMaxX, 1 - face.uvMaxY,
-                face.uvMaxX, 1 - face.uvMinY
+                face.u0, 1 - face.v0,
+                face.u1, 1 - face.v1,
+                face.u2, 1 - face.v2,
+                face.u3, 1 - face.v3
             );
             indices.push(
                 vertexCount + 0, vertexCount + 3, vertexCount + 2,
@@ -168,60 +168,60 @@ export class TileHologramProvider {
         // North
         for(const face of model.north) {
             addFace(face, 0, 0, 1, [
-                face.x, face.y, face.z,
-                face.x, face.y + face.height, face.z,
-                face.x + face.width, face.y + face.height, face.z,
-                face.x + face.width, face.y, face.z,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 
         // South
         for(const face of model.south) {
             addFace(face, 0, 0, -1, [
-                face.x, face.y, face.z,
-                face.x, face.y + face.height, face.z,
-                face.x - face.width, face.y + face.height, face.z,
-                face.x - face.width, face.y, face.z,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 
         // East
         for(const face of model.east) {
             addFace(face, 1, 0, 0, [
-                face.x, face.y, face.z,
-                face.x, face.y + face.height, face.z,
-                face.x, face.y + face.height, face.z - face.width,
-                face.x, face.y, face.z - face.width,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 
         // West
         for(const face of model.west) {
             addFace(face, -1, 0, 0, [
-                face.x, face.y, face.z,
-                face.x, face.y + face.height, face.z,
-                face.x, face.y + face.height, face.z + face.width,
-                face.x, face.y, face.z + face.width,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 
         // Up
         for(const face of model.up) {
             addFace(face, 0, 1, 0, [
-                face.x, face.y, face.z,
-                face.x, face.y, face.z - face.height,
-                face.x + face.width, face.y, face.z - face.height,
-                face.x + face.width, face.y, face.z,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 
         // Down
         for(const face of model.down) {
             addFace(face, 0, -1, 0, [
-                face.x, face.y, face.z,
-                face.x, face.y, face.z + face.height,
-                face.x + face.width, face.y, face.z + face.height,
-                face.x + face.width, face.y, face.z,
+                face.x0, face.y0, face.z0,
+                face.x1, face.y1, face.z1,
+                face.x2, face.y2, face.z2,
+                face.x3, face.y3, face.z3,
             ]);
         }
 

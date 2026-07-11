@@ -1,25 +1,23 @@
 import * as PIXI from "pixi.js";
+import "pixi.js/events";
 import "pixi.js/mesh";
 import "pixi.js/sprite-nine-slice";
 import "pixi.js/text";
-import "pixi.js/events";
 import * as THREE from "three/webgpu";
-import { Assets } from "./textures/assets";
-import { TextureAtlas } from "./textures/textureAtlas";
 import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./block/blockRegistry";
+import { DataDrivenBlock } from "./block/dataDrivenBlock";
+import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
 import { ControlBinding, Input } from "./input/input";
+import { DataDrivenInventoryGuiType } from "./item/dataDrivenInventoryGuiType";
+import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
 import type { MainStorage } from "./persistence/mainStorage";
 import { PersistenceManager } from "./persistence/persistenceManager";
 import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
+import { Assets } from "./textures/assets";
+import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
-import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
-import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
-import { BlobReader, ZipReader } from "@zip.js/zip.js";
-import { DataDrivenBlock } from "./block/dataDrivenBlock";
-import { DataDrivenInventoryGuiType } from "./item/dataDrivenInventoryGuiType";
-import type { DataDrivenJson } from "./data/dataDrivenJson";
 
 
 export class BoxelGame {
@@ -210,11 +208,20 @@ export class BoxelGame {
 
     private registerGameData() {
         for(const [ id, json ] of this.assets.blockRegistry.entries()) {
-            blockRegistry.register(id, DataDrivenBlock.parseJson(json));
+            try {
+                blockRegistry.register(id, DataDrivenBlock.parseJson(json));
+            } catch(e) {
+                throw new Error("Failed to register block " + id, { cause: e });
+            }
         }
         blockRegistry.lock();
+
         for(const [ id, json ] of this.assets.inventoryGuiTypeRegistry.entries()) {
-            inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json));
+            try {
+                inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json));
+            } catch(e) {
+                throw new Error("Failed to register gui type " + id, { cause: e });
+            }
         }
         inventoryGuiTypeRegistry.lock();
     }
@@ -225,6 +232,8 @@ export class BoxelGame {
 
         const blob = await fetch("assets/base.zip").then(v => v.blob());
         await this.assets.loadPack(blob);
+
+        this.assets.processTemplates();
 
         this.loadAssets();
         this.registerGameData();

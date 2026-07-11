@@ -9,11 +9,14 @@ export const BlockEventPredicateParameters = z.object({
         z.number(),
         z.number(),
         z.number(),
-    ]),
+    ]).default([ 0, 0, 0 ]),
     has_tag: z.string().optional()
 })
 
 export class BlockEventPredicate extends EventPredicate<BlockEventPredicateParameters> {
+    public constructor(args: BlockEventPredicateParameters) {
+        super(BlockEventPredicateParameters.parse(args));
+    }
     public override test(cursor: EventCursor): boolean {
         const blockStateId = cursor.world.getBlockState(
             cursor.x + this.args.at[0],

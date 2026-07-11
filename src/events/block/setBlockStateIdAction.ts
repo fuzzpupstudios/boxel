@@ -4,9 +4,9 @@ import type { EventSheet, EventCursor } from "../eventSheet";
 
 export type SetBlockStateIdActionParameters = z.infer<typeof SetBlockStateIdActionParameters>;
 export const SetBlockStateIdActionParameters = z.object({
-    xOffset: z.number(),
-    yOffset: z.number(),
-    zOffset: z.number(),
+    xOffset: z.number().default(0),
+    yOffset: z.number().default(0),
+    zOffset: z.number().default(0),
     blockStateId: z.string()
 });
 
