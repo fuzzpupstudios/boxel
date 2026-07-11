@@ -123,7 +123,9 @@ export class PlayingGameStage extends GameStage {
         this.itemGivePanel.visible = false;
 
         let i = 0;
-        for(const blockStateKey of blockStateRegistry.keys()) {
+        for(const [ blockStateKey, blockState ] of blockStateRegistry.entries()) {
+            if(blockState.tags.has("hidden")) continue;
+
             const x = i % 5;
             const y = (i / 5) | 0;
 
