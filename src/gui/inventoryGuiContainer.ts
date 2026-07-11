@@ -212,7 +212,6 @@ export class InventoryGuiContainer extends Container {
             this.slotContainers.get(slotId)?.updateDisplayItem();
         });
         this.on("destroyed", () => {
-            console.log("destroyed");
             this.onSwapStackHandler.disconnect();
             this.onSplitStackHandler.disconnect();
             this.onDropOneHandler.disconnect();

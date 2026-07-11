@@ -134,7 +134,6 @@ export class PlayingGameStage extends GameStage {
             this.inventoryCursor
         );
         this.hotbar.pivot.set(128, 32);
-        console.log(this.hotbar);
         this.gui.addChild(this.hotbar);
 
         this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));

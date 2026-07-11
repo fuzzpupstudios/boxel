@@ -119,8 +119,6 @@ export class TextureAtlas {
         this.packedTexture.generateMipmaps = false;
         this.packedTexture.mipmaps = [canvas, ...this.generateManualMipmaps(canvas, 4)];
         this.packedTexture.needsUpdate = true;
-
-        canvas.toBlob(blob => console.log(URL.createObjectURL(blob!)));
     }
 
     private tryPack(slots: AtlasSlot[], atlasSize: number): boolean {
