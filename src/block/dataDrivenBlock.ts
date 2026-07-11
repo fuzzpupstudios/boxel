@@ -19,16 +19,146 @@ export class DataDrivenBlock extends Block {
         const block = new DataDrivenBlock;
 
         let defaultState;
-        let defaultStateProperties
-        if(json.defaultStateProperties != null) {
-            defaultStateProperties = this.parseState(block, "", json.defaultStateProperties);
-        }
 
         block.id = json.id;
 
         for(const [ stateKey, jsonState ] of Object.entries(json.states)) {
+            if(json.defaultStateProperties != null) {
+                const defaultProperties: DataDrivenJson.BlockState =
+                    JSON.parse(JSON.stringify(json.defaultStateProperties));
+
+                console.log(defaultProperties, jsonState);
+
+                jsonState.attenuation ??= defaultProperties.attenuation!;
+                jsonState.emission ??= defaultProperties.emission!;
+                jsonState.canPlace ??= defaultProperties.canPlace!;
+
+                if(jsonState.tags == null) {
+                    jsonState.tags = defaultProperties.tags!;
+                } else if(defaultProperties.tags != null) {
+                    jsonState.tags.push(...defaultProperties.tags);
+                }
+
+                if(jsonState.collider == null) {
+                    jsonState.collider = defaultProperties.collider!;
+                } else if(defaultProperties.collider != null) {
+                    jsonState.collider.hitboxes.push(...defaultProperties.collider.hitboxes);
+                }
+
+                if(jsonState.events == null) {
+                    jsonState.events = defaultProperties.events!;
+                } else if(defaultProperties.events != null) {
+                    if(typeof jsonState.events == "string") {
+                        jsonState.events = { parent: jsonState.events };
+                    }
+                    if(typeof defaultProperties.events == "string") {
+                        defaultProperties.events = { parent: defaultProperties.events };
+                    }
+
+                    const jsonEvents = jsonState.events;
+                    const defaultEvents = defaultProperties.events;
+
+                    jsonEvents.parent ??= defaultEvents.parent!;
+
+
+                    if(jsonEvents.triggers == null) {
+                        jsonEvents.triggers = defaultEvents.triggers!;
+                    } else if(defaultEvents.triggers != null) {
+                        for(const triggerId of Object.keys(defaultEvents.triggers)) {
+                            if(jsonEvents.triggers[triggerId] == null) {
+                                jsonEvents.triggers[triggerId] = defaultEvents.triggers[triggerId]!;
+                            } else if(defaultEvents.triggers[triggerId] != null) {
+                                if(!(jsonEvents.triggers[triggerId] instanceof Array)) {
+                                    jsonEvents.triggers[triggerId] = [ jsonEvents.triggers[triggerId] ];
+                                }
+                                if(!(defaultEvents.triggers[triggerId] instanceof Array)) {
+                                    defaultEvents.triggers[triggerId] = [ defaultEvents.triggers[triggerId] ];
+                                }
+
+                                jsonEvents.triggers[triggerId].push(...<any>defaultEvents.triggers);
+                            }
+                        }
+                    }
+                }
+
+                if(jsonState.model == null) {
+                    jsonState.model = defaultProperties.model!;
+                } else if(defaultProperties.model != null) {
+                    if(typeof jsonState.model == "string") {
+                        jsonState.model = { parent: jsonState.model };
+                    }
+                    if(typeof defaultProperties.model == "string") {
+                        defaultProperties.model = { parent: defaultProperties.model };
+                    }
+
+                    const jsonModel = jsonState.model;
+                    const defaultModel = defaultProperties.model;
+
+                    jsonModel.parent ??= defaultModel.parent!;
+                    jsonModel.occlude ??= defaultModel.occlude!;
+
+                    jsonModel.occludeNorth ??= defaultModel.occludeNorth!;
+                    jsonModel.occludeEast ??= defaultModel.occludeEast!;
+                    jsonModel.occludeSouth ??= defaultModel.occludeSouth!;
+                    jsonModel.occludeWest ??= defaultModel.occludeWest!;
+                    jsonModel.occludeDown ??= defaultModel.occludeDown!;
+                    jsonModel.occludeUp ??= defaultModel.occludeUp!;
+
+                    if(jsonModel.textures == null) {
+                        jsonModel.textures = defaultModel.textures!;
+                    } else if(defaultModel.textures != null) {
+                        for(const [ key, value ] of Object.entries(defaultModel.textures)) {
+                            jsonModel.textures[key] ??= value;
+                        }
+                    }
+
+                    if(jsonModel.north == null) {
+                        jsonModel.north = defaultModel.north!;
+                    } else if(defaultModel.north != null) {
+                        jsonModel.north.push(...defaultModel.north);
+                    }
+                    if(jsonModel.east == null) {
+                        jsonModel.east = defaultModel.east!;
+                    } else if(defaultModel.east != null) {
+                        jsonModel.east.push(...defaultModel.east);
+                    }
+                    if(jsonModel.south == null) {
+                        jsonModel.south = defaultModel.south!;
+                    } else if(defaultModel.south != null) {
+                        jsonModel.south.push(...defaultModel.south);
+                    }
+                    if(jsonModel.west == null) {
+                        jsonModel.west = defaultModel.west!;
+                    } else if(defaultModel.west != null) {
+                        jsonModel.west.push(...defaultModel.west);
+                    }
+                    if(jsonModel.up == null) {
+                        jsonModel.up = defaultModel.up!;
+                    } else if(defaultModel.up != null) {
+                        jsonModel.up.push(...defaultModel.up);
+                    }
+                    if(jsonModel.down == null) {
+                        jsonModel.down = defaultModel.down!;
+                    } else if(defaultModel.down != null) {
+                        jsonModel.down.push(...defaultModel.down);
+                    }
+
+                    if(jsonModel.transforms == null) {
+                        jsonModel.transforms = defaultModel.transforms!;
+                    } else if(defaultModel.transforms != null) {
+                        if(!(jsonModel.transforms instanceof Array)) {
+                            jsonModel.transforms = [ jsonModel.transforms ];
+                        }
+                        if(!(defaultModel.transforms instanceof Array)) {
+                            defaultModel.transforms = [ defaultModel.transforms ];
+                        }
+
+                        jsonModel.transforms.push(...<any>defaultModel.transforms);
+                    }
+                }
+            }
             try {
-                const blockState = this.parseState(block, stateKey, jsonState, defaultStateProperties);
+                const blockState = this.parseState(block, stateKey, jsonState);
 
                 block.states.set(stateKey, blockState);
                 defaultState ??= blockState;
@@ -45,39 +175,39 @@ export class DataDrivenBlock extends Block {
 
         return block;
     }
-    private static parseState(block: Block, stateKey: string, jsonState: DataDrivenJson.BlockState, defaultState?: BlockState) {
+    private static parseState(block: Block, stateKey: string, jsonState: DataDrivenJson.BlockState) {
         const game = BoxelGame.INSTANCE;
 
 
         const collider = this.parseJsonCollider(
-            jsonState.collider ?? { hitboxes: [] }, defaultState?.collider);
+            jsonState.collider ?? { hitboxes: [] });
 
-        const tags = this.parseTags(jsonState.tags, defaultState?.tags);
+        const tags = this.parseTags(jsonState.tags);
 
-        const emission = jsonState.emission ?? defaultState?.emission ?? [ 0, 0, 0, 0 ];
+        const emission = jsonState.emission ?? [ 0, 0, 0, 0 ];
         if(emission.length != 4) throw new Error("Emission must have 4 numbers");
 
-        const attenuation = jsonState.attenuation ?? defaultState?.attenuation ?? [ 15, 15, 15, 15 ];
+        const attenuation = jsonState.attenuation ?? [ 15, 15, 15, 15 ];
         if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
 
-        
+
         let model;
         try {
-            model = this.parseModel(jsonState.model, game, defaultState?.model);
+            model = this.parseModel(jsonState.model, game);
         } catch(e) {
             throw new Error("Failed to parse model", { cause: e });
         }
 
         let eventSheet;
         try {
-            eventSheet = this.parseEvents(jsonState.events, game, defaultState?.events);
+            eventSheet = this.parseEvents(jsonState.events, game);
         } catch(e) {
             throw new Error("Failed to parse events " + jsonState.events, { cause: e });
         }
         
         let canPlacePredicate;
         try {
-            canPlacePredicate = this.parseCanPlacePredicate(jsonState.canPlace, defaultState?.canPlacePredicate);
+            canPlacePredicate = this.parseCanPlacePredicate(jsonState.canPlace);
         } catch(e) {
             throw new Error("Failed to parse canPlace predicate", { cause: e });
         }
@@ -93,11 +223,7 @@ export class DataDrivenBlock extends Block {
             attenuation
         );
     }
-    private static parseCanPlacePredicate(json?: DataDrivenJson.EventActionPredicateTree | boolean, defaultPredicate?: EventPredicate): EventPredicate {
-        if(json == null && defaultPredicate != null) {
-            return defaultPredicate;
-        }
-
+    private static parseCanPlacePredicate(json?: DataDrivenJson.EventActionPredicateTree | boolean): EventPredicate {
         json ??= true;
 
         if(typeof json == "boolean") {
@@ -106,22 +232,17 @@ export class DataDrivenBlock extends Block {
             return DataDrivenEventSheet.parsePredicate(json ?? {});
         }
     }
-    private static parseTags(jsonTags?: string[], defaultTags?: Set<string>) {
+    private static parseTags(jsonTags?: string[]) {
         const tags = new Set<string>;
 
-        if(defaultTags != null) {
-            for(const tag of defaultTags) {
-                tags.add(tag);
-            }
-        }
         if(jsonTags != null) {
             for(const tag of jsonTags) tags.add(tag);
         }
 
         return tags;
     }
-    private static parseEvents(events: string | DataDrivenJson.EventSheet | undefined, game: BoxelGame, defaultSheet?: EventSheet) {
-        if(events == null) return new DataDrivenEventSheet;
+    private static parseEvents(events: string | DataDrivenJson.EventSheet | undefined, game: BoxelGame) {
+        if(events == null) return DataDrivenEventSheet.parseJson({}, game.assets);
         
         if(typeof events == "string") {
             const resolvedEvents = game.assets.eventSheetRegistry.get(events);
@@ -130,9 +251,9 @@ export class DataDrivenBlock extends Block {
             events = resolvedEvents;
         }
 
-        return DataDrivenEventSheet.parseJson(events, game.assets, defaultSheet);
+        return DataDrivenEventSheet.parseJson(events, game.assets);
     }
-    private static parseModel(model: string | DataDrivenJson.BlockStateModel, game: BoxelGame, defaultModel?: BlockModel) {
+    private static parseModel(model: string | DataDrivenJson.BlockStateModel, game: BoxelGame) {
         if(typeof model == "string") {
             const resolvedModel = game.assets.blockModelRegistry.get(model);
             if(resolvedModel == null) throw new ReferenceError("Cannot resolve model parent " + model);
@@ -140,16 +261,10 @@ export class DataDrivenBlock extends Block {
             model = resolvedModel;
         }
 
-        return BlockModel.parseJson(model, game.assets, defaultModel);
+        return BlockModel.parseJson(model, game.assets);
     }
-    private static parseJsonCollider(json: DataDrivenJson.BlockStateCollider, defaultCollider?: TileCollider): TileCollider {
+    private static parseJsonCollider(json: DataDrivenJson.BlockStateCollider): TileCollider {
         const collider = new TileCollider;
-
-        if(defaultCollider != null) {
-            for(const hitbox of defaultCollider.hitboxes) {
-                collider.hitboxes.push(hitbox.clone());
-            }
-        }
 
         for(const hitbox of json.hitboxes) {
             collider.hitboxes.push(new Box3(

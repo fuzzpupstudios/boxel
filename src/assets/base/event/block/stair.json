@@ -1,0 +1,132 @@
+{
+    "id": "base:stair",
+    
+    "triggers": {
+        "base:place": [
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": -45,
+                        "maxYaw": 45
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "north"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": 45,
+                        "maxYaw": 135
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "east"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": 135,
+                        "maxYaw": -135
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "south"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": -135,
+                        "maxYaw": -45
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "west"
+                        }
+                    }
+                }
+            },
+
+            {
+                "if": {
+                    "face": {
+                        "sides": [ "north", "east", "south", "west" ],
+                        "minY": 0.5
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "half": "top"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "face": {
+                        "sides": [ "north", "east", "south", "west" ],
+                        "maxY": 0.5
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "half": "bottom"
+                        }
+                    }
+                }
+            },
+
+            {
+                "if": {
+                    "face": "down"
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "half": "top"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "face": "up"
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "half": "bottom"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

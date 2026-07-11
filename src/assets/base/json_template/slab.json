@@ -1,0 +1,44 @@
+{
+    "id": "base:slab",
+
+    "parameters": {
+        "texture": "string",
+        "id": "string"
+    },
+    "json": {
+        "id": "${id}",
+
+        "defaultStateProperties": {
+            "events": "base:slab"
+        },
+
+        "states": {
+            "half=bottom": {
+                "model": {
+                    "parent": "base:slab_bottom",
+                    "textures": {
+                        "block": "${texture}"
+                    }
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] }
+                    ]
+                }
+            },
+            "half=top": {
+                "model": {
+                    "parent": "base:slab_top",
+                    "textures": {
+                        "block": "${texture}"
+                    }
+                },
+                "collider": {
+                    "hitboxes": [
+                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] }
+                    ]
+                }
+            }
+        }
+    }
+}

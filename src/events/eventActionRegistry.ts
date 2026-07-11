@@ -7,6 +7,8 @@ import type { EventPredicate } from "./eventPredicate";
 import { BlockEventPredicate } from "./predicate/blockEventPredicate";
 import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
 import { CloneBlockAction } from "./block/cloneBlockAction";
+import { FaceEventPredicate } from "./predicate/faceEventPredicate";
+import { EntityEventPredicate } from "./predicate/entityEventPredicate";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -22,5 +24,7 @@ eventActionRegistry.lock();
 export const eventPredicateRegistry = new KeyedRegistry<new (args: any) => EventPredicate>;
 
 eventPredicateRegistry.register("block", BlockEventPredicate);
+eventPredicateRegistry.register("face", FaceEventPredicate);
+eventPredicateRegistry.register("entity", EntityEventPredicate);
 
 eventPredicateRegistry.lock();

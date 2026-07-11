@@ -290,7 +290,7 @@ export class BlockModel {
     public textureURIs = new Map<string, string>;
     public textureSources = new Map<string, ImageBitmap>;
 
-    public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets, defaultModel?: BlockModel): BlockModel {
+    public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
         const parentJson = json.parent != null ? assets.blockModelRegistry.get(json.parent) : null;
 
         let model: BlockModel;
@@ -305,28 +305,13 @@ export class BlockModel {
             }
         }
 
-        if(defaultModel != null) {
-            model.north.push(...defaultModel.north.map(face => face.clone()));
-            model.east.push(...defaultModel.east.map(face => face.clone()));
-            model.south.push(...defaultModel.south.map(face => face.clone()));
-            model.west.push(...defaultModel.west.map(face => face.clone()));
-            model.up.push(...defaultModel.up.map(face => face.clone()));
-            model.down.push(...defaultModel.down.map(face => face.clone()));
+        model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth;
+        model.occludeEast = json.occludeEast ?? json.occlude ?? model.occludeEast;
+        model.occludeSouth = json.occludeSouth ?? json.occlude ?? model.occludeSouth;
+        model.occludeWest = json.occludeWest ?? json.occlude ?? model.occludeWest;
+        model.occludeUp = json.occludeUp ?? json.occlude ?? model.occludeUp;
+        model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown;
 
-            for(const [ key, value ] of defaultModel.textureSources.entries()) {
-                model.textureSources.set(key, value);
-            }
-            for(const [ key, value ] of defaultModel.textureURIs.entries()) {
-                model.textureURIs.set(key, value);
-            }
-        }
-
-        model.occludeNorth = json.occludeNorth ?? defaultModel?.occludeNorth ?? json.occlude ?? model.occludeNorth;
-        model.occludeEast = json.occludeEast ?? defaultModel?.occludeEast ?? json.occlude ?? model.occludeEast;
-        model.occludeSouth = json.occludeSouth ?? defaultModel?.occludeSouth ?? json.occlude ?? model.occludeSouth;
-        model.occludeWest = json.occludeWest ?? defaultModel?.occludeWest ?? json.occlude ?? model.occludeWest;
-        model.occludeUp = json.occludeUp ?? defaultModel?.occludeUp ?? json.occlude ?? model.occludeUp;
-        model.occludeDown = json.occludeDown ?? defaultModel?.occludeDown ?? json.occlude ?? model.occludeDown;
 
         model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, 1))));
         model.east.push(...(json.east ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(1, 0, 0))));

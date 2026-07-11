@@ -14,7 +14,8 @@
                 "textures": {
                     "block": "${texture}"
                 }
-            }
+            },
+            "events": "base:stair"
         },
 
         "states": {

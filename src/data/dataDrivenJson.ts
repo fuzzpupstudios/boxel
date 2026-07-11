@@ -19,7 +19,6 @@ export namespace DataDrivenJson {
         id?: string;
         parent?: string;
 
-        skipRender?: boolean;
         occlude?: boolean;
         occludeNorth?: boolean,
         occludeEast?: boolean,

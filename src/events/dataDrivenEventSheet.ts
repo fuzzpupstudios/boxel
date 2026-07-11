@@ -14,7 +14,7 @@ function isEventActionWithPredicate(obj: any): obj is DataDrivenJson.EventAction
 }
 
 export class DataDrivenEventSheet extends EventSheet {
-    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets, defaultSheet?: EventSheet) {
+    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets) {
         const parentJson = json.parent != null ? assets.eventSheetRegistry.get(json.parent) : null;
 
         let eventSheet: EventSheet;
@@ -26,12 +26,6 @@ export class DataDrivenEventSheet extends EventSheet {
                 eventSheet = DataDrivenEventSheet.parseJson(parentJson, assets);
             } catch(e) {
                 throw new Error("Failed to parse parent " + json.parent, { cause: e });
-            }
-        }
-
-        if(defaultSheet != null) {
-            for(const [ triggerId, eventActions ] of defaultSheet.triggers) {
-                eventSheet.addTriggerAction(triggerId, ...eventActions);
             }
         }
 

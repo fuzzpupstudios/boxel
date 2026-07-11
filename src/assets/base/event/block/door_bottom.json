@@ -21,6 +21,70 @@
         ],
         "base:place": [
             {
+                "if": {
+                    "entity": {
+                        "minYaw": -45,
+                        "maxYaw": 45
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "north"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": 45,
+                        "maxYaw": 135
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "east"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": 135,
+                        "maxYaw": -135
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "south"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": -135,
+                        "maxYaw": -45
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "west"
+                        }
+                    }
+                }
+            },
+            {
                 "id": "base:clone_block",
                 "args": {
                     "to": [ 0, 1, 0 ]

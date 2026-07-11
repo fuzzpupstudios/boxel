@@ -1,4 +1,4 @@
-import { Box3, Euler, MathUtils, Vector3 } from "three";
+import { Box3, Euler, MathUtils, Quaternion, Vector2, Vector3 } from "three";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { BoxelGame } from "../boxel";
 import { AABB } from "../physics/AABB";
@@ -152,6 +152,9 @@ export class Player extends Entity {
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        cursor.setFaceDataFromRaycastResult(this.targetedBlock);
+        cursor.setRotation(this.yaw, this.pitch);
+        
         if(!blockState.canPlacePredicate.test(cursor)) return;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
@@ -169,12 +172,16 @@ export class Player extends Entity {
 
         const blockState = blockStateRegistry.get(blockStateId);
 
-        blockState?.events.runTrigger("base:interact", new EventCursor(
+        const cursor = new EventCursor(
             this.world,
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
-        ));
+        );
+        cursor.setFaceDataFromRaycastResult(this.targetedBlock);
+        cursor.setRotation(this.yaw, this.pitch);
+
+        blockState?.events.runTrigger("base:interact", cursor);
     }
 
     public tick(time: Time): void {

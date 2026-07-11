@@ -44,26 +44,6 @@ export class PlayingGameStage extends GameStage {
     private pointerUnlockers = 0;
     private worldLoading: boolean = true;
     private autosaveCooldown: number = 0;
-    private selectableItems = [
-        "base:cobblestone[default]",
-        "base:cobblestone_slab[half=bottom]",
-        "base:cobblestone_slab[half=top]",
-        "base:cobblestone_stair[direction=south]",
-        "base:grass[default]",
-        "base:dirt[default]",
-        "base:lamp[color=white]",
-        "base:lamp[color=red]",
-        "base:lamp[color=green]",
-        "base:lamp[color=blue]",
-        "base:planks[default]",
-        "base:planks_slab[half=bottom]",
-        "base:planks_slab[half=top]",
-        "base:planks_stair[direction=south]",
-        "base:bricks[default]",
-        "base:bricks_slab[half=bottom]",
-        "base:bricks_slab[half=top]",
-        "base:bricks_stair[direction=south]",
-    ];
 
     private sprintFlickCooldown = 0;
     private walkForwardCheckSucceeded = false;
