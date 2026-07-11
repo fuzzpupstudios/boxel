@@ -196,7 +196,6 @@ export class Assets {
                     }
         
                     const applied = this.applyTemplate(template.json, substitutions);
-                    console.log("applied " + value.template.id + " to " + key, applied);
                     registry.set(key, applied);
                 } catch(e) {
                     throw new Error("Error applying template " + value.template.id +

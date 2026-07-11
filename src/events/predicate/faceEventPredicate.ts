@@ -34,8 +34,6 @@ export class FaceEventPredicate extends EventPredicate<FaceEventPredicateParamet
             return this.trySide(cursor, this.args);
         }
 
-        console.log(cursor, this.args);
-
         if(this.args.sides.length > 0) {
             let matched = false;
             for(const side of this.args.sides) {
