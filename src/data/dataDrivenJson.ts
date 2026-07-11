@@ -12,7 +12,8 @@ export namespace DataDrivenJson {
         collider?: BlockStateCollider,
         emission?: [ number, number, number ],
         attenuation?: [ number, number, number ],
-        tags?: string[]
+        tags?: string[],
+        pickBlockState?: string
     }
 
     export interface BlockStateModel {

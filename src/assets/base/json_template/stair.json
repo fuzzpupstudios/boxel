@@ -15,7 +15,8 @@
                     "block": "${texture}"
                 }
             },
-            "events": "base:stair"
+            "events": "base:stair",
+            "pickBlockState": "direction=west,half=bottom"
         },
 
         "states": {
@@ -26,7 +27,8 @@
                         { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
                         { "from": [ 0, 0.5, 0.5 ], "to": [ 1, 1, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
             "direction=west,half=bottom": {
                 "model": {
@@ -52,7 +54,8 @@
                         { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 0.5 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
             "direction=east,half=bottom": {
                 "model": {
@@ -65,7 +68,8 @@
                         { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
                         { "from": [ 0.5, 0.5, 0 ], "to": [ 1, 1, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
 
             "direction=south,half=top": {
@@ -79,7 +83,8 @@
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
                         { "from": [ 0, 0, 0.5 ], "to": [ 1, 0.5, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
             "direction=west,half=top": {
                 "model": {
@@ -93,7 +98,8 @@
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
                         { "from": [ 0, 0, 0 ], "to": [ 0.5, 0.5, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
             "direction=north,half=top": {
                 "model": {
@@ -107,7 +113,8 @@
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
                         { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 0.5 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             },
             "direction=east,half=top": {
                 "model": {
@@ -121,7 +128,8 @@
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
                         { "from": [ 0.5, 0, 0 ], "to": [ 1, 0.5, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             }
         }
     }

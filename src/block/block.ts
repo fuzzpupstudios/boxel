@@ -25,6 +25,7 @@ export class BlockState {
         public readonly tags: Set<string>,
         public readonly emission: [ number, number, number, number ],
         public readonly attenuation: [ number, number, number, number ],
+        public readonly pickBlockStateId: string
     ) {
         for(let i = 0; i < 4; i++) {
             emission[i] = MathUtils.clamp(emission[i]!, 0, 15);

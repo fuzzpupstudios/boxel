@@ -9,7 +9,8 @@
         "id": "${id}",
 
         "defaultStateProperties": {
-            "events": "base:slab"
+            "events": "base:slab",
+            "pickBlockState": "half=bottom"
         },
 
         "states": {
@@ -37,7 +38,8 @@
                     "hitboxes": [
                         { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] }
                     ]
-                }
+                },
+                "tags": [ "hidden" ]
             }
         }
     }

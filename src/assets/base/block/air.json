@@ -6,7 +6,7 @@
                 "occlude": false
             },
             "attenuation": [ 1, 1, 1, 1 ],
-            "tags": [ "replaceable" ]
+            "tags": [ "replaceable", "hidden" ]
         }
     }
 }

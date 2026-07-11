@@ -27,11 +27,10 @@ export class DataDrivenBlock extends Block {
                 const defaultProperties: DataDrivenJson.BlockState =
                     JSON.parse(JSON.stringify(json.defaultStateProperties));
 
-                console.log(defaultProperties, jsonState);
-
                 jsonState.attenuation ??= defaultProperties.attenuation!;
                 jsonState.emission ??= defaultProperties.emission!;
                 jsonState.canPlace ??= defaultProperties.canPlace!;
+                jsonState.pickBlockState ??= defaultProperties.pickBlockState!;
 
                 if(jsonState.tags == null) {
                     jsonState.tags = defaultProperties.tags!;
@@ -190,6 +189,7 @@ export class DataDrivenBlock extends Block {
         const attenuation = jsonState.attenuation ?? [ 15, 15, 15, 15 ];
         if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
 
+        const pickBlockState = jsonState.pickBlockState ?? stateKey;
 
         let model;
         try {
@@ -220,7 +220,8 @@ export class DataDrivenBlock extends Block {
             collider,
             tags,
             emission,
-            attenuation
+            attenuation,
+            pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]")
         );
     }
     private static parseCanPlacePredicate(json?: DataDrivenJson.EventActionPredicateTree | boolean): EventPredicate {

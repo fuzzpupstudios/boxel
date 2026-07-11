@@ -510,14 +510,16 @@ export class PlayingGameStage extends GameStage {
                     if(this.localPlayer.targetedBlock.hit) {
                         const voxelPos = this.localPlayer.targetedBlock.voxel;
                         const blockStateId = this.world.getBlockState(voxelPos.x, voxelPos.y, voxelPos.z);
+                        const blockState = blockStateRegistry.get(blockStateId);
+                        const pickBlockStateId = blockState?.pickBlockStateId ?? blockStateId;
 
-                        const existingSlot = this.localPlayer.inventory.findItem(blockStateId);
+                        const existingSlot = this.localPlayer.inventory.findItem(pickBlockStateId);
                         const selectedSlot = this.localPlayer.selectedSlot;
 
                         if(existingSlot >= 0 && existingSlot <= 9) {
                             this.localPlayer.selectedSlot = existingSlot;
                         } else {
-                            const stack = existingSlot == -1 ? ItemStack.of(blockStateId, 1) : this.localPlayer.inventory.stacks[existingSlot]!;
+                            const stack = existingSlot == -1 ? ItemStack.of(pickBlockStateId, 1) : this.localPlayer.inventory.stacks[existingSlot]!;
                             this.localPlayer.inventory.stacks[selectedSlot]?.swap(stack);
                             this.hotbar.updateSlot(selectedSlot);
                         }
