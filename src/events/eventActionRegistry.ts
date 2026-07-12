@@ -1,14 +1,18 @@
 import { KeyedRegistry } from "objectregistry";
-import { SetBlockStateIdAction } from "./block/setBlockStateIdAction";
-import { EventAction } from "./eventAction";
-import type { EventSheet } from "./eventSheet";
-import { RunTriggerAction } from "./block/runTriggerAction";
-import type { EventPredicate } from "./eventPredicate";
-import { BlockEventPredicate } from "./predicate/blockEventPredicate";
-import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
 import { CloneBlockAction } from "./block/cloneBlockAction";
-import { FaceEventPredicate } from "./predicate/faceEventPredicate";
+import { CloseGuiAction } from "./block/closeGuiAction";
+import { OpenGuiAction } from "./block/openGuiAction";
+import { RunTriggerAction } from "./block/runTriggerAction";
+import { SetBlockStateIdAction } from "./block/setBlockStateIdAction";
+import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
+import { EventAction } from "./eventAction";
+import type { EventPredicate } from "./eventPredicate";
+import type { EventSheet } from "./eventSheet";
+import { BlockEventPredicate } from "./predicate/blockEventPredicate";
 import { EntityEventPredicate } from "./predicate/entityEventPredicate";
+import { FaceEventPredicate } from "./predicate/faceEventPredicate";
+import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
+import { SetSelectedSlotAction } from "./block/setSelectedSlotAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -16,6 +20,9 @@ eventActionRegistry.register("base:set_block_state_id", SetBlockStateIdAction);
 eventActionRegistry.register("base:run_trigger", RunTriggerAction);
 eventActionRegistry.register("base:set_block_state_parameter", SetBlockStateParameterAction);
 eventActionRegistry.register("base:clone_block", CloneBlockAction);
+eventActionRegistry.register("base:open_gui", OpenGuiAction);
+eventActionRegistry.register("base:close_gui", CloseGuiAction);
+eventActionRegistry.register("base:set_selected_slot", SetSelectedSlotAction);
 
 eventActionRegistry.lock();
 
@@ -26,5 +33,6 @@ export const eventPredicateRegistry = new KeyedRegistry<new (args: any) => Event
 eventPredicateRegistry.register("block", BlockEventPredicate);
 eventPredicateRegistry.register("face", FaceEventPredicate);
 eventPredicateRegistry.register("entity", EntityEventPredicate);
+eventPredicateRegistry.register("platform", PlatformEventPredicate);
 
 eventPredicateRegistry.lock();

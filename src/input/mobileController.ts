@@ -6,7 +6,6 @@ import type { Topbar } from "../gui/mobile/topbar";
 export enum MobileButton {
     LEFT, RIGHT, FORWARD, BACKWARD,
     JUMP, CROUCH, TOGGLE_CROUCH,
-    NEXT_ITEM, PREVIOUS_ITEM,
     PAUSE
 }
 
@@ -87,24 +86,6 @@ export class MobileController {
         dpadRight.onJumpUp.connect(() => {
             this.pressingButtons.delete(MobileButton.JUMP);
             this.wasUnpressedButtons.add(MobileButton.JUMP);
-        });
-
-        dpadRight.onNextItemDown.connect(() => {
-            this.pressingButtons.add(MobileButton.NEXT_ITEM);
-            this.wasPressedButtons.add(MobileButton.NEXT_ITEM);
-        });
-        dpadRight.onNextItemUp.connect(() => {
-            this.pressingButtons.delete(MobileButton.NEXT_ITEM);
-            this.wasUnpressedButtons.add(MobileButton.NEXT_ITEM);
-        });
-
-        dpadRight.onPreviousItemDown.connect(() => {
-            this.pressingButtons.add(MobileButton.PREVIOUS_ITEM);
-            this.wasPressedButtons.add(MobileButton.PREVIOUS_ITEM);
-        });
-        dpadRight.onPreviousItemUp.connect(() => {
-            this.pressingButtons.delete(MobileButton.PREVIOUS_ITEM);
-            this.wasUnpressedButtons.add(MobileButton.PREVIOUS_ITEM);
         });
 
         let lastCrouchHit = 0;

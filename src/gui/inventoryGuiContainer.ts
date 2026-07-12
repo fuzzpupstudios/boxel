@@ -1,7 +1,10 @@
 import { Color, Container, Rectangle, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import { Signal, type SignalConnection } from "typed-signals";
-import type { InventoryGui, InventorySlot } from "../item/inventoryGui";
+import { EventCursor } from "../events/eventSheet";
+import type { GraphicalInterface, InventorySlot } from "../item/inventoryGui";
 import { ItemStack } from "../item/itemStack";
+import type { GuiGraphicContainer } from "./data/guiGraphic";
+import { guiGraphicRegistry } from "./data/guiGraphicRegistry";
 import { TileHologram, TileHologramProvider } from "./tileHologram";
 
 export class GuiItemStack extends Container {
@@ -64,27 +67,37 @@ export class GuiItemStack extends Container {
 export class InventoryEvent {
     public consumed = false;
     public constructor(
-        public readonly pointerStack: ItemStack
+        public readonly pointerStack: ItemStack,
+        public readonly slot: number,
+        public readonly gui: GraphicalInterface | null
     ) {}
     public consume() {
         this.consumed = true;
     }
 }
 
-export class InventoryCursor {
+export class GuiEvent {
+    public consumed = false;
+    public constructor() {}
+    public consume() {
+        this.consumed = true;
+    }
+}
+
+export class GuiCursor {
     public readonly onSplitStack = new Signal<(event: InventoryEvent) => void>();
     public readonly onDropOne = new Signal<(event: InventoryEvent) => void>();
     public readonly onSwapStack = new Signal<(event: InventoryEvent) => void>();
     public readonly onQuickMove = new Signal<(event: InventoryEvent) => void>();
+    public readonly onSelectSlot = new Signal<(event: InventoryEvent) => void>();
 }
 
 export class InventorySlotContainer extends Container {
     public readonly hoverSprite: Sprite;
     public readonly itemStack: GuiItemStack;
-    public hovered: boolean = false;
 
     public constructor(
-        public readonly id: number,
+        public readonly slotId: number,
         public readonly slot: InventorySlot,
         hologramProvider: TileHologramProvider
     ) {
@@ -112,57 +125,72 @@ export class InventorySlotContainer extends Container {
         this.itemStack = itemStack;
         this.eventMode = "static";
         this.hitArea = new Rectangle(0, 0, size, size);
-
-        this.on("pointerover", () => {
-            this.hovered = true;
-            hoverSprite.alpha = 0.5;
-        });
-        this.on("pointerout", () => {
-            this.hovered = false;
-            hoverSprite.alpha = 0;
-        });
     }
 
     public updateDisplayItem() {
         this.itemStack.updateDisplayItem();
     }
+
+    public setSelected(selected: boolean) {
+        this.hoverSprite.alpha = selected ? 0.5 : 0;
+    }
 }
 
-export class InventoryGuiContainer extends Container {
+export class GuiContainer extends Container {
     private readonly slotContainers = new Map<number, InventorySlotContainer>;
-    private onSwapStackHandler: SignalConnection;
-    private onSplitStackHandler: SignalConnection;
-    private onDropOneHandler: SignalConnection;
-    private onUpdateHandler: SignalConnection;
+    private readonly graphicContainers = new Map<string, GuiGraphicContainer>;
+
+    private onSwapStackHandler?: SignalConnection;
+    private onSplitStackHandler?: SignalConnection;
+    private onDropOneHandler?: SignalConnection;
+    private onSelectSlotHandler?: SignalConnection;
+    private onUpdateHandler?: SignalConnection;
+    private highlightedSlot: InventorySlotContainer | null = null;
 
     public constructor(
-        public readonly inventoryGui: InventoryGui,
+        public readonly graphicalInterface: GraphicalInterface,
         hologramProvider: TileHologramProvider,
-        private readonly inventoryCursor: InventoryCursor
+        private readonly guiCursor: GuiCursor
     ) {
-        const inventoryType = inventoryGui.inventoryType;
+        const inventoryType = graphicalInterface.inventoryType;
         const background = new Sprite(inventoryType.texture);
 
         super({
             children: [ background ],
-            interactive: inventoryType.interactive,
             interactiveChildren: inventoryType.interactive
         });
 
-        for(const [ id, slot ] of inventoryGui.slots.entries()) {
+        this.interactive = inventoryType.interactive;
+
+        for(const [ id, slot ] of graphicalInterface.slots.entries()) {
             const slotContainer = new InventorySlotContainer(id, slot, hologramProvider);
+            slotContainer.pivot.set(slot.type.size / 2);
             slotContainer.position.set(slot.type.x, slot.type.y);
             this.addChild(slotContainer);
             this.slotContainers.set(id, slotContainer);
         }
+        for(const [ id, graphic ] of graphicalInterface.graphics.entries()) {
+            const GuiGraphicContainerConstructor = guiGraphicRegistry.get(graphic.type.type);
+            if(GuiGraphicContainerConstructor == null) {
+                throw new ReferenceError("GUI graphic type " + graphic.type.type + " does not exist");
+            }
 
-        this.onSwapStackHandler = inventoryCursor.onSwapStack.connect((event) => {
+            const graphicContainer = new GuiGraphicContainerConstructor(id, graphic.type.args);
+
+            graphicContainer.position.set(graphic.type.x, graphic.type.y);
+            this.addChild(graphicContainer);
+            this.graphicContainers.set(id, graphicContainer);
+        }
+
+        this.onSwapStackHandler = this.guiCursor.onSwapStack.connect((event) => {
+            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+
             const pointerStack = event.pointerStack;
+            const slot = event.slot;
 
-            const slot = this.getHoveredSlot();
             if(slot == -1) return;
 
-            const slotStack = inventoryGui.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.stacks[slot];
             if(slotStack == null) return;
             
             if(slotStack.isEmpty() || slotStack.item != pointerStack.item) {
@@ -171,59 +199,87 @@ export class InventoryGuiContainer extends Container {
                 pointerStack.mergeInto(slotStack);
             }
 
-            inventoryGui.inventory.onUpdate.emit(slot);
+            graphicalInterface.inventory.onUpdate.emit(slot);
             event.consume();
         });
-        this.onSplitStackHandler = inventoryCursor.onSplitStack.connect((event) => {
+        this.onSplitStackHandler = this.guiCursor.onSplitStack.connect((event) => {
+            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+
             const pointerStack = event.pointerStack;
 
             if(!pointerStack.isEmpty()) return;
 
-            const slot = this.getHoveredSlot();
+            const slot = event.slot;
             if(slot == -1) return;
 
-            const slotStack = inventoryGui.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.stacks[slot];
             if(slotStack == null) return;
 
             if(slotStack.isEmpty()) return;
             
             slotStack.mergeInto(pointerStack, Math.ceil(slotStack.quantity / 2));
 
-            inventoryGui.inventory.onUpdate.emit(slot);
+            graphicalInterface.inventory.onUpdate.emit(slot);
             event.consume();
         });
-        this.onDropOneHandler = inventoryCursor.onDropOne.connect((event) => {
+        this.onDropOneHandler = this.guiCursor.onDropOne.connect((event) => {
+            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+
             const pointerStack = event.pointerStack;
 
             if(pointerStack.isEmpty()) return;
 
-            const slot = this.getHoveredSlot();
+            const slot = event.slot;
             if(slot == -1) return;
 
-            const slotStack = inventoryGui.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.stacks[slot];
             if(slotStack == null) return;
             
             pointerStack.mergeInto(slotStack, 1);
 
-            inventoryGui.inventory.onUpdate.emit(slot);
+            graphicalInterface.inventory.onUpdate.emit(slot);
             event.consume();
         });
-        this.onUpdateHandler = inventoryGui.inventory.onUpdate.connect((slotId) => {
-            this.slotContainers.get(slotId)?.updateDisplayItem();
+        this.onSelectSlotHandler = this.guiCursor.onSelectSlot.connect((event) => {
+            const slotContainer = this.slotContainers.get(event.slot) ?? null;
+
+            if(this.highlightedSlot != null) {
+                this.highlightedSlot.setSelected(false);
+            }
+
+            if(event.gui == this.graphicalInterface) {
+                if(slotContainer != null) {
+                    slotContainer.setSelected(true);
+                }
+
+                this.highlightedSlot = slotContainer;
+            } else {
+                this.highlightedSlot = null;
+            }
         });
-        this.on("destroyed", () => {
-            this.onSwapStackHandler.disconnect();
-            this.onSplitStackHandler.disconnect();
-            this.onDropOneHandler.disconnect();
-            this.onUpdateHandler.disconnect();
-        });
-    }
-    private getHoveredSlot() {
-        for(const [ id, slotContainer ] of this.slotContainers) {
-            if(slotContainer.hovered) return id;
+        if(graphicalInterface.inventory != null) {
+            this.onUpdateHandler = graphicalInterface.inventory.onUpdate.connect((slotId) => {
+                this.slotContainers.get(slotId)?.updateDisplayItem();
+            });
         }
-        return -1;
+        this.on("destroyed", () => {
+            this.onSwapStackHandler?.disconnect();
+            this.onSplitStackHandler?.disconnect();
+            this.onDropOneHandler?.disconnect();
+            this.onSelectSlotHandler?.disconnect();
+            this.onUpdateHandler?.disconnect();
+        });
     }
+
+    public updateAllGraphics(cursor: EventCursor) {
+        for(const [ graphicId, graphic ] of this.graphicContainers.entries()) {
+            const graphicType = this.graphicalInterface.graphics.get(graphicId);
+            if(graphicType == null) continue;
+            
+            graphic.visible = graphicType.type.renderIf.test(cursor);
+        }
+    }
+    
     public updateAllSlots() {
         for(const slot of this.slotContainers.values()) {
             slot.updateDisplayItem();

@@ -2,6 +2,12 @@ import { Quaternion, Vector3 } from "three";
 import type { RaycastResult } from "../physics/raycaster";
 import type { World } from "../world/world";
 import type { EventAction } from "./eventAction";
+import type { GuiManager } from "../gui/guiManager";
+import type { Entity } from "../entity/entity";
+
+export interface ClientEventPlatform {
+    usingTouchscreen: boolean;
+}
 
 export class EventCursor {
     public faceNormalX = 0;
@@ -11,6 +17,9 @@ export class EventCursor {
     public faceHitY = 0;
     public yaw = 0;
     public pitch = 0;
+    public clientPlatform?: ClientEventPlatform;
+    public guiManager?: GuiManager;
+    public entity: Entity | null = null;
 
     public constructor(
         public readonly world: World,
@@ -49,6 +58,10 @@ export class EventCursor {
 
         this.faceHitX = projected3D.x;
         this.faceHitY = projected3D.y;
+    }
+
+    public setClientPlatform(clientPlatform: ClientEventPlatform) {
+        this.clientPlatform = clientPlatform;
     }
 }
 

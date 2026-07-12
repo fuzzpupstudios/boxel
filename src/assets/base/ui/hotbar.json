@@ -1,17 +1,207 @@
 {
     "id": "base:hotbar",
     "texture": "base:ui/hotbar.png",
-    "interactive": false,
+    "anchor": [ 0.5, 1 ],
+    "offset": [ 0, -16 ],
     "slots": [
-        { "id": 0, "pos": [15, 10], "size": 20 },
-        { "id": 1, "pos": [38, 10], "size": 20 },
-        { "id": 2, "pos": [61, 10], "size": 20 },
-        { "id": 3, "pos": [84, 10], "size": 20 },
-        { "id": 4, "pos": [107, 10], "size": 20 },
-        { "id": 5, "pos": [130, 10], "size": 20 },
-        { "id": 6, "pos": [153, 10], "size": 20 },
-        { "id": 7, "pos": [176, 10], "size": 20 },
-        { "id": 8, "pos": [199, 10], "size": 20 },
-        { "id": 9, "pos": [222, 10], "size": 20 }
-    ]
+        { "id": 0, "pos": [25, 20], "size": 20 },
+        { "id": 1, "pos": [48, 20], "size": 20 },
+        { "id": 2, "pos": [71, 20], "size": 20 },
+        { "id": 3, "pos": [94, 20], "size": 20 },
+        { "id": 4, "pos": [117, 20], "size": 20 },
+        { "id": 5, "pos": [140, 20], "size": 20 },
+        { "id": 6, "pos": [163, 20], "size": 20 },
+        { "id": 7, "pos": [186, 20], "size": 20 },
+        { "id": 8, "pos": [209, 20], "size": 20 },
+        { "id": 9, "pos": [232, 20], "size": 20 }
+    ],
+    "graphics": {
+        "open_inventory": {
+            "type": "icon_button",
+            "texture": "base:ui/inventory_button.png",
+            "pos": [ 255, 20 ],
+
+            "renderIf": {
+                "platform": {
+                    "usingTouchscreen": true
+                }
+            },
+
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:open_gui",
+                            "args": {
+                                "inventory": "player_inventory",
+                                "gui": "base:player_inventory"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_0": {
+            "type": "click_box",
+            "pos": [ 13, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 0
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_1": {
+            "type": "click_box",
+            "pos": [ 36, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 1
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_2": {
+            "type": "click_box",
+            "pos": [ 59, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 2
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_3": {
+            "type": "click_box",
+            "pos": [ 82, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 3
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_4": {
+            "type": "click_box",
+            "pos": [ 105, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 4
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_5": {
+            "type": "click_box",
+            "pos": [ 128, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 5
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_6": {
+            "type": "click_box",
+            "pos": [ 151, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 6
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_7": {
+            "type": "click_box",
+            "pos": [ 174, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 7
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "slot_8": {
+            "type": "click_box",
+            "pos": [ 197, 8 ],
+            "size": [ 22, 22 ],
+            
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:set_selected_slot",
+                            "args": {
+                                "slot": 8
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
 }

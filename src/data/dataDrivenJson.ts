@@ -82,11 +82,22 @@ export namespace DataDrivenJson {
         extract?: boolean;
     }
 
+    export interface InventoryGuiGraphicType {
+        type: string,
+        pos: [ number, number ],
+        events?: EventSheet | string,
+        renderIf?: EventActionPredicateTree | boolean
+    }
+
     export interface InventoryGuiType {
         id: string;
         texture: string;
-        slots: InventoryGuiSlotType[];
+        anchor?: [ number, number ],
+        offset?: [ number, number ],
+        slots?: InventoryGuiSlotType[];
+        graphics?: Record<string, InventoryGuiGraphicType>;
         interactive?: boolean;
+        modal?: boolean;
     }
 
     export interface TemplateApplicable {

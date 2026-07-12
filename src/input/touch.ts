@@ -5,6 +5,7 @@ class Touch {
     public constructor(
         public readonly id: number,
         public readonly start: number,
+        public uiTouch: boolean,
         public x = 0,
         public y = 0
     ) {}
@@ -21,7 +22,7 @@ export class TouchController {
     public readonly justEndedTouches = new Array<Touch>;
     
     public constructor(
-        private readonly touchValidator: (x: number, y: number) => boolean
+        private readonly isTouchingGui: (x: number, y: number) => boolean
     ) {}
 
     public addListeners(element: HTMLElement) {
@@ -56,10 +57,13 @@ export class TouchController {
         // });
     }
 
-    private startTouch(id: number, x: number, y: number) {
-        if(!this.touchValidator(x, y)) return;
-        
-        const touch = new Touch(id, performance.now() / 1000, x, y);
+    private startTouch(id: number, x: number, y: number) {        
+        const touch = new Touch(
+            id,
+            performance.now() / 1000,
+            this.isTouchingGui(x, y),
+            x, y
+        );
         this.touches.push(touch);
         this.justStartedTouches.push(touch);
     }

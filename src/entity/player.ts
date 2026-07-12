@@ -115,6 +115,7 @@ export class Player extends Entity {
         if(blockState == null) return;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        cursor.entity = this;
         blockState.events.runTrigger("base:destroy", cursor);
         
         const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
@@ -152,6 +153,7 @@ export class Player extends Entity {
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        cursor.entity = this;
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
         
@@ -178,6 +180,7 @@ export class Player extends Entity {
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
         );
+        cursor.entity = this;
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 

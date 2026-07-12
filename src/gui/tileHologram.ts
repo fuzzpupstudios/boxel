@@ -35,6 +35,7 @@ varying vec2 vUv;
 varying vec3 vNormal;
 
 uniform sampler2D uTerrainTexture;
+uniform vec4 uColor;
 
 void main() {
     vec4 terrainColor = texture2D(uTerrainTexture, vUv);
@@ -45,7 +46,8 @@ void main() {
     if(vNormal.z != 0.0) brightness = 0.8;
     if(vNormal.x != 0.0) brightness = 0.6;
     
-    gl_FragColor = vec4(terrainColor.rgb * brightness, 1.0);
+    vec4 shadedColor = vec4(terrainColor.rgb * brightness, terrainColor.a);
+    gl_FragColor = shadedColor * uColor;
 }
 `
 
@@ -69,6 +71,7 @@ export class TileHologramProvider {
         });
 
         this.meshState = State.for2d();
+        this.meshState.blend = true;
         // Let PIXI draw order/zIndex determine stacking between hologram meshes.
         // Depth testing here causes separate previews to clip into each other.
         this.meshState.depthTest = false;

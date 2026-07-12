@@ -18,6 +18,8 @@ import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import { Assets } from "./textures/assets";
 import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
+import { GuiDPadLeft } from "./gui/mobile/dPadLeft";
+import { GuiDPadRight } from "./gui/mobile/dPadRight";
 
 
 export class BoxelGame {
@@ -43,7 +45,7 @@ export class BoxelGame {
     private rootElement: HTMLElement;
     private viewportWidth = 1;
     private viewportHeight = 1;
-    private viewportPixelRatio = 1;
+    public viewportPixelRatio = 1;
     public mainStorage: MainStorage | null = null;
     public guiWidth: number = 0;
     public guiHeight: number = 0;
@@ -218,7 +220,7 @@ export class BoxelGame {
 
         for(const [ id, json ] of this.assets.inventoryGuiTypeRegistry.entries()) {
             try {
-                inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json));
+                inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json, this.assets));
             } catch(e) {
                 throw new Error("Failed to register gui type " + id, { cause: e });
             }
@@ -265,20 +267,18 @@ export class BoxelGame {
         this.input.attachKeyboard(this.rootElement);
         this.input.attachMouse(this.rootElement);
 
-        // Callback is necessary because PIXI.js hasn't implemented
-        // touch events for elements yet:
-        // https://github.com/pixijs/pixijs/issues/10181
         this.input.attachTouch(this.rootElement, (x, y) => {
             const bounds = this.gui.canvas.getBoundingClientRect();
             const localX = x - bounds.left;
             const localY = y - bounds.top;
 
             if(localX < 0 || localY < 0 || localX > bounds.width || localY > bounds.height) {
-                return true;
+                return false;
             }
 
             const target = this.gui.renderer.events.rootBoundary.hitTest(localX, localY);
-            return target == null || target === this.guiBackground;
+            
+            return target != null && target != this.guiBackground;
         });
     
         for(const blockState of blockStateRegistry.values()) {

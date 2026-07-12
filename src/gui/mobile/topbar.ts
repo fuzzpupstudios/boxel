@@ -31,6 +31,6 @@ export class Topbar extends Container {
     }
 
     public setTopbarSize(width: number) {
-        this.pause.position.set(width / 2 - 8, 0);
+        this.pause.position.set(0, 0);
     }
 }

@@ -2,6 +2,8 @@ import { isMobile } from "pixi.js";
 import { BoxelGame } from "./boxel";
 import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
 import { blockStateRegistry } from "./block/blockRegistry";
+import { guiGraphicRegistry } from "./gui/data/guiGraphicRegistry";
+import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
 
 main();
 
@@ -14,7 +16,7 @@ async function main() {
     });
 
     window.addEventListener("resize", () => {
-        game.resize(innerWidth, innerHeight, devicePixelRatio);
+        game.resize(Math.min(innerWidth, outerWidth), Math.min(innerHeight, outerHeight), devicePixelRatio);
     });
 
     window.addEventListener("gamepadconnected", event => {
@@ -25,5 +27,5 @@ async function main() {
     });
 
     await game.start();
-    game.resize(innerWidth, innerHeight, devicePixelRatio);
+    game.resize(Math.min(innerWidth, outerWidth), Math.min(innerHeight, outerHeight), devicePixelRatio);
 }

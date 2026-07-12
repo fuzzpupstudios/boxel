@@ -16,12 +16,13 @@ export enum ControlBinding {
 
     NEXT_ITEM, PREVIOUS_ITEM,
 
-    INVENTORY,
+    OPEN_INVENTORY, CLOSE_INVENTORY,
 
     PAUSE, BACK,
     FULLSCREEN,
 
-    SPLIT_STACK, DROP_ONE, SWAP_STACK, QUICK_MOVE
+    SPLIT_STACK, DROP_ONE, SWAP_STACK, QUICK_MOVE,
+    PRESS_UI
 }
 
 export enum MouseAxis {
@@ -65,7 +66,8 @@ export class Input {
         [ControlBinding.NEXT_ITEM]: "BracketRight",
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
-        [ControlBinding.INVENTORY]: "KeyE",
+        [ControlBinding.OPEN_INVENTORY]: "KeyE",
+        [ControlBinding.CLOSE_INVENTORY]: "KeyE",
 
         [ControlBinding.PAUSE]: "Escape",
         [ControlBinding.BACK]: "Escape",
@@ -85,7 +87,8 @@ export class Input {
         [ControlBinding.NEXT_ITEM]: ControllerButton.RIGHT_BUMPER,
         [ControlBinding.PREVIOUS_ITEM]: ControllerButton.LEFT_BUMPER,
 
-        [ControlBinding.INVENTORY]: ControllerButton.X,
+        [ControlBinding.OPEN_INVENTORY]: ControllerButton.X,
+        [ControlBinding.CLOSE_INVENTORY]: ControllerButton.B,
 
         [ControlBinding.TOGGLE_CROUCH]: ControllerButton.LEFT_STICK,
         [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK,
@@ -94,6 +97,8 @@ export class Input {
         [ControlBinding.DROP_ONE]: ControllerButton.X,
         [ControlBinding.SWAP_STACK]: ControllerButton.A,
         [ControlBinding.QUICK_MOVE]: ControllerButton.Y,
+
+        [ControlBinding.PRESS_UI]: ControllerButton.A
     };
     public readonly mouseBindings: Partial<Record<ControlBinding, MouseButton>> = {
         [ControlBinding.DESTROY]: MouseButton.LEFT,
@@ -104,6 +109,8 @@ export class Input {
         [ControlBinding.SWAP_STACK]: MouseButton.LEFT,
         [ControlBinding.SPLIT_STACK]: MouseButton.RIGHT,
         [ControlBinding.DROP_ONE]: MouseButton.RIGHT,
+
+        [ControlBinding.PRESS_UI]: MouseButton.LEFT
     };
     public readonly mobileBindings: Partial<Record<ControlBinding, MobileButton>> = {
         [ControlBinding.RIGHT]: MobileButton.RIGHT,
@@ -116,8 +123,6 @@ export class Input {
         [ControlBinding.CROUCH]: MobileButton.CROUCH,
         [ControlBinding.TOGGLE_CROUCH]: MobileButton.TOGGLE_CROUCH,
 
-        [ControlBinding.NEXT_ITEM]: MobileButton.NEXT_ITEM,
-        [ControlBinding.PREVIOUS_ITEM]: MobileButton.PREVIOUS_ITEM,
         [ControlBinding.PAUSE]: MobileButton.PAUSE,
     };
 
@@ -138,8 +143,8 @@ export class Input {
         this.mouse = new Mouse;
         this.mouse.addListeners(body);
     }
-    public attachTouch(body: HTMLElement, touchValidator: (x: number, y: number) => boolean) {
-        this.touch = new TouchController(touchValidator);
+    public attachTouch(body: HTMLElement, isTouchingGui: (x: number, y: number) => boolean) {
+        this.touch = new TouchController(isTouchingGui);
         this.touch.addListeners(body);
     }
     public attachMobileController(mobile: MobileController) {
@@ -213,20 +218,37 @@ export class Input {
                 return this.mouse.y;
         }
     }
-    public getTouchAxis(axis: TouchAxis, id?: number): number {
-        if(this.touch == null) return -1;
+    public getFirstTouch(isGuiOnly?: boolean) {
+        if(this.touch == null) return null;
+
+        for(const touch of this.touch.touches) {
+            if(isGuiOnly == null) {
+                return touch;
+            } else {
+                if(touch.uiTouch == isGuiOnly) return touch;
+            }
+        }
+
+        return null;
+    }
+    public getTouchAxis(axis: TouchAxis, isGuiOnly?: boolean): number {
+        if(this.touch == null) return 0;
+
+        const touch = this.getFirstTouch(isGuiOnly);
+
+        if(touch == null) return 0;
 
         switch(axis) {
             case TouchAxis.DELTA_X:
-                return id == null ? this.touch.dx : this.touch.dxAt(id);
+                return touch.dx;
             case TouchAxis.DELTA_Y:
-                return id == null ? this.touch.dy : this.touch.dyAt(id);
+                return touch.dy;
             case TouchAxis.X:
-                return id == null ? this.touch.x : this.touch.xAt(id);
+                return touch.x;
             case TouchAxis.Y:
-                return id == null ? this.touch.y : this.touch.yAt(id);
+                return touch.y;
             case TouchAxis.DURATION:
-                return id == null ? this.touch.duration : this.touch.durationAt(id);
+                return touch.duration;
         }
     }
     public getDpadStrafe() {
