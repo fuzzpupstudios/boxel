@@ -6,63 +6,8 @@ import { ItemStack } from "../item/itemStack";
 import type { GuiGraphicContainer } from "./data/guiGraphic";
 import { guiGraphicRegistry } from "./data/guiGraphicRegistry";
 import { TileHologram, TileHologramProvider } from "./tileHologram";
-
-export class GuiItemStack extends Container {
-    public readonly tileHologram: TileHologram;
-    public readonly counter: Text;
-    public constructor(
-        public readonly stack: ItemStack,
-        hologramProvider: TileHologramProvider
-    ) {
-        const tileHologram = new TileHologram(hologramProvider);
-        tileHologram.scale.set(14);
-        tileHologram.position.set(1, 1);
-
-        const counter = new Text({
-            text: "",
-            style: new TextStyle({
-                fill: new Color(0xffffff),
-                fontSize: 8,
-                align: "right"
-            }),
-            anchor: { x: 1, y: 1 }
-        });
-        counter.position.set(16, 16);
-
-        super({
-            children: [ tileHologram, counter ],
-            pivot: { x: 8, y: 8 }
-        });
-
-        this.tileHologram = tileHologram;
-        this.counter = counter;
-
-        this.updateDisplayItem();
-    }
-
-    public updateDisplayItem() {
-        if(this.stack.isEmpty()) {
-            this.visible = false;
-            return;
-        } else {
-            this.visible = true;
-        }
-        this.tileHologram.blockStateId = this.stack.item;
-
-        if(this.stack.quantity > 1) {
-            let amount = this.stack.quantity;
-            let suffix = "";
-            if(amount >= 1000) {
-                amount = Math.floor(amount / 100) / 10;
-                suffix = "K";
-            }
-            this.counter.text = amount + suffix;
-            this.counter.visible = true;
-        } else {
-            this.counter.visible = false;
-        }
-    }
-}
+import { GuiItemStack } from "./guiItemStack";
+import type { GuiItemSpriteProvider } from "./guiItem";
 
 export class InventoryEvent {
     public consumed = false;
@@ -99,7 +44,8 @@ export class InventorySlotContainer extends Container {
     public constructor(
         public readonly slotId: number,
         public readonly slot: InventorySlot,
-        hologramProvider: TileHologramProvider
+        hologramProvider: TileHologramProvider,
+        itemSpriteProvider: GuiItemSpriteProvider,
     ) {
         const size = slot.type.size;
         const halfSize = size / 2;
@@ -112,7 +58,7 @@ export class InventorySlotContainer extends Container {
         hoverSprite.alpha = 0;
         hoverSprite.blendMode = "add";
 
-        const itemStack = new GuiItemStack(slot.stack, hologramProvider);
+        const itemStack = new GuiItemStack(slot.stack, hologramProvider, itemSpriteProvider);
         itemStack.scale.set(size / 16);
         itemStack.position.set(halfSize, halfSize);
 
@@ -150,6 +96,7 @@ export class GuiContainer extends Container {
     public constructor(
         public readonly graphicalInterface: GraphicalInterface,
         hologramProvider: TileHologramProvider,
+        itemSpriteProvider: GuiItemSpriteProvider,
         private readonly guiCursor: GuiCursor
     ) {
         const inventoryType = graphicalInterface.inventoryType;
@@ -163,7 +110,7 @@ export class GuiContainer extends Container {
         this.interactive = inventoryType.interactive;
 
         for(const [ id, slot ] of graphicalInterface.slots.entries()) {
-            const slotContainer = new InventorySlotContainer(id, slot, hologramProvider);
+            const slotContainer = new InventorySlotContainer(id, slot, hologramProvider, itemSpriteProvider);
             slotContainer.pivot.set(slot.type.size / 2);
             slotContainer.position.set(slot.type.x, slot.type.y);
             this.addChild(slotContainer);

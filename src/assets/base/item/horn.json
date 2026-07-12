@@ -1,0 +1,19 @@
+{
+    "id": "base:horn",
+    "texture": "base:item/horn.png",
+    "events": {
+        "triggers": {
+            "base:use": [
+                {
+                    "id": "base:play_sound_2d",
+                    "args": {
+                        "sound": "base:item/party_horn"
+                    }
+                },
+                {
+                    "id": "base:prevent_default"
+                }
+            ]
+        }
+    }
+}

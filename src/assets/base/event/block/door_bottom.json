@@ -161,6 +161,9 @@
                         }
                     }
                 ]
+            },
+            {
+                "id": "base:prevent_default"
             }
         ]
     }

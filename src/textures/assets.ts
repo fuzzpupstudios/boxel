@@ -10,6 +10,7 @@ export class Assets {
     public readonly blockRegistry = new Map<string, DataDrivenJson.Block & DataDrivenJson.TemplateApplicable>;
     public readonly blockModelRegistry = new Map<string, DataDrivenJson.BlockStateModel & DataDrivenJson.TemplateApplicable>;
     public readonly eventSheetRegistry = new Map<string, DataDrivenJson.EventSheet & DataDrivenJson.TemplateApplicable>;
+    public readonly itemRegistry = new Map<string, DataDrivenJson.Item & DataDrivenJson.TemplateApplicable>;
     public readonly inventoryGuiTypeRegistry = new Map<string, DataDrivenJson.InventoryGuiType & DataDrivenJson.TemplateApplicable>;
 
     private readonly fileHandlers: Map<RegExp, (entry: FileEntry, ...groups: string[]) => Promise<void>> = new Map([
@@ -57,6 +58,14 @@ export class Assets {
                 const data = await entry.getData(new TextWriter);
                 const json = JsonhReader.parseElementFromString<DataDrivenJson.EventSheet>(data).value;
                 this.eventSheetRegistry.set(json.id!, json);
+            }
+        ],
+        [
+            /^assets\/[^\/]+\/item\/.*\.jsonh?$/,
+            async (entry: FileEntry) => {
+                const data = await entry.getData(new TextWriter);
+                const json = JsonhReader.parseElementFromString<DataDrivenJson.Item>(data).value;
+                this.itemRegistry.set(json.id, json);
             }
         ],
         [
@@ -191,7 +200,8 @@ export class Assets {
             this.blockRegistry,
             this.blockModelRegistry,
             this.eventSheetRegistry,
-            this.inventoryGuiTypeRegistry
+            this.inventoryGuiTypeRegistry,
+            this.itemRegistry
         ];
 
         for(const registry of registries) {

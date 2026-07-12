@@ -22,6 +22,7 @@ export class EventCursor {
     public faceHitY = 0;
     public yaw = 0;
     public pitch = 0;
+    public defaultPrevented = false;
     public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;
 
@@ -68,6 +69,10 @@ export class EventCursor {
 
         this.faceHitX = projected3D.x;
         this.faceHitY = projected3D.y;
+    }
+
+    public preventDefault() {
+        this.defaultPrevented = true;
     }
 }
 

@@ -60,3 +60,12 @@ export function parsePredicate(predicate?: DataDrivenJson.EventActionPredicateTr
         return DataDrivenEventSheet.parsePredicate(predicate ?? {});
     }
 }
+export function parseTags(jsonTags?: string[]) {
+    const tags = new Set<string>;
+
+    if(jsonTags != null) {
+        for(const tag of jsonTags) tags.add(tag);
+    }
+
+    return tags;
+}

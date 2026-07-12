@@ -8,7 +8,7 @@ import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
 import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
 import { EventSheet } from "../events/eventSheet";
 import type { Assets } from "../textures/assets";
-import { parseEvents, parseJsonCollider, parseModel, parsePredicate } from "./jsonParseUtils";
+import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
 
 
 export class DataDrivenBlock extends Block {
@@ -33,6 +33,7 @@ export class DataDrivenBlock extends Block {
                 jsonState.emission ??= defaultProperties.emission!;
                 jsonState.canPlace ??= defaultProperties.canPlace!;
                 jsonState.pickBlockState ??= defaultProperties.pickBlockState!;
+                jsonState.renderAsTexture ??= defaultProperties.renderAsTexture!;
 
                 if(jsonState.tags == null) {
                     jsonState.tags = defaultProperties.tags!;
@@ -178,7 +179,7 @@ export class DataDrivenBlock extends Block {
         const collider = parseJsonCollider(
             jsonState.collider ?? { hitboxes: [] });
 
-        const tags = this.parseTags(jsonState.tags);
+        const tags = parseTags(jsonState.tags);
 
         const emission = jsonState.emission ?? [ 0, 0, 0, 0 ];
         if(emission.length != 4) throw new Error("Emission must have 4 numbers");
@@ -187,6 +188,17 @@ export class DataDrivenBlock extends Block {
         if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
 
         const pickBlockState = jsonState.pickBlockState ?? stateKey;
+
+        let renderAsTexture: ImageBitmap | null = null;
+        if(jsonState.renderAsTexture != null) {
+            const texture = game.assets.textureRegistry.get(jsonState.renderAsTexture);
+
+            if(texture == null) {
+                throw new ReferenceError("Cannot find renderAsTexture " + jsonState.renderAsTexture);
+            }
+
+            renderAsTexture = texture;
+        }
 
         let model;
         try {
@@ -218,16 +230,8 @@ export class DataDrivenBlock extends Block {
             tags,
             emission,
             attenuation,
-            pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]")
+            pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]"),
+            renderAsTexture
         );
-    }
-    private static parseTags(jsonTags?: string[]) {
-        const tags = new Set<string>;
-
-        if(jsonTags != null) {
-            for(const tag of jsonTags) tags.add(tag);
-        }
-
-        return tags;
     }
 }

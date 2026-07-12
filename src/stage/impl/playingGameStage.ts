@@ -1,13 +1,14 @@
 import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
-import { MathUtils, PerspectiveCamera, Vector3 } from "three";
+import { MathUtils, PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
 import { EventCursor } from "../../events/eventSheet";
 import { GuiButton } from "../../gui/button";
 import { isGuiGraphicContainer } from "../../gui/data/guiGraphic";
+import { GuiItemSpriteProvider } from "../../gui/guiItem";
 import { GuiManager } from "../../gui/guiManager";
-import { GuiContainer, GuiItemStack, GuiCursor, InventoryEvent, InventorySlotContainer } from "../../gui/inventoryGuiContainer";
+import { GuiContainer, InventoryEvent, InventorySlotContainer } from "../../gui/inventoryGuiContainer";
 import { GuiDPadLeft } from "../../gui/mobile/dPadLeft";
 import { GuiDPadRight } from "../../gui/mobile/dPadRight";
 import { Topbar } from "../../gui/mobile/topbar";
@@ -17,6 +18,7 @@ import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
 import { MobileController } from "../../input/mobileController";
 import { MouseButton } from "../../input/mouse";
 import { inventoryGuiTypeRegistry } from "../../item/inventoryGuiTypeRegistry";
+import { itemRegistry } from "../../item/itemRegistry";
 import { ItemStack } from "../../item/itemStack";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
@@ -30,13 +32,14 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
+import { GuiItemStack } from "../../gui/guiItemStack";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
     public readonly worldRenderer: WorldRenderer;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
-    public readonly holdingBlockPreview: TileHologram;
+    public readonly holdingBlockPreview: GuiItemStack;
     public readonly chunkLoader: ChunkLoader;
     public readonly guiManager: GuiManager;
     public override camera = new PerspectiveCamera(90);
@@ -74,6 +77,7 @@ export class PlayingGameStage extends GameStage {
     private readonly pointerStack = ItemStack.empty();
 
     private readonly hologramProvider: TileHologramProvider;
+    private readonly itemSpriteProvider: GuiItemSpriteProvider;
     private readonly mobileController: MobileController | null = null;
     private readonly dPadLeft: GuiDPadLeft | null = null;
     private readonly dPadRight: GuiDPadRight | null = null;
@@ -89,14 +93,19 @@ export class PlayingGameStage extends GameStage {
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!, this.worldRenderer.skyColor);
 
         this.hologramProvider = new TileHologramProvider(game.textureAtlas!);
-        this.guiManager = new GuiManager(this.hologramProvider);
+        this.itemSpriteProvider = new GuiItemSpriteProvider();
+        this.guiManager = new GuiManager(this.hologramProvider, this.itemSpriteProvider);
         this.guiManager.onUpdate.connect(() => {
             this.updateInputLocks();
         });
         this.gui.addChild(this.guiManager.view);
 
-        this.holdingBlockPreview = new TileHologram(this.hologramProvider);
-        this.holdingBlockPreview.scale.set(32);
+        this.holdingBlockPreview = new GuiItemStack(
+            ItemStack.empty(),
+            this.hologramProvider,
+            this.itemSpriteProvider
+        );
+        this.holdingBlockPreview.scale.set(3);
         this.gui.addChild(this.holdingBlockPreview);
 
         this.crosshairSprite = new Sprite(Assets.get("base:ui/crosshair.png"));
@@ -109,7 +118,7 @@ export class PlayingGameStage extends GameStage {
         this.gui.addChild(this.guiContainer);
         this.guiContainer.interactive = true;
 
-        this.pointerGuiStack = new GuiItemStack(this.pointerStack, this.hologramProvider);
+        this.pointerGuiStack = new GuiItemStack(this.pointerStack, this.hologramProvider, this.itemSpriteProvider);
         this.gui.addChild(this.pointerGuiStack);
         this.pointerGuiStack.interactive = false;
         this.pointerGuiStack.zIndex = 10;
@@ -117,15 +126,27 @@ export class PlayingGameStage extends GameStage {
         this.itemGivePanel = new Container;
         this.itemGivePanel.visible = false;
 
-        let i = 0;
+        const giveMenuItems = new Set<string>;
+
         for(const [ blockStateKey, blockState ] of blockStateRegistry.entries()) {
             if(blockState.tags.has("hidden")) continue;
 
+            giveMenuItems.add(blockStateKey);
+        }
+
+        for(const [ itemId, item ] of itemRegistry.entries()) {
+            if(item.tags.has("hidden")) continue;
+
+            giveMenuItems.add(itemId);
+        }
+
+        let i = 0;
+        for(const itemId of giveMenuItems) {
             const x = i % 5;
             const y = (i / 5) | 0;
 
-            const stack = ItemStack.of(blockStateKey, 1);
-            const button = new GuiItemStack(stack, this.hologramProvider);
+            const stack = ItemStack.of(itemId, 1);
+            const button = new GuiItemStack(stack, this.hologramProvider, this.itemSpriteProvider);
 
             button.interactive = true;
             button.on("pointerdown", () => {
@@ -244,7 +265,7 @@ export class PlayingGameStage extends GameStage {
     public resize(width: number, height: number, pixelRatio: number): void {
         this.camera.aspect = width / height;
 
-        this.holdingBlockPreview.position.set(8, 8);
+        this.holdingBlockPreview.position.set(28, 28);
         this.crosshairSprite.position.set(width / 2, height / 2);
 
         if(this.dPadLeft != null) {
@@ -590,11 +611,8 @@ export class PlayingGameStage extends GameStage {
                         this.placeBlockCooldown -= time.deltaTime;
 
                         if(this.placeBlockCooldown <= 0) {
-                            const holdingStack = this.localPlayer.inventory.stacks[this.localPlayer.selectedSlot];
-
-                            if(holdingStack == null || holdingStack.isEmpty()) {
-                                this.localPlayer.use();
-                            } else {
+                            const success = this.localPlayer.use();
+                            if(success) {
                                 this.localPlayer.place();
                             }
                             this.placeBlockCooldown = 0.2;
@@ -678,7 +696,7 @@ export class PlayingGameStage extends GameStage {
                     if(this.localPlayer.selectedSlot < 0) this.localPlayer.selectedSlot = 9;
                 }
 
-                this.holdingBlockPreview.blockStateId = this.localPlayer.inventory.stacks[this.localPlayer.selectedSlot]!.item;
+                this.holdingBlockPreview.setItemStack(this.localPlayer.inventory.stacks[this.localPlayer.selectedSlot]!);
             }
 
             this.world.tick(time);

@@ -25,7 +25,8 @@ export class BlockState {
         public readonly tags: Set<string>,
         public readonly emission: [ number, number, number, number ],
         public readonly attenuation: [ number, number, number, number ],
-        public readonly pickBlockStateId: string
+        public readonly pickBlockStateId: string,
+        public readonly renderAsTexture: ImageBitmap | null
     ) {
         for(let i = 0; i < 4; i++) {
             emission[i] = MathUtils.clamp(emission[i]!, 0, 15);

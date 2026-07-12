@@ -18,6 +18,8 @@ import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import { Assets } from "./textures/assets";
 import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
+import { itemRegistry } from "./item/itemRegistry";
+import { DataDrivenItem } from "./item/dataDrivenItem";
 
 
 export class BoxelGame {
@@ -215,6 +217,15 @@ export class BoxelGame {
             }
         }
         blockRegistry.lock();
+
+        for(const [ id, json ] of this.assets.itemRegistry.entries()) {
+            try {
+                itemRegistry.register(id, DataDrivenItem.parseJson(json, this.assets));
+            } catch(e) {
+                throw new Error("Failed to register item " + id, { cause: e });
+            }
+        }
+        itemRegistry.lock();
 
         for(const [ id, json ] of this.assets.inventoryGuiTypeRegistry.entries()) {
             try {

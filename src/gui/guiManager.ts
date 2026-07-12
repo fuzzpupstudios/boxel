@@ -4,6 +4,7 @@ import type { GraphicalInterface } from "../item/inventoryGui";
 import { GuiCursor, GuiContainer } from "./inventoryGuiContainer";
 import type { TileHologramProvider } from "./tileHologram";
 import { Signal } from "typed-signals";
+import type { GuiItemSpriteProvider } from "./guiItem";
 
 export class GuiManager {
     public readonly openGuis = new Map<string, GuiContainer>;
@@ -16,7 +17,8 @@ export class GuiManager {
     private lastPixelRatio: number = 0;
     
     public constructor(
-        public readonly hologramProvider: TileHologramProvider
+        public readonly hologramProvider: TileHologramProvider,
+        public readonly itemSpriteProvider: GuiItemSpriteProvider
     ) {}
     
     public isGuiOpen(id: string) {
@@ -39,6 +41,7 @@ export class GuiManager {
         const id = gui.inventoryType.id;
         const guiContainer = new GuiContainer(gui,
             this.hologramProvider,
+            this.itemSpriteProvider,
             this.guiCursor
         );
 

@@ -10,6 +10,7 @@ import { Entity, type TileCollider } from "./entity";
 import { Inventory } from "../item/inventory";
 import { EventAction } from "../events/eventAction";
 import { EventCursor } from "../events/eventSheet";
+import { itemRegistry } from "../item/itemRegistry";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(
@@ -101,8 +102,8 @@ export class Player extends Entity {
         this.gliding = gliding;
     }
 
-    public destroy() {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+    public destroy(): boolean {
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
         let targetX = this.targetedBlock.voxel.x;
         let targetY = this.targetedBlock.voxel.y;
@@ -111,13 +112,15 @@ export class Player extends Entity {
         const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
         const blockState = blockStateRegistry.get(previousBlockStateId);
 
-        this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
-        if(blockState == null) return;
+        if(blockState != null) {
+            const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+            cursor.entity = this;
+            blockState.events.runTrigger("base:destroy", cursor);
+            
+            if(cursor.defaultPrevented) return false;
+        }
 
-        const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
-        cursor.entity = this;
-        blockState.events.runTrigger("base:destroy", cursor);
-        
+        this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
         const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
         gameStage?.blockBreakParticles.blockDestructionParticles(
             this.targetedBlock.voxel.x,
@@ -125,12 +128,17 @@ export class Player extends Entity {
             this.targetedBlock.voxel.z,
             previousBlockStateId
         );
+
+        return true;
     }
-    public place() {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
+    public place(): boolean {
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
         const holdingStack = this.inventory.stacks[this.selectedSlot];
-        if(holdingStack == null) return;
+        if(holdingStack == null) return false;
+
+        // do not "place" items
+        if(itemRegistry.get(holdingStack.item) != null) return false;
 
         const blockState = blockStateRegistry.get(holdingStack.item) || getUnknownBlockState();
 
@@ -150,30 +158,27 @@ export class Player extends Entity {
         previousStateId = this.world.getBlockState(targetX, targetY, targetZ);
         previousState = blockStateRegistry.get(previousStateId) || getUnknownBlockState();
 
-        if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return;
+        if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return false;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
         cursor.entity = this;
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
         
-        if(!blockState.canPlacePredicate.test(cursor)) return;
+        if(!blockState.canPlacePredicate.test(cursor)) return false;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
         blockState.events.runTrigger("base:place", cursor);
+
+        if(cursor.defaultPrevented) {
+            this.world.setBlockState(targetX, targetY, targetZ, previousStateId);
+            return false;
+        }
+
+        return true;
     }
 
-    public use() {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return;
-
-        const blockStateId = this.world.getBlockState(
-            this.targetedBlock.voxel.x,
-            this.targetedBlock.voxel.y,
-            this.targetedBlock.voxel.z,
-        );
-
-        const blockState = blockStateRegistry.get(blockStateId);
-
+    public use(): boolean {
         const cursor = new EventCursor(
             this.world,
             this.targetedBlock.voxel.x,
@@ -184,7 +189,42 @@ export class Player extends Entity {
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
-        blockState?.events.runTrigger("base:interact", cursor);
+        let success = false;
+
+        const holdingStack = this.inventory.stacks[this.selectedSlot];
+        if(holdingStack != null) {
+            const item = itemRegistry.get(holdingStack.item);
+            const blockState = blockStateRegistry.get(holdingStack.item);
+
+            const events = item?.events ?? blockState?.events;
+
+            if(events != null) {
+                events.runTrigger("base:use", cursor);
+
+                if(cursor.defaultPrevented) return false;
+
+                success = true;
+            }
+        }
+
+        if(this.crouching) {
+            success = true;
+        } else if(this.targetedBlock.hit && this.targetedBlock.distance <= this.reachDistance) {
+            const blockStateId = this.world.getBlockState(
+                this.targetedBlock.voxel.x,
+                this.targetedBlock.voxel.y,
+                this.targetedBlock.voxel.z,
+            );
+
+            const blockState = blockStateRegistry.get(blockStateId);
+            blockState?.events.runTrigger("base:interact", cursor);
+
+            if(cursor.defaultPrevented) return false;
+
+            success = true;
+        }
+
+        return success;
     }
 
     public tick(time: Time): void {

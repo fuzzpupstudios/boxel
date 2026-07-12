@@ -13,7 +13,8 @@ export namespace DataDrivenJson {
         emission?: [ number, number, number ],
         attenuation?: [ number, number, number ],
         tags?: string[],
-        pickBlockState?: string
+        pickBlockState?: string,
+        renderAsTexture?: string,
     }
 
     export interface BlockStateModelIncludeEntry {
@@ -114,5 +115,12 @@ export namespace DataDrivenJson {
         id: string;
         parameters: Record<string, string>;
         json: any;
+    }
+
+    export interface Item {
+        id: string;
+        texture: string;
+        events?: EventSheet | string[] | string;
+        tags?: string[];
     }
 }
