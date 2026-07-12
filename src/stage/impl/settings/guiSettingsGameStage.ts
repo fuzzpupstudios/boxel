@@ -37,7 +37,7 @@ export class GuiSettingsScreenStage extends GameStage {
         });
         this.titleText.anchor.set(0.5);
 
-        this.backButton = new GuiButton("Close", 100, 30);
+        this.backButton = new GuiButton("Cancel", 100, 30);
 
         this.backButton.on("pointerdown", () => {
             this.game.previousStage();
@@ -49,6 +49,9 @@ export class GuiSettingsScreenStage extends GameStage {
             game.settings.dPadScale = dPadScale;
             game.settings.guiScale = guiScale;
             this.game.updateSettings();
+            this.saveSettings().then(() => {
+                this.backButton.text = "Close";
+            })
         });
 
 
