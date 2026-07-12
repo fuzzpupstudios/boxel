@@ -12,6 +12,6 @@ export class CloseGuiAction extends EventAction<CloseGuiActionParameters> {
         super(eventSheet, CloseGuiActionParameters.parse(args));
     }
     public override run(cursor: EventCursor): void {
-        cursor.guiManager?.closeGui(this.args.gui);
+        cursor.clientPlatform?.guiManager.closeGui(this.args.gui);
     }
 }

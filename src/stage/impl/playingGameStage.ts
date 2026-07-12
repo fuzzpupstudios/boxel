@@ -81,6 +81,7 @@ export class PlayingGameStage extends GameStage {
 
     public constructor(game: BoxelGame) {
         super(game);
+        this.camera.add(this.audioManager.listener);
 
         this.world = new World;
         this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
@@ -173,16 +174,19 @@ export class PlayingGameStage extends GameStage {
 
         this.resumeButton = new GuiButton("Resume", 100, 30);
         this.resumeButton.on("pointerdown", () => {
+            this.audioManager.playMenuBack();
             this.setPaused(false);
         });
 
         this.settingsButton = new GuiButton("Settings", 100, 30);
         this.settingsButton.on("pointerdown", () => {
+            this.audioManager.playMenuClick();
             this.game.changeStage(new SettingsScreenStage(game));
         });
 
         this.quitButton = new GuiButton("Save and Quit", 100, 30);
         this.quitButton.on("pointerdown", () => {
+            this.audioManager.playMenuClick();
             this.game.changeStage(new TitleScreenStage(game), false);
         });
 
@@ -728,9 +732,10 @@ export class PlayingGameStage extends GameStage {
         );
         cursor.entity = this.localPlayer;
         cursor.setClientPlatform({
-            usingTouchscreen: !this.game.isDesktop
+            usingTouchscreen: !this.game.isDesktop,
+            guiManager: this.guiManager,
+            audioManager: this.audioManager
         });
-        cursor.guiManager = this.guiManager;
 
         return cursor;
     }

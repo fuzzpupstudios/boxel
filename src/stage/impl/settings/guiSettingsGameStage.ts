@@ -40,12 +40,15 @@ export class GuiSettingsScreenStage extends GameStage {
         this.backButton = new GuiButton("Cancel", 100, 30);
 
         this.backButton.on("pointerdown", () => {
+            this.audioManager.playMenuBack();
             this.game.previousStage();
         });
 
         this.applyButton = new GuiButton("Apply", 100, 30);
 
         this.applyButton.on("pointerdown", () => {
+            this.audioManager.playMenuClick();
+            
             game.settings.dPadScale = dPadScale;
             game.settings.guiScale = guiScale;
             this.game.updateSettings();

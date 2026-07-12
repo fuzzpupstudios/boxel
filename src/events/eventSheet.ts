@@ -4,9 +4,12 @@ import type { World } from "../world/world";
 import type { EventAction } from "./eventAction";
 import type { GuiManager } from "../gui/guiManager";
 import type { Entity } from "../entity/entity";
+import type { AudioManager } from "../textures/audioManager";
 
 export interface ClientEventPlatform {
     usingTouchscreen: boolean;
+    guiManager: GuiManager;
+    audioManager: AudioManager;
 }
 
 export class EventCursor {
@@ -18,7 +21,6 @@ export class EventCursor {
     public yaw = 0;
     public pitch = 0;
     public clientPlatform?: ClientEventPlatform;
-    public guiManager?: GuiManager;
     public entity: Entity | null = null;
 
     public constructor(

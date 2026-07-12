@@ -1,9 +1,11 @@
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type FileEntry } from "@zip.js/zip.js";
 import { JsonhReader } from "jsonh-ts";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import { AudioContext as ThreeAudioContext } from "three";
 
 export class Assets {
     public readonly textureRegistry = new Map<string, ImageBitmap>;
+    public readonly audioRegistry = new Map<string, AudioBuffer>;
     public readonly jsonTemplatesRegistry = new Map<string, DataDrivenJson.JsonTemplate>;
     public readonly blockRegistry = new Map<string, DataDrivenJson.Block & DataDrivenJson.TemplateApplicable>;
     public readonly blockModelRegistry = new Map<string, DataDrivenJson.BlockStateModel & DataDrivenJson.TemplateApplicable>;
@@ -17,6 +19,20 @@ export class Assets {
                 const data = await entry.getData(new BlobWriter);
                 const image = await createImageBitmap(data);
                 this.textureRegistry.set(namespace + ":" + name, image);
+            }
+        ],
+        [
+            /^assets\/([^\/]+)\/sound\/(.*)\.(?:(wav)|(mp3)|(ogg)|(flac)|(m4a))$/,
+            async (entry: FileEntry, namespace: string, name: string) => {
+                const data = await entry.getData(new BlobWriter);
+                const buffer = await data.arrayBuffer();
+
+                const audioContext = <AudioContext>ThreeAudioContext.getContext();
+                const audioBuffer: AudioBuffer = await new Promise((res, rej) => {
+                    audioContext.decodeAudioData(buffer, res, rej);
+                });
+                
+                this.audioRegistry.set(namespace + ":" + name, audioBuffer);
             }
         ],
         [

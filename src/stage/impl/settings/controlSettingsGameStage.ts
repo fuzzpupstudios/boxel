@@ -39,6 +39,8 @@ export class ControlSettingsScreenStage extends GameStage {
         this.backButton = new GuiButton("Back", 100, 30);
 
         this.backButton.on("pointerdown", () => {
+            this.audioManager.playMenuBack();
+
             this.saveSettings().then(() => {
                 this.game.previousStage();
                 this.game.updateSettings();
@@ -80,6 +82,9 @@ export class ControlSettingsScreenStage extends GameStage {
                 game.settings.invertX = value;
             }
         }("Invert X", 78, 24);
+        this.invertX.element.addListener("pointerdown", () => {
+            this.audioManager.playMenuClick();
+        });
 
         this.invertY = new class extends ToggleButtonSetting {
             protected override getValue() {
@@ -89,6 +94,9 @@ export class ControlSettingsScreenStage extends GameStage {
                 game.settings.invertY = value;
             }
         }("Invert Y", 78, 24);
+        this.invertY.element.addListener("pointerdown", () => {
+            this.audioManager.playMenuClick();
+        });
 
         this.controllerDeadzone = new class extends SliderSetting {
             protected override getValue() {

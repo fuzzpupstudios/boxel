@@ -18,8 +18,6 @@ import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import { Assets } from "./textures/assets";
 import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
-import { GuiDPadLeft } from "./gui/mobile/dPadLeft";
-import { GuiDPadRight } from "./gui/mobile/dPadRight";
 
 
 export class BoxelGame {

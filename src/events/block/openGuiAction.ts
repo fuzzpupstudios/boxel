@@ -25,6 +25,6 @@ export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
         const guiType = inventoryGuiTypeRegistry.get(this.args.gui);
         if(guiType == null) throw new ReferenceError("Unknown gui type " + this.args.gui);
 
-        cursor.guiManager?.openGui(guiType.createGui(inventory));
+        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventory));
     }
 }

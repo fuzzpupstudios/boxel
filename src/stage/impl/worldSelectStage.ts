@@ -150,11 +150,13 @@ export class WorldSelectStage extends GameStage {
 
         this.backButton = new GuiButton("Back", 100, 30);
         this.backButton.on("pointerdown", () => {
+            this.audioManager.playMenuBack();
             this.game.previousStage();
         });
 
         this.createWorldButton = new GuiButton("Create World", 100, 30);
         this.createWorldButton.on("pointerdown", () => {
+            this.audioManager.playMenuClick();
             this.game.changeStage(new WorldCreateStage(game));
         });
 
@@ -251,15 +253,18 @@ export class WorldSelectStage extends GameStage {
             this.worldsList.list.addChild(card);
 
             card.playButton.addListener("pointerdown", () => {
+                this.audioManager.playMenuClick();
                 this.playWorld(world.id);
             });
             card.editButton.addListener("pointerup", async () => {
+                this.audioManager.playMenuClick();
                 world.name = prompt("Enter new world name:", world.name) || world.name;
                 
                 await this.saveWorlds();
                 await this.loadWorlds();
             });
             card.deleteButton.addListener("pointerup", async () => {
+                this.audioManager.playMenuClick();
                 if(confirm("Delete \"" + world.name + "\"? This cannot be undone!\nid: " + world.id)) {
                     this.savedData?.worlds.splice(this.savedData.worlds.indexOf(world), 1);
                 
