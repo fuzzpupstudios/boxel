@@ -3,25 +3,27 @@
 
     "parameters": {
         "texture": "string",
-        "id": "string"
+        "id": "string",
+        "sound_events": "string"
     },
     "json": {
         "id": "${id}",
 
         "defaultStateProperties": {
             "model": {
-                "include": "base:stair",
                 "textures": {
                     "block": "${texture}"
                 }
             },
-            "events": [ "base:stair" ],
+            "events": [ "base:stair", "${sound_events}" ],
             "pickBlockState": "direction=west,half=bottom"
         },
 
         "states": {
             "direction=south,half=bottom": {
-                "model": {},
+                "model": {
+                    "include": "base:stair"
+                },
                 "collider": {
                     "hitboxes": [
                         { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
@@ -32,9 +34,12 @@
             },
             "direction=west,half=bottom": {
                 "model": {
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateY": { "angle": 1, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -45,9 +50,12 @@
             },
             "direction=north,half=bottom": {
                 "model": {
-                    "transforms": [
-                        { "rotateY": { "angle": 2, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateY": { "angle": 2, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -59,9 +67,12 @@
             },
             "direction=east,half=bottom": {
                 "model": {
-                    "transforms": [
-                        { "rotateY": { "angle": 3, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateY": { "angle": 3, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -74,9 +85,12 @@
 
             "direction=south,half=top": {
                 "model": {
-                    "transforms": [
-                        { "rotateZ": { "angle": 2, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateZ": { "angle": 2, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -88,10 +102,13 @@
             },
             "direction=west,half=top": {
                 "model": {
-                    "transforms": [
-                        { "rotateZ": { "angle": 2, "transformUVs": true } },
-                        { "rotateY": { "angle": 1, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateZ": { "angle": 2, "transformUVs": true } },
+                            { "rotateY": { "angle": 1, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -103,10 +120,13 @@
             },
             "direction=north,half=top": {
                 "model": {
-                    "transforms": [
-                        { "rotateZ": { "angle": 2, "transformUVs": true } },
-                        { "rotateY": { "angle": 2, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateZ": { "angle": 2, "transformUVs": true } },
+                            { "rotateY": { "angle": 2, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -118,10 +138,13 @@
             },
             "direction=east,half=top": {
                 "model": {
-                    "transforms": [
-                        { "rotateZ": { "angle": 2, "transformUVs": true } },
-                        { "rotateY": { "angle": 3, "transformUVs": true } }
-                    ]
+                    "include": {
+                        "model": "base:stair",
+                        "transforms": [
+                            { "rotateZ": { "angle": 2, "transformUVs": true } },
+                            { "rotateY": { "angle": 3, "transformUVs": true } }
+                        ]
+                    }
                 },
                 "collider": {
                     "hitboxes": [

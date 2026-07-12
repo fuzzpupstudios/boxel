@@ -4,7 +4,8 @@
         "id": "base:slab",
         "arguments": {
             "texture": "base:block/bricks.png",
-            "id": "base:bricks_slab"
+            "id": "base:bricks_slab",
+            "sound_events": "base:sound_materials/solid"
         }
     }
 }

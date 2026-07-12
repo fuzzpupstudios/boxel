@@ -1,5 +1,5 @@
 import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
-import { MathUtils, PerspectiveCamera } from "three";
+import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
@@ -81,7 +81,6 @@ export class PlayingGameStage extends GameStage {
 
     public constructor(game: BoxelGame) {
         super(game);
-        this.camera.add(this.audioManager.listener);
 
         this.world = new World;
         this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
@@ -201,6 +200,14 @@ export class PlayingGameStage extends GameStage {
         this.pausedContainer.visible = false;
 
         this.gui.addChild(this.pausedContainer);
+
+        EventCursor.setClientPlatform({
+            usingTouchscreen: !this.game.isDesktop,
+            guiManager: this.guiManager,
+            audioManager: this.audioManager
+        });
+
+        this.camera.add(this.audioManager.listener);
     }
     public async openWorld(worldId: string) {
         this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
@@ -731,11 +738,6 @@ export class PlayingGameStage extends GameStage {
             Math.floor(this.localPlayer.aabb.position.z)
         );
         cursor.entity = this.localPlayer;
-        cursor.setClientPlatform({
-            usingTouchscreen: !this.game.isDesktop,
-            guiManager: this.guiManager,
-            audioManager: this.audioManager
-        });
 
         return cursor;
     }

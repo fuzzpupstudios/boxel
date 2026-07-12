@@ -13,6 +13,8 @@ export interface ClientEventPlatform {
 }
 
 export class EventCursor {
+    private static clientPlatform?: ClientEventPlatform;
+
     public faceNormalX = 0;
     public faceNormalY = 0;
     public faceNormalZ = 0;
@@ -20,15 +22,21 @@ export class EventCursor {
     public faceHitY = 0;
     public yaw = 0;
     public pitch = 0;
-    public clientPlatform?: ClientEventPlatform;
+    public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;
+
+    public static setClientPlatform(clientPlatform: ClientEventPlatform) {
+        this.clientPlatform = clientPlatform;
+    }
 
     public constructor(
         public readonly world: World,
         public x: number,
         public y: number,
         public z: number
-    ) {}
+    ) {
+        this.clientPlatform = EventCursor.clientPlatform!;
+    }
 
     public addOffset(x: number, y: number, z: number) {
         this.x += x;
@@ -60,10 +68,6 @@ export class EventCursor {
 
         this.faceHitX = projected3D.x;
         this.faceHitY = projected3D.y;
-    }
-
-    public setClientPlatform(clientPlatform: ClientEventPlatform) {
-        this.clientPlatform = clientPlatform;
     }
 }
 

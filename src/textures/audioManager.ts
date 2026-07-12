@@ -1,4 +1,4 @@
-import { Audio, AudioListener, Object3D, PositionalAudio } from "three";
+import { Audio, AudioListener, Object3D, PositionalAudio, Vector3 } from "three";
 import type { Assets } from "./assets";
 
 export class AudioManager {
@@ -41,9 +41,11 @@ export class AudioManager {
 
         const audio = new PositionalAudio(this.listener);
         audio.setBuffer(audioBuffer);
-
+        audio.setRefDistance(16);
+        
         audio.position.set(x, y, z);
         this.root.add(audio);
+        
         audio.play();
 
         return audio;

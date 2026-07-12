@@ -1,0 +1,22 @@
+{
+    "id": "base:sound_materials/solid",
+
+    "triggers": {
+        "base:place": [
+            {
+                "id": "base:play_sound_2d",
+                "args": {
+                    "sound": "base:block/place/solid"
+                }
+            }
+        ],
+        "base:destroy": [
+            {
+                "id": "base:play_sound_2d",
+                "args": {
+                    "sound": "base:block/destroy/solid"
+                }
+            }
+        ]
+    }
+}

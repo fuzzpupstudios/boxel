@@ -4,7 +4,8 @@
         "id": "base:stair",
         "arguments": {
             "texture": "base:block/cobblestone.png",
-            "id": "base:cobblestone_stair"
+            "id": "base:cobblestone_stair",
+            "sound_events": "base:sound_materials/solid"
         }
     }
 }

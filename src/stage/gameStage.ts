@@ -15,7 +15,7 @@ export abstract class GameStage {
     public constructor(game: BoxelGame) {
         this.game = game;
         this.audioManager = new AudioManager(this.game.assets);
-        this.camera.add(this.audioManager.listener);
+        this.scene.add(this.audioManager.listener);
     }
 
     public abstract resize(width: number, height: number, pixelRatio: number): void;

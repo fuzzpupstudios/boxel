@@ -4,7 +4,8 @@
         "id": "base:stair",
         "arguments": {
             "texture": "base:block/bricks.png",
-            "id": "base:bricks_stair"
+            "id": "base:bricks_stair",
+            "sound_events": "base:sound_materials/solid"
         }
     }
 }

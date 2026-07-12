@@ -4,7 +4,8 @@
         "id": "base:slab",
         "arguments": {
             "texture": "base:block/cobblestone.png",
-            "id": "base:cobblestone_slab"
+            "id": "base:cobblestone_slab",
+            "sound_events": "base:sound_materials/solid"
         }
     }
 }

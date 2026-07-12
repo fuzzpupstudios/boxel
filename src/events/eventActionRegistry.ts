@@ -13,6 +13,8 @@ import { EntityEventPredicate } from "./predicate/entityEventPredicate";
 import { FaceEventPredicate } from "./predicate/faceEventPredicate";
 import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
 import { SetSelectedSlotAction } from "./block/setSelectedSlotAction";
+import { PlaySound3dAction } from "./block/playSound3dAction";
+import { PlaySound2dAction } from "./block/playSound2dAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -23,6 +25,8 @@ eventActionRegistry.register("base:clone_block", CloneBlockAction);
 eventActionRegistry.register("base:open_gui", OpenGuiAction);
 eventActionRegistry.register("base:close_gui", CloseGuiAction);
 eventActionRegistry.register("base:set_selected_slot", SetSelectedSlotAction);
+eventActionRegistry.register("base:play_sound_3d", PlaySound3dAction);
+eventActionRegistry.register("base:play_sound_2d", PlaySound2dAction);
 
 eventActionRegistry.lock();
 

@@ -3,13 +3,14 @@
 
     "parameters": {
         "texture": "string",
-        "id": "string"
+        "id": "string",
+        "sound_events": "string"
     },
     "json": {
         "id": "${id}",
 
         "defaultStateProperties": {
-            "events": [ "base:slab" ],
+            "events": [ "base:slab", "${sound_events}" ],
             "pickBlockState": "half=bottom"
         },
 
