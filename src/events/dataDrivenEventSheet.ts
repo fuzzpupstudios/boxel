@@ -14,18 +14,25 @@ function isEventActionWithPredicate(obj: any): obj is DataDrivenJson.EventAction
 }
 
 export class DataDrivenEventSheet extends EventSheet {
-    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets) {
-        const parentJson = json.parent != null ? assets.eventSheetRegistry.get(json.parent) : null;
+    public static parseJson(json: DataDrivenJson.EventSheet, assets: Assets, mergePrevious?: EventSheet) {
+        const includes = json.include instanceof Array
+            ? json.include
+            : (json.include == null ? [] : [ json.include ]);
+        
+        for(const include of includes) {
+            const includeJson = assets.eventSheetRegistry.get(include);
+            if(includeJson == null) throw new ReferenceError("Cannot find included sheet " + include);
 
-        let eventSheet: EventSheet;
+            mergePrevious = this.parseJson(includeJson, assets, mergePrevious);
+        }
 
-        if(parentJson == null) {
-            eventSheet = new DataDrivenEventSheet;
-        } else {
-            try {
-                eventSheet = DataDrivenEventSheet.parseJson(parentJson, assets);
-            } catch(e) {
-                throw new Error("Failed to parse parent " + json.parent, { cause: e });
+        const eventSheet = new DataDrivenEventSheet;
+
+        if(mergePrevious != null) {
+            for(const [ triggerId, actions ] of eventSheet.triggers.entries()) {
+                for(const action of actions) {
+                    eventSheet.addTriggerAction(triggerId, action);
+                }
             }
         }
 

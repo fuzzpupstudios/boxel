@@ -3,7 +3,7 @@
     "states": {
         "default": {
             "model": {
-                "parent": "base:foliage",
+                "include": "base:foliage",
                 "textures": {
                     "base": "base:block/dirt.png",
                     "side": "base:block/grass_side.png",

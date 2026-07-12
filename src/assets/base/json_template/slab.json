@@ -9,14 +9,14 @@
         "id": "${id}",
 
         "defaultStateProperties": {
-            "events": "base:slab",
+            "events": [ "base:slab" ],
             "pickBlockState": "half=bottom"
         },
 
         "states": {
             "half=bottom": {
                 "model": {
-                    "parent": "base:slab_bottom",
+                    "include": "base:slab_bottom",
                     "textures": {
                         "block": "${texture}"
                     }
@@ -29,7 +29,7 @@
             },
             "half=top": {
                 "model": {
-                    "parent": "base:slab_top",
+                    "include": "base:slab_top",
                     "textures": {
                         "block": "${texture}"
                     }

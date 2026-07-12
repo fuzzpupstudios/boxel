@@ -7,7 +7,7 @@ export namespace DataDrivenJson {
 
     export interface BlockState {
         model: BlockStateModel | string,
-        events?: EventSheet | string,
+        events?: EventSheet | string[] | string,
         canPlace?: EventActionPredicateTree | boolean;
         collider?: BlockStateCollider,
         emission?: [ number, number, number ],
@@ -16,9 +16,14 @@ export namespace DataDrivenJson {
         pickBlockState?: string
     }
 
+    export interface BlockStateModelIncludeEntry {
+        model: BlockStateModel | string;
+        transforms?: Record<string, any>[] | Record<string, any>
+    }
+
     export interface BlockStateModel {
         id?: string;
-        parent?: string;
+        include?: (BlockStateModelIncludeEntry | string)[] | BlockStateModelIncludeEntry | string;
 
         occlude?: boolean;
         occludeNorth?: boolean,
@@ -33,9 +38,7 @@ export namespace DataDrivenJson {
         south?: BlockStateModelFace[],
         west?: BlockStateModelFace[],
         up?: BlockStateModelFace[],
-        down?: BlockStateModelFace[],
-
-        transforms?: Record<string, any>[] | Record<string, any>
+        down?: BlockStateModelFace[]
     }
 
     export interface BlockStateModelFace {
@@ -50,7 +53,7 @@ export namespace DataDrivenJson {
 
     export interface EventSheet {
         id?: string;
-        parent?: string;
+        include?: string | string[];
         triggers?: Record<string, EventAction[] | EventAction>
     }
 
@@ -85,7 +88,7 @@ export namespace DataDrivenJson {
     export interface InventoryGuiGraphicType {
         type: string,
         pos: [ number, number ],
-        events?: EventSheet | string,
+        events?: EventSheet | string[] | string,
         renderIf?: EventActionPredicateTree | boolean
     }
 

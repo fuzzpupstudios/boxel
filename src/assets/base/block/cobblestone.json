@@ -3,7 +3,7 @@
     "states": {
         "default": {
             "model": {
-                "parent": "base:full_block",
+                "include": "base:full_block",
                 "textures": {
                     "block": "base:block/cobblestone.png"
                 }

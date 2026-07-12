@@ -4,6 +4,7 @@ import type { DataDrivenJson } from "../data/dataDrivenJson";
 import type { TileFace, TileMesh } from "../rendering/chunkMesher";
 import { Assets } from "../textures/assets";
 import type { TextureAtlas } from "../textures/textureAtlas";
+import { parseModel } from "./jsonParseUtils";
 
 const blockModelTransforms: Record<string, (model: BlockModel, params: any) => void> = {
     "rotateX": (model: BlockModel, params: any) => {
@@ -273,12 +274,12 @@ export class BlockModelFace {
 }
 
 export class BlockModel {
-    public occludeNorth = true;
-    public occludeEast = true;
-    public occludeSouth = true;
-    public occludeWest = true;
-    public occludeUp = true;
-    public occludeDown = true;
+    public occludeNorth?: boolean;
+    public occludeEast?: boolean;
+    public occludeSouth?: boolean;
+    public occludeWest?: boolean;
+    public occludeUp?: boolean;
+    public occludeDown?: boolean;
 
     public north = new Array<BlockModelFace>;
     public east = new Array<BlockModelFace>;
@@ -291,26 +292,75 @@ export class BlockModel {
     public textureSources = new Map<string, ImageBitmap>;
 
     public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
-        const parentJson = json.parent != null ? assets.blockModelRegistry.get(json.parent) : null;
+        const includes = new Array<DataDrivenJson.BlockStateModelIncludeEntry>;
 
-        let model: BlockModel;
+        for(const include of json.include instanceof Array ? json.include : [ json.include ]) {
+            if(include == null) continue;
 
-        if(parentJson == null) {
-            model = new BlockModel;
-        } else {
-            try {
-                model = BlockModel.parseJson(parentJson, assets);
-            } catch(e) {
-                throw new Error("Failed to parse parent " + json.parent, { cause: e });
+            let includeJson: DataDrivenJson.BlockStateModelIncludeEntry;
+            if(typeof include == "string") {
+                const model = assets.blockModelRegistry.get(include);
+
+                if(model == null) {
+                    throw new ReferenceError("Cannot find model " + include);
+                }
+
+                includeJson = {
+                    model,
+                    transforms: []
+                }
+            } else {
+                includeJson = include;
+            }
+            includes.push(includeJson);
+        }
+
+        const model = new BlockModel;
+
+        for(const include of includes) {
+            const parsedModel = parseModel(include.model, assets);
+
+            if(include.transforms != null) {
+                for(const transforms of include.transforms instanceof Array ? include.transforms : [ include.transforms ]) {
+                    for(const [ id, params ] of Object.entries(transforms)) {
+                        const transform = blockModelTransforms[id];
+                        if(transform == null) throw new ReferenceError("Unknown transform " + id);
+
+                        transform(parsedModel, params);
+                    }
+                }
+            }
+
+            model.occludeNorth = parsedModel.occludeNorth ?? model.occludeNorth!;
+            model.occludeEast = parsedModel.occludeEast ?? model.occludeEast!;
+            model.occludeSouth = parsedModel.occludeSouth ?? model.occludeSouth!;
+            model.occludeWest = parsedModel.occludeWest ?? model.occludeWest!;
+            model.occludeUp = parsedModel.occludeUp ?? model.occludeUp!;
+            model.occludeDown = parsedModel.occludeDown ?? model.occludeDown!;
+
+
+            model.north.push(...parsedModel.north);
+            model.east.push(...parsedModel.east);
+            model.south.push(...parsedModel.south);
+            model.west.push(...parsedModel.west);
+            model.up.push(...parsedModel.up);
+            model.down.push(...parsedModel.down);
+
+
+            for(const [ textureSlot, textureSource ] of parsedModel.textureSources) {
+                model.textureSources.set(textureSlot, textureSource);
+            }
+            for(const [ textureSlot, textureURI ] of parsedModel.textureURIs) {
+                model.textureURIs.set(textureSlot, textureURI);
             }
         }
 
-        model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth;
-        model.occludeEast = json.occludeEast ?? json.occlude ?? model.occludeEast;
-        model.occludeSouth = json.occludeSouth ?? json.occlude ?? model.occludeSouth;
-        model.occludeWest = json.occludeWest ?? json.occlude ?? model.occludeWest;
-        model.occludeUp = json.occludeUp ?? json.occlude ?? model.occludeUp;
-        model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown;
+        model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth!;
+        model.occludeEast = json.occludeEast ?? json.occlude ?? model.occludeEast!;
+        model.occludeSouth = json.occludeSouth ?? json.occlude ?? model.occludeSouth!;
+        model.occludeWest = json.occludeWest ?? json.occlude ?? model.occludeWest!;
+        model.occludeUp = json.occludeUp ?? json.occlude ?? model.occludeUp!;
+        model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown!;
 
 
         model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, 1))));
@@ -330,16 +380,6 @@ export class BlockModel {
             model.textureURIs.set(textureSlot, textureURI);
         }
 
-        if(json.transforms != null) {
-            for(const transforms of json.transforms instanceof Array ? json.transforms : [ json.transforms ]) {
-                for(const [ id, params ] of Object.entries(transforms)) {
-                    const transform = blockModelTransforms[id];
-                    if(transform == null) throw new ReferenceError("Unknown transform " + id);
-
-                    transform(model, params);
-                }
-            }
-        }
         model.correctVertexIndices();
 
         return model;
@@ -427,8 +467,8 @@ export class BlockModel {
                 face.rotateVertexIndicesCCW();
             }
 
-            [ this.occludeUp, this.occludeNorth, this.occludeDown, this.occludeSouth ] =
-            [ this.occludeNorth, this.occludeDown, this.occludeSouth, this.occludeUp ];
+            [ this.occludeUp!, this.occludeNorth!, this.occludeDown!, this.occludeSouth! ] =
+            [ this.occludeNorth!, this.occludeDown!, this.occludeSouth!, this.occludeUp! ];
 
             [ this.up, this.north, this.down, this.south ] =
             [ this.north, this.down, this.south, this.up ];
@@ -464,8 +504,8 @@ export class BlockModel {
                 face.rotateVertexIndicesCCW();
             }
 
-            [ this.occludeNorth, this.occludeEast, this.occludeSouth, this.occludeWest ] =
-            [ this.occludeEast, this.occludeSouth, this.occludeWest, this.occludeNorth ];
+            [ this.occludeNorth!, this.occludeEast!, this.occludeSouth!, this.occludeWest! ] =
+            [ this.occludeEast!, this.occludeSouth!, this.occludeWest!, this.occludeNorth! ];
 
             [ this.north, this.east, this.south, this.west ] =
             [ this.east, this.south, this.west, this.north ];
@@ -501,8 +541,8 @@ export class BlockModel {
                 face.rotateVertexIndicesCCW();
             }
 
-            [ this.occludeUp, this.occludeEast, this.occludeDown, this.occludeWest ] =
-            [ this.occludeEast, this.occludeDown, this.occludeWest, this.occludeUp ];
+            [ this.occludeUp!, this.occludeEast!, this.occludeDown!, this.occludeWest! ] =
+            [ this.occludeEast!, this.occludeDown!, this.occludeWest!, this.occludeUp! ];
 
             [ this.up, this.east, this.down, this.west ] =
             [ this.east, this.down, this.west, this.up ];
@@ -562,12 +602,12 @@ export class BlockModel {
             skipRender: Array.from(this.faces()).length == 0,
             renderAnyWhenCulled,
 
-            occludeNorth: this.occludeNorth,
-            occludeEast: this.occludeEast,
-            occludeSouth: this.occludeSouth,
-            occludeWest: this.occludeWest,
-            occludeUp: this.occludeUp,
-            occludeDown: this.occludeDown,
+            occludeNorth: this.occludeNorth ?? true,
+            occludeEast: this.occludeEast ?? true,
+            occludeSouth: this.occludeSouth ?? true,
+            occludeWest: this.occludeWest ?? true,
+            occludeUp: this.occludeUp ?? true,
+            occludeDown: this.occludeDown ?? true,
 
             north: this.north.map(face => face.compile()),
             east: this.east.map(face => face.compile()),

@@ -10,12 +10,12 @@
 
         "defaultStateProperties": {
             "model": {
-                "parent": "base:stair",
+                "include": "base:stair",
                 "textures": {
                     "block": "${texture}"
                 }
             },
-            "events": "base:stair",
+            "events": [ "base:stair" ],
             "pickBlockState": "direction=west,half=bottom"
         },
 

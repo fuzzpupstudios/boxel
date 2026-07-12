@@ -20,7 +20,7 @@
     "states": {
         "direction=north,open=false,half=bottom": {
             "model": {
-                "parent": "base:door_bottom"
+                "include": "base:door_bottom"
             },
             "canPlace": {
                 "block": {
@@ -38,7 +38,7 @@
         },
         "direction=north,open=false,half=top": {
             "model": {
-                "parent": "base:door_top"
+                "include": "base:door_top"
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -52,10 +52,12 @@
 
         "direction=north,open=true,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_bottom",
@@ -68,10 +70,12 @@
         },
         "direction=north,open=true,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -87,10 +91,12 @@
 
         "direction=east,open=false,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": 1 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": 1 }
+                    ]
+                }
             },
             "canPlace": {
                 "block": {
@@ -108,10 +114,12 @@
         },
         "direction=east,open=false,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": 1 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": 1 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -125,11 +133,13 @@
 
         "direction=east,open=true,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 1 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 1 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_bottom",
@@ -142,11 +152,13 @@
         },
         "direction=east,open=true,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 1 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 1 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -162,10 +174,12 @@
 
         "direction=south,open=false,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": 2 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": 2 }
+                    ]
+                }
             },
             "canPlace": {
                 "block": {
@@ -183,10 +197,12 @@
         },
         "direction=south,open=false,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": 2 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": 2 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -200,11 +216,13 @@
 
         "direction=south,open=true,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 2 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 2 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_bottom",
@@ -217,11 +235,13 @@
         },
         "direction=south,open=true,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 2 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 2 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -237,10 +257,12 @@
 
         "direction=west,open=false,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": 3 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": 3 }
+                    ]
+                }
             },
             "canPlace": {
                 "block": {
@@ -258,10 +280,12 @@
         },
         "direction=west,open=false,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": 3 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": 3 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",
@@ -275,11 +299,13 @@
 
         "direction=west,open=true,half=bottom": {
             "model": {
-                "parent": "base:door_bottom",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 3 }
-                ]
+                "include": {
+                    "model": "base:door_bottom",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 3 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_bottom",
@@ -292,11 +318,13 @@
         },
         "direction=west,open=true,half=top": {
             "model": {
-                "parent": "base:door_top",
-                "transforms": [
-                    { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                    { "rotateY": 3 }
-                ]
+                "include": {
+                    "model": "base:door_top",
+                    "transforms": [
+                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
+                        { "rotateY": 3 }
+                    ]
+                }
             },
             "canPlace": false,
             "events": "base:door_top",

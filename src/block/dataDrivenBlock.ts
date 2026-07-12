@@ -7,6 +7,8 @@ import { BoxelGame } from "../boxel";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
 import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
 import { EventSheet } from "../events/eventSheet";
+import type { Assets } from "../textures/assets";
+import { parseEvents, parseJsonCollider, parseModel, parsePredicate } from "./jsonParseUtils";
 
 
 export class DataDrivenBlock extends Block {
@@ -47,17 +49,17 @@ export class DataDrivenBlock extends Block {
                 if(jsonState.events == null) {
                     jsonState.events = defaultProperties.events!;
                 } else if(defaultProperties.events != null) {
-                    if(typeof jsonState.events == "string") {
-                        jsonState.events = { parent: jsonState.events };
+                    if(typeof jsonState.events == "string" || jsonState.events instanceof Array) {
+                        jsonState.events = { include: jsonState.events };
                     }
-                    if(typeof defaultProperties.events == "string") {
-                        defaultProperties.events = { parent: defaultProperties.events };
+                    if(typeof defaultProperties.events == "string" || defaultProperties.events instanceof Array) {
+                        defaultProperties.events = { include: defaultProperties.events };
                     }
 
                     const jsonEvents = jsonState.events;
                     const defaultEvents = defaultProperties.events;
 
-                    jsonEvents.parent ??= defaultEvents.parent!;
+                    jsonEvents.include ??= defaultEvents.include!;
 
 
                     if(jsonEvents.triggers == null) {
@@ -84,16 +86,24 @@ export class DataDrivenBlock extends Block {
                     jsonState.model = defaultProperties.model!;
                 } else if(defaultProperties.model != null) {
                     if(typeof jsonState.model == "string") {
-                        jsonState.model = { parent: jsonState.model };
+                        jsonState.model = { include: jsonState.model };
                     }
                     if(typeof defaultProperties.model == "string") {
-                        defaultProperties.model = { parent: defaultProperties.model };
+                        defaultProperties.model = { include: defaultProperties.model };
                     }
 
                     const jsonModel = jsonState.model;
                     const defaultModel = defaultProperties.model;
 
-                    jsonModel.parent ??= defaultModel.parent!;
+                    jsonModel.include ??= [];
+                    if(!(jsonModel.include instanceof Array)) {
+                        jsonModel.include = [ jsonModel.include ];
+                    }
+                    if(defaultProperties.model.include instanceof Array) {
+                        jsonModel.include.push(...defaultProperties.model.include);
+                    } else if(defaultProperties.model.include != null) {
+                        jsonModel.include.push(defaultProperties.model.include);
+                    }
                     jsonModel.occlude ??= defaultModel.occlude!;
 
                     jsonModel.occludeNorth ??= defaultModel.occludeNorth!;
@@ -141,19 +151,6 @@ export class DataDrivenBlock extends Block {
                     } else if(defaultModel.down != null) {
                         jsonModel.down.push(...defaultModel.down);
                     }
-
-                    if(jsonModel.transforms == null) {
-                        jsonModel.transforms = defaultModel.transforms!;
-                    } else if(defaultModel.transforms != null) {
-                        if(!(jsonModel.transforms instanceof Array)) {
-                            jsonModel.transforms = [ jsonModel.transforms ];
-                        }
-                        if(!(defaultModel.transforms instanceof Array)) {
-                            defaultModel.transforms = [ defaultModel.transforms ];
-                        }
-
-                        jsonModel.transforms.push(...<any>defaultModel.transforms);
-                    }
                 }
             }
             try {
@@ -178,7 +175,7 @@ export class DataDrivenBlock extends Block {
         const game = BoxelGame.INSTANCE;
 
 
-        const collider = this.parseJsonCollider(
+        const collider = parseJsonCollider(
             jsonState.collider ?? { hitboxes: [] });
 
         const tags = this.parseTags(jsonState.tags);
@@ -193,21 +190,21 @@ export class DataDrivenBlock extends Block {
 
         let model;
         try {
-            model = this.parseModel(jsonState.model, game);
+            model = parseModel(jsonState.model, game.assets);
         } catch(e) {
             throw new Error("Failed to parse model", { cause: e });
         }
 
         let eventSheet;
         try {
-            eventSheet = this.parseEvents(jsonState.events, game);
+            eventSheet = parseEvents(jsonState.events, game.assets);
         } catch(e) {
             throw new Error("Failed to parse events " + jsonState.events, { cause: e });
         }
         
         let canPlacePredicate;
         try {
-            canPlacePredicate = this.parseCanPlacePredicate(jsonState.canPlace);
+            canPlacePredicate = parsePredicate(jsonState.canPlace);
         } catch(e) {
             throw new Error("Failed to parse canPlace predicate", { cause: e });
         }
@@ -224,15 +221,6 @@ export class DataDrivenBlock extends Block {
             pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]")
         );
     }
-    private static parseCanPlacePredicate(json?: DataDrivenJson.EventActionPredicateTree | boolean): EventPredicate {
-        json ??= true;
-
-        if(typeof json == "boolean") {
-            return new ConstantPredicate(json);
-        } else {
-            return DataDrivenEventSheet.parsePredicate(json ?? {});
-        }
-    }
     private static parseTags(jsonTags?: string[]) {
         const tags = new Set<string>;
 
@@ -241,39 +229,5 @@ export class DataDrivenBlock extends Block {
         }
 
         return tags;
-    }
-    private static parseEvents(events: string | DataDrivenJson.EventSheet | undefined, game: BoxelGame) {
-        if(events == null) return DataDrivenEventSheet.parseJson({}, game.assets);
-        
-        if(typeof events == "string") {
-            const resolvedEvents = game.assets.eventSheetRegistry.get(events);
-            if(resolvedEvents == null) throw new ReferenceError("Cannot resolve event sheet parent " + events);
-
-            events = resolvedEvents;
-        }
-
-        return DataDrivenEventSheet.parseJson(events, game.assets);
-    }
-    private static parseModel(model: string | DataDrivenJson.BlockStateModel, game: BoxelGame) {
-        if(typeof model == "string") {
-            const resolvedModel = game.assets.blockModelRegistry.get(model);
-            if(resolvedModel == null) throw new ReferenceError("Cannot resolve model parent " + model);
-
-            model = resolvedModel;
-        }
-
-        return BlockModel.parseJson(model, game.assets);
-    }
-    private static parseJsonCollider(json: DataDrivenJson.BlockStateCollider): TileCollider {
-        const collider = new TileCollider;
-
-        for(const hitbox of json.hitboxes) {
-            collider.hitboxes.push(new Box3(
-                new Vector3(...hitbox.from),
-                new Vector3(...hitbox.to)
-            ));
-        }
-
-        return collider;
     }
 }
