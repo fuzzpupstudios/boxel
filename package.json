@@ -1,6 +1,6 @@
 {
   "name": "boxel",
-  "version": "a0.0.5",
+  "version": "a0.0.6",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
