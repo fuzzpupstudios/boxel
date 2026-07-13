@@ -1,0 +1,37 @@
+{
+    "id": "base:door_common",
+    "triggers": {
+        "door_open_relay": [
+            {
+                "id": "base:set_block_state_parameter",
+                "args": {
+                    "parameters": {
+                        "open": "true"
+                    }
+                }
+            },
+            {
+                "id": "base:play_sound_2d",
+                "args": {
+                    "sound": "base:block/door_open"
+                }
+            }
+        ],
+        "door_close_relay": [
+            {
+                "id": "base:set_block_state_parameter",
+                "args": {
+                    "parameters": {
+                        "open": "false"
+                    }
+                }
+            },
+            {
+                "id": "base:play_sound_2d",
+                "args": {
+                    "sound": "base:block/door_close"
+                }
+            }
+        ]
+    }
+}

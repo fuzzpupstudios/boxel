@@ -13,6 +13,7 @@
                 "top": "base:block/door_top.png"
             }
         },
+        "events": [ "base:sound_materials/solid" ],
         "renderAsTexture": "base:item/door.png",
         "attenuation": [ 1, 1, 1, 1 ],
         "pickBlockState": "direction=north,open=false,half=bottom"

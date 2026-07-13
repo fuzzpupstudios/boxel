@@ -1,5 +1,7 @@
 {
     "id": "base:door_top",
+
+    "include": "base:door_common",
     
     "triggers": {
         "base:destroy": [
@@ -14,11 +16,19 @@
                     "id": "base:set_block_state_id",
                     "args": {
                         "yOffset": -1,
-                        "blockStateId": "base:air[default]"
+                        "blockStateId": "base:air[default]",
+                        "showParticles": true
                     }
                 }
             }
         ],
+        "base:explode": {
+            "id": "base:run_trigger",
+            "args": {
+                "triggerName": "base:destroy",
+                "self": true
+            }
+        },
         "base:interact": [
             {
                 "if": {
@@ -28,55 +38,33 @@
                 },
                 "then": [
                     {
-                        "id": "base:set_block_state_parameter",
+                        "id": "base:run_trigger",
                         "args": {
-                            "parameters": {
-                                "open": "false"
-                            }
+                            "triggerName": "door_close_relay",
+                            "self": true
                         }
                     },
                     {
-                        "if": {
-                            "block": {
-                                "at": [ 0, -1, 0 ],
-                                "has_tag": "base:door"
-                            }
-                        },
-                        "then": {
-                            "id": "base:set_block_state_parameter",
-                            "args": {
-                                "yOffset": -1,
-                                "parameters": {
-                                    "open": "false"
-                                }
-                            }
+                        "id": "base:run_trigger",
+                        "args": {
+                            "triggerName": "door_close_relay",
+                            "yOffset": -1
                         }
                     }
                 ],
                 "else": [
                     {
-                        "id": "base:set_block_state_parameter",
+                        "id": "base:run_trigger",
                         "args": {
-                            "parameters": {
-                                "open": "true"
-                            }
+                            "triggerName": "door_open_relay",
+                            "self": true
                         }
                     },
                     {
-                        "if": {
-                            "block": {
-                                "at": [ 0, -1, 0 ],
-                                "has_tag": "base:door"
-                            }
-                        },
-                        "then": {
-                            "id": "base:set_block_state_parameter",
-                            "args": {
-                                "yOffset": -1,
-                                "parameters": {
-                                    "open": "true"
-                                }
-                            }
+                        "id": "base:run_trigger",
+                        "args": {
+                            "triggerName": "door_open_relay",
+                            "yOffset": -1
                         }
                     }
                 ]
