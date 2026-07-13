@@ -59,7 +59,6 @@ export class GuiItemSprite extends Container {
         this.removeChildren();
 
         const sprite = this.spriteProvdider.createItemSprite(this._item);
-        console.log(sprite, this._item, this.spriteProvdider);
         if(sprite !== null) {
             this.addChild(sprite);
         }
