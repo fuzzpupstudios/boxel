@@ -53,8 +53,8 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         const y = Math.random() * (1 - slice) * (maxV - minV);
 
         return [
-            minU + x, minV + y,
-            minU + x + slice, minV + y + slice,
+            Math.min(maxU, minU + x), Math.min(maxV, minV + y),
+            Math.min(maxU, minU + x + slice), Math.min(maxV, minV + y + slice),
         ]
     }
 
