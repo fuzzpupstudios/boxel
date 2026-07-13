@@ -49,6 +49,7 @@ export class BoxelGame {
     public mainStorage: MainStorage | null = null;
     public guiWidth: number = 0;
     public guiHeight: number = 0;
+    public initialized: boolean = false;
 
 
     constructor(
@@ -82,6 +83,8 @@ export class BoxelGame {
         this.viewportWidth = width;
         this.viewportHeight = height;
         this.viewportPixelRatio = pixelRatio;
+
+        if(!this.initialized) return;
 
         this.threeRenderer.setPixelRatio(pixelRatio);
         this.threeRenderer.setSize(width, height, true);
@@ -297,6 +300,7 @@ export class BoxelGame {
         this.queueNextFrame();
 
         this.changeStage(new TitleScreenStage(this));
+        this.initialized = true;
     }
 
     private loadAssets() {
