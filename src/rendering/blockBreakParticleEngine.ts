@@ -60,7 +60,8 @@ export class BlockBreakParticleEngine extends ParticleEngine {
 
     public blockDestructionParticles(
         x: number, y: number, z: number,
-        tile: string = this.world.tiles.getBlockStateId(x, y, z)
+        tile: string = this.world.tiles.getBlockStateId(x, y, z),
+        density: number = 1
     ) {
         const uvRects = this.tileMeshUvRects.get(tile);
         if(uvRects == null) return;
@@ -68,6 +69,8 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         for(let dx = 0.125; dx <= 0.875; dx += 0.25) {
             for(let dy = 0.125; dy <= 0.875; dy += 0.25) {
                 for(let dz = 0.125; dz <= 0.875; dz += 0.25) {
+                    if(Math.random() > density) continue;
+                    
                     const randomRect = uvRects[(Math.random() * uvRects.length) | 0]!;
 
                     this.addParticle(

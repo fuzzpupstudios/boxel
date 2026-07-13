@@ -16,6 +16,7 @@ import { SetSelectedSlotAction } from "./general/setSelectedSlotAction";
 import { PlaySound3dAction } from "./general/playSound3dAction";
 import { PlaySound2dAction } from "./general/playSound2dAction";
 import { PreventDefaultAction } from "./general/preventDefaultAction";
+import { ExplodeAction } from "./block/explodeAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -23,6 +24,7 @@ eventActionRegistry.register("base:set_block_state_id", SetBlockStateIdAction);
 eventActionRegistry.register("base:run_trigger", RunTriggerAction);
 eventActionRegistry.register("base:set_block_state_parameter", SetBlockStateParameterAction);
 eventActionRegistry.register("base:clone_block", CloneBlockAction);
+eventActionRegistry.register("base:explode", ExplodeAction);
 
 eventActionRegistry.register("base:open_gui", OpenGuiAction);
 eventActionRegistry.register("base:close_gui", CloseGuiAction);

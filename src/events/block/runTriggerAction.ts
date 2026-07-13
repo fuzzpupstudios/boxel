@@ -5,9 +5,9 @@ import { blockStateRegistry } from "../../block/blockRegistry";
 
 export type RunTriggerActionParameters = z.infer<typeof RunTriggerActionParameters>;
 export const RunTriggerActionParameters = z.object({
-    xOffset: z.number(),
-    yOffset: z.number(),
-    zOffset: z.number(),
+    xOffset: z.number().default(0),
+    yOffset: z.number().default(0),
+    zOffset: z.number().default(0),
     self: z.boolean().default(false),
     triggerName: z.string()
 });

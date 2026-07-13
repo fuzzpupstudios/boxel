@@ -1,0 +1,64 @@
+{
+    "id": "base:explosive",
+    "states": {
+        "default": {
+            "model": {
+                "include": "base:axis_block",
+                "textures": {
+                    "side": "base:block/explosive_side.png",
+                    "axis": "base:block/explosive_top.png"
+                }
+            },
+            "events": {
+                "include": "base:sound_materials/solid",
+
+                "triggers": {
+                    "relay_explode": [
+                        {
+                            "id": "base:set_block_state_id",
+                            "args": {
+                                "blockStateId": "base:air[default]"
+                            }
+                        },
+                        {
+                            "id": "base:explode",
+                            "args": {
+                                "radius": 2.7
+                            }
+                        },
+                        {
+                            "id": "base:play_sound_2d",
+                            "args": {
+                                "sound": "base:block/explosion"
+                            }
+                        }
+                    ],
+                    "base:interact": [
+                        {
+                            "id": "base:run_trigger",
+                            "args": {
+                                "self": true,
+                                "triggerName": "relay_explode"
+                            }
+                        },
+                        {
+                            "id": "base:prevent_default"
+                        }
+                    ],
+                    "base:explode": {
+                        "id": "base:run_trigger",
+                        "args": {
+                            "self": true,
+                            "triggerName": "relay_explode"
+                        }
+                    }
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
