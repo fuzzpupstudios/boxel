@@ -165,6 +165,7 @@ export class Player extends Entity {
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
         
+        if(!previousState.tags.has("replaceable")) return false;
         if(!blockState.canPlacePredicate.test(cursor)) return false;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
