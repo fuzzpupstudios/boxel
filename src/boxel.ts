@@ -306,7 +306,7 @@ export class BoxelGame {
     
         this.textureAtlas = new TextureAtlas;
         for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
-            if(textureId.split(":")[1]?.startsWith("ui/")) continue;
+            if(!textureId.split(":")[1]?.startsWith("block/")) continue;
             
             const loadedTexture = new THREE.Texture(textureSource);
             this.textureAtlas.addTexture(textureId, loadedTexture);
