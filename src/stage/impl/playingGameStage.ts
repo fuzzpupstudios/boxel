@@ -643,6 +643,37 @@ export class PlayingGameStage extends GameStage {
                     }
                 }
 
+                if(game.input.wasPressed(ControlBinding.SLOT_0)) {
+                    this.localPlayer.selectedSlot = 0;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_1)) {
+                    this.localPlayer.selectedSlot = 1;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_2)) {
+                    this.localPlayer.selectedSlot = 2;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_3)) {
+                    this.localPlayer.selectedSlot = 3;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_4)) {
+                    this.localPlayer.selectedSlot = 4;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_5)) {
+                    this.localPlayer.selectedSlot = 5;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_6)) {
+                    this.localPlayer.selectedSlot = 6;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_7)) {
+                    this.localPlayer.selectedSlot = 7;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_8)) {
+                    this.localPlayer.selectedSlot = 8;
+                }
+                if(game.input.wasPressed(ControlBinding.SLOT_9)) {
+                    this.localPlayer.selectedSlot = 9;
+                }
+
                 let lookDeltaX = (
                     (
                         game.input.getAnalog(ControlBinding.ROTATE_CW) -

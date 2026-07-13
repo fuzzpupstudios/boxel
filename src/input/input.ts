@@ -22,7 +22,9 @@ export enum ControlBinding {
     FULLSCREEN,
 
     SPLIT_STACK, DROP_ONE, SWAP_STACK, QUICK_MOVE,
-    PRESS_UI
+    PRESS_UI,
+
+    SLOT_0, SLOT_1, SLOT_2, SLOT_3, SLOT_4, SLOT_5, SLOT_6, SLOT_7, SLOT_8, SLOT_9
 }
 
 export enum MouseAxis {
@@ -72,7 +74,18 @@ export class Input {
         [ControlBinding.PAUSE]: "Escape",
         [ControlBinding.BACK]: "Escape",
 
-        [ControlBinding.FULLSCREEN]: "F11"
+        [ControlBinding.FULLSCREEN]: "F11",
+
+        [ControlBinding.SLOT_0]: "Digit1",
+        [ControlBinding.SLOT_1]: "Digit2",
+        [ControlBinding.SLOT_2]: "Digit3",
+        [ControlBinding.SLOT_3]: "Digit4",
+        [ControlBinding.SLOT_4]: "Digit5",
+        [ControlBinding.SLOT_5]: "Digit6",
+        [ControlBinding.SLOT_6]: "Digit7",
+        [ControlBinding.SLOT_7]: "Digit8",
+        [ControlBinding.SLOT_8]: "Digit9",
+        [ControlBinding.SLOT_9]: "Digit0",
     };
     public readonly controllerBindings: Partial<Record<ControlBinding, ControllerButton>> = {
         [ControlBinding.JUMP]: ControllerButton.A,
