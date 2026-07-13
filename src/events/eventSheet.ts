@@ -5,11 +5,13 @@ import type { EventAction } from "./eventAction";
 import type { GuiManager } from "../gui/guiManager";
 import type { Entity } from "../entity/entity";
 import type { AudioManager } from "../textures/audioManager";
+import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 
 export interface ClientEventPlatform {
     usingTouchscreen: boolean;
     guiManager: GuiManager;
     audioManager: AudioManager;
+    blockBreakParticles?: BlockBreakParticleEngine
 }
 
 export class EventCursor {
@@ -37,6 +39,12 @@ export class EventCursor {
         public z: number
     ) {
         this.clientPlatform = EventCursor.clientPlatform!;
+    }
+
+    public setPosition(x: number, y: number, z: number) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public addOffset(x: number, y: number, z: number) {

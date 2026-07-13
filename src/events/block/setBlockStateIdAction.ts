@@ -7,7 +7,8 @@ export const SetBlockStateIdActionParameters = z.object({
     xOffset: z.number().default(0),
     yOffset: z.number().default(0),
     zOffset: z.number().default(0),
-    blockStateId: z.string()
+    blockStateId: z.string(),
+    showParticles: z.boolean().default(false)
 });
 
 export class SetBlockStateIdAction extends EventAction<SetBlockStateIdActionParameters> {
@@ -15,11 +16,13 @@ export class SetBlockStateIdAction extends EventAction<SetBlockStateIdActionPara
         super(eventSheet, SetBlockStateIdActionParameters.parse(args));
     }
     public override run(cursor: EventCursor): void {
-        cursor.world.setBlockState(
-            cursor.x + this.args.xOffset,
-            cursor.y + this.args.yOffset,
-            cursor.z + this.args.zOffset,
-            this.args.blockStateId
-        );
+        const x = cursor.x + this.args.xOffset;
+        const y = cursor.y + this.args.yOffset;
+        const z = cursor.z + this.args.zOffset;
+
+        if(this.args.showParticles) {
+            cursor.clientPlatform?.blockBreakParticles?.blockDestructionParticles(x, y, z);
+        }
+        cursor.world.setBlockState(x, y, z, this.args.blockStateId);
     }
 }

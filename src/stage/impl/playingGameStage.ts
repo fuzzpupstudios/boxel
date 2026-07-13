@@ -225,7 +225,8 @@ export class PlayingGameStage extends GameStage {
         EventCursor.setClientPlatform({
             usingTouchscreen: !this.game.isDesktop,
             guiManager: this.guiManager,
-            audioManager: this.audioManager
+            audioManager: this.audioManager,
+            blockBreakParticles: this.blockBreakParticles
         });
 
         this.camera.add(this.audioManager.listener);
