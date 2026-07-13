@@ -60,7 +60,17 @@ export class DataDrivenBlock extends Block {
                     const jsonEvents = jsonState.events;
                     const defaultEvents = defaultProperties.events;
 
-                    jsonEvents.include ??= defaultEvents.include!;
+                    if(jsonEvents.include == null) {
+                        jsonEvents.include = defaultEvents.include!;
+                    } else if(defaultEvents.include != null) {
+                        if(!(jsonEvents.include instanceof Array)) jsonEvents.include = [ jsonEvents.include ];
+
+                        if(defaultEvents.include instanceof Array) {
+                            jsonEvents.include.unshift(...defaultEvents.include);
+                        } else {
+                            jsonEvents.include.unshift(defaultEvents.include);
+                        }
+                    }
 
 
                     if(jsonEvents.triggers == null) {
