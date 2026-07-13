@@ -139,6 +139,12 @@ export class BlockModelVertex {
     public applyMatrix3(matrix: Matrix3) {
         this.uv.applyMatrix3(matrix);
     }
+
+    public snap(grid: number) {
+        this.x = Math.round(this.x / grid) * grid;
+        this.y = Math.round(this.y / grid) * grid;
+        this.z = Math.round(this.z / grid) * grid;
+    }
 }
 
 export class BlockModelFace {
@@ -146,14 +152,13 @@ export class BlockModelFace {
     public v1 = new BlockModelVertex;
     public v2 = new BlockModelVertex;
     public v3 = new BlockModelVertex;
-    public cull = true;
     public rotation = 0;
     public lit = false;
     public textureSlot = "";
     public texturePosition: Box2 | null = null;
 
     public static parseJson(json: DataDrivenJson.BlockStateModelFace, normal: Vector3): BlockModelFace {
-        const face = new BlockModelFace;
+        const face = new BlockModelFace(normal);
 
         const [ x, y, z ] = json.pos;
         const [ width, height ] = json.size;
@@ -186,20 +191,22 @@ export class BlockModelFace {
         face.v3.uv.copy(uv3);
         
         face.textureSlot = json.texture;
-        face.cull = json.cull ?? face.cull;
         face.lit = json.lit ?? face.lit;
 
         return face;
     }
+
+    public constructor(
+        public readonly normal: Vector3
+    ) {}
     
     public clone(): any {
-        const face = new BlockModelFace();
+        const face = new BlockModelFace(this.normal.clone());
         face.v0 = this.v0.clone();
         face.v1 = this.v1.clone();
         face.v2 = this.v2.clone();
         face.v3 = this.v3.clone();
         
-        face.cull = this.cull;
         face.rotation = this.rotation;
         face.lit = this.lit;
         face.textureSlot = this.textureSlot;
@@ -211,31 +218,50 @@ export class BlockModelFace {
         return face;
     }
 
+    public *vertices() {
+        yield this.v0;
+        yield this.v1;
+        yield this.v2;
+        yield this.v3;
+    }
+
+    public snapVertices(grid = 1/4096) {
+        for(const vertex of this.vertices()) {
+            vertex.snap(grid);
+        }
+    }
+
     public applyMatrix4(matrix: Matrix4) {
-        this.v0.applyMatrix4(matrix);
-        this.v1.applyMatrix4(matrix);
-        this.v2.applyMatrix4(matrix);
-        this.v3.applyMatrix4(matrix);
+        this.normal.applyMatrix4(matrix.clone().extractRotation(new Matrix4)).normalize();
+
+        for(const vertex of this.vertices()) {
+            vertex.applyMatrix4(matrix);
+        }
     }
 
     public applyMatrix3(matrix: Matrix3) {
-        this.v0.applyMatrix3(matrix);
-        this.v1.applyMatrix3(matrix);
-        this.v2.applyMatrix3(matrix);
-        this.v3.applyMatrix3(matrix);
-    }
-
-    public rotateVertexIndicesCW() {
-        [ this.v0, this.v1, this.v2, this.v3 ] =
-        [ this.v1, this.v2, this.v3, this.v0 ]
-    }
-    public rotateVertexIndicesCCW() {
-        [ this.v0, this.v1, this.v2, this.v3 ] =
-        [ this.v1, this.v2, this.v3, this.v0 ]
+        for(const vertex of this.vertices()) {
+            vertex.applyMatrix3(matrix);
+        }
     }
 
     public setTexturePosition(texturePosition: Box2) {
         this.texturePosition = texturePosition;
+    }
+
+    public shouldCull() {
+        const planarX = this.v0.x == this.v1.x && this.v1.x == this.v2.x && this.v2.x == this.v3.x;
+        const planarY = this.v0.y == this.v1.y && this.v1.y == this.v2.y && this.v2.y == this.v3.y;
+        const planarZ = this.v0.z == this.v1.z && this.v1.z == this.v2.z && this.v2.z == this.v3.z;
+
+        return (
+            (this.normal.x === 1 && planarX && this.v0.x == 1) ||
+            (this.normal.x === -1 && planarX && this.v0.x == 0) ||
+            (this.normal.y === 1 && planarY && this.v0.y == 1) ||
+            (this.normal.y === -1 && planarY && this.v0.y == 0) ||
+            (this.normal.z === 1 && planarZ && this.v0.z == 1) ||
+            (this.normal.z === -1 && planarZ && this.v0.z == 0)
+        );
     }
 
     public compile(): TileFace {
@@ -251,7 +277,7 @@ export class BlockModelFace {
         const maxV = this.texturePosition.max.y;
 
         return {
-            cull: this.cull,
+            cull: this.shouldCull(),
             lit: this.lit,
 
             x0: this.v0.x, y0: this.v0.y, z0: this.v0.z,
@@ -363,9 +389,9 @@ export class BlockModel {
         model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown!;
 
 
-        model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, 1))));
+        model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, -1))));
         model.east.push(...(json.east ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(1, 0, 0))));
-        model.south.push(...(json.south ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, -1))));
+        model.south.push(...(json.south ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, 1))));
         model.west.push(...(json.west ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(-1, 0, 0))));
         model.up.push(...(json.up ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 1, 0))));
         model.down.push(...(json.down ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, -1, 0))));
@@ -378,6 +404,10 @@ export class BlockModel {
 
             model.textureSources.set(textureSlot, textureSource);
             model.textureURIs.set(textureSlot, textureURI);
+        }
+
+        for(const face of model.faces()) {
+            face.snapVertices();
         }
 
         model.correctVertexIndices();
@@ -450,28 +480,29 @@ export class BlockModel {
                 face.applyMatrix4(new Matrix4().makeRotationX(Math.PI * -0.5));
             }
                 
-            for(const face of this.east) {
-                if(transformUVs) {
+            if(transformUVs) {
+                for(const face of this.east) {
                     face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().rotate(Math.PI * -0.5));
                     face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
                 }
-                face.rotateVertexIndicesCW();
-            }
-            for(const face of this.west) {
-                if(transformUVs) {
+                for(const face of this.west) {
                     face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().rotate(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
                 }
-                face.rotateVertexIndicesCCW();
+                for(const face of [...this.north, ...this.down]) {
+                    face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
+                    face.applyMatrix3(new Matrix3().rotate(Math.PI));
+                    face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
+                }
             }
 
             [ this.occludeUp!, this.occludeNorth!, this.occludeDown!, this.occludeSouth! ] =
-            [ this.occludeNorth!, this.occludeDown!, this.occludeSouth!, this.occludeUp! ];
+            [ this.occludeSouth!, this.occludeUp!, this.occludeNorth!, this.occludeDown! ];
 
             [ this.up, this.north, this.down, this.south ] =
-            [ this.north, this.down, this.south, this.up ];
+            [ this.south, this.up, this.north, this.down ];
         }
         this.translate(offset, false);
     }
@@ -487,28 +518,24 @@ export class BlockModel {
                 face.applyMatrix4(new Matrix4().makeRotationY(Math.PI * -0.5));
             }
                 
-            for(const face of this.up) {
-                if(transformUVs) {
-                    face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
-                    face.applyMatrix3(new Matrix3().rotate(Math.PI * -0.5));
-                    face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
-                }
-                face.rotateVertexIndicesCW();
-            }
-            for(const face of this.down) {
-                if(transformUVs) {
+            if(transformUVs) {
+                for(const face of this.up) {
                     face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().rotate(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
                 }
-                face.rotateVertexIndicesCCW();
+                for(const face of this.down) {
+                    face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
+                    face.applyMatrix3(new Matrix3().rotate(Math.PI * -0.5));
+                    face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
+                }
             }
 
             [ this.occludeNorth!, this.occludeEast!, this.occludeSouth!, this.occludeWest! ] =
-            [ this.occludeEast!, this.occludeSouth!, this.occludeWest!, this.occludeNorth! ];
+            [ this.occludeWest!, this.occludeNorth!, this.occludeEast!, this.occludeSouth! ];
 
             [ this.north, this.east, this.south, this.west ] =
-            [ this.east, this.south, this.west, this.north ];
+            [ this.west, this.north, this.east, this.south ];
         }
         this.translate(offset, false);
     }
@@ -524,42 +551,43 @@ export class BlockModel {
                 face.applyMatrix4(new Matrix4().makeRotationZ(Math.PI * -0.5));
             }
                 
-            for(const face of this.south) {
-                if(transformUVs) {
+            if(transformUVs) {
+                for(const face of this.north) {
                     face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().rotate(Math.PI * -0.5));
                     face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
                 }
-                face.rotateVertexIndicesCW();
-            }
-            for(const face of this.north) {
-                if(transformUVs) {
+                for(const face of this.south) {
                     face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().rotate(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
                 }
-                face.rotateVertexIndicesCCW();
+                for(const face of [...this.west, ...this.east]) {
+                    face.applyMatrix3(new Matrix3().translate(-pivot.x, -pivot.y));
+                    face.applyMatrix3(new Matrix3().rotate(Math.PI));
+                    face.applyMatrix3(new Matrix3().translate(pivot.x, pivot.y));
+                }
             }
 
             [ this.occludeUp!, this.occludeEast!, this.occludeDown!, this.occludeWest! ] =
-            [ this.occludeEast!, this.occludeDown!, this.occludeWest!, this.occludeUp! ];
+            [ this.occludeWest!, this.occludeUp!, this.occludeEast!, this.occludeDown! ];
 
             [ this.up, this.east, this.down, this.west ] =
-            [ this.east, this.down, this.west, this.up ];
+            [ this.west, this.up, this.east, this.down ];
         }
         this.translate(offset, false);
     }
 
     public correctVertexIndices() {
         for(const face of this.north) {
-            if(face.v0.x > face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
-            if(face.v1.x > face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
+            if(face.v0.x < face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
+            if(face.v1.x < face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
             if(face.v0.y > face.v1.y) [ face.v0, face.v1 ] = [ face.v1, face.v0 ];
             if(face.v3.y > face.v2.y) [ face.v3, face.v2 ] = [ face.v2, face.v3 ];
         }
         for(const face of this.south) {
-            if(face.v0.x < face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
-            if(face.v1.x < face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
+            if(face.v0.x > face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
+            if(face.v1.x > face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
             if(face.v0.y > face.v1.y) [ face.v0, face.v1 ] = [ face.v1, face.v0 ];
             if(face.v3.y > face.v2.y) [ face.v3, face.v2 ] = [ face.v2, face.v3 ];
         }
@@ -576,10 +604,10 @@ export class BlockModel {
             if(face.v3.y > face.v2.y) [ face.v3, face.v2 ] = [ face.v2, face.v3 ];
         }
         for(const face of this.up) {
-            if(face.v0.x > face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
-            if(face.v1.x > face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
             if(face.v0.z < face.v1.z) [ face.v0, face.v1 ] = [ face.v1, face.v0 ];
             if(face.v3.z < face.v2.z) [ face.v3, face.v2 ] = [ face.v2, face.v3 ];
+            if(face.v0.x > face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
+            if(face.v1.x > face.v2.x) [ face.v1, face.v2 ] = [ face.v2, face.v1 ];
         }
         for(const face of this.down) {
             if(face.v0.x > face.v3.x) [ face.v0, face.v3 ] = [ face.v3, face.v0 ];
@@ -592,11 +620,13 @@ export class BlockModel {
     public compile(): TileMesh {
         let renderAnyWhenCulled = false;
         for(const face of this.faces()) {
-            if(face.cull) continue;
+            face.snapVertices();
+            if(face.shouldCull()) continue;
 
             renderAnyWhenCulled = true;
-            break;
         }
+
+        this.correctVertexIndices();
         
         return {
             skipRender: Array.from(this.faces()).length == 0,

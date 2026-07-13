@@ -13,11 +13,10 @@
     
     "north": [
         {
-            "pos": [ 0, 0, 1 ],
+            "pos": [ 1, 0, 0.875 ],
             "size": [ 1, 1 ],
             "uv": [ 0, 0, 1, 0.5 ],
-            "texture": "front",
-            "cull": false
+            "texture": "back"
         }
     ],
     "east": [
@@ -30,10 +29,10 @@
     ],
     "south": [
         {
-            "pos": [ 1, 0, 0.875 ],
+            "pos": [ 0, 0, 1 ],
             "size": [ 1, 1 ],
             "uv": [ 0, 0, 1, 0.5 ],
-            "texture": "back"
+            "texture": "front"
         }
     ],
     "west": [

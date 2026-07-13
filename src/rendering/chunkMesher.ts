@@ -143,8 +143,8 @@ export class ChunkMesher {
 
                     if(mesh.skipRender) continue;
 
-                    const showNorth = !this.getMesh(tiles.at(x, y, z + 1)).occludeSouth;
-                    const showSouth = !this.getMesh(tiles.at(x, y, z - 1)).occludeNorth;
+                    const showNorth = !this.getMesh(tiles.at(x, y, z - 1)).occludeSouth;
+                    const showSouth = !this.getMesh(tiles.at(x, y, z + 1)).occludeNorth;
                     const showEast = !this.getMesh(tiles.at(x + 1, y, z)).occludeWest;
                     const showWest = !this.getMesh(tiles.at(x - 1, y, z)).occludeEast;
                     const showUp = !this.getMesh(tiles.at(x, y + 1, z)).occludeDown;
@@ -212,10 +212,10 @@ export class ChunkMesher {
                             lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
                         } else {
                             lighting.push(
-                                averageLight(light$__p, light$n_p, light$_np, light$nnp),
-                                averageLight(light$__p, light$n_p, light$_pp, light$npp),
-                                averageLight(light$__p, light$p_p, light$_pp, light$ppp),
-                                averageLight(light$__p, light$p_p, light$_np, light$pnp)
+                                averageLight(light$__n, light$p_n, light$_nn, light$pnn),
+                                averageLight(light$__n, light$p_n, light$_pn, light$ppn),
+                                averageLight(light$__n, light$n_n, light$_pn, light$npn),
+                                averageLight(light$__n, light$n_n, light$_nn, light$nnn)
                             );
                         }
                         indices.push(
@@ -250,10 +250,10 @@ export class ChunkMesher {
                             lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
                         } else {
                             lighting.push(
-                                averageLight(light$__n, light$p_n, light$_nn, light$pnn),
-                                averageLight(light$__n, light$p_n, light$_pn, light$ppn),
-                                averageLight(light$__n, light$n_n, light$_pn, light$npn),
-                                averageLight(light$__n, light$n_n, light$_nn, light$nnn)
+                                averageLight(light$__p, light$n_p, light$_np, light$nnp),
+                                averageLight(light$__p, light$n_p, light$_pp, light$npp),
+                                averageLight(light$__p, light$p_p, light$_pp, light$ppp),
+                                averageLight(light$__p, light$p_p, light$_np, light$pnp)
                             );
                         }
                         indices.push(

@@ -48,7 +48,6 @@ export namespace DataDrivenJson {
         uv: [ number, number, number, number ],
         texture: string,
         rotation?: number;
-        cull?: boolean,
         lit?: boolean
     }
 

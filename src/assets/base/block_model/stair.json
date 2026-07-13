@@ -3,16 +3,22 @@
 
     "occlude": false,
     "occludeDown": true,
-    "occludeNorth": true,
+    "occludeSouth": true,
 
     "textures": {
         "block": "base:block/axes.png"
     },
     "north": [
         {
-            "pos": [ 0, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
+            "pos": [ 1, 0, 0 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0, 1, 0.5 ],
+            "texture": "block"
+        },
+        {
+            "pos": [ 1, 0.5, 0.5 ],
+            "size": [ 1, 0.5 ],
+            "uv": [ 0, 0.5, 1, 1 ],
             "texture": "block"
         }
     ],
@@ -32,17 +38,10 @@
     ],
     "south": [
         {
-            "pos": [ 1, 0, 0 ],
-            "size": [ 1, 0.5 ],
-            "uv": [ 0, 0, 1, 0.5 ],
+            "pos": [ 0, 0, 1 ],
+            "size": [ 1, 1 ],
+            "uv": [ 0, 0, 1, 1 ],
             "texture": "block"
-        },
-        {
-            "pos": [ 1, 0.5, 0.5 ],
-            "size": [ 1, 0.5 ],
-            "uv": [ 0, 0.5, 1, 1 ],
-            "texture": "block",
-            "cull": false
         }
     ],
     "west": [
@@ -64,8 +63,7 @@
             "pos": [ 0, 0.5, 0.5 ],
             "size": [ 1, 0.5 ],
             "uv": [ 0, 0.5, 1, 1 ],
-            "texture": "block",
-            "cull": false
+            "texture": "block"
         },
         {
             "pos": [ 0, 1, 1 ],
