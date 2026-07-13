@@ -294,22 +294,20 @@ export class PlayingGameStage extends GameStage {
     public setPaused(paused: boolean) {
         this.paused = paused;
 
-        requestAnimationFrame(() => {
-            if(paused) {
-                this.pausedContainer.visible = true;
+        if(paused) {
+            this.pausedContainer.visible = true;
 
-                this.game.controllerCrosshair?.crosshairPosition
-                    .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
-            } else {
-                this.pausedContainer.visible = false;
-            }
+            this.game.controllerCrosshair?.crosshairPosition
+                .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
+        } else {
+            this.pausedContainer.visible = false;
+        }
 
-            this.updateInputLocks();
-        })
+        this.updateInputLocks();
     }
 
     public updateInputLocks() {
-        if(this.guiManager.getOpenModalCount() > 0) {
+        if(this.guiManager.getOpenModalCount() > 0 || this.paused) {
             if(this.game.isDesktop) {
                 this.game.input.mouse?.unlock();
                 this.game.input.keyboard?.unlock();
@@ -359,8 +357,7 @@ export class PlayingGameStage extends GameStage {
                     this.world.saveWorld();
                     this.world.savePlayerSlot("local", this.localPlayer);
                 }
-            }
-            if(game.input.wasPressed(ControlBinding.BACK) && this.paused) {
+            } else if(game.input.wasPressed(ControlBinding.BACK) && this.paused) {
                 this.setPaused(false);
                 this.unlockTime = 0;
             }
