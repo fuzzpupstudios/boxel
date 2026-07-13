@@ -46,12 +46,6 @@ export class Mouse {
             if(event.deltaY > 0) this.wasPressedButtons.add(MouseButton.SCROLL_UP);
             if(event.deltaY < 0) this.wasPressedButtons.add(MouseButton.SCROLL_DOWN);
         });
-        element.addEventListener("focusout", () => {
-            this.pressingButtons.clear();
-            this.wasPressedButtons.clear();
-
-            this.locked = false;
-        });
         document.addEventListener("pointerlockchange", () => {
             if(!this.isCurrentlyLocked()) {
                 this.wasPressedButtons.add(MouseButton.UNLOCK);
@@ -113,6 +107,13 @@ export class Mouse {
     }
     public isLocked() {
         return this.locked;
+    }
+
+    public clearAll() {
+        this.pressingButtons.clear();
+        this.wasPressedButtons.clear();
+
+        this.unlock();
     }
 
     public async lock() {

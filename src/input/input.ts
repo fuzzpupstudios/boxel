@@ -329,6 +329,9 @@ export class Input {
             controller.update();
         }
     }
-}
 
-let p = false;
+    public clearAll() {
+        this.keyboard?.clearAll();
+        this.mouse?.clearAll();
+    }
+}

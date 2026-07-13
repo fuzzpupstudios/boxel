@@ -17,10 +17,6 @@ export class Keyboard {
             this.pressingKeys.delete(this.translateKey(event.code));
             this.wasUnpressedKeys.add(this.translateKey(event.code));
         });
-        element.addEventListener("focusout", () => {
-            this.pressingKeys.clear();
-            this.wasPressedKeys.clear();
-        });
     }
 
     public lock() {
@@ -48,6 +44,11 @@ export class Keyboard {
     public translateKey(key: string): string {
         if(key == " ") return "space";
         return key.toLowerCase();
+    }
+
+    public clearAll() {
+        this.pressingKeys.clear();
+        this.wasPressedKeys.clear();
     }
 
     public update() {

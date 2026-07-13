@@ -25,6 +25,12 @@ async function main() {
     window.addEventListener("gamepaddisconnected", event => {
         game.detachController(event.gamepad);
     });
+    window.addEventListener("blur", () => {
+        game.onUnfocus();
+    });
+    document.body.addEventListener("focusout", () => {
+        game.onUnfocus();
+    })
 
     await game.start();
     game.resize(Math.min(innerWidth, outerWidth), Math.min(innerHeight, outerHeight), devicePixelRatio);

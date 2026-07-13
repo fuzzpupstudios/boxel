@@ -240,6 +240,10 @@ export class BoxelGame {
         inventoryGuiTypeRegistry.lock();
     }
 
+    public onUnfocus() {
+        this.input.clearAll();
+    }
+
     public async start() {
         this.mainStorage = this.persistenceManager.openMainStorage();
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
