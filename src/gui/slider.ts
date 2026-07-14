@@ -1,12 +1,13 @@
 import { Slider } from "@pixi/ui";
 import { Assets, BitmapText, Color, Container, FederatedPointerEvent, getGlobalBounds, NineSliceSprite, Sprite, TextStyle } from "pixi.js";
 import { MathUtils } from "three";
+import { GuiText } from "./guiText";
 
 export class GuiSlider extends Container {
     private readonly background: NineSliceSprite;
     private readonly fill: NineSliceSprite;
     private readonly handle: NineSliceSprite;
-    private readonly textNode: BitmapText;
+    private readonly textNode: GuiText;
     private _text: string;
     private _width: number;
     private _height: number;
@@ -52,13 +53,8 @@ export class GuiSlider extends Container {
         handle.anchor.set(0.5, 0.5);
         handle.width = 3;
         
-        const textStyle = new TextStyle({
-            fill: new Color(0xffffff),
-            fontFamily: "BoxelFont",
-            fontSize: 12
-        });
-        const textNode = new BitmapText({ text, style: textStyle });
-        textNode.anchor.set(0.5);
+        const textNode = new GuiText({ text, align: "center" });
+        textNode.setAnchor(0.5, 0.5);
 
         super({
             children: [ background, fill, handle, textNode ],

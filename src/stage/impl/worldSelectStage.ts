@@ -11,6 +11,7 @@ import { MathUtils } from "three";
 import "javascript-time-ago/locale/en";
 import TimeAgo from "javascript-time-ago";
 import { IconButton } from "../../gui/iconButton";
+import { GuiText } from "../../gui/guiText";
 
 type SavedWorld = z.infer<typeof SavedWorld>;
 const SavedWorld = z.object({
@@ -29,8 +30,8 @@ class WorldCard extends Container {
     public static readonly WIDTH = 240;
 
     public readonly background: NineSliceSprite;
-    public readonly worldName: BitmapText;
-    public readonly lastPlayed: BitmapText;
+    public readonly worldName: GuiText;
+    public readonly lastPlayed: GuiText;
     public readonly playButton: IconButton;
     public readonly deleteButton: IconButton;
     public readonly editButton: IconButton;
@@ -48,28 +49,14 @@ class WorldCard extends Container {
         });
         background.anchor.set(0.5);
 
-        const textStyle = new TextStyle({
-            fill: new Color(0xffffff),
-            fontSize: 12
-        });
-        const worldName = new BitmapText({
-            text: world.name,
-            style: new TextStyle({
-                fill: new Color(0xffffff),
-                fontFamily: "BoxelFont",
-                fontSize: 12
-            })
+        const worldName = new GuiText({
+            text: world.name
         });
         worldName.position.set(40, 4);
 
         const timeFormat = new TimeAgo(navigator.language);
-        const lastPlayed = new BitmapText({
+        const lastPlayed = new GuiText({
             text: world.played == 0 ? "Never played" : timeFormat.format(world.played),
-            style: new TextStyle({
-                fill: new Color(0xffffff),
-                fontFamily: "BoxelFont",
-                fontSize: 12
-            }),
             alpha: 0.5
         });
         lastPlayed.position.set(40, 18);
@@ -109,7 +96,7 @@ class WorldCard extends Container {
 }
 
 export class WorldSelectStage extends GameStage {
-    private readonly titleText: BitmapText;
+    private readonly titleText: GuiText;
     private readonly backButton: GuiButton;
     private readonly createWorldButton: GuiButton;
     private readonly background: Sprite;
@@ -132,16 +119,12 @@ export class WorldSelectStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new BitmapText({
+        this.titleText = new GuiText({
             text: "World Select",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            fontScale: 2,
+            align: "center"
         });
-        this.titleText.anchor.set(0.5);
+        this.titleText.setAnchor(0.5);
 
         this.backButton = new GuiButton("Back", 100, 30);
         this.backButton.on("pointerdown", () => {

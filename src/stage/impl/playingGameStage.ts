@@ -33,6 +33,7 @@ import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
 import { GuiItemStack } from "../../gui/guiItemStack";
+import { GuiText } from "../../gui/guiText";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -65,7 +66,7 @@ export class PlayingGameStage extends GameStage {
 
     private readonly pausedContainer: Container;
     private readonly pausedBackground: Sprite;
-    private readonly pausedText: BitmapText;
+    private readonly pausedText: GuiText;
     private readonly resumeButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly quitButton: GuiButton;
@@ -182,16 +183,12 @@ export class PlayingGameStage extends GameStage {
         this.pausedBackground.alpha = 0.25;
         this.pausedBackground.interactive = true;
 
-        this.pausedText = new BitmapText({
+        this.pausedText = new GuiText({
             text: "Paused",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            fontScale: 2,
+            align: "center"
         });
-        this.pausedText.anchor.set(0.5);
+        this.pausedText.setAnchor(0.5, 0.5);
 
         this.resumeButton = new GuiButton("Resume", 100, 30);
         this.resumeButton.on("pointerdown", () => {

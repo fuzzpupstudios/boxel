@@ -1,13 +1,14 @@
-import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
+import { Sprite, Texture } from "pixi.js";
 import type { BoxelGame } from "../../../boxel";
 import { GuiButton } from "../../../gui/button";
+import { GuiText } from "../../../gui/guiText";
 import { ControlBinding } from "../../../input/input";
 import type { Time } from "../../../time";
 import { GameStage } from "../../gameStage";
 import { SliderSetting } from "./elements";
 
 export class VideoSettingsScreenStage extends GameStage {
-    private readonly titleText: BitmapText;
+    private readonly titleText: GuiText;
     private readonly backButton: GuiButton;
     private readonly fov: SliderSetting;
     private readonly renderDistance: SliderSetting;
@@ -21,16 +22,12 @@ export class VideoSettingsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new BitmapText({
+        this.titleText = new GuiText({
             text: Math.random() > 0.999 ? "Hideo Settings" : "Video Settings",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            fontScale: 2,
+            align: "center"
         });
-        this.titleText.anchor.set(0.5);
+        this.titleText.setAnchor(0.5);
 
         this.backButton = new GuiButton("Back", 100, 30);
 

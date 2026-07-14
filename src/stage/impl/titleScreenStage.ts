@@ -1,5 +1,5 @@
 import { ButtonContainer } from "@pixi/ui";
-import { Assets, BitmapText, Container, Sprite, TextStyle, Texture } from "pixi.js";
+import { Assets, BitmapText, Color, Container, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import type { Time } from "../../time";
 import { PlayingGameStage } from "./playingGameStage";
@@ -9,11 +9,12 @@ import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { CreditsScreenStage } from "./creditsGameStage";
 import { IconButton } from "../../gui/iconButton";
 import { WorldSelectStage } from "./worldSelectStage";
+import { GuiText } from "../../gui/guiText";
 
 export class TitleScreenStage extends GameStage {
-    private readonly titleText: BitmapText;
-    private readonly versionText: BitmapText;
-    private readonly watermark: BitmapText;
+    private readonly titleText: GuiText;
+    private readonly versionText: GuiText;
+    private readonly watermark: GuiText;
     private readonly playButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly creditsButton: GuiButton;
@@ -27,49 +28,33 @@ export class TitleScreenStage extends GameStage {
         this.background.origin.set(0, 0);
         this.background.tint = 0x000000;
 
-            this.titleText = new BitmapText({
+        this.titleText = new GuiText({
             text: "Boxel",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            fontScale: 2
         });
-        this.titleText.anchor.set(0.5);
+        this.titleText.setAnchor(0.5, 0.5);
 
-            this.versionText = new BitmapText({
+        this.versionText = new GuiText({
             text: "Version " + game.version,
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 10,
-                align: "right",
-            }),
+            align: "right"
         });
-        this.versionText.anchor.set(1, 1);
+        this.versionText.setAnchor(1, 1);
 
-            this.watermark = new BitmapText({
+        this.watermark = new GuiText({
             text: "Fuzzpup Studios 2026",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 10,
-                align: "left",
-            }),
             interactive: true
         });
         this.watermark.cursor = "pointer";
-        this.watermark.anchor.set(0, 1);
+        this.watermark.setAnchor(0, 1);
 
         this.watermark.on("pointerdown", () => {
             window.open("https://github.com/fuzzpupstudios", "_blank")
         })
         this.watermark.on("pointerover", () => {
-            this.watermark.style.fill = 0x8888ff;
+            this.watermark.fill = new Color(0x8888ff);
         });
         this.watermark.on("pointerout", () => {
-            this.watermark.style.fill = 0xffffff;
+            this.watermark.fill = new Color(0xffffff);
         });
 
         this.playButton = new GuiButton("Play", 100, 30);

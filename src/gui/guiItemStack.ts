@@ -1,13 +1,13 @@
-import { BitmapText, Container, TextStyle, Color } from "pixi.js";
+import { Color, Container } from "pixi.js";
 import type { ItemStack } from "../item/itemStack";
-import { TileHologram, type TileHologramProvider } from "./tileHologram";
 import { GuiItemSprite, type GuiItemSpriteProvider } from "./guiItem";
-import { itemRegistry } from "../item/itemRegistry";
+import { GuiText } from "./guiText";
+import { TileHologram, type TileHologramProvider } from "./tileHologram";
 
 export class GuiItemStack extends Container {
     public readonly tileHologram: TileHologram;
     public readonly itemSprite: GuiItemSprite;
-    public readonly counter: BitmapText;
+    public readonly counter: GuiText;
     public constructor(
         public readonly stack: ItemStack,
         private readonly hologramProvider: TileHologramProvider,
@@ -21,16 +21,13 @@ export class GuiItemStack extends Container {
         itemSprite.scale.set(14);
         itemSprite.position.set(1, 1);
 
-        const counter = new BitmapText({
+        const counter = new GuiText({
             text: "",
-            style: new TextStyle({
-                fill: new Color(0xffffff),
-                fontFamily: "BoxelFont",
-                fontSize: 8,
-                align: "right"
-            }),
-            anchor: { x: 1, y: 1 }
+            fill: new Color(0xffffff),
+            fontScale: 2/3,
+            align: "right"
         });
+        counter.setAnchor(1);
         counter.position.set(16, 16);
 
         super({

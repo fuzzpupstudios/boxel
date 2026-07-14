@@ -1,15 +1,16 @@
-import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
+import { Sprite, Texture } from "pixi.js";
 import type { BoxelGame } from "../../../boxel";
 import { GuiButton } from "../../../gui/button";
+import { GuiText } from "../../../gui/guiText";
+import { GuiDPadLeft } from "../../../gui/mobile/dPadLeft";
+import { GuiDPadRight } from "../../../gui/mobile/dPadRight";
 import { ControlBinding } from "../../../input/input";
 import type { Time } from "../../../time";
 import { GameStage } from "../../gameStage";
 import { SliderSetting } from "./elements";
-import { GuiDPadLeft } from "../../../gui/mobile/dPadLeft";
-import { GuiDPadRight } from "../../../gui/mobile/dPadRight";
 
 export class GuiSettingsScreenStage extends GameStage {
-    private readonly titleText: BitmapText;
+    private readonly titleText: GuiText;
     private readonly backButton: GuiButton;
     private readonly applyButton: GuiButton;
     private readonly guiScale: SliderSetting;
@@ -27,16 +28,12 @@ export class GuiSettingsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new BitmapText({
+        this.titleText = new GuiText({
             text: "Gui Settings",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            fontScale: 2,
+            align: "center"
         });
-        this.titleText.anchor.set(0.5);
+        this.titleText.setAnchor(0.5);
 
         this.backButton = new GuiButton("Cancel", 100, 30);
 

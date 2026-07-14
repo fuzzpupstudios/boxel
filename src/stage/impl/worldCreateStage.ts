@@ -5,9 +5,10 @@ import { GuiInput } from "../../gui/input";
 import type { Time } from "../../time";
 import { GameStage } from "../gameStage";
 import { WorldSelectStage } from "./worldSelectStage";
+import { GuiText } from "../../gui/guiText";
 
 export class WorldCreateStage extends GameStage {
-    private readonly titleText: BitmapText;
+    private readonly titleText: GuiText;
     private readonly backButton: GuiButton;
     private readonly createWorldButton: GuiButton;
     private readonly background: Sprite;
@@ -22,16 +23,12 @@ export class WorldCreateStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new BitmapText({
+        this.titleText = new GuiText({
             text: "Create World",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                align: "center",
-                fontSize: 24,
-            }),
+            fontScale: 2,
+            align: "center"
         });
-        this.titleText.anchor.set(0.5);
+        this.titleText.setAnchor(0.5);
 
         this.worldNameInput = new GuiInput("World name", 160, 24);
         this.worldNameInput.pivot.set(80, 12);

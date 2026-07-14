@@ -4,6 +4,7 @@ import { GuiButton } from "../../gui/button";
 import { ControlBinding } from "../../input/input";
 import type { Time } from "../../time";
 import { GameStage } from "../gameStage";
+import { GuiText } from "../../gui/guiText";
 
 const CREDITS = `
 === Programming ===
@@ -20,10 +21,10 @@ Third-party libraries licensed separately under their own licensing agreement
 `
 
 export class CreditsScreenStage extends GameStage {
-    private readonly creditsTitle: BitmapText;
+    private readonly creditsTitle: GuiText;
+    private readonly creditsText: GuiText;
     private readonly backButton: GuiButton;
     private readonly background: Sprite;
-    private readonly creditsText: BitmapText;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -33,27 +34,18 @@ export class CreditsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.creditsTitle = new BitmapText({
+        this.creditsTitle = new GuiText({
             text: "Credits",
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 24,
-                align: "center",
-            }),
+            align: "center",
+            fontScale: 2
         });
-        this.creditsTitle.anchor.set(0.5);
+        this.creditsTitle.setAnchor(0.5, 0.5);
 
-        this.creditsText = new BitmapText({
+        this.creditsText = new GuiText({
             text: CREDITS,
-            style: new TextStyle({
-                fill: 0xffffff,
-                fontFamily: "BoxelFont",
-                fontSize: 10,
-                align: "center",
-            }),
+            align: "center"
         });
-        this.creditsText.anchor.set(0.5);
+        this.creditsText.setAnchor(0.5, 0.5);
 
         this.backButton = new GuiButton("Back", 100, 30);
 
