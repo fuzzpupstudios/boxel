@@ -1,4 +1,4 @@
-import { Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../../boxel";
 import { GuiButton } from "../../../gui/button";
 import { ControlBinding } from "../../../input/input";
@@ -9,7 +9,7 @@ import { GuiDPadLeft } from "../../../gui/mobile/dPadLeft";
 import { GuiDPadRight } from "../../../gui/mobile/dPadRight";
 
 export class GuiSettingsScreenStage extends GameStage {
-    private readonly titleText: Text;
+    private readonly titleText: BitmapText;
     private readonly backButton: GuiButton;
     private readonly applyButton: GuiButton;
     private readonly guiScale: SliderSetting;
@@ -27,10 +27,11 @@ export class GuiSettingsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new Text({
+        this.titleText = new BitmapText({
             text: "Gui Settings",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),

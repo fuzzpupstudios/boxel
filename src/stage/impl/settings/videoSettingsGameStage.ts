@@ -1,4 +1,4 @@
-import { Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../../boxel";
 import { GuiButton } from "../../../gui/button";
 import { ControlBinding } from "../../../input/input";
@@ -7,7 +7,7 @@ import { GameStage } from "../../gameStage";
 import { SliderSetting } from "./elements";
 
 export class VideoSettingsScreenStage extends GameStage {
-    private readonly titleText: Text;
+    private readonly titleText: BitmapText;
     private readonly backButton: GuiButton;
     private readonly fov: SliderSetting;
     private readonly renderDistance: SliderSetting;
@@ -21,10 +21,11 @@ export class VideoSettingsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new Text({
+        this.titleText = new BitmapText({
             text: Math.random() > 0.999 ? "Hideo Settings" : "Video Settings",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),

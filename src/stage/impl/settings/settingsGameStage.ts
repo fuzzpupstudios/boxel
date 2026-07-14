@@ -1,4 +1,4 @@
-import { Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../../boxel";
 import { GuiButton } from "../../../gui/button";
 import { ControlBinding } from "../../../input/input";
@@ -10,7 +10,7 @@ import { ControlSettingsScreenStage } from "./controlSettingsGameStage";
 import { GuiSettingsScreenStage } from "./guiSettingsGameStage";
 
 export class SettingsScreenStage extends GameStage {
-    private readonly titleText: Text;
+    private readonly titleText: BitmapText;
     private readonly backButton: GuiButton;
     private readonly videoButton: GuiButton;
     private readonly controlsButton: GuiButton;
@@ -25,10 +25,11 @@ export class SettingsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new Text({
+        this.titleText = new BitmapText({
             text: "Settings",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),

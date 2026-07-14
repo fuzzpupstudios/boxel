@@ -1,5 +1,5 @@
 import { ButtonContainer } from "@pixi/ui";
-import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Assets, BitmapText, Container, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import type { Time } from "../../time";
 import { PlayingGameStage } from "./playingGameStage";
@@ -11,9 +11,9 @@ import { IconButton } from "../../gui/iconButton";
 import { WorldSelectStage } from "./worldSelectStage";
 
 export class TitleScreenStage extends GameStage {
-    private readonly titleText: Text;
-    private readonly versionText: Text;
-    private readonly watermark: Text;
+    private readonly titleText: BitmapText;
+    private readonly versionText: BitmapText;
+    private readonly watermark: BitmapText;
     private readonly playButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly creditsButton: GuiButton;
@@ -27,30 +27,33 @@ export class TitleScreenStage extends GameStage {
         this.background.origin.set(0, 0);
         this.background.tint = 0x000000;
 
-        this.titleText = new Text({
+            this.titleText = new BitmapText({
             text: "Boxel",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),
         });
         this.titleText.anchor.set(0.5);
 
-        this.versionText = new Text({
+            this.versionText = new BitmapText({
             text: "Version " + game.version,
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 10,
                 align: "right",
             }),
         });
         this.versionText.anchor.set(1, 1);
 
-        this.watermark = new Text({
+            this.watermark = new BitmapText({
             text: "Fuzzpup Studios 2026",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 10,
                 align: "left",
             }),

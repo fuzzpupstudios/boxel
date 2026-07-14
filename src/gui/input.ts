@@ -1,5 +1,5 @@
 import { Input } from "@pixi/ui";
-import { Assets, TextStyle, Texture } from "pixi.js";
+import { Assets, BitmapText, TextStyle, Texture } from "pixi.js";
 
 export class GuiInput extends Input {
     public constructor(placeholder: string, width: number, height: number) {
@@ -11,8 +11,10 @@ export class GuiInput extends Input {
             align: "left",
             textStyle: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 12,
-            })
+            }),
+            TextClass: BitmapText
         });
 
         this.width = width;

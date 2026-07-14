@@ -1,4 +1,4 @@
-import { Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import { GuiButton } from "../../gui/button";
 import { GuiInput } from "../../gui/input";
@@ -7,7 +7,7 @@ import { GameStage } from "../gameStage";
 import { WorldSelectStage } from "./worldSelectStage";
 
 export class WorldCreateStage extends GameStage {
-    private readonly titleText: Text;
+    private readonly titleText: BitmapText;
     private readonly backButton: GuiButton;
     private readonly createWorldButton: GuiButton;
     private readonly background: Sprite;
@@ -22,10 +22,11 @@ export class WorldCreateStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new Text({
+        this.titleText = new BitmapText({
             text: "Create World",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 align: "center",
                 fontSize: 24,
             }),

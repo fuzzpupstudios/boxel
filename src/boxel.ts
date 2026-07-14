@@ -2,7 +2,8 @@ import * as PIXI from "pixi.js";
 import "pixi.js/events";
 import "pixi.js/mesh";
 import "pixi.js/sprite-nine-slice";
-import "pixi.js/text";
+import "pixi.js/graphics";
+import "pixi.js/text-bitmap";
 import * as THREE from "three/webgpu";
 import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./block/blockRegistry";
 import { DataDrivenBlock } from "./block/dataDrivenBlock";
@@ -20,6 +21,7 @@ import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
 import { itemRegistry } from "./item/itemRegistry";
 import { DataDrivenItem } from "./item/dataDrivenItem";
+import { FontLoader } from "./font/fontLoader";
 
 
 export class BoxelGame {
@@ -320,6 +322,21 @@ export class BoxelGame {
             this.textureAtlas.addTexture(textureId, loadedTexture);
         }
         this.textureAtlas.pack();
+
+        const fontLoader = new FontLoader("BoxelFont");
+        for(let characterByteStart = 0; characterByteStart < 0xffff; characterByteStart += 0xff) {
+            const hexIdentifier = characterByteStart.toString(16).padStart(4, "0");
+            const image = this.assets.textureRegistry.get("base:font/boxel-font-" + hexIdentifier + ".png");
+
+            if(image == null) continue;
+
+            fontLoader.addPage({
+                pageTexture: PIXI.Texture.from(image),
+                characterByteStart
+            });
+        }
+        console.log("Loading " + fontLoader.pages.length + " font page(s)");
+        fontLoader.load();
     }
 
     private queueNextFrame() {

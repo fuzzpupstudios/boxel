@@ -1,12 +1,12 @@
 import { ButtonContainer } from "@pixi/ui";
-import { Assets, Color, Container, NineSliceSprite, Text, TextStyle } from "pixi.js";
+import { Assets, BitmapText, Color, Container, NineSliceSprite, TextStyle } from "pixi.js";
 
 export class GuiButton extends ButtonContainer {
     private _text: string;
     private _width: number;
     private _height: number;
     public readonly background: NineSliceSprite;
-    public readonly textNode: Text;
+    public readonly textNode: BitmapText;
 
     public constructor(text: string, width: number, height: number) {
         const background = new NineSliceSprite({
@@ -22,9 +22,10 @@ export class GuiButton extends ButtonContainer {
 
         const textStyle = new TextStyle({
             fill: new Color(0xffffff),
+            fontFamily: "BoxelFont",
             fontSize: 12
         })
-        const textNode = new Text({ text, style: textStyle });
+        const textNode = new BitmapText({ text, style: textStyle });
         textNode.anchor.set(0.5);
 
         const buttonContainer = new Container({ children: [ background, textNode ] });

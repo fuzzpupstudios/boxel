@@ -1,4 +1,4 @@
-import { Assets, Color, Container, Graphics, NineSliceSprite, Rectangle, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Assets, BitmapText, Color, Container, Graphics, NineSliceSprite, Rectangle, Sprite, TextStyle, Texture } from "pixi.js";
 import { ScrollBox } from "@pixi/ui";
 import type { BoxelGame } from "../../boxel";
 import { GuiButton } from "../../gui/button";
@@ -29,8 +29,8 @@ class WorldCard extends Container {
     public static readonly WIDTH = 240;
 
     public readonly background: NineSliceSprite;
-    public readonly worldName: Text;
-    public readonly lastPlayed: Text;
+    public readonly worldName: BitmapText;
+    public readonly lastPlayed: BitmapText;
     public readonly playButton: IconButton;
     public readonly deleteButton: IconButton;
     public readonly editButton: IconButton;
@@ -52,16 +52,24 @@ class WorldCard extends Container {
             fill: new Color(0xffffff),
             fontSize: 12
         });
-        const worldName = new Text({
+        const worldName = new BitmapText({
             text: world.name,
-            style: textStyle
+            style: new TextStyle({
+                fill: new Color(0xffffff),
+                fontFamily: "BoxelFont",
+                fontSize: 12
+            })
         });
         worldName.position.set(40, 4);
 
         const timeFormat = new TimeAgo(navigator.language);
-        const lastPlayed = new Text({
+        const lastPlayed = new BitmapText({
             text: world.played == 0 ? "Never played" : timeFormat.format(world.played),
-            style: textStyle,
+            style: new TextStyle({
+                fill: new Color(0xffffff),
+                fontFamily: "BoxelFont",
+                fontSize: 12
+            }),
             alpha: 0.5
         });
         lastPlayed.position.set(40, 18);
@@ -101,7 +109,7 @@ class WorldCard extends Container {
 }
 
 export class WorldSelectStage extends GameStage {
-    private readonly titleText: Text;
+    private readonly titleText: BitmapText;
     private readonly backButton: GuiButton;
     private readonly createWorldButton: GuiButton;
     private readonly background: Sprite;
@@ -138,10 +146,11 @@ export class WorldSelectStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.titleText = new Text({
+        this.titleText = new BitmapText({
             text: "World Select",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),

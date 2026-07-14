@@ -1,4 +1,4 @@
-import { Assets, Container, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Assets, BitmapText, Container, Sprite, TextStyle, Texture } from "pixi.js";
 import { MathUtils, PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
@@ -65,7 +65,7 @@ export class PlayingGameStage extends GameStage {
 
     private readonly pausedContainer: Container;
     private readonly pausedBackground: Sprite;
-    private readonly pausedText: Text;
+    private readonly pausedText: BitmapText;
     private readonly resumeButton: GuiButton;
     private readonly settingsButton: GuiButton;
     private readonly quitButton: GuiButton;
@@ -182,10 +182,11 @@ export class PlayingGameStage extends GameStage {
         this.pausedBackground.alpha = 0.25;
         this.pausedBackground.interactive = true;
 
-        this.pausedText = new Text({
+        this.pausedText = new BitmapText({
             text: "Paused",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),

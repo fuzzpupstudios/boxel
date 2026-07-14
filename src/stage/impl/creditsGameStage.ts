@@ -1,4 +1,4 @@
-import { Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { BitmapText, Sprite, TextStyle, Texture } from "pixi.js";
 import type { BoxelGame } from "../../boxel";
 import { GuiButton } from "../../gui/button";
 import { ControlBinding } from "../../input/input";
@@ -20,10 +20,10 @@ Third-party libraries licensed separately under their own licensing agreement
 `
 
 export class CreditsScreenStage extends GameStage {
-    private readonly creditsTitle: Text;
+    private readonly creditsTitle: BitmapText;
     private readonly backButton: GuiButton;
     private readonly background: Sprite;
-    private readonly creditsText: Text;
+    private readonly creditsText: BitmapText;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -33,20 +33,22 @@ export class CreditsScreenStage extends GameStage {
         this.background.tint = 0x000000;
         this.background.interactive = true;
 
-        this.creditsTitle = new Text({
+        this.creditsTitle = new BitmapText({
             text: "Credits",
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 24,
                 align: "center",
             }),
         });
         this.creditsTitle.anchor.set(0.5);
 
-        this.creditsText = new Text({
+        this.creditsText = new BitmapText({
             text: CREDITS,
             style: new TextStyle({
                 fill: 0xffffff,
+                fontFamily: "BoxelFont",
                 fontSize: 10,
                 align: "center",
             }),

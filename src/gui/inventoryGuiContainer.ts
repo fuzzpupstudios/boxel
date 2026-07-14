@@ -1,4 +1,4 @@
-import { Color, Container, Rectangle, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Color, Container, Rectangle, Sprite, Texture } from "pixi.js";
 import { Signal, type SignalConnection } from "typed-signals";
 import { EventCursor } from "../events/eventSheet";
 import type { GraphicalInterface, InventorySlot } from "../item/inventoryGui";
