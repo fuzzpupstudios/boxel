@@ -51,7 +51,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.mouseSensitivity = value;
             }
-        }("Mouse sensitivity", 0.1, 5.0, 0.1, 160, 24);
+        }("Mouse sensitivity", 0.1, 5.0, 0.1, 200, 24);
 
         this.controllerSensitivity = new class extends SliderSetting {
             protected override getValue() {
@@ -60,7 +60,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.controllerSensitivity = value;
             }
-        }("Controller sensitivity", 0.1, 5.0, 0.1, 160, 24);
+        }("Controller sensitivity", 0.1, 5.0, 0.1, 200, 24);
 
         this.controllerGuiSensitivity = new class extends SliderSetting {
             protected override getValue() {
@@ -69,7 +69,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.controllerGuiSensitivity = value;
             }
-        }("Controller GUI sensitivity", 0.1, 5.0, 0.1, 160, 24);
+        }("Controller GUI sensitivity", 0.1, 5.0, 0.1, 200, 24);
 
         this.invertX = new class extends ToggleButtonSetting {
             protected override getValue() {
@@ -78,7 +78,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: boolean) {
                 game.settings.invertX = value;
             }
-        }("Invert X", 78, 24);
+        }("Invert X", 98, 24);
         this.invertX.element.addListener("pointerdown", () => {
             this.audioManager.playMenuClick();
         });
@@ -90,7 +90,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: boolean) {
                 game.settings.invertY = value;
             }
-        }("Invert Y", 78, 24);
+        }("Invert Y", 98, 24);
         this.invertY.element.addListener("pointerdown", () => {
             this.audioManager.playMenuClick();
         });
@@ -102,7 +102,7 @@ export class ControlSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.controllerDeadzone = value;
             }
-        }("Controller deadzone", 0, 0.9, 0.01, 160, 24);
+        }("Controller deadzone", 0, 0.9, 0.01, 200, 24);
 
         this.gui.addChild(
             this.background, this.titleText,
@@ -124,12 +124,12 @@ export class ControlSettingsScreenStage extends GameStage {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
 
-        this.mouseSensitivity.element.position.set(width / 2, 50);
-        this.controllerSensitivity.element.position.set(width / 2, 80);
-        this.controllerGuiSensitivity.element.position.set(width / 2, 110);
-        this.invertX.element.position.set(width / 2 - 41, 140);
-        this.invertY.element.position.set(width / 2 + 41, 140);
-        this.controllerDeadzone.element.position.set(width / 2, 170);
+        this.mouseSensitivity.element.position.set(width / 2, 80);
+        this.controllerSensitivity.element.position.set(width / 2, 110);
+        this.controllerGuiSensitivity.element.position.set(width / 2, 140);
+        this.invertX.element.position.set(width / 2 - 51, 170);
+        this.invertY.element.position.set(width / 2 + 51, 170);
+        this.controllerDeadzone.element.position.set(width / 2, 200);
 
         this.background.setSize(width, height);
     }

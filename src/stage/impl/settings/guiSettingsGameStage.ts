@@ -66,7 +66,7 @@ export class GuiSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 guiScale = value;
             }
-        }("GUI Scale", 1, 8, 1, 160, 24);
+        }("GUI Scale", 1, 8, 1, 200, 24);
 
         const dpadLeftPreview = this.dpadLeftPreview = new GuiDPadLeft;
         this.dpadLeftPreview.scale.set(dPadScale);
@@ -87,7 +87,7 @@ export class GuiSettingsScreenStage extends GameStage {
                 dpadLeftPreview.scale.set(dPadScale);
                 dpadRightPreview.scale.set(dPadScale);
             }
-        }("D-Pad Scale", 0.5, 4, 0.25, 160, 24);
+        }("D-Pad Scale", 0.5, 4, 0.25, 200, 24);
 
         this.gui.addChild(
             this.background,

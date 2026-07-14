@@ -46,7 +46,7 @@ export class VideoSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.fov = value;
             }
-        }("FOV", 10, 160, 1, 160, 24);
+        }("FOV", 10, 160, 1, 200, 24);
 
         this.renderDistance = new class extends SliderSetting {
             protected override getValue() {
@@ -55,7 +55,7 @@ export class VideoSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.renderDistance = value;
             }
-        }("Render distance", 24, 512, 16, 160, 24);
+        }("Render distance", 24, 512, 16, 200, 24);
 
         this.gui.addChild(
             this.background, this.titleText,
