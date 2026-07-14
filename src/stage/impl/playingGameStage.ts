@@ -368,7 +368,10 @@ export class PlayingGameStage extends GameStage {
             } else {
                 this.unlockTime += time.deltaTime;
             }
-            if(this.unlockTime > 1 || (game.input.mouse.wasPressed(MouseButton.UNLOCK) && pointerUnlockers == 0)) {
+            if(
+                (this.unlockTime > 1 && this.game.settings.pauseIfUnlocked)
+                || (game.input.mouse.wasPressed(MouseButton.UNLOCK) && pointerUnlockers == 0)
+            ) {
                 this.setPaused(true);
             }
         }

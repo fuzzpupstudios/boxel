@@ -16,6 +16,7 @@ export class ControlSettingsScreenStage extends GameStage {
     private readonly invertX: ToggleButtonSetting;
     private readonly invertY: ToggleButtonSetting;
     private readonly controllerDeadzone: SliderSetting;
+    private readonly pauseIfUnlocked: ToggleButtonSetting;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -104,6 +105,18 @@ export class ControlSettingsScreenStage extends GameStage {
             }
         }("Controller deadzone", 0, 0.9, 0.01, 200, 24);
 
+        this.pauseIfUnlocked = new class extends ToggleButtonSetting {
+            protected override getValue() {
+                return game.settings.pauseIfUnlocked;
+            }
+            protected override setValue(value: boolean) {
+                game.settings.pauseIfUnlocked = value;
+            }
+        }("Pause if Unlocked", 200, 24);
+        this.pauseIfUnlocked.element.addListener("pointerdown", () => {
+            this.audioManager.playMenuClick();
+        });
+
         this.gui.addChild(
             this.background, this.titleText,
             this.mouseSensitivity.element,
@@ -112,6 +125,7 @@ export class ControlSettingsScreenStage extends GameStage {
             this.invertX.element,
             this.invertY.element,
             this.controllerDeadzone.element,
+            this.pauseIfUnlocked.element,
             this.backButton
         );
     }
@@ -130,6 +144,7 @@ export class ControlSettingsScreenStage extends GameStage {
         this.invertX.element.position.set(width / 2 - 51, 170);
         this.invertY.element.position.set(width / 2 + 51, 170);
         this.controllerDeadzone.element.position.set(width / 2, 200);
+        this.pauseIfUnlocked.element.position.set(width / 2, 230);
 
         this.background.setSize(width, height);
     }
