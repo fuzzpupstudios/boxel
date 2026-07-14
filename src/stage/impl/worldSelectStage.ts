@@ -114,8 +114,6 @@ export class WorldSelectStage extends GameStage {
     private readonly createWorldButton: GuiButton;
     private readonly background: Sprite;
     private readonly worldsList: ScrollBox;
-    private readonly worldsListMask: Sprite;
-    private readonly worldsListViewport: Graphics;
     public savedData: SavedWorlds | null = null;
 
     public constructor(game: BoxelGame) {
@@ -125,21 +123,9 @@ export class WorldSelectStage extends GameStage {
             width: WorldCard.WIDTH + 16,
             height: 160,
             type: "vertical",
-            background: 0x1a1a1a,
             elementsMargin: 8,
-            padding: 8,
-            globalScroll: false,
-            disableDynamicRendering: true
+            padding: 8
         });
-        this.worldsListMask = new Sprite(Texture.WHITE);
-        this.worldsListMask.anchor.set(0, 0);
-        this.worldsListMask.eventMode = "none";
-        this.worldsListMask.alpha = 1;
-        this.worldsList.addChild(this.worldsListMask);
-        this.worldsList.mask = this.worldsListMask;
-
-        this.worldsListViewport = new Graphics();
-        this.worldsListViewport.eventMode = "none";
 
         this.background = new Sprite(Texture.WHITE);
         this.background.origin.set(0, 0);
@@ -174,7 +160,6 @@ export class WorldSelectStage extends GameStage {
 
         this.gui.addChild(
             this.background, this.titleText,
-            this.worldsListViewport,
             this.worldsList,
             this.backButton, this.createWorldButton
         );
@@ -285,18 +270,6 @@ export class WorldSelectStage extends GameStage {
 
         this.worldsList.resize(true);
         this.worldsList.scrollTop();
-        this.syncWorldCardRendering();
-    }
-
-    private syncWorldCardRendering() {
-        const list = this.worldsList.list;
-        if(list == null) return;
-
-        // Ensure cards are visible on first frame before any scroll event updates visibility.
-        for(const child of list.children) {
-            child.visible = true;
-            child.renderable = true;
-        }
     }
 
     private async saveWorlds() {
@@ -312,34 +285,12 @@ export class WorldSelectStage extends GameStage {
         this.background.setSize(width, height);
 
         const worldsListWidth = WorldCard.WIDTH + 16;
-        const worldsListHeight = Math.max(80, height - 120);
+        const worldsListHeight = Math.max(20, height - 100);
         const worldsListX = (width - worldsListWidth) * 0.5;
         const worldsListY = 50;
 
         this.worldsList.setSize(worldsListWidth, worldsListHeight);
         this.worldsList.position.set(worldsListX, worldsListY);
-        this.worldsListMask.position.set(0, 0);
-        this.worldsListMask.width = worldsListWidth;
-        this.worldsListMask.height = worldsListHeight;
-
-        const list = this.worldsList.list;
-        if(list != null) {
-            const horizontalPadding = Math.max(8, Math.floor((worldsListWidth - WorldCard.WIDTH) * 0.5));
-            list.leftPadding = horizontalPadding;
-            list.rightPadding = horizontalPadding;
-            list.arrangeChildren();
-
-            // Keep ScrollBox track bounds in sync after manual list layout changes.
-            this.worldsList.resize(true);
-        }
-
-        this.worldsListViewport.position.set(worldsListX, worldsListY);
-        this.worldsListViewport.clear()
-            .roundRect(0, 0, worldsListWidth, worldsListHeight, 3)
-            .fill(0x1a1a1a)
-            .stroke({ color: 0x333333, width: 1 });
-
-        this.syncWorldCardRendering();
     }
 
     public tick(time: Time): void {
