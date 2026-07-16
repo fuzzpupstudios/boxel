@@ -60,6 +60,7 @@ export class World {
     public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
     public persistentWorld: PersistentWorld | null = null;
     private readonly chunksToSave = new Set<Chunk>;
+    private readonly chunksWithBlockEntities = new Set<Chunk>;
     private readonly loadingChunks = new Map<number, Promise<Chunk>>;
     public readonly lighting = new LightingEngine(this);
 
@@ -100,6 +101,7 @@ export class World {
 
         console.log("Saving the world...");
         await this.persistentWorld.saveChunks(this.chunksToSave);
+        await this.persistentWorld.saveChunks(this.chunksWithBlockEntities.difference(this.chunksToSave));
         this.chunksToSave.clear();
 
         this.persistentWorld.saveMeta({
@@ -134,6 +136,7 @@ export class World {
 
         this.chunks.delete(chunk.key);
         this.chunksToSave.add(chunk);
+        this.chunksWithBlockEntities.delete(chunk);
     }
 
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
@@ -200,6 +203,9 @@ export class World {
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
+            if(chunk.blockEntities.size > 0) {
+                this.chunksWithBlockEntities.add(chunk);
+            }
             for(const blockEntity of chunk.blockEntities) {
                 if(blockEntity.type.tickable) {
                     this.tickables.add(blockEntity);
@@ -224,6 +230,7 @@ export class World {
         }
         
         chunk.addBlockEntity(blockEntity);
+        this.chunksWithBlockEntities.add(chunk);
     }
 
     public getBlockState(x: number, y: number, z: number): string {
@@ -247,6 +254,10 @@ export class World {
         if(chunk == null) return;
 
         chunk.removeBlockEntity(blockEntity.x & 0xf, blockEntity.y & 0xf, blockEntity.z & 0xf);
+
+        if(chunk.blockEntities.size === 0) {
+            this.chunksWithBlockEntities.delete(chunk);
+        }
     }
 
     public removeBlockEntityAtPos(x: number, y: number, z: number) {
