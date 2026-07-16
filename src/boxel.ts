@@ -22,6 +22,9 @@ import type { Time } from "./time";
 import { itemRegistry } from "./item/itemRegistry";
 import { DataDrivenItem } from "./item/dataDrivenItem";
 import { FontLoader } from "./font/fontLoader";
+import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
+import { BlockEntityType } from "./block/entity/blockEntity";
+import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity";
 
 
 export class BoxelGame {
@@ -214,9 +217,18 @@ export class BoxelGame {
     }
 
     private registerGameData() {
+        for(const [ id, json ] of this.assets.blockEntityTypeRegistry.entries()) {
+            try {
+                blockEntityTypeRegistry.register(id, new DataDrivenBlockEntityType(json, this.assets));
+            } catch(e) {
+                throw new Error("Failed to register block entity " + id, { cause: e });
+            }
+        }
+        blockEntityTypeRegistry.lock();
+
         for(const [ id, json ] of this.assets.blockRegistry.entries()) {
             try {
-                blockRegistry.register(id, DataDrivenBlock.parseJson(json));
+                blockRegistry.register(id, DataDrivenBlock.parseJson(json, this.assets));
             } catch(e) {
                 throw new Error("Failed to register block " + id, { cause: e });
             }

@@ -16,7 +16,8 @@ export enum ControlBinding {
 
     NEXT_ITEM, PREVIOUS_ITEM,
 
-    OPEN_INVENTORY, CLOSE_INVENTORY,
+    OPEN_INVENTORY,
+    CLOSE_MODAL,
 
     PAUSE, BACK,
     FULLSCREEN,
@@ -69,7 +70,7 @@ export class Input {
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
         [ControlBinding.OPEN_INVENTORY]: "KeyE",
-        [ControlBinding.CLOSE_INVENTORY]: "KeyE",
+        [ControlBinding.CLOSE_MODAL]: "KeyE",
 
         [ControlBinding.PAUSE]: "Escape",
         [ControlBinding.BACK]: "Escape",
@@ -101,7 +102,7 @@ export class Input {
         [ControlBinding.PREVIOUS_ITEM]: ControllerButton.LEFT_BUMPER,
 
         [ControlBinding.OPEN_INVENTORY]: ControllerButton.X,
-        [ControlBinding.CLOSE_INVENTORY]: ControllerButton.B,
+        [ControlBinding.CLOSE_MODAL]: ControllerButton.B,
 
         [ControlBinding.TOGGLE_CROUCH]: ControllerButton.LEFT_STICK,
         [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK,

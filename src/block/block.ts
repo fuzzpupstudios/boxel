@@ -3,11 +3,13 @@ import type { TileCollider } from "../entity/entity";
 import type { BlockModel } from "./blockModel";
 import type { EventSheet } from "../events/eventSheet";
 import type { EventPredicate } from "../events/eventPredicate";
+import type { BlockEntity, BlockEntityType } from "./entity/blockEntity";
 
 export abstract class Block {
     public states: Map<string, BlockState> = new Map;
     public abstract defaultState: BlockState;
     public abstract id: string;
+    public blockEntity: BlockEntityType | null = null;
 
     public toString() {
         return `{Block id=${this.id}}`

@@ -1,6 +1,6 @@
 import { Euler, MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3, type Box2 } from "three";
 import z from "zod";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
 import type { TileFace, TileMesh } from "../rendering/chunkMesher";
 import { Assets } from "../textures/assets";
 import type { TextureAtlas } from "../textures/textureAtlas";

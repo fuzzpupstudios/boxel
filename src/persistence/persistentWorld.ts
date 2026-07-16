@@ -1,11 +1,14 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { Chunk } from "../world/world";
+import { Chunk, World } from "../world/world";
 import { VoxelChunk } from "../world/voxelGrid";
 import z from "zod";
 import { Player } from "../entity/player";
 import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
 import { LightingChunk } from "../world/lighting/lightingGrid";
 import { SerializedInventory } from "../item/inventory";
+import type { SerializedBlockEntity } from "../block/entity/blockEntity";
+import { blockEntityTypeRegistry } from "../block/entity/blockEntityRegistry";
+import { UnknownBlockEntityType } from "../block/entity/unknownBlockEntity";
 
 export interface SerializedChunk {
     version: number,
@@ -14,7 +17,8 @@ export interface SerializedChunk {
     z: number,
     tiles: ArrayBuffer,
     lighting: ArrayBuffer,
-    palette: string[]
+    palette: string[],
+    blockEntities: SerializedBlockEntity[]
 }
 
 export type WorldMeta = z.infer<typeof WorldMeta>;
@@ -62,9 +66,10 @@ export class PersistentWorld {
     public static readonly SCHEMA_VERSION = 1;
     private readonly db: Promise<IDBPDatabase<PersistentWorldSchema>>;
     private readonly allKeys = new Set<number>;
+    private world: World | null = null;
 
     public constructor(
-        public readonly worldId: string
+        public readonly worldId: string,
     ) {
         this.db = openDB<PersistentWorldSchema>(
             "world$" + worldId, PersistentWorld.SCHEMA_VERSION, {
@@ -80,6 +85,10 @@ export class PersistentWorld {
                 });
             },
         })
+    }
+
+    public setWorld(world: World) {
+        this.world = world;
     }
 
     public async saveMeta(meta: WorldMeta) {
@@ -204,7 +213,8 @@ export class PersistentWorld {
             x: chunk.x, y: chunk.y, z: chunk.z,
             tiles: chunk.tiles.tiles.buffer,
             palette: chunk.tiles.palette,
-            lighting: chunk.lighting.values.buffer
+            lighting: chunk.lighting.values.buffer,
+            blockEntities: chunk.blockEntities.values().map(entity => entity.serialize()).toArray()
         }
     }
 
@@ -214,11 +224,30 @@ export class PersistentWorld {
         
         voxelChunk.tiles.set(new Uint8Array(serialized.tiles));
         lightingChunk.values.set(new Uint16Array(serialized.lighting));
+
         for(let i = 0; i < serialized.palette.length; i++) {
             voxelChunk.palette[i] = serialized.palette[i]!;
             voxelChunk.paletteMap.set(serialized.palette[i]!, i);
         }
         const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk, lightingChunk);
+
+        if(this.world == null) {
+            console.warn("PersistentWorld World not set; block entities cannot be loaded");
+        } else {
+            for(const serializedBlockEntity of serialized.blockEntities) {
+                let blockEntityType = blockEntityTypeRegistry.get(serializedBlockEntity.id);
+                if(blockEntityType == null) blockEntityType = new UnknownBlockEntityType(serializedBlockEntity.id);
+
+                const blockEntity = blockEntityType.create(
+                    this.world,
+                    serializedBlockEntity.x,
+                    serializedBlockEntity.y,
+                    serializedBlockEntity.z
+                );
+                blockEntity.deserialize(serializedBlockEntity);
+                chunk.addBlockEntity(blockEntity);
+            }
+        }
 
         return chunk;
     }

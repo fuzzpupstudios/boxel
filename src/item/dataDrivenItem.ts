@@ -1,5 +1,5 @@
 import { parseEvents, parseTags } from "../block/jsonParseUtils";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { DataDrivenJson } from "../block/entity/data/dataDrivenJson";
 import type { Assets } from "../textures/assets";
 import { Item } from "./item";
 

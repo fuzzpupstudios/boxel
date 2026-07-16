@@ -34,11 +34,14 @@ export class GuiManager {
 
         this.onUpdate.emit();
     }
+    public getTopModal() {
+        return this.openGuis.values().filter(gui => gui.graphicalInterface.type.modal).toArray().pop();
+    }
     public getOpenModalCount() {
-        return this.openGuis.values().reduce((a, gui) => gui.graphicalInterface.inventoryType.modal ? a + 1 : a, 0);
+        return this.openGuis.values().reduce((a, gui) => gui.graphicalInterface.type.modal ? a + 1 : a, 0);
     }
     public openGui(gui: GraphicalInterface) {
-        const id = gui.inventoryType.id;
+        const id = gui.type.id;
         const guiContainer = new GuiContainer(gui,
             this.hologramProvider,
             this.itemSpriteProvider,
@@ -67,7 +70,7 @@ export class GuiManager {
         this.lastPixelRatio = pixelRatio;
 
         for(const gui of this.openGuis.values()) {
-            const type = gui.graphicalInterface.inventoryType;
+            const type = gui.graphicalInterface.type;
 
             gui.position.set(
                 width * type.anchor[0] + type.offset[0],

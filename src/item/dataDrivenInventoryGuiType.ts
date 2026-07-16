@@ -1,10 +1,10 @@
 import { Assets as PixiAssets } from "pixi.js";
 import { parseEvents, parsePredicate } from "../block/jsonParseUtils";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { DataDrivenJson } from "../block/entity/data/dataDrivenJson";
 import type { Assets } from "../textures/assets";
-import { InventoryGuiType } from "./inventoryGui";
+import { GuiType } from "./inventoryGui";
 
-export class DataDrivenInventoryGuiType extends InventoryGuiType {
+export class DataDrivenInventoryGuiType extends GuiType {
     public static parseJson(json: DataDrivenJson.InventoryGuiType, assets: Assets) {
         const guiType = new DataDrivenInventoryGuiType(
             json.id,
@@ -18,8 +18,6 @@ export class DataDrivenInventoryGuiType extends InventoryGuiType {
             guiType.addSlot(
                 slot.id,
                 slot.pos[0], slot.pos[1],
-                slot.insert ?? true,
-                slot.extract ?? true,
                 slot.size ?? 20,
             );
         }

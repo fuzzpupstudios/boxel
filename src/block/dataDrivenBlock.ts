@@ -1,13 +1,7 @@
-import { Box3, Vector3 } from "three";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
-import { TileCollider } from "../entity/entity";
-import { Block, BlockState } from "./block";
-import { BlockModel } from "./blockModel";
-import { BoxelGame } from "../boxel";
-import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
-import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
-import { EventSheet } from "../events/eventSheet";
+import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
+import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
 import type { Assets } from "../textures/assets";
+import { Block, BlockState } from "./block";
 import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
 
 
@@ -16,13 +10,21 @@ export class DataDrivenBlock extends Block {
     public id: string = "default";
 
     public static parseJson(
-        json: DataDrivenJson.Block
+        json: DataDrivenJson.Block,
+        assets: Assets
     ) {
         const block = new DataDrivenBlock;
 
         let defaultState;
 
         block.id = json.id;
+
+        if(json.blockEntity != null) {
+            block.blockEntity = blockEntityTypeRegistry.get(json.blockEntity);
+            if(block.blockEntity == null) {
+                throw new ReferenceError("Cannot find block entity " + json.blockEntity);
+            }
+        }
 
         for(const [ stateKey, jsonState ] of Object.entries(json.states)) {
             if(json.defaultStateProperties != null) {
@@ -165,7 +167,7 @@ export class DataDrivenBlock extends Block {
                 }
             }
             try {
-                const blockState = this.parseState(block, stateKey, jsonState);
+                const blockState = this.parseState(block, stateKey, jsonState, assets);
 
                 block.states.set(stateKey, blockState);
                 defaultState ??= blockState;
@@ -182,10 +184,7 @@ export class DataDrivenBlock extends Block {
 
         return block;
     }
-    private static parseState(block: Block, stateKey: string, jsonState: DataDrivenJson.BlockState) {
-        const game = BoxelGame.INSTANCE;
-
-
+    private static parseState(block: Block, stateKey: string, jsonState: DataDrivenJson.BlockState, assets: Assets) {
         const collider = parseJsonCollider(
             jsonState.collider ?? { hitboxes: [] });
 
@@ -201,7 +200,7 @@ export class DataDrivenBlock extends Block {
 
         let renderAsTexture: ImageBitmap | null = null;
         if(jsonState.renderAsTexture != null) {
-            const texture = game.assets.textureRegistry.get(jsonState.renderAsTexture);
+            const texture = assets.textureRegistry.get(jsonState.renderAsTexture);
 
             if(texture == null) {
                 throw new ReferenceError("Cannot find renderAsTexture " + jsonState.renderAsTexture);
@@ -212,14 +211,14 @@ export class DataDrivenBlock extends Block {
 
         let model;
         try {
-            model = parseModel(jsonState.model, game.assets);
+            model = parseModel(jsonState.model, assets);
         } catch(e) {
             throw new Error("Failed to parse model", { cause: e });
         }
 
         let eventSheet;
         try {
-            eventSheet = parseEvents(jsonState.events, game.assets);
+            eventSheet = parseEvents(jsonState.events, assets);
         } catch(e) {
             throw new Error("Failed to parse events " + jsonState.events, { cause: e });
         }

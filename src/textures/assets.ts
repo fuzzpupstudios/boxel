@@ -1,6 +1,6 @@
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type FileEntry } from "@zip.js/zip.js";
 import { JsonhReader } from "jsonh-ts";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { DataDrivenJson } from "../block/entity/data/dataDrivenJson";
 import { AudioContext as ThreeAudioContext } from "three";
 
 export class Assets {
@@ -12,6 +12,7 @@ export class Assets {
     public readonly eventSheetRegistry = new Map<string, DataDrivenJson.EventSheet & DataDrivenJson.TemplateApplicable>;
     public readonly itemRegistry = new Map<string, DataDrivenJson.Item & DataDrivenJson.TemplateApplicable>;
     public readonly inventoryGuiTypeRegistry = new Map<string, DataDrivenJson.InventoryGuiType & DataDrivenJson.TemplateApplicable>;
+    public readonly blockEntityTypeRegistry = new Map<string, DataDrivenJson.BlockEntity & DataDrivenJson.TemplateApplicable>;
 
     private readonly fileHandlers: Map<RegExp, (entry: FileEntry, ...groups: string[]) => Promise<void>> = new Map([
         [
@@ -66,6 +67,14 @@ export class Assets {
                 const data = await entry.getData(new TextWriter);
                 const json = JsonhReader.parseElementFromString<DataDrivenJson.Item>(data).value;
                 this.itemRegistry.set(json.id, json);
+            }
+        ],
+        [
+            /^assets\/[^\/]+\/block_entity\/.*\.jsonh?$/,
+            async (entry: FileEntry) => {
+                const data = await entry.getData(new TextWriter);
+                const json = JsonhReader.parseElementFromString<DataDrivenJson.BlockEntity>(data).value;
+                this.blockEntityTypeRegistry.set(json.id, json);
             }
         ],
         [

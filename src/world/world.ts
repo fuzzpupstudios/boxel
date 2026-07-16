@@ -9,9 +9,12 @@ import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 import { LightingEngine } from "./lightingEngine";
 import type { LightingChunk } from "./lighting/lightingGrid";
+import type { BlockEntity } from "../block/entity/blockEntity";
 
 export class Chunk {
     public readonly key: number;
+    public readonly blockEntities = new Set<BlockEntity>;
+    private readonly blockEntityGrid = new Array<BlockEntity>(16 ** 3);
 
     public constructor(
         public readonly x: number,
@@ -25,6 +28,25 @@ export class Chunk {
 
     public toString() {
         return `{Chunk x=${this.x} y=${this.y} z=${this.z}}`;
+    }
+
+    public addBlockEntity(blockEntity: BlockEntity) {
+        const index = (blockEntity.x & 0xf) << 8 | (blockEntity.y & 0xf) << 4 | (blockEntity.z & 0xf);
+        this.blockEntityGrid[index] = blockEntity;
+        this.blockEntities.add(blockEntity);
+    }
+
+    public removeBlockEntity(x: number, y: number, z: number) {
+        const index = x << 8 | y << 4 | z;
+        const blockEntity = this.blockEntityGrid[index];
+        if(blockEntity == null) return;
+
+        delete this.blockEntityGrid[index];
+        this.blockEntities.delete(blockEntity);
+    }
+
+    public getBlockEntity(x: number, y: number, z: number): BlockEntity | null {
+        return this.blockEntityGrid[x << 8 | y << 4 | z] ?? null;
     }
 }
 
@@ -42,6 +64,8 @@ export class World {
     public readonly lighting = new LightingEngine(this);
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {
+        persistentWorld.setWorld(this);
+        
         this.persistentWorld = persistentWorld;
     }
 
@@ -102,6 +126,10 @@ export class World {
     public unloadChunk(chunk: Chunk) {
         if(this.renderer != null) {
             this.renderer.removeChunk(chunk);
+        }
+
+        for(const blockEntity of chunk.blockEntities) {
+            this.tickables.delete(blockEntity);
         }
 
         this.chunks.delete(chunk.key);
@@ -172,6 +200,12 @@ export class World {
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
+            for(const blockEntity of chunk.blockEntities) {
+                if(blockEntity.type.tickable) {
+                    this.tickables.add(blockEntity);
+                }
+            }
+
             this.flagChunksForRender(chunkX - 1, chunkY - 1, chunkZ - 1, chunkX + 1, chunkY + 1, chunkZ + 1);
 
             return chunk;
@@ -181,12 +215,77 @@ export class World {
         return promise;
     }
 
+    public addBlockEntity(blockEntity: BlockEntity) {
+        const chunk = this.getChunk(blockEntity.x >> 4, blockEntity.y >> 4, blockEntity.z >> 4);
+        if(chunk == null) return;
+        
+        if(blockEntity.type.tickable) {
+            this.tickables.add(blockEntity);
+        }
+        
+        chunk.addBlockEntity(blockEntity);
+    }
+
     public getBlockState(x: number, y: number, z: number): string {
         return this.tiles.getBlockStateId(x, y, z);
     }
 
-    public setBlockState(x: number, y: number, z: number, blockStateId: string, markDirty = true) {        
+    public getBlockEntity(x: number, y: number, z: number): BlockEntity | null {
+        const chunk = this.getChunk(x >> 4, y >> 4, z >> 4);
+        if(chunk == null) return null;
+
+        const blockEntity = chunk.getBlockEntity(x & 0xf, y & 0xf, z & 0xf);
+        return blockEntity;
+    }
+
+    public removeBlockEntity(blockEntity: BlockEntity) {
+        this.tickables.delete(blockEntity);
+
+        const chunk = this.getChunk(blockEntity.x >> 4, blockEntity.y >> 4, blockEntity.z >> 4);
+        if(chunk == null) return;
+
+        chunk.removeBlockEntity(blockEntity.x & 0xf, blockEntity.y & 0xf, blockEntity.z & 0xf);
+    }
+
+    public removeBlockEntityAtPos(x: number, y: number, z: number) {
+        const blockEntity = this.getBlockEntity(x, y, z);
+        if(blockEntity == null) return;
+
+        this.removeBlockEntity(blockEntity);
+    }
+
+    public updateBlockEntity(x: number, y: number, z: number) {
+        const currrentBlockId = this.tiles.getBlockStateId(x, y, z);
+        const currentBlockState = blockStateRegistry.get(currrentBlockId);
+        
+        const blockEntity = this.getBlockEntity(x, y, z);
+        if(currentBlockState == null && blockEntity != null) {
+            this.removeBlockEntity(blockEntity);
+            return;
+        }
+
+        if(currentBlockState != null) {
+            const currentBlockEntityType = currentBlockState.block.blockEntity;
+
+            if(currentBlockEntityType == null) {
+                if(blockEntity != null) {
+                    this.removeBlockEntity(blockEntity);
+                }
+            } else {
+                if(blockEntity != null) {
+                    blockEntity.updateBlockState(currentBlockState);
+                } else {
+                    const blockEntity = currentBlockEntityType.create(this, x, y, z);
+                    blockEntity.init();
+                    this.addBlockEntity(blockEntity);
+                }
+            }
+        }
+    }
+
+    public setBlockState(x: number, y: number, z: number, blockStateId: string, markDirty = true) {
         this.tiles.setBlockStateId(x, y, z, blockStateId);
+        this.updateBlockEntity(x, y, z);
 
         if(!markDirty) return;
         this.markChunkDirty(x >> 4, y >> 4, z >> 4);

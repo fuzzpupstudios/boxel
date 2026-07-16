@@ -9,43 +9,73 @@ export interface SerializedInventory {
     items: SerializedItemStack[]
 }
 
+export class InventorySlot {
+    public readonly stack = ItemStack.empty();
+    public allowInsert: boolean = true;
+    public allowExtract: boolean = true;
+
+    public serialize(): SerializedItemStack {
+        return this.stack.serialize();
+    }
+    public deserialize(data: SerializedItemStack) {
+        this.stack.deserialize(data);
+    }
+    public clone() {
+        const slot = new InventorySlot;
+        slot.stack.copyFrom(this.stack);
+        slot.allowInsert = this.allowInsert;
+        slot.allowExtract = this.allowExtract;
+
+        return slot;
+    }
+}
+
 export class Inventory {
     public readonly onUpdate = new Signal<(slotId: number) => void>();
     public static deserialize(serialized: SerializedInventory) {
         return new Inventory().deserialize(serialized);
     }
 
-    public stacks = new Array<ItemStack>;
+    public slots = new Array<InventorySlot>;
     public slotCount: number = 0;
 
-    public setSlotCount(slotCount: number) {
-        this.slotCount = slotCount;
+    public addSlot(slot: InventorySlot) {
+        this.slots.push(slot);
+        this.slotCount = this.slots.length;
+    }
 
-        // Remove extra items
-        this.stacks.splice(slotCount);
+    public clone(): Inventory {
+        const inventory = new Inventory;
 
-        // Add nonexistent items
-        while(this.stacks.length < slotCount) this.stacks.push(ItemStack.empty());
+        for(const slot of this.slots) {
+            inventory.addSlot(slot.clone());
+        }
+
+        return inventory;
     }
 
     public deserialize(serialized: SerializedInventory) {
-        this.setSlotCount(serialized.items.length);
         for(let i = 0; i < this.slotCount; i++) {
-            this.stacks[i]!.deserialize(serialized.items[i]!);
+            const slot = this.slots[i];
+            if(slot == null) {
+                console.warn("Cannot deserialize into missing slot " + i)
+                continue;
+            }
+            slot.deserialize(serialized.items[i]!);
         }
     }
 
     public findItem(item: string) {
-        for(let i = 0; i < this.stacks.length; i++) {
-            if(this.stacks[i]!.item == item) return i;
+        for(let i = 0; i < this.slots.length; i++) {
+            if(this.slots[i]!.stack.item == item) return i;
         }
 
         return -1;
     }
 
     public addStack(stack: ItemStack) {
-        for(let i = 0; i < this.stacks.length; i++) {
-            stack.mergeInto(this.stacks[i]!);
+        for(let i = 0; i < this.slots.length; i++) {
+            stack.mergeInto(this.slots[i]!.stack);
             this.onUpdate.emit(i);
             if(stack.isEmpty()) break;
         }
@@ -53,7 +83,7 @@ export class Inventory {
 
     public serialize(): SerializedInventory {
         return {
-            items: this.stacks.map(item => item.serialize())
+            items: this.slots.map(item => item.serialize())
         }
     }
 }

@@ -7,7 +7,7 @@ import { PlayingGameStage } from "../stage/impl/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
 import { Entity, type TileCollider } from "./entity";
-import { Inventory } from "../item/inventory";
+import { Inventory, InventorySlot } from "../item/inventory";
 import { EventAction } from "../events/eventAction";
 import { EventCursor } from "../events/eventSheet";
 import { itemRegistry } from "../item/itemRegistry";
@@ -34,7 +34,10 @@ export class Player extends Entity {
 
     public constructor(world: World) {
         super(world);
-        this.inventory.setSlotCount(50);
+
+        for(let i = 0; i < 50; i++) {
+            this.inventory.addSlot(new InventorySlot);
+        }
     }
 
     protected override createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB {
@@ -134,7 +137,7 @@ export class Player extends Entity {
     public place(): boolean {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
-        const holdingStack = this.inventory.stacks[this.selectedSlot];
+        const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
         if(holdingStack == null) return false;
 
         // do not "place" items
@@ -192,7 +195,7 @@ export class Player extends Entity {
 
         let success = false;
 
-        const holdingStack = this.inventory.stacks[this.selectedSlot];
+        const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
         if(holdingStack != null) {
             const item = itemRegistry.get(holdingStack.item);
             const blockState = blockStateRegistry.get(holdingStack.item);

@@ -1,5 +1,5 @@
 import { Box3, Vector3 } from "three";
-import type { DataDrivenJson } from "../data/dataDrivenJson";
+import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
 import { TileCollider } from "../entity/entity";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
 import type { Assets } from "../textures/assets";

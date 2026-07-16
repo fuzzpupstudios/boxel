@@ -1,8 +1,23 @@
 export namespace DataDrivenJson {
     export interface Block {
         id: string,
+        blockEntity?: string,
         defaultStateProperties?: BlockState,
         states: Record<string, BlockState>
+    }
+
+    export interface BlockEntitySlot {
+        extract?: boolean;
+        insert?: boolean;
+        onInsert?: string;
+        onExtract?: string;
+        onChange?: string;
+    }
+
+    export interface BlockEntity {
+        id: string,
+        slots?: BlockEntitySlot[],
+        tickable?: boolean,
     }
 
     export interface BlockState {
@@ -81,8 +96,6 @@ export namespace DataDrivenJson {
         id: number;
         pos: [ number, number ],
         size?: number,
-        insert?: boolean;
-        extract?: boolean;
     }
 
     export interface InventoryGuiGraphicType {

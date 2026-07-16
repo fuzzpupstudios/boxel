@@ -32,6 +32,10 @@ export class ItemStack {
             quantity: this.quantity
         }
     }
+    public copyFrom(other: ItemStack) {
+        this.item = other.item;
+        this.quantity = other.quantity;
+    }
     public clone() {
         return ItemStack.of(this.item, this.quantity);
     }

@@ -1,4 +1,4 @@
 import { KeyedRegistry } from "objectregistry";
-import { InventoryGuiType } from "./inventoryGui";
+import { GuiType } from "./inventoryGui";
 
-export const inventoryGuiTypeRegistry = new KeyedRegistry<InventoryGuiType>;
+export const inventoryGuiTypeRegistry = new KeyedRegistry<GuiType>;

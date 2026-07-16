@@ -10,7 +10,8 @@ export const BlockEventPredicateParameters = z.object({
         z.number(),
         z.number(),
     ]).default([ 0, 0, 0 ]),
-    has_tag: z.string().optional()
+    has_tag: z.string().optional(),
+    is: z.string().optional(),
 })
 
 export class BlockEventPredicate extends EventPredicate<BlockEventPredicateParameters> {
@@ -23,8 +24,12 @@ export class BlockEventPredicate extends EventPredicate<BlockEventPredicateParam
             cursor.y + this.args.at[1],
             cursor.z + this.args.at[2]
         );
-        const blockState = blockStateRegistry.get(blockStateId);
 
+        if(this.args.is) {
+            if(blockStateId != this.args.is) return false;
+        }
+
+        const blockState = blockStateRegistry.get(blockStateId);
         if(blockState == null) return false;
 
         if(this.args.has_tag) {

@@ -1,0 +1,37 @@
+{
+    "id": "base:crate",
+    "blockEntity": "base:crate",
+    "states": {
+        "default": {
+            "model": {
+                "include": "base:full_block",
+                "textures": {
+                    "block": "base:block/crate.png"
+                }
+            },
+            "events": {
+                "include": "base:sound_materials/solid",
+
+                "triggers": {
+                    "base:interact": [
+                        {
+                            "id": "base:open_gui",
+                            "args": {
+                                "inventory": "block_entity",
+                                "gui": "base:crate_inventory"
+                            }
+                        },
+                        {
+                            "id": "base:prevent_default"
+                        }
+                    ]
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

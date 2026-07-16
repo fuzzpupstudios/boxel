@@ -2,7 +2,7 @@ import type { SerializedChunk } from "./persistentWorld"
 
 type ChunkUpgrade = (chunk: SerializedChunk) => SerializedChunk;
 
-export const CHUNK_SCHEMA_VERSION = 1;
+export const CHUNK_SCHEMA_VERSION = 2;
 export const chunkUpgrades: ChunkUpgrade[] = [
     // upgrade to 0
     (chunk: SerializedChunk) => {
@@ -34,6 +34,11 @@ export const chunkUpgrades: ChunkUpgrade[] = [
             }
         }
         chunk.lighting = lighting.buffer;
+        return chunk;
+    },
+    // upgrade to 2
+    (chunk: SerializedChunk) => {
+        chunk.blockEntities = [];
         return chunk;
     }
 ]

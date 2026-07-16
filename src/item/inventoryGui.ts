@@ -1,20 +1,18 @@
 import { Texture } from "pixi.js";
 import type { EventSheet } from "../events/eventSheet";
-import type { Inventory } from "./inventory";
+import type { Inventory, InventorySlot } from "./inventory";
 import type { ItemStack } from "./itemStack";
 import type { EventPredicate } from "../events/eventPredicate";
 
 
-export interface InventorySlotType {
+export interface GuiInventorySlotType {
     id: number;
     x: number;
     y: number;
-    insertAllowed: boolean;
-    extractAllowed: boolean;
     size: number;
 }
 
-export interface InventoryGraphicType {
+export interface GuiGraphicType {
     id: string;
     type: string;
     x: number;
@@ -24,22 +22,22 @@ export interface InventoryGraphicType {
     renderIf: EventPredicate;
 }
 
-export class InventorySlot {
+export class GuiInventorySlot {
     public constructor(
-        public stack: ItemStack,
-        public type: InventorySlotType
+        public slot: InventorySlot,
+        public type: GuiInventorySlotType
     ) {}
 }
 
-export class InventoryGraphic {
+export class GuiGraphic {
     public constructor(
-        public type: InventoryGraphicType
+        public type: GuiGraphicType
     ) {}
 }
 
-export abstract class InventoryGuiType {
-    public readonly slots = new Set<InventorySlotType>;
-    public readonly graphics = new Set<InventoryGraphicType>;
+export abstract class GuiType {
+    public readonly slots = new Set<GuiInventorySlotType>;
+    public readonly graphics = new Set<GuiGraphicType>;
     public texture: Texture = Texture.EMPTY;
 
     public constructor(
@@ -73,13 +71,11 @@ export abstract class InventoryGuiType {
     protected addSlot(
         id: number,
         x: number, y: number,
-        insertAllowed: boolean, extractAllowed: boolean,
         size: number
     ) {
         this.slots.add({
             id,
             x, y,
-            insertAllowed, extractAllowed,
             size
         });
     }
@@ -90,21 +86,21 @@ export abstract class InventoryGuiType {
 }
 
 export class GraphicalInterface {
-    public readonly slots = new Map<number, InventorySlot>;
-    public readonly graphics = new Map<string, InventoryGraphic>;
+    public readonly slots = new Map<number, GuiInventorySlot>;
+    public readonly graphics = new Map<string, GuiGraphic>;
 
     public constructor(
-        public readonly inventoryType: InventoryGuiType,
+        public readonly type: GuiType,
         public readonly inventory: Inventory | null
     ) {
         if(inventory != null) {
-            for(const slotType of inventoryType.slots) {
-                const slot = new InventorySlot(inventory.stacks[slotType.id]!, slotType);
+            for(const slotType of type.slots) {
+                const slot = new GuiInventorySlot(inventory.slots[slotType.id]!, slotType);
                 this.slots.set(slotType.id, slot);
             }
         }
-        for(const graphicType of inventoryType.graphics) {
-            const graphic = new InventoryGraphic(graphicType);
+        for(const graphicType of type.graphics) {
+            const graphic = new GuiGraphic(graphicType);
             this.graphics.set(graphicType.id, graphic);
         }
     }

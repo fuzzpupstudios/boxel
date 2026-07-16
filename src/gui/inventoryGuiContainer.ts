@@ -1,7 +1,7 @@
 import { Color, Container, Rectangle, Sprite, Texture } from "pixi.js";
 import { Signal, type SignalConnection } from "typed-signals";
 import { EventCursor } from "../events/eventSheet";
-import type { GraphicalInterface, InventorySlot } from "../item/inventoryGui";
+import type { GraphicalInterface, GuiInventorySlot } from "../item/inventoryGui";
 import { ItemStack } from "../item/itemStack";
 import type { GuiGraphicContainer } from "./data/guiGraphic";
 import { guiGraphicRegistry } from "./data/guiGraphicRegistry";
@@ -43,11 +43,11 @@ export class InventorySlotContainer extends Container {
 
     public constructor(
         public readonly slotId: number,
-        public readonly slot: InventorySlot,
+        public readonly guiSlot: GuiInventorySlot,
         hologramProvider: TileHologramProvider,
         itemSpriteProvider: GuiItemSpriteProvider,
     ) {
-        const size = slot.type.size;
+        const size = guiSlot.type.size;
         const halfSize = size / 2;
 
         const hoverSprite = new Sprite(Texture.WHITE);
@@ -58,7 +58,7 @@ export class InventorySlotContainer extends Container {
         hoverSprite.alpha = 0;
         hoverSprite.blendMode = "add";
 
-        const itemStack = new GuiItemStack(slot.stack, hologramProvider, itemSpriteProvider);
+        const itemStack = new GuiItemStack(guiSlot.slot.stack, hologramProvider, itemSpriteProvider);
         itemStack.scale.set(size / 16);
         itemStack.position.set(halfSize, halfSize);
 
@@ -99,7 +99,7 @@ export class GuiContainer extends Container {
         itemSpriteProvider: GuiItemSpriteProvider,
         private readonly guiCursor: GuiCursor
     ) {
-        const inventoryType = graphicalInterface.inventoryType;
+        const inventoryType = graphicalInterface.type;
         const background = new Sprite(inventoryType.texture);
 
         super({
@@ -137,7 +137,7 @@ export class GuiContainer extends Container {
 
             if(slot == -1) return;
 
-            const slotStack = graphicalInterface.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
             if(slotStack == null) return;
             
             if(slotStack.isEmpty() || slotStack.item != pointerStack.item) {
@@ -159,7 +159,7 @@ export class GuiContainer extends Container {
             const slot = event.slot;
             if(slot == -1) return;
 
-            const slotStack = graphicalInterface.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
             if(slotStack == null) return;
 
             if(slotStack.isEmpty()) return;
@@ -179,7 +179,7 @@ export class GuiContainer extends Container {
             const slot = event.slot;
             if(slot == -1) return;
 
-            const slotStack = graphicalInterface.inventory.stacks[slot];
+            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
             if(slotStack == null) return;
             
             pointerStack.mergeInto(slotStack, 1);
