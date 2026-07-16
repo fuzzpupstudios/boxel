@@ -82,6 +82,12 @@ export class Inventory {
         }
     }
 
+    public dump(inventory: Inventory) {
+        for(const slot of this.slots) {
+            inventory.addStack(slot.stack);
+        }
+    }
+
     public serialize(): SerializedInventory {
         return {
             items: this.slots.map(item => item.serialize())

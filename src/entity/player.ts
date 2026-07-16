@@ -114,6 +114,7 @@ export class Player extends Entity {
 
         const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
         const blockState = blockStateRegistry.get(previousBlockStateId);
+        const blockEntity = this.world.getBlockEntity(targetX, targetY, targetZ);
 
         if(blockState != null) {
             const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
@@ -121,6 +122,10 @@ export class Player extends Entity {
             blockState.events.runTrigger("base:destroy", cursor);
             
             if(cursor.defaultPrevented) return false;
+        }
+
+        if(blockEntity?.hasInventory()) {
+            blockEntity.inventory.dump(this.inventory);
         }
 
         this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
