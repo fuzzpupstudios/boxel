@@ -205,7 +205,9 @@ export class PlayingGameStage extends GameStage {
         this.quitButton = new GuiButton("Save and Quit", 100, 30);
         this.quitButton.on("pointerdown", () => {
             this.audioManager.playMenuClick();
-            this.game.changeStage(new TitleScreenStage(game), false);
+            this.world.saveWorld().then(() => {
+                this.game.changeStage(new TitleScreenStage(game), false);
+            });
         });
 
         this.pausedContainer.addChild(
@@ -377,9 +379,10 @@ export class PlayingGameStage extends GameStage {
         }
 
         if(!this.paused) {
-            if(this.guiManager.isGuiOpen("base:player_inventory")) {
-                if(game.input.wasPressed(ControlBinding.CLOSE_INVENTORY) || game.input.wasPressed(ControlBinding.BACK)) {
-                    this.guiManager.closeGui("base:player_inventory");
+            const topModal = this.guiManager.getTopModal();
+            if(topModal != null) {
+                if(game.input.wasPressed(ControlBinding.CLOSE_MODAL) || game.input.wasPressed(ControlBinding.BACK)) {
+                    this.guiManager.closeGui(topModal.graphicalInterface.type.id);
                     this.localPlayer.inventory.addStack(this.pointerStack);
                 }
             } else {
@@ -439,7 +442,7 @@ export class PlayingGameStage extends GameStage {
                         dropOne = game.input.wasPressed(ControlBinding.DROP_ONE);
                         splitStack = game.input.wasPressed(ControlBinding.SPLIT_STACK);
                     } else if(this.game.input.touch != null) {
-                        const slotStack = gui.inventory?.stacks[slot];
+                        const slotStack = gui.inventory?.slots[slot]?.stack;
                         const endedTouch = this.game.input.touch.justEndedTouches.at(-1);
                         
                         if(endedTouch?.uiTouch) {
@@ -634,8 +637,10 @@ export class PlayingGameStage extends GameStage {
                         if(existingSlot >= 0 && existingSlot <= 9) {
                             this.localPlayer.selectedSlot = existingSlot;
                         } else {
-                            const stack = existingSlot == -1 ? ItemStack.of(pickBlockStateId, 1) : this.localPlayer.inventory.stacks[existingSlot]!;
-                            this.localPlayer.inventory.stacks[selectedSlot]?.swap(stack);
+                            const stack = existingSlot == -1
+                                ? ItemStack.of(pickBlockStateId, 1)
+                                : this.localPlayer.inventory.slots[existingSlot]!.stack;
+                            this.localPlayer.inventory.slots[selectedSlot]?.stack.swap(stack);
                             const hotbar = this.guiManager.getOpenGui("base:hotbar");
                             hotbar?.updateSlot(selectedSlot);
                         }
@@ -726,7 +731,8 @@ export class PlayingGameStage extends GameStage {
                     if(this.localPlayer.selectedSlot < 0) this.localPlayer.selectedSlot = 9;
                 }
 
-                this.holdingBlockPreview.setItemStack(this.localPlayer.inventory.stacks[this.localPlayer.selectedSlot]!);
+                this.holdingBlockPreview.setItemStack(
+                    this.localPlayer.inventory.slots[this.localPlayer.selectedSlot]!.stack);
             }
 
             this.world.tick(time);
