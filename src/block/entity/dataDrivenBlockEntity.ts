@@ -76,19 +76,13 @@ export class DataDrivenBlockEntity extends BlockEntity {
     public updateBlockState(state?: string | BlockState) {
         super.updateBlockState(state);
 
-        this.tickEvents = this.blockState.events.triggers.get("base:tick") ?? [];
+        this.tickEvents = this.blockState.events.triggers.get("base:block_entity/tick") ?? [];
         this.eventCursor = new EventCursor(this.world, this.x, this.y, this.z);
     }
 
     public override init(): void {
-        if(this.inventory != null) {
-            for(const slot of this.inventory.slots) {
-                if(Math.random() > 0.3) continue;
-
-                slot.stack.item = "base:cobblestone[default]";
-                slot.stack.quantity = Math.ceil((Math.random() ** 3) * 1000);
-            }
-        }
+        if(this.eventCursor == null) throw new Error("Block state init() called before event cursor was set");
+        this.blockState.events.runTrigger("base:block_entity/init", this.eventCursor);
     }
 
     public override tick(time: Time) {
@@ -97,5 +91,11 @@ export class DataDrivenBlockEntity extends BlockEntity {
         for(let i = 0; i < this.tickEvents.length; i++) {
             this.tickEvents[i]!.run(this.eventCursor);
         }
+    }
+
+    public override deinit(): void {
+        if(this.eventCursor == null) throw new Error("Block state deinit() called before event cursor was set");
+
+        this.blockState.events.runTrigger("base:block_entity/remove", this.eventCursor);
     }
 }

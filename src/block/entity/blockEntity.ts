@@ -50,6 +50,7 @@ export class BlockEntity implements Tickable {
 
     public init() { }
     public tick(time: Time) { }
+    public deinit() { }
 
     public deserialize(data: SerializedBlockEntity) {
 

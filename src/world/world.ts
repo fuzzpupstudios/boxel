@@ -1,15 +1,15 @@
 import { Vector3 } from "three";
-import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry } from "../block/blockRegistry";
+import type { BlockEntity } from "../block/entity/blockEntity";
 import { type Tickable } from "../entity/entity";
 import type { Player } from "../entity/player";
 import type { PersistentWorld } from "../persistence/persistentWorld";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
+import type { LightingChunk } from "./lighting/lightingGrid";
+import { LightingEngine } from "./lightingEngine";
 import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
-import { LightingEngine } from "./lightingEngine";
-import type { LightingChunk } from "./lighting/lightingGrid";
-import type { BlockEntity } from "../block/entity/blockEntity";
 
 export class Chunk {
     public readonly key: number;
@@ -239,7 +239,9 @@ export class World {
     }
 
     public removeBlockEntity(blockEntity: BlockEntity) {
-        this.tickables.delete(blockEntity);
+        if(this.tickables.delete(blockEntity)) {
+            blockEntity.deinit();
+        }
 
         const chunk = this.getChunk(blockEntity.x >> 4, blockEntity.y >> 4, blockEntity.z >> 4);
         if(chunk == null) return;
