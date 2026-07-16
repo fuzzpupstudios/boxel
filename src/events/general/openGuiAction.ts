@@ -11,7 +11,10 @@ export const OpenGuiActionParameters = z.object({
     xOffset: z.int().default(0),
     yOffset: z.int().default(0),
     zOffset: z.int().default(0),
-    inventory: z.enum([ "none", "player_inventory", "block_entity" ]).default("none")
+    inventories: z.record(
+        z.string(),
+        z.enum([ "none", "player_inventory", "block_entity" ])
+    ).default({})
 });
 
 export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
@@ -19,25 +22,33 @@ export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
         super(eventSheet, OpenGuiActionParameters.parse(args));
     }
     public override run(cursor: EventCursor): void {
-        let inventory: Inventory | null = null;
+        const inventories = new Map<string, Inventory>;
 
-        if(this.args.inventory == "player_inventory" && cursor.entity instanceof Player) {
-            inventory = cursor.entity.inventory;
-        }
-        if(this.args.inventory == "block_entity") {
-            const blockEntity = cursor.world.getBlockEntity(
-                cursor.x + this.args.xOffset,
-                cursor.y + this.args.yOffset,
-                cursor.z + this.args.zOffset
-            );
-            if(blockEntity != null && blockEntity.hasInventory()) {
-                inventory = blockEntity.inventory;
+        for(const [ inventoryId, inventorySource ] of Object.entries(this.args.inventories)) {
+            let inventory: Inventory | null = null;
+
+            if(inventorySource == "player_inventory" && cursor.entity instanceof Player) {
+                inventory = cursor.entity.inventory;
+            }
+            if(inventorySource == "block_entity") {
+                const blockEntity = cursor.world.getBlockEntity(
+                    cursor.x + this.args.xOffset,
+                    cursor.y + this.args.yOffset,
+                    cursor.z + this.args.zOffset
+                );
+                if(blockEntity != null && blockEntity.hasInventory()) {
+                    inventory = blockEntity.inventory;
+                }
+            }
+
+            if(inventory !== null) {
+                inventories.set(inventoryId, inventory);
             }
         }
 
         const guiType = inventoryGuiTypeRegistry.get(this.args.gui);
         if(guiType == null) throw new ReferenceError("Unknown gui type " + this.args.gui);
 
-        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventory));
+        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories));
     }
 }

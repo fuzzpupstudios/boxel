@@ -10,9 +10,12 @@ export interface SerializedInventory {
 }
 
 export class InventorySlot {
-    public readonly stack = ItemStack.empty();
     public allowInsert: boolean = true;
     public allowExtract: boolean = true;
+    
+    public constructor(
+        public readonly stack = ItemStack.empty()
+    ) {}
 
     public serialize(): SerializedItemStack {
         return this.stack.serialize();
@@ -21,7 +24,7 @@ export class InventorySlot {
         this.stack.deserialize(data);
     }
     public clone() {
-        const slot = new InventorySlot;
+        const slot = new InventorySlot();
         slot.stack.copyFrom(this.stack);
         slot.allowInsert = this.allowInsert;
         slot.allowExtract = this.allowExtract;
@@ -37,11 +40,9 @@ export class Inventory {
     }
 
     public slots = new Array<InventorySlot>;
-    public slotCount: number = 0;
 
     public addSlot(slot: InventorySlot) {
         this.slots.push(slot);
-        this.slotCount = this.slots.length;
     }
 
     public clone(): Inventory {
@@ -55,7 +56,7 @@ export class Inventory {
     }
 
     public deserialize(serialized: SerializedInventory) {
-        for(let i = 0; i < this.slotCount; i++) {
+        for(let i = 0; i < this.slots.length; i++) {
             const slot = this.slots[i];
             if(slot == null) {
                 console.warn("Cannot deserialize into missing slot " + i)

@@ -3,6 +3,7 @@
     "texture": "base:ui/hotbar.png",
     "anchor": [ 0.5, 1 ],
     "offset": [ 0, -16 ],
+    "inventories": [ "player" ],
     "slots": [
         { "id": 0, "pos": [25, 20], "size": 20 },
         { "id": 1, "pos": [48, 20], "size": 20 },
@@ -33,7 +34,9 @@
                         {
                             "id": "base:open_gui",
                             "args": {
-                                "inventory": "player_inventory",
+                                "inventories": {
+                                    "player": "player_inventory"
+                                },
                                 "gui": "base:player_inventory"
                             }
                         }

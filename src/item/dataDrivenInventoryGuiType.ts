@@ -14,9 +14,22 @@ export class DataDrivenInventoryGuiType extends GuiType {
             json.offset ?? [0, 0],
         );
 
+        for(const inventory of json.inventories ?? []) {
+            guiType.inventories.add(inventory);
+        }
+
         for(const slot of json.slots ?? []) {
+            let slotId = slot.id;
+            if(typeof slotId == "number") {
+                if(guiType.inventories.size != 1) {
+                    throw new Error("Cannot use slot number shorthand when the number of defined inventories isn't 1")
+                }
+                const firstInventory = guiType.inventories.values().next().value!;
+                slotId = firstInventory + "." + slotId;
+            }
+
             guiType.addSlot(
-                slot.id,
+                slotId,
                 slot.pos[0], slot.pos[1],
                 slot.size ?? 20,
             );

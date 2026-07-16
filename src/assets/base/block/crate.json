@@ -17,7 +17,10 @@
                         {
                             "id": "base:open_gui",
                             "args": {
-                                "inventory": "block_entity",
+                                "inventories": {
+                                    "crate": "block_entity",
+                                    "player": "player_inventory"
+                                },
                                 "gui": "base:crate_inventory"
                             }
                         },

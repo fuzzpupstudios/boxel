@@ -1,12 +1,11 @@
 import { Texture } from "pixi.js";
+import type { EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
 import type { Inventory, InventorySlot } from "./inventory";
-import type { ItemStack } from "./itemStack";
-import type { EventPredicate } from "../events/eventPredicate";
 
 
 export interface GuiInventorySlotType {
-    id: number;
+    id: string;
     x: number;
     y: number;
     size: number;
@@ -36,6 +35,7 @@ export class GuiGraphic {
 }
 
 export abstract class GuiType {
+    public readonly inventories = new Set<string>;
     public readonly slots = new Set<GuiInventorySlotType>;
     public readonly graphics = new Set<GuiGraphicType>;
     public texture: Texture = Texture.EMPTY;
@@ -69,7 +69,7 @@ export abstract class GuiType {
     }
 
     protected addSlot(
-        id: number,
+        id: string,
         x: number, y: number,
         size: number
     ) {
@@ -80,28 +80,49 @@ export abstract class GuiType {
         });
     }
 
-    public createGui(inventory: Inventory | null): GraphicalInterface {
-        return new GraphicalInterface(this, inventory);
+    public createGui(inventories: Map<string, Inventory>): GraphicalInterface {
+        return new GraphicalInterface(this, inventories);
     }
 }
 
 export class GraphicalInterface {
-    public readonly slots = new Map<number, GuiInventorySlot>;
+    public readonly slots = new Map<string, GuiInventorySlot>;
     public readonly graphics = new Map<string, GuiGraphic>;
 
     public constructor(
         public readonly type: GuiType,
-        public readonly inventory: Inventory | null
+        public readonly inventories: Map<string, Inventory>
     ) {
-        if(inventory != null) {
-            for(const slotType of type.slots) {
-                const slot = new GuiInventorySlot(inventory.slots[slotType.id]!, slotType);
-                this.slots.set(slotType.id, slot);
+        for(const slotType of type.slots) {
+            const [ inventoryId, slotIndexString ] = slotType.id.split(".");
+            if(inventoryId == null || slotIndexString == null) {
+                throw new ReferenceError("Invalid slot format " + slotType.id);
+            }
+            const inventory = this.inventories.get(inventoryId);
+
+            if(inventory != null) {
+                const inventorySlot = inventory.slots[+slotIndexString];
+                if(inventorySlot == null) {
+                    console.warn("Cannot find slot " + slotType.id);
+                } else {
+                    const slot = new GuiInventorySlot(inventorySlot, slotType);
+                    this.slots.set(slotType.id, slot);
+                }
             }
         }
         for(const graphicType of type.graphics) {
             const graphic = new GuiGraphic(graphicType);
             this.graphics.set(graphicType.id, graphic);
         }
+    }
+
+    public updateSlot(slotId: string) {
+        const [ inventoryId, slotIndexString ] = slotId.split(".");
+        if(inventoryId == null || slotIndexString == null) return;
+        
+        const inventory = this.inventories.get(inventoryId);
+        if(inventory == null) return;
+
+        inventory.onUpdate.emit(+slotIndexString);
     }
 }

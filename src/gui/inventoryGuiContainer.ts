@@ -13,7 +13,7 @@ export class InventoryEvent {
     public consumed = false;
     public constructor(
         public readonly pointerStack: ItemStack,
-        public readonly slot: number,
+        public readonly slot: string | null,
         public readonly gui: GraphicalInterface | null
     ) {}
     public consume() {
@@ -42,7 +42,6 @@ export class InventorySlotContainer extends Container {
     public readonly itemStack: GuiItemStack;
 
     public constructor(
-        public readonly slotId: number,
         public readonly guiSlot: GuiInventorySlot,
         hologramProvider: TileHologramProvider,
         itemSpriteProvider: GuiItemSpriteProvider,
@@ -83,7 +82,7 @@ export class InventorySlotContainer extends Container {
 }
 
 export class GuiContainer extends Container {
-    private readonly slotContainers = new Map<number, InventorySlotContainer>;
+    private readonly slotContainers = new Map<string, InventorySlotContainer>;
     private readonly graphicContainers = new Map<string, GuiGraphicContainer>;
 
     private onSwapStackHandler?: SignalConnection;
@@ -110,7 +109,7 @@ export class GuiContainer extends Container {
         this.interactive = inventoryType.interactive;
 
         for(const [ id, slot ] of graphicalInterface.slots.entries()) {
-            const slotContainer = new InventorySlotContainer(id, slot, hologramProvider, itemSpriteProvider);
+            const slotContainer = new InventorySlotContainer(slot, hologramProvider, itemSpriteProvider);
             slotContainer.pivot.set(slot.type.size / 2);
             slotContainer.position.set(slot.type.x, slot.type.y);
             this.addChild(slotContainer);
@@ -130,14 +129,14 @@ export class GuiContainer extends Container {
         }
 
         this.onSwapStackHandler = this.guiCursor.onSwapStack.connect((event) => {
-            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+            if(event.gui != this.graphicalInterface) return;
 
             const pointerStack = event.pointerStack;
             const slot = event.slot;
 
-            if(slot == -1) return;
+            if(slot == null) return;
 
-            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
+            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
             if(slotStack == null) return;
             
             if(slotStack.isEmpty() || slotStack.item != pointerStack.item) {
@@ -146,49 +145,49 @@ export class GuiContainer extends Container {
                 pointerStack.mergeInto(slotStack);
             }
 
-            graphicalInterface.inventory.onUpdate.emit(slot);
+            graphicalInterface.updateSlot(slot);
             event.consume();
         });
         this.onSplitStackHandler = this.guiCursor.onSplitStack.connect((event) => {
-            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+            if(event.gui != this.graphicalInterface) return;
 
             const pointerStack = event.pointerStack;
 
             if(!pointerStack.isEmpty()) return;
 
             const slot = event.slot;
-            if(slot == -1) return;
+            if(slot == null) return;
 
-            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
+            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
             if(slotStack == null) return;
 
             if(slotStack.isEmpty()) return;
             
             slotStack.mergeInto(pointerStack, Math.ceil(slotStack.quantity / 2));
 
-            graphicalInterface.inventory.onUpdate.emit(slot);
+            graphicalInterface.updateSlot(slot);
             event.consume();
         });
         this.onDropOneHandler = this.guiCursor.onDropOne.connect((event) => {
-            if(event.gui != this.graphicalInterface || graphicalInterface.inventory == null) return;
+            if(event.gui != this.graphicalInterface) return;
 
             const pointerStack = event.pointerStack;
 
             if(pointerStack.isEmpty()) return;
 
             const slot = event.slot;
-            if(slot == -1) return;
+            if(slot == null) return;
 
-            const slotStack = graphicalInterface.inventory.slots[slot]?.stack;
+            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
             if(slotStack == null) return;
             
             pointerStack.mergeInto(slotStack, 1);
 
-            graphicalInterface.inventory.onUpdate.emit(slot);
+            graphicalInterface.updateSlot(slot);
             event.consume();
         });
         this.onSelectSlotHandler = this.guiCursor.onSelectSlot.connect((event) => {
-            const slotContainer = this.slotContainers.get(event.slot) ?? null;
+            const slotContainer = event.slot == null ? null : (this.slotContainers.get(event.slot) ?? null);
 
             if(this.highlightedSlot != null) {
                 this.highlightedSlot.setSelected(false);
@@ -204,9 +203,9 @@ export class GuiContainer extends Container {
                 this.highlightedSlot = null;
             }
         });
-        if(graphicalInterface.inventory != null) {
-            this.onUpdateHandler = graphicalInterface.inventory.onUpdate.connect((slotId) => {
-                this.slotContainers.get(slotId)?.updateDisplayItem();
+        for(const [ inventoryId, inventory ] of graphicalInterface.inventories.entries()) {
+            this.onUpdateHandler = inventory.onUpdate.connect((slotId) => {
+                this.slotContainers.get(inventoryId + "." + slotId)?.updateDisplayItem();
             });
         }
         this.on("destroyed", () => {
@@ -232,7 +231,7 @@ export class GuiContainer extends Container {
             slot.updateDisplayItem();
         }
     }
-    public updateSlot(slot: number) {
+    public updateSlot(slot: string) {
         this.slotContainers.get(slot)?.updateDisplayItem();
     }
 }

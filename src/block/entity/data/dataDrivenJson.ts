@@ -93,7 +93,7 @@ export namespace DataDrivenJson {
     }
 
     export interface InventoryGuiSlotType {
-        id: number;
+        id: string | number;
         pos: [ number, number ],
         size?: number,
     }
@@ -110,6 +110,7 @@ export namespace DataDrivenJson {
         texture: string;
         anchor?: [ number, number ],
         offset?: [ number, number ],
+        inventories?: string[],
         slots?: InventoryGuiSlotType[];
         graphics?: Record<string, InventoryGuiGraphicType>;
         interactive?: boolean;

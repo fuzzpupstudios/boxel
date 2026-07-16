@@ -250,12 +250,16 @@ export class PlayingGameStage extends GameStage {
         if(playerSlot.inventory) this.localPlayer.inventory.deserialize(playerSlot.inventory);
 
 
-        const hotbar = this.guiManager.openGui(
-            inventoryGuiTypeRegistry.get("base:hotbar")!.createGui(this.localPlayer.inventory),
-        );
+        const inventories = new Map([
+            ["player", this.localPlayer.inventory]
+        ]);
+        const hotbarGuiType = inventoryGuiTypeRegistry.get("base:hotbar");
+        if(hotbarGuiType != null) {
+            const hotbar = this.guiManager.openGui(hotbarGuiType.createGui(inventories));
 
-        this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
-        hotbar.addChild(this.hotbarSelection);
+            this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
+            hotbar.addChild(this.hotbarSelection);
+        }
 
         this.world.addTickable(this.localPlayer);
 
@@ -389,7 +393,11 @@ export class PlayingGameStage extends GameStage {
                 if(game.input.wasPressed(ControlBinding.OPEN_INVENTORY)) {
                     const inventoryType = inventoryGuiTypeRegistry.get("base:player_inventory")!;
 
-                    this.guiManager.openGui(inventoryType.createGui(this.localPlayer.inventory));
+                    const inventories = new Map([
+                        ["player", this.localPlayer.inventory]
+                    ]);
+                    const gui = inventoryType.createGui(inventories);
+                    this.guiManager.openGui(gui);
                 }
             }
 
@@ -415,21 +423,21 @@ export class PlayingGameStage extends GameStage {
                 let guiContainer: Container | null = target;
                 while(guiContainer != null && !(guiContainer instanceof GuiContainer)) guiContainer = guiContainer.parent;
 
-                let guiSlot: Container | null = target;
-                while(guiSlot != null && !(guiSlot instanceof InventorySlotContainer)) guiSlot = guiSlot.parent;
+                let slotContainer: Container | null = target;
+                while(slotContainer != null && !(slotContainer instanceof InventorySlotContainer)) slotContainer = slotContainer.parent;
 
                 let guiGraphic: Container | null = target;
                 while(guiGraphic != null && !isGuiGraphicContainer(guiGraphic)) guiGraphic = guiGraphic.parent;
 
-                if(guiContainer == null || guiSlot == null) {
-                    const inventoryEvent = new InventoryEvent(this.pointerStack, -1, null);
+                if(guiContainer == null || slotContainer == null) {
+                    const inventoryEvent = new InventoryEvent(this.pointerStack, null, null);
 
                     this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
                 } else {
                     const gui = guiContainer.graphicalInterface;
-                    const slot = guiSlot.slotId;
+                    const guiSlot = slotContainer.guiSlot;
 
-                    const inventoryEvent = new InventoryEvent(this.pointerStack, slot, gui);
+                    const inventoryEvent = new InventoryEvent(this.pointerStack, guiSlot.type.id, gui);
 
                     this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
 
@@ -442,7 +450,7 @@ export class PlayingGameStage extends GameStage {
                         dropOne = game.input.wasPressed(ControlBinding.DROP_ONE);
                         splitStack = game.input.wasPressed(ControlBinding.SPLIT_STACK);
                     } else if(this.game.input.touch != null) {
-                        const slotStack = gui.inventory?.slots[slot]?.stack;
+                        const slotStack = guiSlot.slot.stack;
                         const endedTouch = this.game.input.touch.justEndedTouches.at(-1);
                         
                         if(endedTouch?.uiTouch) {
@@ -642,7 +650,7 @@ export class PlayingGameStage extends GameStage {
                                 : this.localPlayer.inventory.slots[existingSlot]!.stack;
                             this.localPlayer.inventory.slots[selectedSlot]?.stack.swap(stack);
                             const hotbar = this.guiManager.getOpenGui("base:hotbar");
-                            hotbar?.updateSlot(selectedSlot);
+                            hotbar?.updateSlot("player." + selectedSlot);
                         }
                     }
                 }
