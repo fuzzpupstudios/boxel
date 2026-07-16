@@ -39,12 +39,21 @@ export enum TouchAxis {
     DURATION
 }
 
+export interface CompositeControl {
+    keyboardKeys?: { preventActivate: boolean, key: string }[],
+    controllerButtons?: { preventActivate: boolean, button: ControllerButton }[],
+    mouseButtons?: { preventActivate: boolean, button: MouseButton }[],
+    mobileButtons?: { preventActivate: boolean, button: MobileButton }[]
+}
+
 export class Input {
     public keyboard: Keyboard | null = null;
     public mouse: Mouse | null = null;
     public touch: TouchController | null = null;
     public mobile: MobileController | null = null;
     public readonly controllers: Map<Gamepad, Controller> = new Map;
+
+    private readonly lastCompositeBindingsHeld = new Set<CompositeControl>;
 
     public readonly keyBindings: Partial<Record<ControlBinding, string>> = {
         [ControlBinding.RIGHT]: "KeyD",
@@ -139,6 +148,8 @@ export class Input {
 
         [ControlBinding.PAUSE]: MobileButton.PAUSE,
     };
+    public readonly compositeBindings: Partial<Record<ControlBinding, CompositeControl>> = {
+    };
 
     public attachKeyboard(body: HTMLElement) {
         this.keyboard = new Keyboard;
@@ -171,7 +182,7 @@ export class Input {
     public isPressed(binding: ControlBinding): boolean {
         return this.getAnalog(binding) > 0.5;
     }
-    public wasPressed(binding: ControlBinding): boolean {
+    private wasPressedInternal(binding: ControlBinding) {
         if(this.keyboard != null) {
             if(binding in this.keyBindings) {
                 if(this.keyboard.wasPressed(this.keyBindings[binding]!)) return true;
@@ -194,7 +205,46 @@ export class Input {
         }
         return false;
     }
-    public wasUnpressed(binding: ControlBinding): boolean {
+    private wasPressedComposite(binding: ControlBinding) {
+        if(binding in this.compositeBindings) {
+            const compositeBinding = this.compositeBindings[binding]!;
+
+            if(this.isPressed(binding)) {
+                if(this.keyboard != null) {
+                    for(const bind of compositeBinding.keyboardKeys ?? []) {
+                        if(bind.preventActivate) continue;
+                        if(this.keyboard.wasPressed(bind.key)) return true;
+                    }
+                }
+                if(this.mouse != null) {
+                    for(const bind of compositeBinding.mouseButtons ?? []) {
+                        if(bind.preventActivate) continue;
+                        if(this.mouse.wasPressed(bind.button)) return true;
+                    }
+                }
+                if(this.mobile != null) {
+                    for(const bind of compositeBinding.mobileButtons ?? []) {
+                        if(bind.preventActivate) continue;
+                        if(this.mobile.wasPressed(bind.button)) return true;
+                    }
+                }
+                for(const controller of this.controllers.values()) {
+                    for(const bind of compositeBinding.controllerButtons ?? []) {
+                        if(controller.wasPressed(bind.button)) return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+    public wasPressed(binding: ControlBinding): boolean {
+        if(this.wasPressedInternal(binding)) return true;
+        if(this.wasPressedComposite(binding)) return true;
+
+        return false;
+    }
+    private wasUnpressedInternal(binding: ControlBinding) {
         if(this.keyboard != null) {
             if(binding in this.keyBindings) {
                 if(this.keyboard.wasUnpressed(this.keyBindings[binding]!)) return true;
@@ -215,6 +265,25 @@ export class Input {
                 if(controller.wasPressed(this.controllerBindings[binding]!)) return true;
             }
         }
+
+        return false;
+    }
+    private wasUnpressedComposite(binding: ControlBinding) {
+        if(binding in this.compositeBindings) {
+            const compositeBinding = this.compositeBindings[binding]!;
+
+            if(
+                this.lastCompositeBindingsHeld.has(compositeBinding) &&
+                this.getAnalogComposite(binding) < 0.5
+            ) return true;
+        }
+
+        return true;
+    }
+    public wasUnpressed(binding: ControlBinding): boolean {
+        if(this.wasUnpressedInternal(binding)) return true;
+        if(this.wasUnpressedComposite(binding)) return true;
+
         return false;
     }
     public getMouseAxis(axis: MouseAxis, lockedOnly: boolean = false): number {
@@ -282,7 +351,7 @@ export class Input {
 
         return factor;
     }
-    public getAnalog(binding: ControlBinding, clamp: boolean = true): number {
+    private getAnalogInternal(binding: ControlBinding) {
         let factor = 0;
         if(this.keyboard != null) {
             if(binding in this.keyBindings) {
@@ -304,6 +373,52 @@ export class Input {
                 factor += controller.getButtonValue(this.controllerBindings[binding]!);
             }
         }
+
+        return factor;
+    }
+    private getAnalogComposite(binding: ControlBinding) {
+        let factor = 0;
+
+        if(binding in this.compositeBindings) {
+            const compositeBinding = this.compositeBindings[binding]!;
+
+            let pressed = true;
+
+            if(this.keyboard != null) {
+                for(const bind of compositeBinding.keyboardKeys ?? []) {
+                    if(!this.keyboard.isPressed(bind.key)) pressed = false;
+                }
+            }
+            if(this.mouse != null) {
+                for(const bind of compositeBinding.mouseButtons ?? []) {
+                    if(!this.mouse.isPressed(bind.button)) pressed = false;
+                }
+            }
+            if(this.mobile != null) {
+                for(const bind of compositeBinding.mobileButtons ?? []) {
+                    if(!this.mobile.isPressed(bind.button)) pressed = false;
+                }
+            }
+
+            let controllerFactor = 0;
+            const controllerButtons = compositeBinding.controllerButtons ?? [];
+
+            for(const controller of this.controllers.values()) {
+                for(const bind of controllerButtons) {
+                    controllerFactor += controller.getButtonValue(bind.button) / controllerButtons.length;
+                }
+            }
+
+            if(pressed) factor += controllerButtons.length ? controllerFactor : 1;
+        }
+
+        return factor;
+    }
+    public getAnalog(binding: ControlBinding, clamp: boolean = true): number {
+        let factor = 0;
+        
+        factor += this.getAnalogInternal(binding);
+        factor += this.getAnalogComposite(binding);
 
         if(clamp) {
             if(factor > 1) return 1;
@@ -328,6 +443,18 @@ export class Input {
         }
         for(const controller of this.controllers.values()) {
             controller.update();
+        }
+
+        this.lastCompositeBindingsHeld.clear();
+        for(const binding of Object.keys(this.compositeBindings)) {
+            if(typeof binding != "number") continue;
+
+            const compositeBinding = this.compositeBindings[binding];
+            if(compositeBinding == null) continue;
+
+            if(this.getAnalogComposite(binding) > 0.5) {
+                this.lastCompositeBindingsHeld.add(compositeBinding);
+            }
         }
     }
 
