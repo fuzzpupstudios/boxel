@@ -18,15 +18,16 @@ export class DataDrivenInventoryGuiType extends GuiType {
             guiType.inventories.add(inventory);
         }
 
-        for(const slot of json.slots ?? []) {
-            let slotId = slot.id;
-            if(typeof slotId == "number") {
-                if(guiType.inventories.size != 1) {
-                    throw new Error("Cannot use slot number shorthand when the number of defined inventories isn't 1")
-                }
-                const firstInventory = guiType.inventories.values().next().value!;
-                slotId = firstInventory + "." + slotId;
+        for(const [ groupName, groupSlots ] of Object.entries(json.quickMoveGroups ?? {})) {
+            const groupSlotsList = guiType.quickMoveGroups.getOrInsert(groupName, []);
+
+            for(const slotId of groupSlots) {
+                groupSlotsList.push(this.parseSlotId(slotId, guiType));
             }
+        }
+
+        for(const slot of json.slots ?? []) {
+            const slotId = this.parseSlotId(slot.id, guiType);
 
             guiType.addSlot(
                 slotId,
@@ -49,5 +50,14 @@ export class DataDrivenInventoryGuiType extends GuiType {
         guiType.addTexture(PixiAssets.get(json.texture));
 
         return guiType;
+    }
+    private static parseSlotId(id: string | number, guiType: GuiType) {
+        if(typeof id == "string") return id;
+
+        if(guiType.inventories.size != 1) {
+            throw new Error("Cannot use slot number shorthand when the number of defined inventories isn't 1")
+        }
+        const firstInventory = guiType.inventories.values().next().value!;
+        return firstInventory + "." + id;
     }
 }

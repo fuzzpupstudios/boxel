@@ -444,11 +444,13 @@ export class PlayingGameStage extends GameStage {
                     let swapStack = false;
                     let dropOne = false;
                     let splitStack = false;
+                    let quickMove = false;
 
                     if(game.isDesktop) {
                         swapStack = game.input.wasPressed(ControlBinding.SWAP_STACK);
                         dropOne = game.input.wasPressed(ControlBinding.DROP_ONE);
                         splitStack = game.input.wasPressed(ControlBinding.SPLIT_STACK);
+                        quickMove = game.input.wasPressed(ControlBinding.QUICK_MOVE);
                     } else if(this.game.input.touch != null) {
                         const slotStack = guiSlot.slot.stack;
                         const endedTouch = this.game.input.touch.justEndedTouches.at(-1);
@@ -496,9 +498,9 @@ export class PlayingGameStage extends GameStage {
                     if(splitStack && !inventoryEvent.consumed) {
                         this.guiManager.guiCursor.onSplitStack.emit(inventoryEvent);
                     }
-                    // if(game.input.wasPressed(ControlBinding.QUICK_MOVE)) {
-                    //     this.inventoryCursor.onQuickMove.emit();
-                    // }
+                    if(quickMove && !inventoryEvent.consumed) {
+                        this.guiManager.guiCursor.onQuickMove.emit(inventoryEvent);
+                    }
                 }
 
                 if(guiContainer != null && guiGraphic != null) {

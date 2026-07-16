@@ -88,6 +88,7 @@ export class GuiContainer extends Container {
     private onSwapStackHandler?: SignalConnection;
     private onSplitStackHandler?: SignalConnection;
     private onDropOneHandler?: SignalConnection;
+    private onQuickMoveHandler?: SignalConnection;
     private onSelectSlotHandler?: SignalConnection;
     private onUpdateHandler?: SignalConnection;
     private highlightedSlot: InventorySlotContainer | null = null;
@@ -186,6 +187,40 @@ export class GuiContainer extends Container {
             graphicalInterface.updateSlot(slot);
             event.consume();
         });
+        this.onQuickMoveHandler = this.guiCursor.onQuickMove.connect((event) => {
+            if(event.gui != this.graphicalInterface) return;
+
+            const slot = event.slot;
+            if(slot == null) return;
+
+            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
+            if(slotStack == null) return;
+
+            const quickMoveGroups = this.graphicalInterface.type.quickMoveGroups;
+            
+            let currentGroup: string | null = null;
+            for(const [ groupName, groupSlots ] of quickMoveGroups.entries()) {
+                if(groupSlots.includes(slot)) currentGroup = groupName;
+            }
+
+            if(currentGroup == null) return;
+
+            const quickMoveGroupNames = quickMoveGroups.keys().toArray();
+            const nextIndex = (quickMoveGroupNames.indexOf(currentGroup) + 1) % quickMoveGroupNames.length;
+            const newGroup = quickMoveGroups.get(quickMoveGroupNames[nextIndex]!)!;
+
+            for(let i = 0; i < newGroup.length && !slotStack.isEmpty(); i++) {
+                const otherSlotId = newGroup[i]!;
+                const otherSlot = graphicalInterface.slots.get(otherSlotId)?.slot;
+                if(otherSlot == null) continue;
+
+                slotStack.mergeInto(otherSlot.stack);
+                graphicalInterface.updateSlot(otherSlotId);
+            }
+
+            graphicalInterface.updateSlot(slot);
+            event.consume();
+        });
         this.onSelectSlotHandler = this.guiCursor.onSelectSlot.connect((event) => {
             const slotContainer = event.slot == null ? null : (this.slotContainers.get(event.slot) ?? null);
 
@@ -214,6 +249,7 @@ export class GuiContainer extends Container {
             this.onDropOneHandler?.disconnect();
             this.onSelectSlotHandler?.disconnect();
             this.onUpdateHandler?.disconnect();
+            this.onQuickMoveHandler?.disconnect();
         });
     }
 

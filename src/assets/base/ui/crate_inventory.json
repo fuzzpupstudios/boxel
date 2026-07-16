@@ -5,6 +5,21 @@
     "anchor": [ 0.5, 0.5 ],
     "offset": [ 0, 0 ],
     "inventories": [ "crate", "player" ],
+    "quickMoveGroups": {
+        "crate_inventory": [
+            "crate.0", "crate.1", "crate.2", "crate.3", "crate.4", "crate.5", "crate.6", "crate.7", "crate.8", "crate.9",
+            "crate.10", "crate.11", "crate.12", "crate.13", "crate.14", "crate.15", "crate.16", "crate.17", "crate.18", "crate.19",
+            "crate.20", "crate.21", "crate.22", "crate.23", "crate.24", "crate.25", "crate.26", "crate.27", "crate.28", "crate.29",
+            "crate.30", "crate.31", "crate.32", "crate.33", "crate.34", "crate.35", "crate.36", "crate.37", "crate.38", "crate.39"
+        ],
+        "player_inventory": [
+            "player.0", "player.1", "player.2", "player.3", "player.4", "player.5", "player.6", "player.7", "player.8", "player.9",
+            "player.10", "player.11", "player.12", "player.13", "player.14", "player.15", "player.16", "player.17", "player.18", "player.19",
+            "player.20", "player.21", "player.22", "player.23", "player.24", "player.25", "player.26", "player.27", "player.28", "player.29",
+            "player.30", "player.31", "player.32", "player.33", "player.34", "player.35", "player.36", "player.37", "player.38", "player.39",
+            "player.40", "player.41", "player.42", "player.43", "player.44", "player.45", "player.46", "player.47", "player.48", "player.49"
+        ]
+    },
     "slots": [
         { "id": "crate.0", "pos": [ 16, 63 ], "size": 20 },
         { "id": "crate.1", "pos": [ 39, 63 ], "size": 20 },

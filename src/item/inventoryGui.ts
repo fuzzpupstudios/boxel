@@ -36,6 +36,7 @@ export class GuiGraphic {
 
 export abstract class GuiType {
     public readonly inventories = new Set<string>;
+    public readonly quickMoveGroups = new Map<string, string[]>;
     public readonly slots = new Set<GuiInventorySlotType>;
     public readonly graphics = new Set<GuiGraphicType>;
     public texture: Texture = Texture.EMPTY;

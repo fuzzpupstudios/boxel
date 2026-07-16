@@ -111,6 +111,7 @@ export namespace DataDrivenJson {
         anchor?: [ number, number ],
         offset?: [ number, number ],
         inventories?: string[],
+        quickMoveGroups?: Record<string, (string | number)[]>,
         slots?: InventoryGuiSlotType[];
         graphics?: Record<string, InventoryGuiGraphicType>;
         interactive?: boolean;
