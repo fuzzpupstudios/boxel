@@ -489,6 +489,9 @@ export class PlayingGameStage extends GameStage {
                         }
                     }
 
+                    if(quickMove && !inventoryEvent.consumed) {
+                        this.guiManager.guiCursor.onQuickMove.emit(inventoryEvent);
+                    }
                     if(swapStack && !inventoryEvent.consumed) {
                         this.guiManager.guiCursor.onSwapStack.emit(inventoryEvent);
                     }
@@ -497,9 +500,6 @@ export class PlayingGameStage extends GameStage {
                     }
                     if(splitStack && !inventoryEvent.consumed) {
                         this.guiManager.guiCursor.onSplitStack.emit(inventoryEvent);
-                    }
-                    if(quickMove && !inventoryEvent.consumed) {
-                        this.guiManager.guiCursor.onQuickMove.emit(inventoryEvent);
                     }
                 }
 

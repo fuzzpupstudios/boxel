@@ -149,6 +149,14 @@ export class Input {
         [ControlBinding.PAUSE]: MobileButton.PAUSE,
     };
     public readonly compositeBindings: Partial<Record<ControlBinding, CompositeControl>> = {
+        [ControlBinding.QUICK_MOVE]: {
+            keyboardKeys: [
+                { key: "ShiftLeft", preventActivate: true }
+            ],
+            mouseButtons: [
+                { button: MouseButton.LEFT, preventActivate: false }
+            ]
+        }
     };
 
     public attachKeyboard(body: HTMLElement) {
