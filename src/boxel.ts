@@ -262,7 +262,7 @@ export class BoxelGame {
         this.mainStorage = this.persistenceManager.openMainStorage();
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
-        const blob = await fetch("assets/base.zip").then(v => v.blob());
+        const blob = await fetch("assets/base.zip?" + btoa(this.version)).then(v => v.blob());
         await this.assets.loadPack(blob);
 
         this.assets.processTemplates();
