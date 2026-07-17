@@ -286,7 +286,7 @@ export class Input {
             ) return true;
         }
 
-        return true;
+        return false;
     }
     public wasUnpressed(binding: ControlBinding): boolean {
         if(this.wasUnpressedInternal(binding)) return true;
