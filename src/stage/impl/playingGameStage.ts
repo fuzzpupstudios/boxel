@@ -248,6 +248,7 @@ export class PlayingGameStage extends GameStage {
         this.localPlayer.velocity.set(...playerSlot.velocity);
         [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
         if(playerSlot.inventory) this.localPlayer.inventory.deserialize(playerSlot.inventory);
+        this.localPlayer.selectedSlot = playerSlot.selectedSlot;
 
 
         const inventories = new Map([

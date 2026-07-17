@@ -44,7 +44,8 @@ export const WorldPlayer = z.object({
         z.number()
     ]).default([ 0, 0 ]),
     gliding: z.boolean().default(false),
-    inventory: SerializedInventory.optional()
+    inventory: SerializedInventory.optional(),
+    selectedSlot: z.int().default(0)
 });
 
 interface PersistentWorldSchema extends DBSchema {
@@ -119,7 +120,8 @@ export class PersistentWorld {
             velocity: player.velocity.toArray(),
             rotation: [ player.yaw, player.pitch ],
             gliding: player.gliding,
-            inventory: player.inventory.serialize()
+            inventory: player.inventory.serialize(),
+            selectedSlot: player.selectedSlot
         });
     }
 
