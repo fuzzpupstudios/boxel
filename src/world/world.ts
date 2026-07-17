@@ -59,9 +59,9 @@ export class World {
     private terrainGenerator: TerrainGenerator = TerrainGenerator.DEFAULT;
     public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
     public persistentWorld: PersistentWorld | null = null;
-    private readonly chunksToSave = new Set<Chunk>;
+    public readonly chunksToSave = new Set<Chunk>;
     private readonly chunksWithBlockEntities = new Set<Chunk>;
-    private readonly loadingChunks = new Map<number, Promise<Chunk>>;
+    public readonly loadingChunks = new Map<number, Promise<Chunk>>;
     public readonly lighting = new LightingEngine(this);
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {

@@ -34,6 +34,7 @@ import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
 import { GuiItemStack } from "../../gui/guiItemStack";
 import { GuiText } from "../../gui/guiText";
+import { DebugMenu, DebugMenuLineAlignment } from "../../gui/debugMenu";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -44,6 +45,71 @@ export class PlayingGameStage extends GameStage {
     public readonly chunkLoader: ChunkLoader;
     public readonly guiManager: GuiManager;
     public override camera = new PerspectiveCamera(90);
+    
+    public readonly debugMenu = new DebugMenu;
+    public readonly debugMenuLines = {
+        version: this.debugMenu.createLine(
+            DebugMenuLineAlignment.TOP_LEFT, Infinity,
+            (version: string) => `Boxel ${version}`
+        ),
+        queues: this.debugMenu.createLine(
+            DebugMenuLineAlignment.TOP_LEFT, 0.05,
+            (
+                loadingChunks: number, generatingChunks: number, meshingChunks: number,
+                savingChunks: number, unloadingChunks: number
+            ) =>
+                `Load ${loadingChunks}  Gen ${generatingChunks}  Mesh ${meshingChunks}  ` +
+                `Save ${savingChunks}  Unload ${unloadingChunks}`
+        ),
+        player: {
+            position: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_LEFT, 0.1,
+                (x: number, y: number, z: number) => `X ${x}   Y ${y}   Z ${z}`
+            ),
+            rotation: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_LEFT, 0.1,
+                (pitch: number, yaw: number) => `Pitch ${pitch}   Yaw ${yaw}`
+            ),
+            chunk: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_LEFT, 0.5,
+                (x: number, y: number, z: number) => `In chunk ${x}, ${y}, ${z}`
+            ),
+            light: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_LEFT, 0.25,
+                (red: number, green: number, blue: number, sky: number) =>
+                    `Light:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+            ),
+        },
+        lookingBlock: {
+            position: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (x: number, y: number, z: number) => `Looking at ${x}, ${y}, ${z}`
+            ),
+            stateId: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (blockStateId: string) => blockStateId
+            ),
+            light: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (red: number, green: number, blue: number, sky: number) =>
+                    `Light:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+            ),
+            emission: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (red: number, green: number, blue: number, sky: number) =>
+                    `Emission:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+            ),
+            attenuation: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (red: number, green: number, blue: number, sky: number) =>
+                    `Attenuation:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+            ),
+            tags: this.debugMenu.createLine(
+                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
+                (tags: string[]) => tags.join?.("\n") ?? ""
+            ),
+        },
+    }
     
     public readonly localPlayer: Player;
     private persistentWorld: PersistentWorld | null = null;
@@ -126,6 +192,11 @@ export class PlayingGameStage extends GameStage {
 
         this.itemGivePanel = new Container;
         this.itemGivePanel.visible = false;
+
+        this.debugMenu.view.zIndex = 30;
+        this.debugMenu.view.visible = false;
+        this.gui.addChild(this.debugMenu.view);
+        this.debugMenuLines.version.setData(this.game.version);
 
         const giveMenuItems = new Set<string>;
 
@@ -294,6 +365,7 @@ export class PlayingGameStage extends GameStage {
         this.itemGivePanel.position.set(width, 0);
 
         this.guiManager.resize(width, height, pixelRatio);
+        this.debugMenu.resize(width, height);
     }
 
     public setPaused(paused: boolean) {
@@ -809,10 +881,121 @@ export class PlayingGameStage extends GameStage {
 
 
         this.guiManager.update(this.createEventCursor());
-
+        
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
         this.blockBreakParticles.tick(time);
+
+        if(this.game.input.wasPressed(ControlBinding.TOGGLE_DEBUG)) {
+            this.debugMenu.view.visible = !this.debugMenu.view.visible;
+        }
+
+        if(this.debugMenu.view.visible) {            
+            this.debugMenuLines.queues.setData(
+                this.world.loadingChunks.size,
+                this.chunkLoader.columnsToGenerate.size,
+                this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
+                this.world.chunksToSave.size,
+                this.chunkLoader.chunksToUnload.size
+            );
+            this.debugMenuLines.player.position.setData(
+                this.localPlayer.aabb.position.x,
+                this.localPlayer.aabb.position.y,
+                this.localPlayer.aabb.position.z,
+            );
+            this.debugMenuLines.player.rotation.setData(
+                this.localPlayer.pitch,
+                this.localPlayer.yaw,
+            );
+            this.debugMenuLines.player.light.setData(
+                this.world.lighting.red.get(
+                    Math.floor(this.localPlayer.aabb.position.x),
+                    Math.floor(this.localPlayer.aabb.position.y),
+                    Math.floor(this.localPlayer.aabb.position.z)
+                ),
+                this.world.lighting.green.get(
+                    Math.floor(this.localPlayer.aabb.position.x),
+                    Math.floor(this.localPlayer.aabb.position.y),
+                    Math.floor(this.localPlayer.aabb.position.z)
+                ),
+                this.world.lighting.blue.get(
+                    Math.floor(this.localPlayer.aabb.position.x),
+                    Math.floor(this.localPlayer.aabb.position.y),
+                    Math.floor(this.localPlayer.aabb.position.z)
+                ),
+                this.world.lighting.sun.get(
+                    Math.floor(this.localPlayer.aabb.position.x),
+                    Math.floor(this.localPlayer.aabb.position.y),
+                    Math.floor(this.localPlayer.aabb.position.z)
+                )
+            );
+            this.debugMenuLines.player.chunk.setData(
+                Math.floor(this.localPlayer.aabb.position.x) >> 4,
+                Math.floor(this.localPlayer.aabb.position.y) >> 4,
+                Math.floor(this.localPlayer.aabb.position.z) >> 4
+            );
+            if(this.localPlayer.targetedBlock.hit) {
+                this.debugMenuLines.lookingBlock.position.show();
+                this.debugMenuLines.lookingBlock.position.setData(
+                    this.localPlayer.targetedBlock.voxel.x,
+                    this.localPlayer.targetedBlock.voxel.y,
+                    this.localPlayer.targetedBlock.voxel.z
+                );
+                const targetedBlockStateId = this.world.getBlockState(
+                    this.localPlayer.targetedBlock.voxel.x,
+                    this.localPlayer.targetedBlock.voxel.y,
+                    this.localPlayer.targetedBlock.voxel.z
+                );
+                const targetedBlockState = blockStateRegistry.get(targetedBlockStateId);
+
+                this.debugMenuLines.lookingBlock.stateId.show();
+                this.debugMenuLines.lookingBlock.stateId.setData(targetedBlockStateId);
+
+                this.debugMenuLines.lookingBlock.light.show();
+                this.debugMenuLines.lookingBlock.light.setData(
+                    this.world.lighting.red.get(
+                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                    ),
+                    this.world.lighting.green.get(
+                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                    ),
+                    this.world.lighting.blue.get(
+                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                    ),
+                    this.world.lighting.sun.get(
+                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                    )
+                );
+
+                if(targetedBlockState != null) {
+                    this.debugMenuLines.lookingBlock.emission.show();
+                    this.debugMenuLines.lookingBlock.emission.setData(...targetedBlockState.emission);
+
+                    this.debugMenuLines.lookingBlock.attenuation.show();
+                    this.debugMenuLines.lookingBlock.attenuation.setData(...targetedBlockState.attenuation);
+
+                    this.debugMenuLines.lookingBlock.tags.show();
+                    this.debugMenuLines.lookingBlock.tags.setData(Array.from(targetedBlockState.tags));
+                }
+            } else {
+                this.debugMenuLines.lookingBlock.position.hide();
+                this.debugMenuLines.lookingBlock.stateId.hide();
+                this.debugMenuLines.lookingBlock.light.hide();
+                this.debugMenuLines.lookingBlock.emission.hide();
+                this.debugMenuLines.lookingBlock.attenuation.hide();
+                this.debugMenuLines.lookingBlock.tags.hide();
+            }
+        }
+
+        this.debugMenu.update(time);
     }
 
     public createEventCursor() {

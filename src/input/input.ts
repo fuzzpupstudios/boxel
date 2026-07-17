@@ -27,7 +27,9 @@ export enum ControlBinding {
     SPLIT_STACK, DROP_ONE, SWAP_STACK, QUICK_MOVE,
     PRESS_UI,
 
-    SLOT_0, SLOT_1, SLOT_2, SLOT_3, SLOT_4, SLOT_5, SLOT_6, SLOT_7, SLOT_8, SLOT_9
+    TOGGLE_DEBUG,
+
+    SLOT_0, SLOT_1, SLOT_2, SLOT_3, SLOT_4, SLOT_5, SLOT_6, SLOT_7, SLOT_8, SLOT_9,
 }
 
 export enum MouseAxis {
@@ -90,6 +92,7 @@ export class Input {
         [ControlBinding.BACK]: "Escape",
 
         [ControlBinding.FULLSCREEN]: "F11",
+        [ControlBinding.TOGGLE_DEBUG]: "F3",
 
         [ControlBinding.SLOT_0]: "Digit1",
         [ControlBinding.SLOT_1]: "Digit2",
@@ -166,6 +169,13 @@ export class Input {
             ],
             mouseButtons: [
                 { button: MouseButton.LEFT, preventActivate: false }
+            ]
+        },
+        [ControlBinding.TOGGLE_DEBUG]: {
+            controllerButtons: [
+                { button: ControllerButton.RIGHT_STICK, preventActivate: false },
+                { button: ControllerButton.LEFT_STICK, preventActivate: false },
+                { button: ControllerButton.SELECT, preventActivate: false }
             ]
         }
     };

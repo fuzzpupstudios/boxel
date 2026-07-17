@@ -11,8 +11,8 @@ export class ChunkLoader {
     private readonly origin = new Vector3(Infinity);
     private radius = 128;
     private needsUpdate: boolean = true;
-    private readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
-    private readonly chunksToUnload = new Map<number, Chunk>;
+    public readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
+    public readonly chunksToUnload = new Map<number, Chunk>;
     private readonly chunkGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     private updateChunksCooldown: number = 0;
 

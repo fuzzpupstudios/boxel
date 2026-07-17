@@ -14,8 +14,8 @@ export class WorldRenderer {
     public readonly skyColor = uniform(vec3(1.0, 1.0, 1.0));
     public readonly root = new Scene;
     public readonly chunkMesher: ChunkMesher;
-    private readonly dirtyChunks = new Set<Chunk>;
-    private readonly priorityDirtyChunks = new Set<Chunk>;
+    public readonly dirtyChunks = new Set<Chunk>;
+    public readonly priorityDirtyChunks = new Set<Chunk>;
     private readonly renderedChunks = new Map<Chunk, Mesh | null>;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly renderedChunkKeyList = new Set<number>;
