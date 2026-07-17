@@ -19,6 +19,7 @@ export class Player extends Entity {
     );
     public eyeHeight = 1.7;
     public walkSpeed = 2.5;
+    public flySpeed = 1.5;
     public crouchSpeedModifier = 0.3;
     public sprintSpeedModifier = 1.3;
     public jumpHeight = 1;
@@ -63,9 +64,19 @@ export class Player extends Entity {
         let walkSpeed = this.walkSpeed;
         if(this.crouching) walkSpeed *= this.crouchSpeedModifier;
         if(this.sprinting) walkSpeed *= this.sprintSpeedModifier;
-        const moveSpeed = this.onGround
-            ? walkSpeed * (0.16277136 / (friction * friction * friction))
-            : walkSpeed * 0.15;
+        if(this.flying) walkSpeed
+        
+        let moveSpeed = 0;
+        
+        if(this.flying) {
+            moveSpeed = this.flySpeed;
+        } else {
+            if(this.onGround) {
+                moveSpeed = walkSpeed * (0.16277136 / (friction * friction * friction));
+            } else {
+                moveSpeed = walkSpeed * 0.15;
+            }
+        }
         const factor = moveSpeed * time.deltaTime * 20;
 
         this.velocity.x += Math.cos(this.yaw) * dx * factor - Math.sin(this.yaw) * dz * factor;
@@ -103,6 +114,9 @@ export class Player extends Entity {
     }
     public setGliding(gliding: boolean) {
         this.gliding = gliding;
+    }
+    public setFlying(flying: boolean) {
+        this.flying = flying;
     }
 
     public destroy(): boolean {
@@ -262,7 +276,7 @@ export class Player extends Entity {
 
         const direction = new Vector3(0, 0, -1).applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
         
-        if(this.gliding) {
+        if(this.gliding && !this.flying) {
             this.velocity.add(direction.clone().add(new Vector3(0, 0.5, 0)).normalize().multiplyScalar(time.deltaTime * 50));
         }
 

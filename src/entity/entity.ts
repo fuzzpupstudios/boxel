@@ -20,6 +20,7 @@ export abstract class Entity implements Tickable {
     public lastCollisionY = 0;
     public lastCollisionZ = 0;
     public gliding = false;
+    public flying = false;
     public stepHeight = 0.5;
 
     public constructor(world: World) {
@@ -50,6 +51,7 @@ export abstract class Entity implements Tickable {
 
         let gravityInfluence = 1;
         if(this.gliding) gravityInfluence = 0.2;
+        if(this.flying) gravityInfluence = 0;
 
         this.velocity.x += this.world.gravity.x * time.deltaTime * gravityInfluence;
         this.velocity.y += this.world.gravity.y * time.deltaTime * gravityInfluence;
@@ -68,11 +70,23 @@ export abstract class Entity implements Tickable {
         if(collisionZ !== 0) this.velocity.z = 0;
         this.lastCollisionZ = collisionZ;
 
-        if(this.onGround) this.gliding = false;
+        if(this.onGround) this.gliding = this.flying = false;
 
-        const friction = this.gliding ? 0.92 : (this.onGround ? 0.546 : 0.91);
-        const drag = Math.pow(friction, time.deltaTime * 20);
+        let friction = 1;
         if(this.gliding) {
+            friction = 0.92
+        } else if(this.onGround) {
+            friction = 0.546;
+        } else {
+            friction = 0.91;
+        }
+
+        const drag = Math.pow(friction, time.deltaTime * 20);
+        if(this.flying) {
+            this.velocity.x *= drag;
+            this.velocity.y *= Math.pow(0.5, time.deltaTime * 20);
+            this.velocity.z *= drag;
+        } else if(this.gliding) {
             this.velocity.x *= drag;
             this.velocity.y *= drag;
             this.velocity.z *= drag;

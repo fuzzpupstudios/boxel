@@ -534,11 +534,12 @@ export class PlayingGameStage extends GameStage {
                 );
                 this.localPlayer.walk(moveDeltaX, moveDeltaZ, time);
 
+                const canSprint = (!this.localPlayer.crouching && this.localPlayer.onGround) || this.localPlayer.flying;
                 if(moveDeltaZ < -0.9) {
                     if(!this.walkForwardCheckSucceeded) {
                         this.walkForwardCheckSucceeded = true;
 
-                        if(this.sprintFlickCooldown > 0 && !this.localPlayer.crouching) {
+                        if(this.sprintFlickCooldown > 0 && canSprint) {
                             if(!this.localPlayer.sprinting) {
                                 this.localPlayer.setSprinting(true);
                             }
@@ -551,7 +552,7 @@ export class PlayingGameStage extends GameStage {
                         this.localPlayer.setSprinting(false);
                     }
                 }
-                if(game.input.isPressed(ControlBinding.SPRINT) && !this.localPlayer.crouching) {
+                if(game.input.wasPressed(ControlBinding.SPRINT) && canSprint) {
                     if(!this.localPlayer.sprinting) {
                         this.localPlayer.setSprinting(true);
                     }
@@ -560,7 +561,28 @@ export class PlayingGameStage extends GameStage {
                 this.sprintFlickCooldown -= time.deltaTime;
 
                 if(game.input.isPressed(ControlBinding.JUMP)) {
+                    if(!this.jumpCheckSucceeded) {
+                        this.jumpCheckSucceeded = true;
+
+                        if(this.flyCheckCooldown > 0) {
+                            this.localPlayer.setFlying(!this.localPlayer.flying);
+                        }
+                        this.flyCheckCooldown = 0.25;
+                    }
+
                     this.localPlayer.jump();
+                } else {
+                    this.jumpCheckSucceeded = false;
+                }
+                this.flyCheckCooldown -= time.deltaTime;
+
+                if(this.localPlayer.flying) {
+                    if(game.input.isPressed(ControlBinding.FLY_UP)) {
+                        this.localPlayer.velocity.y += 100 * time.deltaTime;
+                    }
+                    if(game.input.isPressed(ControlBinding.FLY_DOWN)) {
+                        this.localPlayer.velocity.y -= 100 * time.deltaTime;
+                    }
                 }
 
                 if(game.input.wasPressed(ControlBinding.CROUCH)) {

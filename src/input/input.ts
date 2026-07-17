@@ -7,6 +7,8 @@ import { TouchController } from "./touch";
 export enum ControlBinding {
     RIGHT, LEFT, FORWARD, BACKWARD,
     JUMP, CROUCH, TOGGLE_CROUCH, SPRINT,
+    
+    FLY_DOWN, FLY_UP,
 
     DESTROY, USE, PICK_BLOCK,
 
@@ -75,6 +77,9 @@ export class Input {
         [ControlBinding.JUMP]: "Space",
         [ControlBinding.CHANGE_PERSPECTIVE]: "G",
 
+        [ControlBinding.FLY_DOWN]: "ShiftLeft",
+        [ControlBinding.FLY_UP]: "Space",
+
         [ControlBinding.NEXT_ITEM]: "BracketRight",
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
 
@@ -116,6 +121,9 @@ export class Input {
         [ControlBinding.TOGGLE_CROUCH]: ControllerButton.LEFT_STICK,
         [ControlBinding.PICK_BLOCK]: ControllerButton.RIGHT_STICK,
 
+        [ControlBinding.FLY_DOWN]: ControllerButton.LEFT_STICK,
+        [ControlBinding.FLY_UP]: ControllerButton.A,
+
         [ControlBinding.SPLIT_STACK]: ControllerButton.X,
         [ControlBinding.DROP_ONE]: ControllerButton.X,
         [ControlBinding.SWAP_STACK]: ControllerButton.A,
@@ -145,6 +153,9 @@ export class Input {
 
         [ControlBinding.CROUCH]: MobileButton.CROUCH,
         [ControlBinding.TOGGLE_CROUCH]: MobileButton.TOGGLE_CROUCH,
+
+        [ControlBinding.FLY_DOWN]: MobileButton.CROUCH,
+        [ControlBinding.FLY_UP]: MobileButton.JUMP,
 
         [ControlBinding.PAUSE]: MobileButton.PAUSE,
     };
