@@ -205,7 +205,7 @@ export class PlayingGameStage extends GameStage {
         this.quitButton = new GuiButton("Save and Quit", 100, 30);
         this.quitButton.on("pointerdown", () => {
             this.audioManager.playMenuClick();
-            this.world.saveWorld().then(() => {
+            this.save().then(() => {
                 this.game.changeStage(new TitleScreenStage(game), false);
             });
         });
@@ -346,8 +346,7 @@ export class PlayingGameStage extends GameStage {
         this.autosaveCooldown -= time.deltaTime;
 
         if(this.autosaveCooldown <= 0) {
-            this.world.saveWorld();
-            this.world.savePlayerSlot("local", this.localPlayer);
+            this.save();
 
             this.autosaveCooldown = 10;
         }
@@ -358,8 +357,7 @@ export class PlayingGameStage extends GameStage {
                     this.setPaused(false);
                 } else {
                     this.setPaused(true);
-                    this.world.saveWorld();
-                    this.world.savePlayerSlot("local", this.localPlayer);
+                    this.save();
                 }
             } else if(game.input.wasPressed(ControlBinding.BACK) && this.paused) {
                 this.setPaused(false);
@@ -804,6 +802,11 @@ export class PlayingGameStage extends GameStage {
         cursor.entity = this.localPlayer;
 
         return cursor;
+    }
+
+    private async save() {
+        await this.world.saveWorld();
+        await this.world.savePlayerSlot("local", this.localPlayer);
     }
 
     public unload(): void {
