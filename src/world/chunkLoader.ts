@@ -21,17 +21,21 @@ export class ChunkLoader {
     ) {}
 
     public updateColumnsToUnload() {
-        const radiusSquare = (this.radius + 16) ** 2;
+        const minX = (this.origin.x - this.radius) >> 4;
+        const maxX = (this.origin.x + this.radius + 15) >> 4;
+        const minY = (this.origin.y - this.radius) >> 4;
+        const maxY = (this.origin.y + this.radius + 15) >> 4;
+        const minZ = (this.origin.z - this.radius) >> 4;
+        const maxZ = (this.origin.z + this.radius + 15) >> 4;
 
         for(const [ key, chunk ] of this.world.chunks.entries()) {
-            const distanceSquare =
-                ((chunk.x << 4) - this.origin.x) * ((chunk.x << 4) - this.origin.x) +
-                ((chunk.y << 4) - this.origin.y) * ((chunk.y << 4) - this.origin.y) +
-                ((chunk.z << 4) - this.origin.z) * ((chunk.z << 4) - this.origin.z);
-
-            if(distanceSquare > radiusSquare) {
-                this.chunksToUnload.set(key, chunk);
-            }
+            if(
+                chunk.x > minX && chunk.x < maxX &&
+                chunk.y > minY && chunk.y < maxY &&
+                chunk.z > minZ && chunk.z < maxZ
+            ) continue;
+            
+            this.chunksToUnload.set(key, chunk);
         }
     }
 
@@ -49,7 +53,7 @@ export class ChunkLoader {
         const minZ = (marker.z - this.radius) >> 4;
         const maxZ = (marker.z + this.radius) >> 4;
 
-        const radiusSquare = this.radius * this.radius;
+        const radiusSquare = (this.radius * this.radius) >> 8;
 
         for(let x = minX; x <= maxX; x++) {
             for(let z = minZ; z <= maxZ; z++) {
@@ -82,7 +86,7 @@ export class ChunkLoader {
         const minZ = (marker.z - this.radius) >> 4;
         const maxZ = (marker.z + this.radius) >> 4;
 
-        const radiusSquare = this.radius * this.radius;
+        const radiusSquare = (this.radius * this.radius) >> 8;
 
         for(let x = minX; x <= maxX; x++) {
             for(let z = minZ; z <= maxZ; z++) {
@@ -127,6 +131,9 @@ export class ChunkLoader {
     public setRadius(radius: number) {
         this.radius = radius;
         this.needsUpdate = true;
+        this.columnsToGenerate.clear();
+        this.chunksToUnload.clear();
+        this.chunkGenerationQueue.clear();
     }
 
     public getRadius() {
