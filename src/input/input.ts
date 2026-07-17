@@ -429,16 +429,17 @@ export class Input {
                 }
             }
 
-            let controllerFactor = 0;
             const controllerButtons = compositeBinding.controllerButtons ?? [];
 
             for(const controller of this.controllers.values()) {
                 for(const bind of controllerButtons) {
-                    controllerFactor += controller.getButtonValue(bind.button) / controllerButtons.length;
+                    if(controller.getButtonValue(bind.button) < 0.5) {
+                        pressed = false;
+                    }
                 }
             }
 
-            if(pressed) factor += controllerButtons.length ? controllerFactor : 1;
+            if(pressed) factor++;
         }
 
         return factor;
