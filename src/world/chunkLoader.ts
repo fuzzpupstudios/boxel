@@ -8,11 +8,11 @@ export class ChunkLoader {
     public maxColumnGenerations = 1;
     public maxChunkUnloads = 64;
 
-    private readonly origin = new Vector3(Infinity);
+    private readonly origin = new Vector3(0);
     private radius = 128;
     private needsUpdate: boolean = true;
     public readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
-    public readonly chunksToUnload = new Map<number, Chunk>;
+    public readonly chunksToHide = new Map<number, Chunk>;
     private readonly chunkGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     private updateChunksCooldown: number = 0;
 
@@ -20,22 +20,24 @@ export class ChunkLoader {
         private readonly world: World
     ) {}
 
-    public updateColumnsToUnload() {
-        const minX = (this.origin.x - this.radius) >> 4;
-        const maxX = (this.origin.x + this.radius + 15) >> 4;
-        const minY = (this.origin.y - this.radius) >> 4;
-        const maxY = (this.origin.y + this.radius + 15) >> 4;
-        const minZ = (this.origin.z - this.radius) >> 4;
-        const maxZ = (this.origin.z + this.radius + 15) >> 4;
+    public updateChunksToHide() {
+        if(this.world.renderer == null) return;
+        
+        const minX = (this.origin.x - this.radius - 15) >> 4;
+        const maxX = (this.origin.x + this.radius + 31) >> 4;
+        const minY = (this.origin.y - this.radius - 15) >> 4;
+        const maxY = (this.origin.y + this.radius + 31) >> 4;
+        const minZ = (this.origin.z - this.radius - 15) >> 4;
+        const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
-        for(const [ key, chunk ] of this.world.chunks.entries()) {
+        for(const chunk of this.world.renderer.renderedChunks.keys()) {
             if(
                 chunk.x > minX && chunk.x < maxX &&
                 chunk.y > minY && chunk.y < maxY &&
                 chunk.z > minZ && chunk.z < maxZ
             ) continue;
             
-            this.chunksToUnload.set(key, chunk);
+            this.chunksToHide.set(chunk.key, chunk);
         }
     }
 
@@ -63,9 +65,9 @@ export class ChunkLoader {
                     if(this.world.renderer.renderedChunkKeyList.has(key)) continue;
 
                     const distanceSquare =
-                        (x - originX + 0.5) * (x - originX + 0.5) +
-                        (y - originY + 0.5) * (y - originY + 0.5) +
-                        (z - originZ + 0.5) * (z - originZ + 0.5);
+                        (x - originX) * (x - originX) +
+                        (y - originY) * (y - originY) +
+                        (z - originZ) * (z - originZ);
                     
                     if(distanceSquare > radiusSquare) continue;
 
@@ -92,8 +94,8 @@ export class ChunkLoader {
             for(let z = minZ; z <= maxZ; z++) {
                 for(let y = minY; y <= maxY; y += 8) {
                     const distanceSquare =
-                        (x - originX + 0.5) * (x - originX + 0.5) +
-                        (z - originZ + 0.5) * (z - originZ + 0.5);
+                        (x - originX) * (x - originX) +
+                        (z - originZ) * (z - originZ);
                     
                     if(distanceSquare > radiusSquare) continue;
 
@@ -132,7 +134,7 @@ export class ChunkLoader {
         this.radius = radius;
         this.needsUpdate = true;
         this.columnsToGenerate.clear();
-        this.chunksToUnload.clear();
+        this.chunksToHide.clear();
         this.chunkGenerationQueue.clear();
     }
 
@@ -143,7 +145,7 @@ export class ChunkLoader {
     public update(time: Time) {
         if(this.needsUpdate) {
             this.updateColumnsToLoad();
-            this.updateColumnsToUnload();
+            this.updateChunksToHide();
             this.updateChunksToLoad();
             this.needsUpdate = false;
         }
@@ -179,9 +181,9 @@ export class ChunkLoader {
         }
 
         {
-            const max = Math.min(this.chunksToUnload.size, this.maxChunkUnloads);
+            const max = Math.min(this.chunksToHide.size, this.maxChunkUnloads);
 
-            const iterator = this.chunksToUnload.entries();
+            const iterator = this.chunksToHide.entries();
             for(let i = 0; i < max; i++) {
                 const next = iterator.next();
                 if(next.done) break;
@@ -189,7 +191,7 @@ export class ChunkLoader {
                 const [ key, chunk ] = next.value;
 
                 this.world.hideChunk(chunk);
-                this.chunksToUnload.delete(key);
+                this.chunksToHide.delete(key);
                 this.columnsToGenerate.delete(key);
             }
         }

@@ -404,7 +404,7 @@ export class PlayingGameStage extends GameStage {
 
     public updateSettings(settings: Settings) {
         this.chunkLoader.setRadius(settings.renderDistance);
-        this.worldRenderer.fogDistance.value = settings.renderDistance - 16;
+        this.worldRenderer.fogDistance.value = Math.max(8, settings.renderDistance - 32);
 
         if(this.dPadLeft != null) {
             this.dPadLeft.scale.set(settings.dPadScale);
@@ -899,7 +899,7 @@ export class PlayingGameStage extends GameStage {
                 this.chunkLoader.columnsToGenerate.size,
                 this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
                 this.world.chunksToSave.size,
-                this.chunkLoader.chunksToUnload.size
+                this.chunkLoader.chunksToHide.size
             );
             this.debugMenuLines.particles.setData(
                 this.worldRenderer.blockBreakParticles.particleCount

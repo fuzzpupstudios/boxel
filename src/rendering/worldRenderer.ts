@@ -21,7 +21,7 @@ export class WorldRenderer {
     public readonly chunkMesher: ChunkMesher;
     public readonly dirtyChunks = new Set<Chunk>;
     public readonly priorityDirtyChunks = new Set<Chunk>;
-    private readonly renderedChunks = new Map<Chunk, Mesh | null>;
+    public readonly renderedChunks = new Map<Chunk, Mesh | null>;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly renderedChunkKeyList = new Set<number>;
     public readonly targetedBlock = new BlockStateOutline;
