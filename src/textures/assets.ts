@@ -239,4 +239,13 @@ export class Assets {
             }
         }
     }
+
+    public getTextureOrThrow(textureId: string) {
+        const texture = this.textureRegistry.get(textureId);
+        if(texture == null) {
+            throw new ReferenceError("Cannot find texture with id " + textureId);
+        }
+
+        return texture;
+    }
 }

@@ -340,6 +340,8 @@ export class PlayingGameStage extends GameStage {
 
         this.worldLoading = false;
         this.setPaused(false);
+
+        this.worldRenderer.create();
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {

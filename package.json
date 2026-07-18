@@ -37,6 +37,7 @@
     "@datastructures-js/priority-queue": "^6.3.5",
     "@pixi/ui": "^2.2.7",
     "@zip.js/zip.js": "^2.8.26",
+    "alea": "^1.0.1",
     "idb": "^8.0.3",
     "javascript-time-ago": "^2.6.4",
     "jsonh-ts": "^3.8.0",

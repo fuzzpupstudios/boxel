@@ -71,6 +71,10 @@ export class WorldRenderer {
         world.setRenderer(this);
     }
 
+    public create() {
+        this.sky.create(this.world.seed);
+    }
+
     public getRenderPass(): Node<"vec4"> {
         const sky = this.sky.renderPass;
         const ground = pass(this.scene, this.camera);
