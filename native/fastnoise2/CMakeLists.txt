@@ -18,8 +18,8 @@ set(FASTNOISE2_TESTS OFF CACHE BOOL "" FORCE)
 set(FASTNOISE2_UTILITY OFF CACHE BOOL "" FORCE)
 set(FASTNOISE2_STANDALONE_PROJECT OFF CACHE BOOL "" FORCE)
 
-add_compile_options(-O3 -msimd128)
-add_link_options(-O3 -msimd128)
+add_compile_options(-O3 -msimd128 -mno-relaxed-simd)
+add_link_options(-O3 -msimd128 -mno-relaxed-simd)
 
 add_subdirectory("${FASTNOISE2_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/fastnoise2")
 
