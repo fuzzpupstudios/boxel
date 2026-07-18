@@ -1,51 +1,80 @@
 import { MathUtils, Mesh, Scene } from "three";
-import { attribute, cameraPosition, float, luminance, mix, normalGeometry, positionWorld, texture, uint, uniform, uv, varying, vec3, vec4, vertexStage } from "three/tsl";
-import { MeshBasicNodeMaterial } from "three/webgpu";
+import { Fn } from "three/src/nodes/TSL.js";
+import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uint, uniform, uv, varying, vec4, vertexStage } from "three/tsl";
+import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
+import type { Assets } from "../textures/assets";
 import type { TextureAtlas } from "../textures/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
+import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
+import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
 import { lightMix, lightUnpack } from "./lightUtils";
+import { Sky } from "./sky";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
     public maxChunkUpdates = 32;
     public readonly fogDistance = uniform(64);
-    public readonly skyColor = uniform(vec3(1.0, 1.0, 1.0));
-    public readonly root = new Scene;
+    public readonly scene = new Scene;
+    public readonly sky: Sky;
     public readonly chunkMesher: ChunkMesher;
     public readonly dirtyChunks = new Set<Chunk>;
     public readonly priorityDirtyChunks = new Set<Chunk>;
     private readonly renderedChunks = new Map<Chunk, Mesh | null>;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly renderedChunkKeyList = new Set<number>;
+    public readonly targetedBlock = new BlockStateOutline;
+    public readonly blockBreakParticles: BlockBreakParticleEngine;
 
     public constructor(
         public readonly world: World,
-        private readonly textureAtlas: TextureAtlas
+        private readonly textureAtlas: TextureAtlas,
+        public readonly camera: PerspectiveCamera,
+        assets: Assets
     ) {
         this.chunkMesher = new ChunkMesher(world);
+        this.sky = new Sky(assets);
+
+        this.blockBreakParticles = new BlockBreakParticleEngine(
+            this.world, this, textureAtlas, this.sky.sunlightColor);
 
         {
-            const light = uint(attribute("lighting") as any);
-            const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
+            this.terrainMaterial = new MeshBasicNodeMaterial({
+                colorNode: Fn<Node<"vec3">>(() => {
+                    const light = uint(attribute("lighting") as any);
+                    const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
 
-            const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
-            const shadow = normalGeometry.dot(vec3(0.6, 1.0, 0.2).normalize()).remap(-1, 1, 0, 1).toVar("shadow");
-            const playerDistanceNode = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
-            
-            const colorNode = vec4(
-                mix(
-                    terrainColor.rgb.mul(lightMix(this.skyColor, shadow, lightColor)),
-                    vec3(1, 1, 1),
-                    playerDistanceNode
-                ),
-                terrainColor.a
-            );
-            this.terrainMaterial = new MeshBasicNodeMaterial({ colorNode, alphaTest: 0.1 });
+                    const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
+                        
+                    If(terrainColor.a.lessThan(0.5), () => Discard());
+
+                    const sunDot = normalGeometry.dot(this.sky.sunPos.normalize());
+                    const moonDot = normalGeometry.dot(this.sky.moonPos.normalize());
+                    
+                    const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 1).toVar("shadow");
+                    const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+
+                    If(fogFactor.greaterThanEqual(1), () => Discard());
+                    
+                    return mix(
+                        terrainColor.rgb.mul(lightMix(this.sky.sunlightColor, shadow, lightColor)),
+                        this.sky.fogColor,
+                        fogFactor
+                    );
+                })(),
+                transparent: true
+            });
         }
 
+        this.scene.add(this.targetedBlock.mesh, this.blockBreakParticles.mesh);
         world.setRenderer(this);
+    }
+
+    public getRenderPass(): Node<"vec4"> {
+        const sky = this.sky.renderPass;
+        const ground = pass(this.scene, this.camera);
+        return vec4(mix(sky.rgb, ground.rgb, ground.a), 1);
     }
 
     public markDirty(chunk: Chunk, priority: boolean = false) {
@@ -78,6 +107,12 @@ export class WorldRenderer {
             this.renderChunk(priorityDirtyChunk);
         }
         this.priorityDirtyChunks.clear();
+
+        this.blockBreakParticles.tick(time);
+        this.sky.updateCamera(this.camera);
+
+        this.sky.time.value = this.world.time;
+        this.sky.update();
     }
 
     public removeChunk(chunk: Chunk) {
@@ -125,7 +160,7 @@ export class WorldRenderer {
 
                 mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
                 mesh.updateMatrix();
-                this.root.add(mesh);
+                this.scene.add(mesh);
             } else {
                 this.renderedChunks.set(chunk, null);
             }
@@ -135,7 +170,7 @@ export class WorldRenderer {
             if(geometrySize > 0) {
                 mesh.geometry = geometry;
                 if(mesh.parent == null) {
-                    this.root.add(mesh);
+                    this.scene.add(mesh);
                 }
             } else {
                 mesh.removeFromParent();

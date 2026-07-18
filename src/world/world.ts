@@ -58,6 +58,7 @@ export class World {
     public readonly chunks = new Map<number, Chunk>;
     private terrainGenerator: TerrainGenerator = TerrainGenerator.DEFAULT;
     public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
+    public time: number = 0;
     public persistentWorld: PersistentWorld | null = null;
     public readonly chunksToSave = new Set<Chunk>;
     private readonly chunksWithBlockEntities = new Set<Chunk>;
@@ -92,6 +93,7 @@ export class World {
         }
         
         this.seed = meta.seed;
+        this.time = meta.time;
     }
 
     public async saveWorld() {
@@ -105,7 +107,8 @@ export class World {
         this.chunksToSave.clear();
 
         this.persistentWorld.saveMeta({
-            seed: this.seed
+            seed: this.seed,
+            time: this.time
         });
     }
     
@@ -374,6 +377,8 @@ export class World {
     }
 
     public tick(time: Time) {
+        this.time += time.deltaTime / 2400;
+
         for(const tickable of this.tickables) {
             tickable.tick(time);
         }

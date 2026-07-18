@@ -1,10 +1,11 @@
-import { Box2, Vector2, Vector3 } from "three";
-import type { UniformNode } from "three/webgpu";
+import { Box2, Vector2 } from "three";
+import type { Node } from "three/webgpu";
 import { Side } from "../block/direction";
 import type { TextureAtlas } from "../textures/textureAtlas";
 import type { World } from "../world/world";
 import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";
+import type { WorldRenderer } from "./worldRenderer";
 
 export class BlockBreakParticleEngine extends ParticleEngine {
     private readonly tileMeshes: Map<string, TileMesh>;
@@ -12,12 +13,13 @@ export class BlockBreakParticleEngine extends ParticleEngine {
 
     public constructor(
         world: World,
+        worldRenderer: WorldRenderer,
         textureAtlas: TextureAtlas,
-        skyColor: UniformNode<"vec3", Vector3>,
+        skyColor: Node<"vec3">,
     ) {
         super(world, textureAtlas.packedTexture, skyColor);
 
-        this.tileMeshes = this.world.renderer!.chunkMesher.tileMeshes;
+        this.tileMeshes = worldRenderer.chunkMesher.tileMeshes;
         for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
             const uvRects = new Set([
                 ...tileMesh.north,

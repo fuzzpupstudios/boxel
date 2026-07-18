@@ -23,7 +23,8 @@ export interface SerializedChunk {
 
 export type WorldMeta = z.infer<typeof WorldMeta>;
 export const WorldMeta = z.object({
-    seed: z.number().default(-1)
+    seed: z.number().default(-1),
+    time: z.number().default(0.1),
 });
 
 export type WorldPlayer = z.infer<typeof WorldPlayer>;

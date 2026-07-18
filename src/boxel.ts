@@ -1,30 +1,31 @@
 import * as PIXI from "pixi.js";
 import "pixi.js/events";
+import "pixi.js/graphics";
 import "pixi.js/mesh";
 import "pixi.js/sprite-nine-slice";
-import "pixi.js/graphics";
 import "pixi.js/text-bitmap";
+import { mix, vec4 } from "three/tsl";
 import * as THREE from "three/webgpu";
 import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./block/blockRegistry";
 import { DataDrivenBlock } from "./block/dataDrivenBlock";
+import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
+import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity";
+import { FontLoader } from "./font/fontLoader";
 import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
 import { ControlBinding, Input } from "./input/input";
 import { DataDrivenInventoryGuiType } from "./item/dataDrivenInventoryGuiType";
+import { DataDrivenItem } from "./item/dataDrivenItem";
 import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
+import { itemRegistry } from "./item/itemRegistry";
 import type { MainStorage } from "./persistence/mainStorage";
 import { PersistenceManager } from "./persistence/persistenceManager";
 import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/impl/titleScreenStage";
 import { Assets } from "./textures/assets";
+import { AudioManager } from "./textures/audioManager";
 import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
-import { itemRegistry } from "./item/itemRegistry";
-import { DataDrivenItem } from "./item/dataDrivenItem";
-import { FontLoader } from "./font/fontLoader";
-import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
-import { BlockEntityType } from "./block/entity/blockEntity";
-import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity";
 
 
 export class BoxelGame {
@@ -32,15 +33,18 @@ export class BoxelGame {
 
     public readonly threeRenderer: THREE.WebGPURenderer;
     public readonly gui: PIXI.Application;
+    public readonly renderPipeline: THREE.RenderPipeline;
     public guiBackground?: PIXI.Sprite;
     public controllerCrosshair: GuiControllerCrosshair | null = null;
 
     public readonly input: Input;
     public readonly assets = new Assets;
     public readonly persistenceManager = new PersistenceManager;
+    public readonly audioManager = new AudioManager(this.assets);
 
     public textureAtlas: TextureAtlas | null = null;
     public activeStages = new Array<GameStage>;
+    public stagePasses = new Array<THREE.Node<"vec4">>;
     public settings: Settings;
     
     public readonly isDesktop: boolean;
@@ -75,6 +79,9 @@ export class BoxelGame {
             forceWebGL: true,
             antialias: false
         });
+        this.renderPipeline = new THREE.RenderPipeline(this.threeRenderer);
+        this.updateRenderPipeline();
+
         this.gui = new PIXI.Application();
         (<any>globalThis).__PIXI_APP__ = this.gui;
         
@@ -131,6 +138,8 @@ export class BoxelGame {
 
             this.activeStages.push(stage);
             this.openStage(stage);
+
+            this.updateRenderPipeline();
         } else {
             requestAnimationFrame(() => {
                 this.changeStage(stage, savePrevious, true);
@@ -141,6 +150,8 @@ export class BoxelGame {
     public previousStage(immediate = false) {
         if(immediate) {
             const stage = this.activeStages.pop();
+            this.stagePasses.pop();
+            this.updateRenderPipeline();
             if(stage != null) {
                 this.closeStage(stage);
             }
@@ -149,6 +160,22 @@ export class BoxelGame {
                 this.previousStage(true);
             })
         }
+    }
+
+    public updateRenderPipeline() {
+        let node: THREE.Node<"vec4"> = vec4(0, 0, 0, 1);
+
+        for(const stage of this.activeStages) {
+            const pass = stage.getRenderPass();
+            if(pass == null) continue;
+
+            node = mix(node, pass, pass.a);
+        }
+
+        console.log("updated render pipeline");
+
+        this.renderPipeline.outputNode = node;
+        this.renderPipeline.needsUpdate = true;
     }
 
     private updateUiSizes(width: number, height: number, pixelRatio: number) {
@@ -272,7 +299,6 @@ export class BoxelGame {
         registerAllBlockStates();
 
         await this.threeRenderer.init();
-        this.threeRenderer.setClearColor(0xffffff);
         await this.gui.init({
             backgroundAlpha: 0,
             antialias: false,
@@ -378,9 +404,8 @@ export class BoxelGame {
 
         for(const activeStage of this.activeStages) {
             activeStage.tick(time);
-
-            this.threeRenderer.render(activeStage.scene, activeStage.camera);
         }
+        this.renderPipeline.render();
         this.gui.render();
         this.controllerCrosshair?.update(time);
         this.input.update();

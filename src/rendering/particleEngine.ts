@@ -1,6 +1,6 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
 import { attribute, billboarding, float, positionGeometry, texture, uint, uv, varying, vertexStage } from "three/tsl";
-import { IntType, MeshBasicNodeMaterial, UniformNode, Vector3 } from "three/webgpu";
+import { IntType, MeshBasicNodeMaterial, Node } from "three/webgpu";
 import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { Time } from "../time";
@@ -39,7 +39,7 @@ export class ParticleEngine {
     public constructor(
         public readonly world: World,
         private readonly particleTexture: Texture,
-        private readonly skyColor: UniformNode<"vec3", Vector3>,
+        private readonly skyColor: Node<"vec3">,
         options?: Partial<{
             drag: number
         }>

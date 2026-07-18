@@ -35,13 +35,13 @@ export class WorldCreateStage extends GameStage {
 
         this.backButton = new GuiButton("Back", 100, 30);
         this.backButton.on("pointerdown", () => {
-            this.audioManager.playMenuBack();
+            this.game.audioManager.playMenuBack();
             this.game.previousStage();
         });
 
         this.createWorldButton = new GuiButton("Finish", 100, 30);
         this.createWorldButton.on("pointerdown", async () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
 
             const worldSelect = this.game.getActiveStage<WorldSelectStage>(WorldSelectStage);
             if(worldSelect == null) return;

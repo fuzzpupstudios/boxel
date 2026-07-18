@@ -1,4 +1,4 @@
-import { Assets, BitmapText, Container, Sprite, TextStyle, Texture } from "pixi.js";
+import { Assets, Container, Sprite, Texture } from "pixi.js";
 import { MathUtils, PerspectiveCamera } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
@@ -6,13 +6,16 @@ import { Player } from "../../entity/player";
 import { EventCursor } from "../../events/eventSheet";
 import { GuiButton } from "../../gui/button";
 import { isGuiGraphicContainer } from "../../gui/data/guiGraphic";
+import { DebugMenu, DebugMenuLineAlignment } from "../../gui/debugMenu";
 import { GuiItemSpriteProvider } from "../../gui/guiItem";
+import { GuiItemStack } from "../../gui/guiItemStack";
 import { GuiManager } from "../../gui/guiManager";
+import { GuiText } from "../../gui/guiText";
 import { GuiContainer, InventoryEvent, InventorySlotContainer } from "../../gui/inventoryGuiContainer";
 import { GuiDPadLeft } from "../../gui/mobile/dPadLeft";
 import { GuiDPadRight } from "../../gui/mobile/dPadRight";
 import { Topbar } from "../../gui/mobile/topbar";
-import { TileHologram, TileHologramProvider } from "../../gui/tileHologram";
+import { TileHologramProvider } from "../../gui/tileHologram";
 import { ControllerAxis } from "../../input/controller";
 import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
 import { MobileController } from "../../input/mobileController";
@@ -32,19 +35,16 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
-import { GuiItemStack } from "../../gui/guiItemStack";
-import { GuiText } from "../../gui/guiText";
-import { DebugMenu, DebugMenuLineAlignment } from "../../gui/debugMenu";
+import type { Node } from "three/webgpu";
+import { mix, vec4 } from "three/tsl";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
     public readonly worldRenderer: WorldRenderer;
-    public readonly targetedBlock = new BlockStateOutline;
-    public readonly blockBreakParticles: BlockBreakParticleEngine;
     public readonly holdingBlockPreview: GuiItemStack;
     public readonly chunkLoader: ChunkLoader;
     public readonly guiManager: GuiManager;
-    public override camera = new PerspectiveCamera(90);
+    public readonly camera = new PerspectiveCamera(90);
     
     public readonly debugMenu = new DebugMenu;
     public readonly debugMenuLines = {
@@ -154,10 +154,10 @@ export class PlayingGameStage extends GameStage {
         super(game);
 
         this.world = new World;
-        this.worldRenderer = new WorldRenderer(this.world, this.game.textureAtlas!);
+        this.worldRenderer = new WorldRenderer(
+            this.world, this.game.textureAtlas!, this.camera, this.game.assets);
         this.chunkLoader = new ChunkLoader(this.world);
         this.localPlayer = new Player(this.world);
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, game.textureAtlas!, this.worldRenderer.skyColor);
 
         this.hologramProvider = new TileHologramProvider(game.textureAtlas!);
         this.itemSpriteProvider = new GuiItemSpriteProvider();
@@ -263,19 +263,19 @@ export class PlayingGameStage extends GameStage {
 
         this.resumeButton = new GuiButton("Resume", 100, 30);
         this.resumeButton.on("pointerdown", () => {
-            this.audioManager.playMenuBack();
+            this.game.audioManager.playMenuBack();
             this.setPaused(false);
         });
 
         this.settingsButton = new GuiButton("Settings", 100, 30);
         this.settingsButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new SettingsScreenStage(game));
         });
 
         this.quitButton = new GuiButton("Save and Quit", 100, 30);
         this.quitButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.save().then(() => {
                 this.game.changeStage(new TitleScreenStage(game), false);
             });
@@ -296,21 +296,20 @@ export class PlayingGameStage extends GameStage {
         EventCursor.setClientPlatform({
             usingTouchscreen: !this.game.isDesktop,
             guiManager: this.guiManager,
-            audioManager: this.audioManager,
-            blockBreakParticles: this.blockBreakParticles
+            audioManager: this.game.audioManager,
+            blockBreakParticles: this.worldRenderer.blockBreakParticles
         });
 
-        this.camera.add(this.audioManager.listener);
+        this.camera.add(this.game.audioManager.listener);
+    }
+    public getRenderPass(): Node<"vec4"> {
+        return this.worldRenderer.getRenderPass();
     }
     public async openWorld(worldId: string) {
         this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
 
         this.world.setPersistentWorld(this.persistentWorld);
         this.world.setTerrainGenerator(new SimpleTerrainGenerator());
-
-        this.scene.add(this.worldRenderer.root);
-        this.scene.add(this.targetedBlock.mesh);
-        this.scene.add(this.blockBreakParticles.mesh);
 
         await this.world.loadWorld();
         
@@ -809,20 +808,21 @@ export class PlayingGameStage extends GameStage {
 
                 this.localPlayer.rotate(lookDeltaX, lookDeltaY);
 
+                const targetedBlock = this.worldRenderer.targetedBlock;
                 if(
                     this.localPlayer.targetedBlock.hit &&
                     this.localPlayer.targetedBlock.distance < this.localPlayer.reachDistance
                 ) {
-                    this.targetedBlock.mesh.visible = true;
-                    this.targetedBlock.mesh.position.copy(this.localPlayer.targetedBlock.voxel)
+                    targetedBlock.mesh.visible = true;
+                    targetedBlock.mesh.position.copy(this.localPlayer.targetedBlock.voxel)
                     const stateKey = this.world.getBlockState(
                         this.localPlayer.targetedBlock.voxel.x,
                         this.localPlayer.targetedBlock.voxel.y,
                         this.localPlayer.targetedBlock.voxel.z
                     );
-                    this.targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
+                    targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
                 } else {
-                    this.targetedBlock.mesh.visible = false;
+                    targetedBlock.mesh.visible = false;
                 }
 
                 if(game.input.wasPressed(ControlBinding.NEXT_ITEM)) {
@@ -884,7 +884,6 @@ export class PlayingGameStage extends GameStage {
         
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
-        this.blockBreakParticles.tick(time);
 
         if(this.game.input.wasPressed(ControlBinding.TOGGLE_DEBUG)) {
             this.debugMenu.view.visible = !this.debugMenu.view.visible;

@@ -34,25 +34,25 @@ export class SettingsScreenStage extends GameStage {
 
         this.backButton = new GuiButton("Back", 100, 30);
         this.backButton.on("pointerdown", () => {
-            this.audioManager.playMenuBack();
+            this.game.audioManager.playMenuBack();
             this.game.previousStage();
         });
 
         this.videoButton = new GuiButton("Video", 160, 24);
         this.videoButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new VideoSettingsScreenStage(game));
         });
 
         this.controlsButton = new GuiButton("Control", 160, 24);
         this.controlsButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new ControlSettingsScreenStage(game));
         });
 
         this.guiSettingsButton = new GuiButton("GUI", 160, 24);
         this.guiSettingsButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new GuiSettingsScreenStage(game));
         });
 

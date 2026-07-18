@@ -59,19 +59,19 @@ export class TitleScreenStage extends GameStage {
 
         this.playButton = new GuiButton("Play", 100, 30);
         this.playButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new WorldSelectStage(this.game));
         });
 
         this.settingsButton = new GuiButton("Settings", 100, 30);
         this.settingsButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new SettingsScreenStage(this.game));
         });
 
         this.creditsButton = new GuiButton("Credits", 100, 30);
         this.creditsButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             this.game.changeStage(new CreditsScreenStage(this.game));
         });
 
@@ -79,7 +79,7 @@ export class TitleScreenStage extends GameStage {
             new Texture(Assets.get("base:ui/fullscreen_button.png"))
         );
         this.fullscreenButton.on("pointerdown", () => {
-            this.audioManager.playMenuClick();
+            this.game.audioManager.playMenuClick();
             game.toggleFullscreen();
         });
         if(game.isDesktop) {

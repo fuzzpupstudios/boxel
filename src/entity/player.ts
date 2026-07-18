@@ -144,7 +144,7 @@ export class Player extends Entity {
 
         this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
         const gameStage = BoxelGame.INSTANCE.getActiveStage<PlayingGameStage>(PlayingGameStage);
-        gameStage?.blockBreakParticles.blockDestructionParticles(
+        gameStage?.worldRenderer.blockBreakParticles.blockDestructionParticles(
             this.targetedBlock.voxel.x,
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
