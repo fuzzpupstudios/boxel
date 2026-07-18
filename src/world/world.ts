@@ -128,18 +128,27 @@ export class World {
         await this.persistentWorld.savePlayerSlot(id, player);
     }
 
-    public unloadChunk(chunk: Chunk) {
+    public hideChunk(chunk: Chunk) {
         if(this.renderer != null) {
             this.renderer.removeChunk(chunk);
         }
+    }
+
+    public async unloadChunk(chunk: Chunk) {
+        this.hideChunk(chunk);
 
         for(const blockEntity of chunk.blockEntities) {
             this.tickables.delete(blockEntity);
         }
 
         this.chunks.delete(chunk.key);
-        this.chunksToSave.add(chunk);
         this.chunksWithBlockEntities.delete(chunk);
+
+        if(this.persistentWorld == null) {
+            console.warn("No PersistentWorld container present; changes in chunk " + chunk + " were lost");
+        } else {
+            this.persistentWorld.saveChunk(chunk);
+        }
     }
 
     public generateColumn(columnX: number, columnY: number, columnZ: number) {

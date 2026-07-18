@@ -188,7 +188,7 @@ export class ChunkLoader {
 
                 const [ key, chunk ] = next.value;
 
-                this.world.unloadChunk(chunk);
+                this.world.hideChunk(chunk);
                 this.chunksToUnload.delete(key);
                 this.columnsToGenerate.delete(key);
             }
