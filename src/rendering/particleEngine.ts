@@ -33,13 +33,13 @@ export class ParticleEngine {
     private readonly sizeAttr: InstancedBufferAttribute;
     private readonly uvRectAttr: InstancedBufferAttribute;
 
-    private particleCount = 0;
+    public particleCount = 0;
     public drag = 0.98;
 
     public constructor(
         public readonly world: World,
         private readonly particleTexture: Texture,
-        private readonly skyColor: Node<"vec3">,
+        private readonly sunlightColor: Node<"vec3">,
         options?: Partial<{
             drag: number
         }>
@@ -108,7 +108,7 @@ export class ParticleEngine {
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
             ).toVar("particleUv");
             const particleColor = texture(this.particleTexture, particleUv)
-                .mul(lightMix(this.skyColor, float(1), lightColor)).toVar("particleColor");
+                .mul(lightMix(this.sunlightColor, float(1), lightColor)).toVar("particleColor");
 
             this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
                 vertexNode: billboarding({
@@ -122,6 +122,7 @@ export class ParticleEngine {
                 depthWrite: false,
             }));
             this.mesh.frustumCulled = false;
+            this.mesh.renderOrder = 1;
         }
     }
 

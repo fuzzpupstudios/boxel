@@ -1,5 +1,6 @@
 import { Assets, Container, Sprite, Texture } from "pixi.js";
 import { MathUtils, PerspectiveCamera } from "three";
+import type { Node } from "three/webgpu";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import { Player } from "../../entity/player";
@@ -24,8 +25,6 @@ import { inventoryGuiTypeRegistry } from "../../item/inventoryGuiTypeRegistry";
 import { itemRegistry } from "../../item/itemRegistry";
 import { ItemStack } from "../../item/itemStack";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
-import { BlockBreakParticleEngine } from "../../rendering/blockBreakParticleEngine";
-import { BlockStateOutline } from "../../rendering/blockStateOutline";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Settings } from "../../settings";
 import type { Time } from "../../time";
@@ -35,8 +34,6 @@ import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "./settings/settingsGameStage";
 import { TitleScreenStage } from "./titleScreenStage";
-import type { Node } from "three/webgpu";
-import { mix, vec4 } from "three/tsl";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -60,6 +57,13 @@ export class PlayingGameStage extends GameStage {
             ) =>
                 `Load ${loadingChunks}  Gen ${generatingChunks}  Mesh ${meshingChunks}  ` +
                 `Save ${savingChunks}  Unload ${unloadingChunks}`
+        ),
+        particles: this.debugMenu.createLine(
+            DebugMenuLineAlignment.TOP_LEFT, 0.05,
+            (
+                blockBreakParticles: number
+            ) =>
+                `Particles ${blockBreakParticles}`
         ),
         player: {
             position: this.debugMenu.createLine(
@@ -889,13 +893,16 @@ export class PlayingGameStage extends GameStage {
             this.debugMenu.view.visible = !this.debugMenu.view.visible;
         }
 
-        if(this.debugMenu.view.visible) {            
+        if(this.debugMenu.view.visible) {
             this.debugMenuLines.queues.setData(
                 this.world.loadingChunks.size,
                 this.chunkLoader.columnsToGenerate.size,
                 this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
                 this.world.chunksToSave.size,
                 this.chunkLoader.chunksToUnload.size
+            );
+            this.debugMenuLines.particles.setData(
+                this.worldRenderer.blockBreakParticles.particleCount
             );
             this.debugMenuLines.player.position.setData(
                 this.localPlayer.aabb.position.x,

@@ -15,9 +15,9 @@ export class BlockBreakParticleEngine extends ParticleEngine {
         world: World,
         worldRenderer: WorldRenderer,
         textureAtlas: TextureAtlas,
-        skyColor: Node<"vec3">,
+        sunlightColor: Node<"vec3">,
     ) {
-        super(world, textureAtlas.packedTexture, skyColor);
+        super(world, textureAtlas.packedTexture, sunlightColor);
 
         this.tileMeshes = worldRenderer.chunkMesher.tileMeshes;
         for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
