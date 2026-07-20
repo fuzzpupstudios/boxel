@@ -9,6 +9,7 @@ import { SerializedInventory } from "../item/inventory";
 import type { SerializedBlockEntity } from "../block/entity/blockEntity";
 import { blockEntityTypeRegistry } from "../block/entity/blockEntityRegistry";
 import { UnknownBlockEntityType } from "../block/entity/unknownBlockEntity";
+import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 
 export interface SerializedChunk {
     version: number,
@@ -213,7 +214,15 @@ export class PersistentWorld {
     private serializeChunk(chunk: Chunk): SerializedChunk {
         const lighting: Record<string, ArrayBuffer> = {};
 
-        for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
+        const lightingNames = new Set([
+            ...lightChannelRegistry.keys(),
+            ...chunk.lightingChunks.keys()
+        ]);
+
+        for(const lightChannelId of lightingNames) {
+            const lightingChunk = chunk.getLightingChunk(lightChannelId);
+            if(lightingChunk == null) continue;
+
             lighting[lightChannelId] = lightingChunk.nibbles.buffer;
         }
 

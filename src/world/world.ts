@@ -205,6 +205,7 @@ export class World {
         const tileChunk = this.tiles.chunks.get(chunkKey);
         if(tileChunk != null) {
             chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk);
+            chunk.setWorld(this);
             this.chunks.set(chunkKey, chunk);
             return chunk;
         }
@@ -236,6 +237,7 @@ export class World {
                 const lightingGrid = this.lighting.getChannel(lightChannelId).lightingGrid;
                 lightingGrid.chunks.set(chunkKey, lightingChunk);
             }
+            chunk.setWorld(this);
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
