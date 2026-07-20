@@ -885,6 +885,9 @@ export class PlayingGameStage extends GameStage {
             this.pointerGuiStack.updateDisplayItem();
         }
 
+        // copy the sky color from the world renderer's sky to the lighting channel color value
+        this.world.lighting.getChannel("base:sky").color.value.copy(
+            this.worldRenderer.sky.sunlightColor.value);
 
         this.guiManager.update(this.createEventCursor());
         

@@ -9,8 +9,9 @@ import { Chunk, World } from "../world/world";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
-import { lightMix } from "./lightUtils";
+import { createLightColorNode } from "./lightUtils";
 import { Sky } from "./sky";
+import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
@@ -36,19 +37,11 @@ export class WorldRenderer {
         this.chunkMesher = new ChunkMesher(world);
         this.sky = new Sky(assets);
 
-        this.blockBreakParticles = new BlockBreakParticleEngine(
-            this.world, this, textureAtlas, this.sky.sunlightColor);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlas);
 
         {
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn<Node<"vec3">>(() => {
-                    const lightColor = vec4(
-                        <Node<"float">>attribute("light0", "float"),
-                        <Node<"float">>attribute("light1", "float"),
-                        <Node<"float">>attribute("light2", "float"),
-                        <Node<"float">>attribute("light3", "float")
-                    ).pow3();
-
                     const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
                         
                     If(terrainColor.a.lessThan(0.5), () => Discard());
@@ -61,8 +54,10 @@ export class WorldRenderer {
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     
+                    const lightColor = createLightColorNode(this.world.lighting, shadow);
+
                     return mix(
-                        terrainColor.rgb.mul(lightMix(this.sky.sunlightColor, shadow, lightColor)),
+                        terrainColor.rgb.mul(lightColor),
                         this.sky.fogColor,
                         fogFactor
                     );

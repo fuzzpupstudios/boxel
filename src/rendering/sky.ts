@@ -1,5 +1,5 @@
 import { Object3D } from "three";
-import { cameraPosition, float, instanceIndex, pass, positionWorld, uniform, vec3, vec4, vertexIndex } from "three/tsl";
+import { cameraPosition, color, float, instanceIndex, pass, positionWorld, uniform, vec3, vec4, vertexIndex } from "three/tsl";
 import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, ConstantAlphaFactor, Euler, Float32BufferAttribute, InstancedBufferGeometry, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicMaterial, MeshBasicNodeMaterial, NearestFilter, Node, PassNode, PerspectiveCamera, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
 import type { Assets } from "../textures/assets";
 import Alea from "alea";
@@ -9,9 +9,9 @@ export class Sky {
     public readonly sunPos = uniform(vec3(0));
     public readonly moonPos = uniform(vec3(0));
 
-    public readonly skyColor = uniform(vec3(0, 0, 0));
-    public readonly fogColor = uniform(vec3(0, 0, 0));
-    public readonly sunlightColor = uniform(vec3(0, 0, 0));
+    public readonly skyColor = uniform(color(0, 0, 0));
+    public readonly fogColor = uniform(color(0, 0, 0));
+    public readonly sunlightColor = uniform(color(0, 0, 0));
     public readonly dayFactor = uniform(float(0));
     public readonly starThreshold = uniform(float(0));
 

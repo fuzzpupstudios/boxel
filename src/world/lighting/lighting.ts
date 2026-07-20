@@ -1,23 +1,30 @@
 import { MathUtils, type Box3 } from "three";
+import { uniform } from "three/tsl";
+import type { Color, UniformNode } from "three/webgpu";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { VoxelGrid } from "../voxelGrid";
+import type { LightChannelType } from "./lightChannelRegistry";
 import type { LightingGrid } from "./lightingGrid";
 
 const lerp = MathUtils.lerp;
 
 export abstract class Lighting {
+    public readonly color: UniformNode<"color", Color>;
     protected readonly lightProperties = new Map<string, number>;
-
+    
     public constructor(
         public readonly lightingGrid: LightingGrid,
         public readonly tiles: VoxelGrid,
-        public readonly channel: string
+        public readonly channel: string,
+        public readonly type: LightChannelType
     ) {
         for(const [ blockStateId, blockState ] of blockStateRegistry.entries()) {
             const emission = blockState.emission.get(channel) ?? 0;
             const attenuation = blockState.attenuation.get(channel) ?? 1;
             this.lightProperties.set(blockStateId, (emission & 0xf) << 4 | attenuation & 0xf);
         }
+
+        this.color = uniform(type.defaultColor);
     }
 
     protected getLightProperties(x: number, y: number, z: number) {

@@ -1,5 +1,4 @@
 import { Box2, Vector2 } from "three";
-import type { Node } from "three/webgpu";
 import { Side } from "../block/direction";
 import type { TextureAtlas } from "../textures/textureAtlas";
 import type { World } from "../world/world";
@@ -14,10 +13,9 @@ export class BlockBreakParticleEngine extends ParticleEngine {
     public constructor(
         world: World,
         worldRenderer: WorldRenderer,
-        textureAtlas: TextureAtlas,
-        sunlightColor: Node<"vec3">,
+        textureAtlas: TextureAtlas
     ) {
-        super(world, textureAtlas.packedTexture, sunlightColor);
+        super(world, textureAtlas.packedTexture);
 
         this.tileMeshes = worldRenderer.chunkMesher.tileMeshes;
         for(const [ blockStateId, tileMesh ] of this.tileMeshes) {

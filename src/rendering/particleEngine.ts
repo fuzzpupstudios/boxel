@@ -1,11 +1,11 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
-import { attribute, billboarding, float, positionGeometry, texture, uint, uv, varying, vec4, vertexStage } from "three/tsl";
-import { HalfFloatType, IntType, MeshBasicNodeMaterial, Node, type TypedArray } from "three/webgpu";
+import { attribute, billboarding, float, positionGeometry, texture, uv } from "three/tsl";
+import { MeshBasicNodeMaterial, Node } from "three/webgpu";
 import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { lightMix } from "./lightUtils";
+import { createLightColorNode } from "./lightUtils";
 
 export class ParticleEngine {
     public static readonly MAX_PARTICLES = 65535;
@@ -40,7 +40,6 @@ export class ParticleEngine {
     public constructor(
         public readonly world: World,
         private readonly particleTexture: Texture,
-        private readonly sunlightColor: Node<"vec3">,
         options?: Partial<{
             drag: number
         }>
@@ -112,18 +111,12 @@ export class ParticleEngine {
             const particlePosition = attribute("particlePosition", "vec3");
             const particleSize = attribute("particleSize", "float") as any;
             const particleUvRect = attribute("particleUvRect", "vec4") as any;
-            const lightColor = vec4(
-                <Node<"float">>attribute("light0", "float"),
-                <Node<"float">>attribute("light1", "float"),
-                <Node<"float">>attribute("light2", "float"),
-                <Node<"float">>attribute("light3", "float")
-            ).pow3();
 
             const particleUv = particleUvRect.xy.add(
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
             ).toVar("particleUv");
             const particleColor = texture(this.particleTexture, particleUv)
-                .mul(lightMix(this.sunlightColor, float(1), lightColor)).toVar("particleColor");
+                .mul(createLightColorNode(this.world.lighting, float(1))).toVar("particleColor");
 
             this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
                 vertexNode: billboarding({
