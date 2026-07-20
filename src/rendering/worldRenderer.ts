@@ -1,6 +1,6 @@
 import { MathUtils, Mesh, Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
-import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uint, uniform, uv, varying, vec4, vertexStage } from "three/tsl";
+import { attribute, cameraPosition, color, Discard, float, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
 import type { Assets } from "../textures/assets";
 import type { TextureAtlas } from "../textures/textureAtlas";
@@ -11,7 +11,6 @@ import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
 import { createLightColorNode } from "./lightUtils";
 import { Sky } from "./sky";
-import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
@@ -43,18 +42,29 @@ export class WorldRenderer {
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn<Node<"vec3">>(() => {
                     const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
-                        
+
+                    const faceType = attribute<"uint">("faceType", "uint");
+                    const lit = faceType.bitAnd(1).toBool();
+
                     If(terrainColor.a.lessThan(0.5), () => Discard());
 
                     const sunDot = normalGeometry.dot(this.sky.sunPos.normalize());
                     const moonDot = normalGeometry.dot(this.sky.moonPos.normalize());
                     
+                    const c = 1;
+                    const ao = float(c).div(attribute<"float">("aoFactor", "float").add(c)).oneMinus().toVar("aoCalculated");
+
                     const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 1).toVar("shadow");
                     const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     
-                    const lightColor = createLightColorNode(this.world.lighting, shadow);
+                    const lightColor = createLightColorNode(this.world.lighting, shadow, ao).toVar("lightColor");
+
+                    If(lit, () => {
+                        ao.assign(1);
+                        lightColor.assign(color(1, 1, 1));
+                    });
 
                     return mix(
                         terrainColor.rgb.mul(lightColor),

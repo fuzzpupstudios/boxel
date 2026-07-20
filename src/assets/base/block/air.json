@@ -3,7 +3,8 @@
     "states": {
         "default": {
             "model": {
-                "occlude": false
+                "occlude": false,
+                "aoCastWeight": 0
             },
             "attenuation": 1,
             "tags": [ "replaceable", "hidden" ]

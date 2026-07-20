@@ -48,7 +48,11 @@ export namespace DataDrivenJson {
         occludeWest?: boolean,
         occludeUp?: boolean,
         occludeDown?: boolean,
+
+        aoCastWeight?: number,
+
         textures?: Record<string, string>,
+        
         north?: BlockStateModelFace[],
         east?: BlockStateModelFace[],
         south?: BlockStateModelFace[],
@@ -62,8 +66,9 @@ export namespace DataDrivenJson {
         size: [ number, number ],
         uv: [ number, number, number, number ],
         texture: string,
-        rotation?: number;
-        lit?: boolean
+        rotation?: number,
+        lit?: boolean,
+        aoReceiveWeight?: number
     }
 
     export interface EventSheet {

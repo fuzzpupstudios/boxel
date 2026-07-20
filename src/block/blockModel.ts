@@ -156,6 +156,7 @@ export class BlockModelFace {
     public lit = false;
     public textureSlot = "";
     public texturePosition: Box2 | null = null;
+    public aoReceiveWeight: number = 1;
 
     public static parseJson(json: DataDrivenJson.BlockStateModelFace, normal: Vector3): BlockModelFace {
         const face = new BlockModelFace(normal);
@@ -192,6 +193,7 @@ export class BlockModelFace {
         
         face.textureSlot = json.texture;
         face.lit = json.lit ?? face.lit;
+        face.aoReceiveWeight = json.aoReceiveWeight ?? (json.lit ? 0 : face.aoReceiveWeight);
 
         return face;
     }
@@ -278,7 +280,8 @@ export class BlockModelFace {
 
         return {
             cull: this.shouldCull(),
-            lit: this.lit,
+            typeMask: 0b00000000 & (+this.lit),
+            aoReceiveWeight: this.aoReceiveWeight,
 
             x0: this.v0.x, y0: this.v0.y, z0: this.v0.z,
             u0: MathUtils.mapLinear(this.v0.u, 0, 1, minU, maxU),
@@ -294,7 +297,7 @@ export class BlockModelFace {
 
             x3: this.v3.x, y3: this.v3.y, z3: this.v3.z,
             u3: MathUtils.mapLinear(this.v3.u, 0, 1, minU, maxU),
-            v3: MathUtils.mapLinear(this.v3.v, 0, 1, minV, maxV),
+            v3: MathUtils.mapLinear(this.v3.v, 0, 1, minV, maxV)
         }
     }
 }
@@ -316,6 +319,8 @@ export class BlockModel {
 
     public textureURIs = new Map<string, string>;
     public textureSources = new Map<string, ImageBitmap>;
+
+    public aoCastWeight?: number;
 
     public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
         const includes = new Array<DataDrivenJson.BlockStateModelIncludeEntry>;
@@ -372,6 +377,8 @@ export class BlockModel {
             model.up.push(...parsedModel.up);
             model.down.push(...parsedModel.down);
 
+            model.aoCastWeight = parsedModel.aoCastWeight ?? model.aoCastWeight!;
+
 
             for(const [ textureSlot, textureSource ] of parsedModel.textureSources) {
                 model.textureSources.set(textureSlot, textureSource);
@@ -387,6 +394,7 @@ export class BlockModel {
         model.occludeWest = json.occludeWest ?? json.occlude ?? model.occludeWest!;
         model.occludeUp = json.occludeUp ?? json.occlude ?? model.occludeUp!;
         model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown!;
+        model.aoCastWeight = json.aoCastWeight ?? model.aoCastWeight!;
 
 
         model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, -1))));
@@ -645,6 +653,8 @@ export class BlockModel {
             west: this.west.map(face => face.compile()),
             up: this.up.map(face => face.compile()),
             down: this.down.map(face => face.compile()),
+
+            aoCastWeight: this.aoCastWeight ?? 1
         }
     }
 

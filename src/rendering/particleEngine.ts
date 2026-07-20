@@ -116,7 +116,7 @@ export class ParticleEngine {
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
             ).toVar("particleUv");
             const particleColor = texture(this.particleTexture, particleUv)
-                .mul(createLightColorNode(this.world.lighting, float(1))).toVar("particleColor");
+                .mul(createLightColorNode(this.world.lighting, float(1), float(0))).toVar("particleColor");
 
             this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
                 vertexNode: billboarding({
