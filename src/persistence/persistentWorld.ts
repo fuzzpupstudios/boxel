@@ -16,7 +16,7 @@ export interface SerializedChunk {
     y: number,
     z: number,
     tiles: ArrayBuffer,
-    lighting: ArrayBuffer,
+    lighting: Record<string, ArrayBuffer>,
     palette: string[],
     blockEntities: SerializedBlockEntity[]
 }
@@ -211,28 +211,38 @@ export class PersistentWorld {
     }
 
     private serializeChunk(chunk: Chunk): SerializedChunk {
+        const lighting: Record<string, ArrayBuffer> = {};
+
+        for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
+            lighting[lightChannelId] = lightingChunk.nibbles.buffer;
+        }
+
         return {
             version: CHUNK_SCHEMA_VERSION,
             x: chunk.x, y: chunk.y, z: chunk.z,
             tiles: chunk.tiles.tiles.buffer,
             palette: chunk.tiles.palette,
-            lighting: chunk.lighting.values.buffer,
+            lighting,
             blockEntities: chunk.blockEntities.values().map(entity => entity.serialize()).toArray()
         }
     }
 
     private deserializeChunk(serialized: SerializedChunk): Chunk {
         const voxelChunk = new VoxelChunk;
-        const lightingChunk = new LightingChunk;
         
         voxelChunk.tiles.set(new Uint8Array(serialized.tiles));
-        lightingChunk.values.set(new Uint16Array(serialized.lighting));
 
         for(let i = 0; i < serialized.palette.length; i++) {
             voxelChunk.palette[i] = serialized.palette[i]!;
             voxelChunk.paletteMap.set(serialized.palette[i]!, i);
         }
-        const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk, lightingChunk);
+        const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk);
+
+        for(const [ lightChannelId, lightingBuffer ] of Object.entries(serialized.lighting)) {
+            const lightingChunk = new LightingChunk;
+            lightingChunk.nibbles.set(new Uint8Array(lightingBuffer));
+            chunk.lightingChunks.set(lightChannelId, lightingChunk);
+        }
 
         if(this.world == null) {
             console.warn("PersistentWorld World not set; block entities cannot be loaded");

@@ -1,47 +1,27 @@
 export class LightingGrid {
-    private static readonly CHUNK_SIZE_LOG2 = 4;
-    private static readonly CHUNK_SIZE = 1 << LightingGrid.CHUNK_SIZE_LOG2;
-    private static readonly CHUNK_MASK = LightingGrid.CHUNK_SIZE - 1;
-
     public readonly chunks = new Map<number, LightingChunk>();
 
     /** Get a lighting value at global coordinates */
-    public get(x: number, y: number, z: number, offset: number): number {
-        const chunkX = x >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkY = y >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkZ = z >> LightingGrid.CHUNK_SIZE_LOG2;
+    public get(x: number, y: number, z: number): number {
+        const chunkX = x >> 4;
+        const chunkY = y >> 4;
+        const chunkZ = z >> 4;
         
         const chunk = this.chunks.get(LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
         if(!chunk) return 0;
 
-        const localX = x & LightingGrid.CHUNK_MASK;
-        const localY = y & LightingGrid.CHUNK_MASK;
-        const localZ = z & LightingGrid.CHUNK_MASK;
+        const localX = x & 15;
+        const localY = y & 15;
+        const localZ = z & 15;
 
-        return chunk.get(localX, localY, localZ, offset);
-    }
-
-    /** Get a raw lighting value at global coordinates */
-    public getRaw(x: number, y: number, z: number): number {
-        const chunkX = x >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkY = y >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkZ = z >> LightingGrid.CHUNK_SIZE_LOG2;
-        
-        const chunk = this.chunks.get(LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
-        if(!chunk) return 0;
-
-        const localX = x & LightingGrid.CHUNK_MASK;
-        const localY = y & LightingGrid.CHUNK_MASK;
-        const localZ = z & LightingGrid.CHUNK_MASK;
-
-        return chunk.getRaw(localX, localY, localZ);
+        return chunk.get(localX, localY, localZ);
     }
 
     /** Set a lighting value at global coordinates, creating chunk if needed */
-    public set(x: number, y: number, z: number, value: number, offset: number): void {
-        const chunkX = x >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkY = y >> LightingGrid.CHUNK_SIZE_LOG2;
-        const chunkZ = z >> LightingGrid.CHUNK_SIZE_LOG2;
+    public set(x: number, y: number, z: number, value: number): void {
+        const chunkX = x >> 4;
+        const chunkY = y >> 4;
+        const chunkZ = z >> 4;
 
         const key = LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
@@ -50,11 +30,11 @@ export class LightingGrid {
             this.chunks.set(key, chunk);
         }
 
-        const localX = x & LightingGrid.CHUNK_MASK;
-        const localY = y & LightingGrid.CHUNK_MASK;
-        const localZ = z & LightingGrid.CHUNK_MASK;
+        const localX = x & 15;
+        const localY = y & 15;
+        const localZ = z & 15;
 
-        chunk.set(localX, localY, localZ, offset, value);
+        chunk.set(localX, localY, localZ, value);
     }
 
     /** Get a VoxelChunk by chunk coordinates */
@@ -85,19 +65,19 @@ export class LightingGrid {
 }
 
 export class LightingChunk {
-    public readonly values = new Uint16Array(4096);
+    public readonly nibbles = new Uint8Array(2048);
 
-    public get(x: number, y: number, z: number, offset: number) {
-        return this.values[x << 8 | y << 4 | z]! >> offset & 0xf;
+    public get(x: number, y: number, z: number): number {
+        const index = x | (y << 4) | (z << 8);
+        const shift = (index & 1) << 2; // 0 or 4
+        return (this.nibbles[index >> 1]! >> shift) & 0x0F;
     }
-    public getRaw(x: number, y: number, z: number) {
-        return this.values[x << 8 | y << 4 | z]!;
-    }
-    public set(x: number, y: number, z: number, offset: number, value: number) {
-        const index = x << 8 | y << 4 | z;
-        const mask = 0xf << offset;
-        const clampedValue = value & 0xf;
 
-        this.values[index] = this.values[index]! & ~mask | clampedValue << offset;
+    public set(x: number, y: number, z: number, nibble: number): void {
+        const index = x | (y << 4) | (z << 8);
+        const byteIndex = index >> 1;
+        const shift = (index & 1) << 2; // 0 or 4
+        const mask = 0x0F << shift;
+        this.nibbles[byteIndex] = (this.nibbles[byteIndex]! & ~mask) | ((nibble << shift) & mask);
     }
 }

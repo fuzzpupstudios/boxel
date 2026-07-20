@@ -3,6 +3,7 @@ import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
 import type { Assets } from "../textures/assets";
 import { Block, BlockState } from "./block";
 import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
+import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 
 
 export class DataDrivenBlock extends Block {
@@ -190,11 +191,35 @@ export class DataDrivenBlock extends Block {
 
         const tags = parseTags(jsonState.tags);
 
-        const emission = jsonState.emission ?? [ 0, 0, 0, 0 ];
-        if(emission.length != 4) throw new Error("Emission must have 4 numbers");
+        let emission: Record<string, number>;
+        if(jsonState.emission == null) {
+            emission = {};
+            for(const lightChannel of lightChannelRegistry.values()) {
+                emission[lightChannel.id] = lightChannel.defaultEmission;
+            }
+        } else if(typeof jsonState.emission == "number") {
+            emission = {};
+            for(const lightChannelId of lightChannelRegistry.keys()) {
+                emission[lightChannelId] = jsonState.emission;
+            }
+        } else {
+            emission = jsonState.emission
+        }
 
-        const attenuation = jsonState.attenuation ?? [ 15, 15, 15, 15 ];
-        if(attenuation.length != 4) throw new Error("Attenuation must have 4 numbers");
+        let attenuation: Record<string, number>;
+        if(jsonState.attenuation == null) {
+            attenuation = {};
+            for(const lightChannel of lightChannelRegistry.values()) {
+                attenuation[lightChannel.id] = lightChannel.defaultAttenuation;
+            }
+        } else if(typeof jsonState.attenuation == "number") {
+            attenuation = {};
+            for(const lightChannelId of lightChannelRegistry.keys()) {
+                attenuation[lightChannelId] = jsonState.attenuation;
+            }
+        } else {
+            attenuation = jsonState.attenuation
+        }
 
         const pickBlockState = jsonState.pickBlockState ?? stateKey;
 
@@ -237,8 +262,8 @@ export class DataDrivenBlock extends Block {
             canPlacePredicate,
             collider,
             tags,
-            emission,
-            attenuation,
+            new Map(Object.entries(emission)),
+            new Map(Object.entries(attenuation)),
             pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]"),
             renderAsTexture
         );

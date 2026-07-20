@@ -1,21 +1,21 @@
-import type { Box3 } from "three";
+import { MathUtils, type Box3 } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { VoxelGrid } from "../voxelGrid";
 import type { LightingGrid } from "./lightingGrid";
 
+const lerp = MathUtils.lerp;
+
 export abstract class Lighting {
     protected readonly lightProperties = new Map<string, number>;
-    protected readonly offset: number;
 
     public constructor(
         public readonly lightingGrid: LightingGrid,
         public readonly tiles: VoxelGrid,
-        public readonly channel: number
+        public readonly channel: string
     ) {
-        this.offset = channel << 2;
         for(const [ blockStateId, blockState ] of blockStateRegistry.entries()) {
-            const emission = blockState.emission[channel] ?? 0;
-            const attenuation = blockState.attenuation[channel] ?? 1;
+            const emission = blockState.emission.get(channel) ?? 0;
+            const attenuation = blockState.attenuation.get(channel) ?? 1;
             this.lightProperties.set(blockStateId, (emission & 0xf) << 4 | attenuation & 0xf);
         }
     }
@@ -33,11 +33,54 @@ export abstract class Lighting {
         return lightProperties >> 4 & 0xf;
     }
 
+    public getPoint(x: number, y: number, z: number) {
+        const minX = Math.floor(x);
+        const maxX = Math.ceil(x);
+        const minY = Math.floor(y);
+        const maxY = Math.ceil(y);
+        const minZ = Math.floor(z);
+        const maxZ = Math.ceil(z);
+
+        const uvX = x - minX;
+        const uvY = y - minY;
+        const uvZ = z - minZ;
+
+        return lerp(
+            lerp(
+                lerp(
+                    this.lightingGrid.get(minX, minY, minZ),
+                    this.lightingGrid.get(maxX, minY, minZ),
+                    uvX
+                ),
+                lerp(
+                    this.lightingGrid.get(minX, maxY, minZ),
+                    this.lightingGrid.get(maxX, maxY, minZ),
+                    uvX
+                ),
+                uvY
+            ),
+            lerp(
+                lerp(
+                    this.lightingGrid.get(minX, minY, maxZ),
+                    this.lightingGrid.get(maxX, minY, maxZ),
+                    uvX
+                ),
+                lerp(
+                    this.lightingGrid.get(minX, maxY, maxZ),
+                    this.lightingGrid.get(maxX, maxY, maxZ),
+                    uvX
+                ),
+                uvY
+            ),
+            uvZ
+        )
+    }
+
     public get(x: number, y: number, z: number) {
-        return this.lightingGrid.get(x, y, z, this.offset);
+        return this.lightingGrid.get(x, y, z);
     }
     public set(x: number, y: number, z: number, value: number) {
-        return this.lightingGrid.set(x, y, z, value, this.offset);
+        return this.lightingGrid.set(x, y, z, value);
     }
 
     public abstract updateLight(x: number, y: number, z: number, affectedExtent: Box3): void;

@@ -1,4 +1,4 @@
-import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
+import { BufferGeometry, ByteType, ClampToEdgeWrapping, Data3DTexture, HalfFloatType, InterleavedBuffer, InterleavedBufferAttribute, IntType, LinearFilter, RGBAFormat, Uint16BufferAttribute, Uint8BufferAttribute } from "three";
 import type { World } from "../world/world";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 
@@ -49,10 +49,17 @@ export interface TileMesh {
 
 class TileCache {
     public readonly halo = new Array<string>(18 ** 3);
-    public readonly haloLighting = new Uint16Array(18 ** 3);
+    public readonly lighting: Float16Array | Float32Array;
+    private readonly lightChannelCount: number;
+    
+    public constructor(
+        private readonly world: World
+    ) {
+        this.lightChannelCount = world.lighting.lightChannels.length;
+        this.lighting = new (Float16Array || Float32Array)(18 ** 3 * this.lightChannelCount);
+    }
 
     public update(
-        world: World,
         chunkX: number,
         chunkY: number,
         chunkZ: number
@@ -61,13 +68,25 @@ class TileCache {
         const chunkOriginY = chunkY << 4;
         const chunkOriginZ = chunkZ << 4;
 
+        const world = this.world;
+        const lightChannelCount = this.lightChannelCount;
+        const lightChannels = world.lighting.lightChannels;
+        const lightStrength = 1 / 15;
+
         let tile: string;
-        for(let x = -1, i = 0; x < 17; x++) {
+        for(let x = -1, i = 0, k = 0; x < 17; x++) {
             for(let y = -1; y < 17; y++) {
                 for(let z = -1; z < 17; z++, i++) {
                     tile = world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
                     this.halo[i] = tile;
-                    this.haloLighting[i] = world.lighting.values.getRaw(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
+
+                    for(let j = 0; j < lightChannelCount; j++, k++) {
+                        this.lighting[k] = lightChannels[j]!.get(
+                            x + chunkOriginX,
+                            y + chunkOriginY,
+                            z + chunkOriginZ
+                        ) * lightStrength;
+                    }
                 }
             }
         }
@@ -76,8 +95,24 @@ class TileCache {
     public at(x: number, y: number, z: number) {
         return this.halo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
     }
-    public lightingAt(x: number, y: number, z: number) {
-        return this.haloLighting[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
+    public retrieveLightingAt(x: number, y: number, z: number, out: number[]) {
+        const X = 324 * this.lightChannelCount;
+        const Y = 18 * this.lightChannelCount;
+        const Z = this.lightChannelCount;
+        let j = (x + 1) * X + (y + 1) * Y + (z + 1) * Z;
+
+        for(let i = 0; i < this.lightChannelCount; i++, j++) {
+            out[i] = Math.max(
+                this.lighting[j]!,
+                this.lighting[j - Z]!,
+                this.lighting[j - Y]!,
+                this.lighting[j - Y - Z]!,
+                this.lighting[j - X]!,
+                this.lighting[j - X - Z]!,
+                this.lighting[j - X - Y]!,
+                this.lighting[j - X - Y - Z]!,
+            );
+        }
     }
 }
 
@@ -85,6 +120,10 @@ export class ChunkMesher {
     public readonly tileMeshes: Map<string, TileMesh>;
     private readonly tileCache: TileCache;
     private readonly defaultMesh: TileMesh;
+    private readonly lightChannelCount: number;
+    private readonly geometryFloatAttributes: Float32Array;
+    private readonly geometryFaceType: Uint16Array;
+    private readonly geometryIndex: Uint32Array;
 
     public constructor(
         public readonly world: World
@@ -104,7 +143,20 @@ export class ChunkMesher {
 
         this.defaultMesh = getUnknownBlockState().model.compile();
 
-        this.tileCache = new TileCache();
+        this.tileCache = new TileCache(world);
+        this.lightChannelCount = world.lighting.lightChannels.length;
+
+        // ~150 MB maximum mesh size (should be more than enough..?)
+        const MAX_VERTEX_COUNT = 2 ** 22;
+
+        // [ pos.x, pos.y, pos.z, uv.x, uv.y, normal.x, normal.y, normal.z, color*... ]
+        this.geometryFloatAttributes = new Float32Array(MAX_VERTEX_COUNT * (3 + 2 + 3 + this.lightChannelCount));
+
+        // [ faceType ]
+        // { <15x none> <lit> }
+        this.geometryFaceType = new Uint16Array(MAX_VERTEX_COUNT);
+
+        this.geometryIndex = new Uint32Array(MAX_VERTEX_COUNT * (6 / 4));
     }
 
     private getMesh(tile: string) {
@@ -116,24 +168,27 @@ export class ChunkMesher {
         // to cache tiles, so VoxelGrid#tileAt() isn't
         // called so frequently
         const tiles = this.tileCache;
-        tiles.update(this.world, chunkX, chunkY, chunkZ);
+        tiles.update(chunkX, chunkY, chunkZ);
 
-        // [ pos.x, pos.y, pos.z, uv.x, uv.y, normal.x, normal.y, normal.z ]
-        const floatAttributes = new Array;
-        const lighting = new Array;
-        const indices = new Array;
+        // const floatAttributes = this.geometryFloatAttributes;
+        // const faceType = this.geometryFaceType;
+        // const index = this.geometryIndex;
+
+        const lightChannelCount = this.lightChannelCount;
+        const floatAttributes: number[] = new Array;
+        const faceType: number[] = new Array;
+        const indices: number[] = new Array;
 
         let vertexCount = 0;
 
-        let light$nnn = 0, light$nn_ = 0, light$nnp = 0;
-        let light$n_n = 0, light$n__ = 0, light$n_p = 0;
-        let light$npn = 0, light$np_ = 0, light$npp = 0;
-        let light$_nn = 0, light$_n_ = 0, light$_np = 0;
-        let light$__n = 0, light$__p = 0;
-        let light$_pn = 0, light$_p_ = 0, light$_pp = 0;
-        let light$pnn = 0, light$pn_ = 0, light$pnp = 0;
-        let light$p_n = 0, light$p__ = 0, light$p_p = 0;
-        let light$ppn = 0, light$pp_ = 0, light$ppp = 0;
+        let light$nnn = Array.from(new Uint8Array(lightChannelCount));
+        let light$nnp = Array.from(new Uint8Array(lightChannelCount));
+        let light$npn = Array.from(new Uint8Array(lightChannelCount));
+        let light$npp = Array.from(new Uint8Array(lightChannelCount));
+        let light$pnn = Array.from(new Uint8Array(lightChannelCount));
+        let light$pnp = Array.from(new Uint8Array(lightChannelCount));
+        let light$ppn = Array.from(new Uint8Array(lightChannelCount));
+        let light$ppp = Array.from(new Uint8Array(lightChannelCount));
 
         for(let x = 0; x < 16; x++) {
             for(let y = 0; y < 16; y++) {
@@ -157,35 +212,14 @@ export class ChunkMesher {
                         if(!mesh.renderAnyWhenCulled) continue;
                     }
 
-
-                    light$nnn = tiles.lightingAt(x - 1, y - 1, z - 1);
-                    light$nn_ = tiles.lightingAt(x - 1, y - 1, z);
-                    light$nnp = tiles.lightingAt(x - 1, y - 1, z + 1);
-                    light$n_n = tiles.lightingAt(x - 1, y, z - 1);
-                    light$n__ = tiles.lightingAt(x - 1, y, z);
-                    light$n_p = tiles.lightingAt(x - 1, y, z + 1);
-                    light$npn = tiles.lightingAt(x - 1, y + 1, z - 1);
-                    light$np_ = tiles.lightingAt(x - 1, y + 1, z);
-                    light$npp = tiles.lightingAt(x - 1, y + 1, z + 1);
-
-                    light$_nn = tiles.lightingAt(x, y - 1, z - 1);
-                    light$_n_ = tiles.lightingAt(x, y - 1, z);
-                    light$_np = tiles.lightingAt(x, y - 1, z + 1);
-                    light$__n = tiles.lightingAt(x, y, z - 1);
-                    light$__p = tiles.lightingAt(x, y, z + 1);
-                    light$_pn = tiles.lightingAt(x, y + 1, z - 1);
-                    light$_p_ = tiles.lightingAt(x, y + 1, z);
-                    light$_pp = tiles.lightingAt(x, y + 1, z + 1);
-
-                    light$pnn = tiles.lightingAt(x + 1, y - 1, z - 1);
-                    light$pn_ = tiles.lightingAt(x + 1, y - 1, z);
-                    light$pnp = tiles.lightingAt(x + 1, y - 1, z + 1);
-                    light$p_n = tiles.lightingAt(x + 1, y, z - 1);
-                    light$p__ = tiles.lightingAt(x + 1, y, z);
-                    light$p_p = tiles.lightingAt(x + 1, y, z + 1);
-                    light$ppn = tiles.lightingAt(x + 1, y + 1, z - 1);
-                    light$pp_ = tiles.lightingAt(x + 1, y + 1, z);
-                    light$ppp = tiles.lightingAt(x + 1, y + 1, z + 1);
+                    tiles.retrieveLightingAt(x, y, z, light$nnn);
+                    tiles.retrieveLightingAt(x, y, z + 1, light$nnp);
+                    tiles.retrieveLightingAt(x, y + 1, z, light$npn);
+                    tiles.retrieveLightingAt(x, y + 1, z + 1, light$npp);
+                    tiles.retrieveLightingAt(x + 1, y, z, light$pnn);
+                    tiles.retrieveLightingAt(x + 1, y, z + 1, light$pnp);
+                    tiles.retrieveLightingAt(x + 1, y + 1, z, light$ppn);
+                    tiles.retrieveLightingAt(x + 1, y + 1, z + 1, light$ppp);
 
                     // North
                     for(const face of mesh.north) {
@@ -195,29 +229,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  0, 0, -1,
+            /* light    */  ...light$pnn,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  0, 0, -1,
+            /* light    */  ...light$ppn,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  0, 0, -1,
+            /* light    */  ...light$npn,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  0, 0, -1,
+            /* light    */  ...light$nnn,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$__n, light$p_n, light$_nn, light$pnn),
-                                averageLight(light$__n, light$p_n, light$_pn, light$ppn),
-                                averageLight(light$__n, light$n_n, light$_pn, light$npn),
-                                averageLight(light$__n, light$n_n, light$_nn, light$nnn)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -233,29 +262,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  0, 0, 1,
+            /* light    */  ...light$nnp,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  0, 0, 1,
+            /* light    */  ...light$npp,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  0, 0, 1,
+            /* light    */  ...light$ppp,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  0, 0, 1,
+            /* light    */  ...light$pnp,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$__p, light$n_p, light$_np, light$nnp),
-                                averageLight(light$__p, light$n_p, light$_pp, light$npp),
-                                averageLight(light$__p, light$p_p, light$_pp, light$ppp),
-                                averageLight(light$__p, light$p_p, light$_np, light$pnp)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -271,29 +295,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  1, 0, 0,
+            /* light    */  ...light$pnp,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  1, 0, 0,
+            /* light    */  ...light$ppp,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  1, 0, 0,
+            /* light    */  ...light$ppn,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  1, 0, 0,
+            /* light    */  ...light$pnn,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$p_p, light$p__, light$pnp, light$pn_),
-                                averageLight(light$p_p, light$p__, light$ppp, light$pp_),
-                                averageLight(light$p_n, light$p__, light$ppn, light$pp_),
-                                averageLight(light$p_n, light$p__, light$pnn, light$pn_)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -309,29 +328,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  -1, 0, 0,
+            /* light    */  ...light$nnn,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  -1, 0, 0,
+            /* light    */  ...light$npn,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  -1, 0, 0,
+            /* light    */  ...light$npp,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  -1, 0, 0,
+            /* light    */  ...light$nnp,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$n_n, light$n__, light$nnn, light$nn_),
-                                averageLight(light$n_n, light$n__, light$npn, light$np_),
-                                averageLight(light$n_p, light$n__, light$npp, light$np_),
-                                averageLight(light$n_p, light$n__, light$nnp, light$nn_)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -347,29 +361,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  0, 1, 0,
+            /* light    */  ...light$npp,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  0, 1, 0,
+            /* light    */  ...light$npn,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  0, 1, 0,
+            /* light    */  ...light$ppn,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  0, 1, 0,
+            /* light    */  ...light$ppp,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$_p_, light$np_, light$_pp, light$npp),
-                                averageLight(light$_p_, light$np_, light$_pn, light$npn),
-                                averageLight(light$_p_, light$pp_, light$_pn, light$ppn),
-                                averageLight(light$_p_, light$pp_, light$_pp, light$ppp)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -385,29 +394,24 @@ export class ChunkMesher {
             /* pos      */  x + face.x0, y + face.y0, z + face.z0,
             /* uv       */  face.u0, face.v0,
             /* normal   */  0, -1, 0,
+            /* light    */  ...light$nnn,
 
             /* pos      */  x + face.x1, y + face.y1, z + face.z1,
             /* uv       */  face.u1, face.v1,
             /* normal   */  0, -1, 0,
+            /* light    */  ...light$nnp,
 
             /* pos      */  x + face.x2, y + face.y2, z + face.z2,
             /* uv       */  face.u2, face.v2,
             /* normal   */  0, -1, 0,
+            /* light    */  ...light$pnp,
 
             /* pos      */  x + face.x3, y + face.y3, z + face.z3,
             /* uv       */  face.u3, face.v3,
             /* normal   */  0, -1, 0,
+            /* light    */  ...light$pnn,
                         );
-                        if(face.lit) {
-                            lighting.push(0xffff, 0xffff, 0xffff, 0xffff)
-                        } else {
-                            lighting.push(
-                                averageLight(light$_n_, light$nn_, light$_nn, light$nnn),
-                                averageLight(light$_n_, light$nn_, light$_np, light$nnp),
-                                averageLight(light$_n_, light$pn_, light$_np, light$pnp),
-                                averageLight(light$_n_, light$pn_, light$_nn, light$pnn)
-                            );
-                        }
+                        faceType.push(0b00000000 & (+face.lit))
                         indices.push(
                             vertexCount + 0, vertexCount + 3, vertexCount + 2,
                             vertexCount + 2, vertexCount + 1, vertexCount + 0
@@ -422,17 +426,21 @@ export class ChunkMesher {
 
         // Copy float data to Float32Array and make it an InterleavedBuffer
         const interleavedFloatAttributes = new InterleavedBuffer(
-            new Float32Array(floatAttributes), 8);
+            new Float32Array(floatAttributes), 8 + lightChannelCount);
 
-        // Copy lighting data to Uint16Array and make it a Uint16BufferAttribute
-        const lightingAttribute = new Uint16BufferAttribute(lighting, 1);
-        lightingAttribute.gpuType = IntType;
+        // Copy face type data to Uint16Array and make it a Uint16BufferAttribute
+        const faceTypeAttribute = new Uint16BufferAttribute(faceType, 1);
+        faceTypeAttribute.gpuType = IntType;
         
         // Use interleaved buffer data to set vertex attributes
         geometry.setAttribute("position", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 0));
         geometry.setAttribute("uv", new InterleavedBufferAttribute(interleavedFloatAttributes, 2, 3));
         geometry.setAttribute("normal", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 5));
-        geometry.setAttribute("lighting", lightingAttribute);
+        
+        for(let i = 0; i < lightChannelCount; i++) {
+            geometry.setAttribute("light" + i, new InterleavedBufferAttribute(interleavedFloatAttributes, 1, 8 + i));
+        }
+        geometry.setAttribute("faceType", faceTypeAttribute);
 
         // Set indices
         geometry.setIndex(indices);

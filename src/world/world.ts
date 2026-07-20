@@ -14,16 +14,34 @@ import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 export class Chunk {
     public readonly key: number;
     public readonly blockEntities = new Set<BlockEntity>;
+    public readonly lightingChunks = new Map<string, LightingChunk>;
     private readonly blockEntityGrid = new Array<BlockEntity>(16 ** 3);
+    public world?: World;
 
     public constructor(
         public readonly x: number,
         public readonly y: number,
         public readonly z: number,
         public readonly tiles: VoxelChunk,
-        public readonly lighting: LightingChunk,
     ) {
         this.key = VoxelGrid.encodeChunkKey(x, y, z);
+    }
+
+    public setWorld(world: World) {
+        this.world = world;
+    }
+
+    public getLightingChunk(lightChannelId: string) {
+        let lightingChunk: LightingChunk | undefined = this.lightingChunks.get(lightChannelId);
+        if(lightingChunk != null) return lightingChunk;
+        if(this.world == null) return null;
+        
+        lightingChunk = this.world.lighting.getChannel(lightChannelId)
+            .lightingGrid.getChunk(this.x, this.y, this.z);
+        if(lightingChunk == null) return null;
+
+        this.lightingChunks.set(lightChannelId, lightingChunk);
+        return lightingChunk;
     }
 
     public toString() {
@@ -154,6 +172,8 @@ export class World {
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
 
+        const skyLight = this.lighting.getChannel("base:sky");
+
         if(columnY >= 0) {
             const minX = columnX << 4;
             const minZ = columnZ << 4;
@@ -163,7 +183,7 @@ export class World {
 
             for(let x = minX; x < maxX; x++) {
                 for(let z = minZ; z < maxZ; z++) {
-                    this.lighting.sun.set(x, maxY - 1, z, 15);
+                    skyLight.set(x, maxY - 1, z, 15);
                 }
             }
         }
@@ -184,8 +204,7 @@ export class World {
         // Otherwise, try to make a new chunk from existing tiles
         const tileChunk = this.tiles.chunks.get(chunkKey);
         if(tileChunk != null) {
-            const lightingChunk = this.lighting.values.getChunkOrCreate(chunkX, chunkY, chunkZ);
-            chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk, lightingChunk);
+            chunk = new Chunk(chunkX, chunkY, chunkZ, tileChunk);
             this.chunks.set(chunkKey, chunk);
             return chunk;
         }
@@ -210,8 +229,13 @@ export class World {
             if(chunk == null) throw new Error("Failed to load chunk @ " +
                 chunkX + ", " + chunkY + ", " + chunkZ);
             
-            this.tiles.chunks.set(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ), chunk.tiles);
-            this.lighting.values.chunks.set(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ), chunk.lighting);
+            const chunkKey = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+            this.tiles.chunks.set(chunkKey, chunk.tiles);
+
+            for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
+                const lightingGrid = this.lighting.getChannel(lightChannelId).lightingGrid;
+                lightingGrid.chunks.set(chunkKey, lightingChunk);
+            }
             this.chunks.set(key, chunk);
             this.loadingChunks.delete(key);
 
@@ -243,10 +267,6 @@ export class World {
         
         chunk.addBlockEntity(blockEntity);
         this.chunksWithBlockEntities.add(chunk);
-    }
-
-    public getBlockState(x: number, y: number, z: number): string {
-        return this.tiles.getBlockStateId(x, y, z);
     }
 
     public getBlockEntity(x: number, y: number, z: number): BlockEntity | null {
@@ -306,6 +326,10 @@ export class World {
                 }
             }
         }
+    }
+
+    public getBlockState(x: number, y: number, z: number): string {
+        return this.tiles.getBlockStateId(x, y, z);
     }
 
     public setBlockState(x: number, y: number, z: number, blockStateId: string, markDirty = true) {

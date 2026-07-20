@@ -14,7 +14,11 @@
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
                 ]
             },
-            "emission": [ 15, 15, 15, 0 ]
+            "emission": {
+                "base:red": 15,
+                "base:green": 15,
+                "base:blue": 15
+            }
         },
         "color=red": {
             "model": {
@@ -29,7 +33,9 @@
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
                 ]
             },
-            "emission": [ 15, 0, 0, 0 ]
+            "emission": {
+                "base:red": 15
+            }
         },
         "color=green": {
             "model": {
@@ -44,7 +50,9 @@
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
                 ]
             },
-            "emission": [ 0, 15, 0, 0 ]
+            "emission": {
+                "base:green": 15
+            }
         },
         "color=blue": {
             "model": {
@@ -59,7 +67,9 @@
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
                 ]
             },
-            "emission": [ 0, 0, 15, 0 ]
+            "emission": {
+                "base:blue": 15
+            }
         },
         "color=sky": {
             "model": {
@@ -74,7 +84,9 @@
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
                 ]
             },
-            "emission": [ 0, 0, 0, 15 ]
+            "emission": {
+                "base:sky": 15
+            }
         }
     }
 }

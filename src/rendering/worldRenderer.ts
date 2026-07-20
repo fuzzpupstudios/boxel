@@ -9,7 +9,7 @@ import { Chunk, World } from "../world/world";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
-import { lightMix, lightUnpack } from "./lightUtils";
+import { lightMix } from "./lightUtils";
 import { Sky } from "./sky";
 
 export class WorldRenderer {
@@ -42,8 +42,12 @@ export class WorldRenderer {
         {
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn<Node<"vec3">>(() => {
-                    const light = uint(attribute("lighting") as any);
-                    const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
+                    const lightColor = vec4(
+                        <Node<"float">>attribute("light0", "float"),
+                        <Node<"float">>attribute("light1", "float"),
+                        <Node<"float">>attribute("light2", "float"),
+                        <Node<"float">>attribute("light3", "float")
+                    ).pow3();
 
                     const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
                         

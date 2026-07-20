@@ -1,17 +1,17 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
-import { attribute, billboarding, float, positionGeometry, texture, uint, uv, varying, vertexStage } from "three/tsl";
-import { IntType, MeshBasicNodeMaterial, Node } from "three/webgpu";
+import { attribute, billboarding, float, positionGeometry, texture, uint, uv, varying, vec4, vertexStage } from "three/tsl";
+import { HalfFloatType, IntType, MeshBasicNodeMaterial, Node, type TypedArray } from "three/webgpu";
 import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { lightMix, lightUnpack } from "./lightUtils";
+import { lightMix } from "./lightUtils";
 
 export class ParticleEngine {
     public static readonly MAX_PARTICLES = 65535;
 
     private readonly positions = new Float32Array(ParticleEngine.MAX_PARTICLES * 3);
-    private readonly lighting = new Uint16Array(ParticleEngine.MAX_PARTICLES);
+    private readonly lighting: Float32Array[];
     private readonly sizes = new Float32Array(ParticleEngine.MAX_PARTICLES);
     private readonly uvRects = new Float32Array(ParticleEngine.MAX_PARTICLES * 4);
 
@@ -27,11 +27,12 @@ export class ParticleEngine {
     private readonly colliderCounts: Map<string, number>;
     private readonly geometry: InstancedBufferGeometry;
     public readonly mesh: Mesh;
-
+    
     private readonly positionAttr: InstancedBufferAttribute;
-    private readonly lightingAttr: InstancedBufferAttribute;
+    private readonly lightingAttr: InstancedBufferAttribute[];
     private readonly sizeAttr: InstancedBufferAttribute;
     private readonly uvRectAttr: InstancedBufferAttribute;
+    private readonly lightChannelCount: number;
 
     public particleCount = 0;
     public drag = 0.98;
@@ -79,19 +80,29 @@ export class ParticleEngine {
         ], 2));
         this.geometry.setIndex([ 0, 1, 2, 2, 3, 0 ]);
 
+        this.lightChannelCount = world.lighting.lightChannels.length;
+        this.lighting = [];
+        this.lightingAttr = [];
+        for(let i = 0; i < this.lightChannelCount; i++) {
+            const array = new Float32Array(ParticleEngine.MAX_PARTICLES);
+            const attribute = new InstancedBufferAttribute(array, this.lightChannelCount);
+            attribute.setUsage(DynamicDrawUsage);
+
+            this.lighting.push(array);
+            this.lightingAttr.push(attribute);
+
+            this.geometry.setAttribute("light" + i, attribute);
+        }
+
         this.positionAttr = new InstancedBufferAttribute(this.positions, 3);
-        this.lightingAttr = new InstancedBufferAttribute(this.lighting, 1);
         this.sizeAttr = new InstancedBufferAttribute(this.sizes, 1);
         this.uvRectAttr = new InstancedBufferAttribute(this.uvRects, 4);
 
         this.positionAttr.setUsage(DynamicDrawUsage);
-        this.lightingAttr.setUsage(DynamicDrawUsage);
-        this.lightingAttr.gpuType = IntType;
         this.sizeAttr.setUsage(DynamicDrawUsage);
         this.uvRectAttr.setUsage(DynamicDrawUsage);
         
         this.geometry.setAttribute("particlePosition", this.positionAttr);
-        this.geometry.setAttribute("particleLighting", this.lightingAttr);
         this.geometry.setAttribute("particleSize", this.sizeAttr);
         this.geometry.setAttribute("particleUvRect", this.uvRectAttr);
 
@@ -101,8 +112,12 @@ export class ParticleEngine {
             const particlePosition = attribute("particlePosition", "vec3");
             const particleSize = attribute("particleSize", "float") as any;
             const particleUvRect = attribute("particleUvRect", "vec4") as any;
-            const light = uint(attribute("particleLighting", "uint") as any);
-            const lightColor = varying(vertexStage(lightUnpack(light)), "lightColor");
+            const lightColor = vec4(
+                <Node<"float">>attribute("light0", "float"),
+                <Node<"float">>attribute("light1", "float"),
+                <Node<"float">>attribute("light2", "float"),
+                <Node<"float">>attribute("light3", "float")
+            ).pow3();
 
             const particleUv = particleUvRect.xy.add(
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
@@ -127,11 +142,15 @@ export class ParticleEngine {
     }
 
     private updateLight(index: number) {
-        this.lighting[index] = this.world.lighting.values.getRaw(
-            Math.floor(this.positions[index * 3]!),
-            Math.floor(this.positions[index * 3 + 1]!),
-            Math.floor(this.positions[index * 3 + 2]!),
-        )
+        const lightChannelCount = this.lightChannelCount;
+
+        for(let i = 0; i < lightChannelCount; i++) {
+            this.lighting[i]![index] = this.world.lighting.lightChannels[i]!.get(
+                Math.floor(this.positions[index * 3]!),
+                Math.floor(this.positions[index * 3 + 1]!),
+                Math.floor(this.positions[index * 3 + 2]!),
+            )
+        }
     }
 
     public addParticle(

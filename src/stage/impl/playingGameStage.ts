@@ -915,28 +915,28 @@ export class PlayingGameStage extends GameStage {
                 this.localPlayer.pitch,
                 this.localPlayer.yaw,
             );
-            this.debugMenuLines.player.light.setData(
-                this.world.lighting.red.get(
-                    Math.floor(this.localPlayer.aabb.position.x),
-                    Math.floor(this.localPlayer.aabb.position.y),
-                    Math.floor(this.localPlayer.aabb.position.z)
-                ),
-                this.world.lighting.green.get(
-                    Math.floor(this.localPlayer.aabb.position.x),
-                    Math.floor(this.localPlayer.aabb.position.y),
-                    Math.floor(this.localPlayer.aabb.position.z)
-                ),
-                this.world.lighting.blue.get(
-                    Math.floor(this.localPlayer.aabb.position.x),
-                    Math.floor(this.localPlayer.aabb.position.y),
-                    Math.floor(this.localPlayer.aabb.position.z)
-                ),
-                this.world.lighting.sun.get(
-                    Math.floor(this.localPlayer.aabb.position.x),
-                    Math.floor(this.localPlayer.aabb.position.y),
-                    Math.floor(this.localPlayer.aabb.position.z)
-                )
-            );
+            // this.debugMenuLines.player.light.setData(
+            //     this.world.lighting.red.get(
+            //         Math.floor(this.localPlayer.aabb.position.x),
+            //         Math.floor(this.localPlayer.aabb.position.y),
+            //         Math.floor(this.localPlayer.aabb.position.z)
+            //     ),
+            //     this.world.lighting.green.get(
+            //         Math.floor(this.localPlayer.aabb.position.x),
+            //         Math.floor(this.localPlayer.aabb.position.y),
+            //         Math.floor(this.localPlayer.aabb.position.z)
+            //     ),
+            //     this.world.lighting.blue.get(
+            //         Math.floor(this.localPlayer.aabb.position.x),
+            //         Math.floor(this.localPlayer.aabb.position.y),
+            //         Math.floor(this.localPlayer.aabb.position.z)
+            //     ),
+            //     this.world.lighting.sun.get(
+            //         Math.floor(this.localPlayer.aabb.position.x),
+            //         Math.floor(this.localPlayer.aabb.position.y),
+            //         Math.floor(this.localPlayer.aabb.position.z)
+            //     )
+            // );
             this.debugMenuLines.player.chunk.setData(
                 Math.floor(this.localPlayer.aabb.position.x) >> 4,
                 Math.floor(this.localPlayer.aabb.position.y) >> 4,
@@ -960,35 +960,35 @@ export class PlayingGameStage extends GameStage {
                 this.debugMenuLines.lookingBlock.stateId.setData(targetedBlockStateId);
 
                 this.debugMenuLines.lookingBlock.light.show();
-                this.debugMenuLines.lookingBlock.light.setData(
-                    this.world.lighting.red.get(
-                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    ),
-                    this.world.lighting.green.get(
-                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    ),
-                    this.world.lighting.blue.get(
-                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    ),
-                    this.world.lighting.sun.get(
-                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    )
-                );
+                // this.debugMenuLines.lookingBlock.light.setData(
+                //     this.world.lighting.red.get(
+                //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                //     ),
+                //     this.world.lighting.green.get(
+                //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                //     ),
+                //     this.world.lighting.blue.get(
+                //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                //     ),
+                //     this.world.lighting.sun.get(
+                //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
+                //     )
+                // );
 
                 if(targetedBlockState != null) {
                     this.debugMenuLines.lookingBlock.emission.show();
-                    this.debugMenuLines.lookingBlock.emission.setData(...targetedBlockState.emission);
+                    // this.debugMenuLines.lookingBlock.emission.setData(...targetedBlockState.emission);
 
                     this.debugMenuLines.lookingBlock.attenuation.show();
-                    this.debugMenuLines.lookingBlock.attenuation.setData(...targetedBlockState.attenuation);
+                    // this.debugMenuLines.lookingBlock.attenuation.setData(...targetedBlockState.attenuation);
 
                     this.debugMenuLines.lookingBlock.tags.show();
                     this.debugMenuLines.lookingBlock.tags.setData(Array.from(targetedBlockState.tags));

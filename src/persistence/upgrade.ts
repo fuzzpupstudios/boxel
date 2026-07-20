@@ -2,7 +2,7 @@ import type { SerializedChunk } from "./persistentWorld"
 
 type ChunkUpgrade = (chunk: SerializedChunk) => SerializedChunk;
 
-export const CHUNK_SCHEMA_VERSION = 2;
+export const CHUNK_SCHEMA_VERSION = 3;
 export const chunkUpgrades: ChunkUpgrade[] = [
     // upgrade to 0
     (chunk: SerializedChunk) => {
@@ -33,12 +33,54 @@ export const chunkUpgrades: ChunkUpgrade[] = [
                 lighting[i] = 0xf000; // full sky light, no block light
             }
         }
-        chunk.lighting = lighting.buffer;
+        (<any>chunk).lighting = lighting.buffer;
         return chunk;
     },
     // upgrade to 2
     (chunk: SerializedChunk) => {
         chunk.blockEntities = [];
+        return chunk;
+    },
+    // upgrade to 3
+    (chunk: SerializedChunk) => {
+        class LightingChunk {
+            public readonly nibbles = new Uint8Array(2048);
+
+            public set(x: number, y: number, z: number, nibble: number): void {
+                const index = x | (y << 4) | (z << 8);
+                const byteIndex = index >> 1;
+                const shift = (index & 1) << 2; // 0 or 4
+                const mask = 0x0F << shift;
+                this.nibbles[byteIndex] = (this.nibbles[byteIndex]! & ~mask) | ((nibble << shift) & mask);
+            }
+        }
+
+        const oldLighting = new Uint16Array((<any>chunk).lighting);
+
+        const redValues = new LightingChunk;
+        const greenValues = new LightingChunk;
+        const blueValues = new LightingChunk;
+        const skyValues = new LightingChunk;
+
+        let x = 0, y = 0, z = 0, light = 0;
+        for(let i = 0; i < 4096; i++) {
+            light = oldLighting[i]!;
+            x = i >> 8;
+            y = (i >> 4) & 0xf;
+            z = i & 0xf;
+
+            redValues.set(x, y, z, light & 0x000f);
+            greenValues.set(x, y, z, (light & 0x00f0) >> 4);
+            blueValues.set(x, y, z, (light & 0x0f00) >> 8);
+            skyValues.set(x, y, z, (light & 0xf000) >> 12);
+        }
+
+        chunk.lighting = {
+            "base:red": redValues.nibbles.buffer,
+            "base:green": greenValues.nibbles.buffer,
+            "base:blue": blueValues.nibbles.buffer,
+            "base:sky": skyValues.nibbles.buffer
+        };
         return chunk;
     }
 ]

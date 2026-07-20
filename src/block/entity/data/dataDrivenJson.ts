@@ -25,8 +25,8 @@ export namespace DataDrivenJson {
         events?: EventSheet | string[] | string,
         canPlace?: EventActionPredicateTree | boolean;
         collider?: BlockStateCollider,
-        emission?: [ number, number, number ],
-        attenuation?: [ number, number, number ],
+        emission?: Record<string, number> | number,
+        attenuation?: Record<string, number> | number,
         tags?: string[],
         pickBlockState?: string,
         renderAsTexture?: string,

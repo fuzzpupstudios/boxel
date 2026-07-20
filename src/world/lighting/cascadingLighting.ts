@@ -3,16 +3,15 @@ import { Lighting } from "./lighting";
 
 export class CascadingLighting extends Lighting {
     private getPropagatedIntensity(x: number, y: number, z: number) {
-        const offset = this.offset;
         const lightProperties = this.getLightProperties(x, y, z);
         const attenuation = this.getAttenuation(lightProperties);
 
-        const east = this.lightingGrid.get(x + 1, y, z, offset) - attenuation;
-        const west = this.lightingGrid.get(x - 1, y, z, offset) - attenuation;
-        const up = this.lightingGrid.get(x, y + 1, z, offset);
-        const down = this.lightingGrid.get(x, y - 1, z, offset) - attenuation;
-        const north = this.lightingGrid.get(x, y, z + 1, offset) - attenuation;
-        const south = this.lightingGrid.get(x, y, z - 1, offset) - attenuation;
+        const east = this.lightingGrid.get(x + 1, y, z) - attenuation;
+        const west = this.lightingGrid.get(x - 1, y, z) - attenuation;
+        const up = this.lightingGrid.get(x, y + 1, z);
+        const down = this.lightingGrid.get(x, y - 1, z) - attenuation;
+        const north = this.lightingGrid.get(x, y, z + 1) - attenuation;
+        const south = this.lightingGrid.get(x, y, z - 1) - attenuation;
 
         // Full sunlight does not lose intensity when moving downward through
         // attenuation-1 media. Stronger attenuation can still reduce it.
@@ -52,7 +51,7 @@ export class CascadingLighting extends Lighting {
             const tileX = queue[queueIndex++]!;
             const tileY = queue[queueIndex++]!;
             const tileZ = queue[queueIndex++]!;
-            const current = this.lightingGrid.get(tileX, tileY, tileZ, this.offset);
+            const current = this.lightingGrid.get(tileX, tileY, tileZ);
             const next = this.getPropagatedIntensity(tileX, tileY, tileZ);
 
             if(current === next) continue;
@@ -65,7 +64,7 @@ export class CascadingLighting extends Lighting {
             if(tileY > maxAffectedY) maxAffectedY = tileY;
             if(tileZ > maxAffectedZ) maxAffectedZ = tileZ;
 
-            this.lightingGrid.set(tileX, tileY, tileZ, next, this.offset);
+            this.lightingGrid.set(tileX, tileY, tileZ, next);
             this.enqueueNeighbors(queue, tileX, tileY, tileZ);
         }
 
@@ -93,13 +92,13 @@ export class CascadingLighting extends Lighting {
         for(let x = minX; x <= maxX; x++) {
             for(let z = minZ; z <= maxZ; z++) {
                 for(let y = maxY; y >= minY; y--) {
-                    const current = this.lightingGrid.get(x, y, z, this.offset);
+                    const current = this.lightingGrid.get(x, y, z);
                     const propagated = this.getPropagatedIntensity(x, y, z);
                     const next = y === maxY ? Math.max(current, propagated) : propagated;
 
                     if(current === next) continue;
 
-                    this.lightingGrid.set(x, y, z, next, this.offset);
+                    this.lightingGrid.set(x, y, z, next);
                     this.enqueue(queue, x, y, z);
                 }
             }

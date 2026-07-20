@@ -1,34 +1,38 @@
 import { Box3, Vector3 } from "three";
-import { CascadingLighting } from "./lighting/cascadingLighting";
+import { lightChannelRegistry } from "./lighting/lightChannelRegistry";
 import type { Lighting } from "./lighting/lighting";
 import { LightingGrid } from "./lighting/lightingGrid";
-import { PointSourceLighting } from "./lighting/pointSourceLighting";
 import type { World } from "./world";
 
 export class LightingEngine {
-    public readonly values = new LightingGrid;
-
-    public readonly red: Lighting;
-    public readonly green: Lighting;
-    public readonly blue: Lighting;
-    public readonly sun: Lighting;
+    public readonly lightChannels = new Array<Lighting>;
+    public readonly lightChannelMap = new Map<string, number>;
 
     public constructor(
         public readonly world: World
     ) {
-        this.red = new PointSourceLighting(this.values, world.tiles, 0);
-        this.green = new PointSourceLighting(this.values, world.tiles, 1);
-        this.blue = new PointSourceLighting(this.values, world.tiles, 2);
-        this.sun = new CascadingLighting(this.values, world.tiles, 3);
+        let index = 0;        
+        for(const channelType of lightChannelRegistry.values()) {
+            const grid = new LightingGrid;
+            this.lightChannels.push(channelType.createLighting(grid, world.tiles));
+            this.lightChannelMap.set(channelType.id, index);
+            index++;
+        }
+    }
+
+    public getChannel(id: string) {
+        const index = this.lightChannelMap.get(id);
+        if(index == null) throw new ReferenceError("Lighting channel " + id + " does not exist");
+
+        return this.lightChannels[index]!;
     }
 
     public updateChunk(x: number, y: number, z: number, markDirty = true) {
         const affectedExtent = new Box3(new Vector3(x, y, z), new Vector3(x, y, z));
 
-        this.sun.updateChunk(x, y, z, affectedExtent);
-        this.red.updateChunk(x, y, z, affectedExtent);
-        this.green.updateChunk(x, y, z, affectedExtent);
-        this.blue.updateChunk(x, y, z, affectedExtent);
+        for(const channel of this.lightChannels) {
+            channel.updateChunk(x, y, z, affectedExtent);
+        }
         
         if(markDirty) {
             this.world.markChunksDirty(
@@ -45,10 +49,9 @@ export class LightingEngine {
     public updateLight(x: number, y: number, z: number, priority: boolean = false) {
         const affectedExtent = new Box3(new Vector3(x, y, z), new Vector3(x, y, z));
         
-        this.sun.updateLight(x, y, z, affectedExtent);
-        this.red.updateLight(x, y, z, affectedExtent);
-        this.green.updateLight(x, y, z, affectedExtent);
-        this.blue.updateLight(x, y, z, affectedExtent);
+        for(const channel of this.lightChannels) {
+            channel.updateLight(x, y, z, affectedExtent);
+        }
         
         this.world.markChunksDirty(
             (affectedExtent.min.x - 1) >> 4,
