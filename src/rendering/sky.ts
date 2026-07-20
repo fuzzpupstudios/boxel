@@ -238,7 +238,6 @@ export class Sky {
                 quat2.multiply(quat1),
                 scale
             );
-            console.log(pos);
 
             mesh.setMatrixAt(i, matrix);
         }
