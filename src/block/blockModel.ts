@@ -280,7 +280,7 @@ export class BlockModelFace {
 
         return {
             cull: this.shouldCull(),
-            typeMask: 0b00000000 & (+this.lit),
+            typeMask: 0b00000000 | (+this.lit),
             aoReceiveWeight: this.aoReceiveWeight,
 
             x0: this.v0.x, y0: this.v0.y, z0: this.v0.z,

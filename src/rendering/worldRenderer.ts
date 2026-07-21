@@ -44,7 +44,7 @@ export class WorldRenderer {
                     const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
 
                     const faceType = attribute<"uint">("faceType", "uint");
-                    const lit = faceType.bitAnd(1).toBool();
+                    const lit = faceType.bitAnd(1).greaterThan(0);
 
                     If(terrainColor.a.lessThan(0.5), () => Discard());
 
@@ -56,14 +56,15 @@ export class WorldRenderer {
 
                     const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 1).toVar("shadow");
                     const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+                    
+                    const direction = positionWorld.sub(cameraPosition).normalize().toVar();
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     
                     const lightColor = createLightColorNode(this.world.lighting, shadow, ao).toVar("lightColor");
 
                     If(lit, () => {
-                        ao.assign(1);
-                        lightColor.assign(color(1, 1, 1));
+                        lightColor.assign(vec3(1, 1, 1));
                     });
 
                     return mix(
