@@ -71,6 +71,40 @@
                 "base:blue": 15
             }
         },
+        "color=yellow": {
+            "model": {
+                "include": "base:full_block_lit",
+                "textures": {
+                    "block": "base:block/yellow_lamp.png"
+                }
+            },
+            "events": "base:sound_materials/solid",
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": {
+                "base:yellow": 15
+            }
+        },
+        "color=purple": {
+            "model": {
+                "include": "base:full_block_lit",
+                "textures": {
+                    "block": "base:block/purple_lamp.png"
+                }
+            },
+            "events": "base:sound_materials/solid",
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": {
+                "base:purple": 15
+            }
+        },
         "color=sky": {
             "model": {
                 "include": "base:full_block_lit",
