@@ -1,7 +1,7 @@
 import type { Box3 } from "three";
-import { Lighting } from "./lighting";
+import { LightingEngine } from "./lightingEngine";
 
-export class CascadingLighting extends Lighting {
+export class CascadingLighting extends LightingEngine {
     private getPropagatedIntensity(x: number, y: number, z: number) {
         const lightProperties = this.getLightProperties(x, y, z);
         const attenuation = this.getAttenuation(lightProperties);

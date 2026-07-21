@@ -1,7 +1,7 @@
 import { Vector3, type Box3 } from "three";
-import type { World } from "../world/world";
-import type { TileCollider } from "../entity/entity";
 import { getUnknownBlockState } from "../block/blockRegistry";
+import type { TileCollider } from "../entity/entity";
+import type { World } from "../world/world";
 
 type CollisionResult = -1 | 0 | 1;
 

@@ -1,11 +1,11 @@
 import { Box3, Vector3 } from "three";
-import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
+import type { Assets } from "../data/assets";
+import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { TileCollider } from "../entity/entity";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
-import type { Assets } from "../textures/assets";
-import { BlockModel } from "./blockModel";
-import { EventPredicate, ConstantPredicate } from "../events/eventPredicate";
+import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
+import { BlockModel } from "./model/blockModel";
 
 export function parseEvents(events: DataDrivenJson.EventSheet | string[] | string | undefined, assets: Assets) {
     if(events == null || (events instanceof Array && !events.length)) {

@@ -9,7 +9,7 @@
     "prestart": "npm run fastnoise:build",
     "pack-assets": "cd src && zip -9 -FSr ../assets/base.zip assets -x \\*.aseprite",
     "start": "npm run pack-assets && webpack-dev-server --open --config webpack.dev.js",
-    "prebuild": "npm run fastnoise:build && mkdir assets",
+    "prebuild": "npm run fastnoise:build && mkdir -p assets",
     "build": "npm run pack-assets && webpack --config webpack.prod.js",
     "prewatch": "npm run fastnoise:build",
     "watch": "webpack --watch",

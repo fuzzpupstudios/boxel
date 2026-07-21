@@ -1,5 +1,5 @@
 import { Color } from "three";
-import type { DataDrivenJson } from "../../block/entity/data/dataDrivenJson";
+import type { DataDrivenJson } from "../../data/dataDrivenJson";
 import { LightChannelType, LightingEngineType } from "./lightChannelRegistry";
 
 export class DataDrivenLightChannel extends LightChannelType {

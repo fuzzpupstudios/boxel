@@ -1,6 +1,6 @@
 import { Signal } from "typed-signals";
-import { ItemStack, SerializedItemStack } from "./itemStack";
 import z from "zod";
+import { ItemStack, SerializedItemStack } from "./itemStack";
 
 export const SerializedInventory = z.object({
     items: z.array(SerializedItemStack).default([])

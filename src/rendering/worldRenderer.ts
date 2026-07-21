@@ -1,9 +1,9 @@
 import { MathUtils, Mesh, Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
-import { attribute, cameraPosition, color, Discard, float, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
+import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
-import type { Assets } from "../textures/assets";
-import type { TextureAtlas } from "../textures/textureAtlas";
+import type { Assets } from "../data/assets";
+import type { TextureAtlas } from "../data/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
@@ -58,7 +58,7 @@ export class WorldRenderer {
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     
-                    const lightColor = createLightColorNode(this.world.lighting, shadow, ao).toVar("lightColor");
+                    const lightColor = createLightColorNode(this.world.lightingManager, shadow, ao).toVar("lightColor");
 
                     If(lit, () => {
                         lightColor.assign(vec3(1, 1, 1));

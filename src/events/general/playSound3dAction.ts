@@ -1,6 +1,6 @@
 import z from "zod";
 import { EventAction } from "../eventAction";
-import type { EventSheet, EventCursor } from "../eventSheet";
+import type { EventCursor, EventSheet } from "../eventSheet";
 
 export type PlaySound3dActionParameters = z.infer<typeof PlaySound3dActionParameters>;
 export const PlaySound3dActionParameters = z.object({

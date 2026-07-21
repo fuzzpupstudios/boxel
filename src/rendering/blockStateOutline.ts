@@ -1,8 +1,8 @@
-import { BoxGeometry, EdgesGeometry, LineSegments, Vector2, Vector3 } from "three";
-import { BufferGeometryUtils, LineMaterial } from "three/examples/jsm/Addons.js";
+import { BoxGeometry, EdgesGeometry, LineSegments, Vector3 } from "three";
+import { BufferGeometryUtils } from "three/examples/jsm/Addons.js";
+import { LineBasicNodeMaterial } from "three/webgpu";
 import { BlockState } from "../block/block";
-import { BufferGeometry, LineBasicNodeMaterial } from "three/webgpu";
-import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
+import { getUnknownBlockState } from "../block/blockRegistry";
 
 export class BlockStateOutline {
     public readonly mesh: LineSegments;

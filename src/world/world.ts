@@ -7,7 +7,7 @@ import type { PersistentWorld } from "../persistence/persistentWorld";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
 import type { LightingChunk } from "./lighting/lightingGrid";
-import { LightingEngine } from "./lightingEngine";
+import { LightingManager } from "./lighting/lightingManager";
 import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 
@@ -36,7 +36,7 @@ export class Chunk {
         if(lightingChunk != null) return lightingChunk;
         if(this.world == null) return null;
         
-        lightingChunk = this.world.lighting.getChannelOrThrow(lightChannelId)
+        lightingChunk = this.world.lightingManager.getChannelOrThrow(lightChannelId)
             .lightingGrid.getChunk(this.x, this.y, this.z);
         if(lightingChunk == null) return null;
 
@@ -81,7 +81,7 @@ export class World {
     public readonly chunksToSave = new Set<Chunk>;
     private readonly chunksWithBlockEntities = new Set<Chunk>;
     public readonly loadingChunks = new Map<number, Promise<Chunk>>;
-    public readonly lighting = new LightingEngine(this);
+    public readonly lightingManager = new LightingManager(this);
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {
         persistentWorld.setWorld(this);
@@ -172,7 +172,7 @@ export class World {
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
 
-        const skyLight = this.lighting.getChannelOrThrow("base:sky");
+        const skyLight = this.lightingManager.getChannelOrThrow("base:sky");
 
         if(columnY >= 0) {
             const minX = columnX << 4;
@@ -190,7 +190,7 @@ export class World {
         
         for(let y = columnY + 7; y >= columnY; y--) {
             this.getChunk(columnX, y, columnZ);
-            this.lighting.updateChunk(columnX, y, columnZ, false);
+            this.lightingManager.updateChunk(columnX, y, columnZ, false);
         }
     }
 
@@ -234,7 +234,7 @@ export class World {
             this.tiles.chunks.set(chunkKey, chunk.tiles);
 
             for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
-                const lightingChannel = this.lighting.getChannel(lightChannelId);
+                const lightingChannel = this.lightingManager.getChannel(lightChannelId);
                 if(lightingChannel == null) {
                     console.warn("Cannot find lighting channel " + lightChannelId);
                     continue;
@@ -344,7 +344,7 @@ export class World {
 
         if(!markDirty) return;
         this.markChunkDirty(x >> 4, y >> 4, z >> 4);
-        this.lighting.updateLight(x, y, z, true);
+        this.lightingManager.updateLight(x, y, z, true);
 
         if(this.renderer === null) return;
 

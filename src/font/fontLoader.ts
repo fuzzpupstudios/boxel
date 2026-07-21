@@ -1,5 +1,5 @@
-import { BitmapFont, Cache, Texture } from "pixi.js";
 import type { RawCharData } from "pixi.js";
+import { BitmapFont, Cache, Texture } from "pixi.js";
 
 export interface FontPage {
     pageTexture: Texture;

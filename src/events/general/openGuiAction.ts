@@ -1,9 +1,9 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventSheet, EventCursor } from "../eventSheet";
-import type { Inventory } from "../../item/inventory";
 import { Player } from "../../entity/player";
-import { inventoryGuiTypeRegistry } from "../../item/inventoryGuiTypeRegistry";
+import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
+import type { Inventory } from "../../item/inventory";
+import { EventAction } from "../eventAction";
+import type { EventCursor, EventSheet } from "../eventSheet";
 
 export type OpenGuiActionParameters = z.infer<typeof OpenGuiActionParameters>;
 export const OpenGuiActionParameters = z.object({
@@ -46,7 +46,7 @@ export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
             }
         }
 
-        const guiType = inventoryGuiTypeRegistry.get(this.args.gui);
+        const guiType = guiTypeRegistry.get(this.args.gui);
         if(guiType == null) throw new ReferenceError("Unknown gui type " + this.args.gui);
 
         cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories));

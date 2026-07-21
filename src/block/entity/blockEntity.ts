@@ -1,9 +1,9 @@
-import { BlockState } from "../block";
-import { blockStateRegistry } from "../blockRegistry";
 import type { Tickable } from "../../entity/entity";
 import { Inventory } from "../../item/inventory";
 import type { Time } from "../../time";
 import type { World } from "../../world/world";
+import { BlockState } from "../block";
+import { blockStateRegistry } from "../blockRegistry";
 
 export abstract class BlockEntityType {
     public abstract readonly tickable: boolean;

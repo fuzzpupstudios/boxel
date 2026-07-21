@@ -1,8 +1,8 @@
-import { Vector3, type Vector3Like } from "three";
-import type { World } from "../world/world";
-import type { TileCollider } from "../entity/entity";
+import { Vector3 } from "three";
+import { getUnknownBlockState } from "../block/blockRegistry";
 import { Side } from "../block/direction";
-import { tileRegistry, getUnknownBlockState } from "../block/blockRegistry";
+import type { TileCollider } from "../entity/entity";
+import type { World } from "../world/world";
 
 export class RaycastResult {
     public hit: boolean = false;

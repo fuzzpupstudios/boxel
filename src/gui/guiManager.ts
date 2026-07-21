@@ -1,10 +1,10 @@
 import { Container } from "pixi.js";
-import { EventCursor } from "../events/eventSheet";
-import type { GraphicalInterface } from "../item/inventoryGui";
-import { GuiCursor, GuiContainer } from "./inventoryGuiContainer";
-import type { TileHologramProvider } from "./tileHologram";
 import { Signal } from "typed-signals";
-import type { GuiItemSpriteProvider } from "./guiItem";
+import { EventCursor } from "../events/eventSheet";
+import type { GuiItemSpriteProvider } from "./element/itemSprite";
+import type { TileHologramProvider } from "./element/tileHologram";
+import { GuiContainer, GuiCursor } from "./guiContainer";
+import type { GraphicalInterface } from "./guiType";
 
 export class GuiManager {
     public readonly openGuis = new Map<string, GuiContainer>;

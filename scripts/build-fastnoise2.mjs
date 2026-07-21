@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, rmSync, copyFileSync, renameSync } from "node:fs";
-import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, renameSync, rmSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const FASTNOISE2_VERSION = "v1.1.1";

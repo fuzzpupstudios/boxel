@@ -1,15 +1,15 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import { Chunk, World } from "../world/world";
-import { VoxelChunk } from "../world/voxelGrid";
 import z from "zod";
-import { Player } from "../entity/player";
-import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
-import { LightingChunk } from "../world/lighting/lightingGrid";
-import { SerializedInventory } from "../item/inventory";
 import type { SerializedBlockEntity } from "../block/entity/blockEntity";
 import { blockEntityTypeRegistry } from "../block/entity/blockEntityRegistry";
 import { UnknownBlockEntityType } from "../block/entity/unknownBlockEntity";
+import { Player } from "../entity/player";
+import { SerializedInventory } from "../item/inventory";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
+import { LightingChunk } from "../world/lighting/lightingGrid";
+import { VoxelChunk } from "../world/voxelGrid";
+import { Chunk, World } from "../world/world";
+import { CHUNK_SCHEMA_VERSION, chunkUpgrades } from "./upgrade";
 
 export interface SerializedChunk {
     version: number,

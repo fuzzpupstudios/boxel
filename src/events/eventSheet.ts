@@ -1,11 +1,11 @@
 import { Quaternion, Vector3 } from "three";
+import type { AudioManager } from "../data/audioManager";
+import type { Entity } from "../entity/entity";
+import type { GuiManager } from "../gui/guiManager";
 import type { RaycastResult } from "../physics/raycaster";
+import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 import type { World } from "../world/world";
 import type { EventAction } from "./eventAction";
-import type { GuiManager } from "../gui/guiManager";
-import type { Entity } from "../entity/entity";
-import type { AudioManager } from "../textures/audioManager";
-import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 
 export interface ClientEventPlatform {
     usingTouchscreen: boolean;

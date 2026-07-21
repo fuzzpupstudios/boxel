@@ -1,6 +1,6 @@
-import { BufferGeometry, ByteType, ClampToEdgeWrapping, Data3DTexture, HalfFloatType, InterleavedBuffer, InterleavedBufferAttribute, IntType, LinearFilter, RGBAFormat, Uint16BufferAttribute, Uint8BufferAttribute } from "three";
-import type { World } from "../world/world";
+import { BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
+import type { World } from "../world/world";
 
 
 export interface TileFace {
@@ -49,7 +49,7 @@ class TileCache {
         private readonly world: World,
         private readonly aoWeights: Map<string, number>
     ) {
-        this.lightChannelCount = world.lighting.lightChannels.length;
+        this.lightChannelCount = world.lightingManager.lightChannels.length;
         this.lighting = new (Float16Array || Float32Array)(18 ** 3 * this.lightChannelCount);
     }
 
@@ -64,7 +64,7 @@ class TileCache {
 
         const world = this.world;
         const lightChannelCount = this.lightChannelCount;
-        const lightChannels = world.lighting.lightChannels;
+        const lightChannels = world.lightingManager.lightChannels;
         const lightStrength = 1 / 15;
 
         let tile: string;
@@ -148,7 +148,7 @@ export class ChunkMesher {
         }
 
         this.tileCache = new TileCache(world, this.aoWeights);
-        this.lightChannelCount = world.lighting.lightChannels.length;
+        this.lightChannelCount = world.lightingManager.lightChannels.length;
 
         // ~150 MB maximum mesh size (should be more than enough..?)
         const MAX_VERTEX_COUNT = 2 ** 22;

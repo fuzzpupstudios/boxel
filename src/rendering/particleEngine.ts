@@ -1,6 +1,6 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
 import { attribute, billboarding, float, positionGeometry, texture, uv } from "three/tsl";
-import { MeshBasicNodeMaterial, Node } from "three/webgpu";
+import { MeshBasicNodeMaterial } from "three/webgpu";
 import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { Time } from "../time";
@@ -79,7 +79,7 @@ export class ParticleEngine {
         ], 2));
         this.geometry.setIndex([ 0, 1, 2, 2, 3, 0 ]);
 
-        this.lightChannelCount = world.lighting.lightChannels.length;
+        this.lightChannelCount = world.lightingManager.lightChannels.length;
         this.lighting = [];
         this.lightingAttr = [];
         for(let i = 0; i < this.lightChannelCount; i++) {
@@ -116,7 +116,7 @@ export class ParticleEngine {
                 uv().mul(particleUvRect.zw.sub(particleUvRect.xy))
             ).toVar("particleUv");
             const particleColor = texture(this.particleTexture, particleUv)
-                .mul(createLightColorNode(this.world.lighting, float(1), float(0))).toVar("particleColor");
+                .mul(createLightColorNode(this.world.lightingManager, float(1), float(0))).toVar("particleColor");
 
             this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
                 vertexNode: billboarding({
@@ -142,7 +142,7 @@ export class ParticleEngine {
         const z = Math.floor(this.positions[index * 3 + 2]!);
 
         for(let i = 0; i < lightChannelCount; i++) {
-            this.lighting[i]![index] = this.world.lighting.lightChannels[i]!.get(x, y, z) / 15;
+            this.lighting[i]![index] = this.world.lightingManager.lightChannels[i]!.get(x, y, z) / 15;
         }
     }
 

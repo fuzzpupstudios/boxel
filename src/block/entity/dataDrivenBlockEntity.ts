@@ -1,36 +1,46 @@
-import type { BlockState } from "../block";
-import type { DataDrivenJson } from "./data/dataDrivenJson";
+import type { DataDrivenJson } from "../../data/dataDrivenJson";
 import type { EventAction } from "../../events/eventAction";
 import { EventCursor } from "../../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../../item/inventory";
-import type { Assets } from "../../textures/assets";
 import type { Time } from "../../time";
 import type { World } from "../../world/world";
+import type { BlockState } from "../block";
 import { BlockEntity, BlockEntityType, type SerializedBlockEntity } from "./blockEntity";
 
 export class DataDrivenBlockEntityType extends BlockEntityType {
     public override readonly tickable: boolean;
     public override readonly id: string;
     public readonly inventory?: Inventory;
-    
-    public constructor(
-        json: DataDrivenJson.BlockEntity, assets: Assets
-    ) {
-        super();
 
-        this.id = json.id;
-        this.tickable = json.tickable ?? false;
-
+    public static parseJson(json: DataDrivenJson.BlockEntityType) {
+        let inventory: Inventory | undefined;
+        
         if(json.slots != null) {
-            this.inventory = new Inventory;
+            inventory = new Inventory;
 
             for(const jsonSlot of json.slots) {
                 const slot = new InventorySlot;
                 slot.allowInsert = jsonSlot.insert ?? slot.allowInsert;
                 slot.allowExtract = jsonSlot.extract ?? slot.allowExtract;
-                this.inventory.addSlot(slot);
+                inventory.addSlot(slot);
             }
         }
+
+        return new DataDrivenBlockEntityType(
+            json.id,
+            json.tickable ?? false,
+            inventory
+        )
+    }
+    
+    public constructor(
+        id: string, tickable: boolean, inventory?: Inventory
+    ) {
+        super();
+
+        this.id = id;
+        this.tickable = tickable;
+        this.inventory = inventory!;
     }
     
     public create(world: World, x: number, y: number, z: number): DataDrivenBlockEntity {

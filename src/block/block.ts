@@ -1,10 +1,10 @@
 import { MathUtils } from "three";
 import type { TileCollider } from "../entity/entity";
-import type { BlockModel } from "./blockModel";
-import type { EventSheet } from "../events/eventSheet";
 import type { EventPredicate } from "../events/eventPredicate";
-import type { BlockEntity, BlockEntityType } from "./entity/blockEntity";
+import type { EventSheet } from "../events/eventSheet";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
+import type { BlockEntityType } from "./entity/blockEntity";
+import type { BlockModel } from "./model/blockModel";
 
 export abstract class Block {
     public states: Map<string, BlockState> = new Map;

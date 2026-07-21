@@ -1,7 +1,7 @@
+import { MathUtils } from "three";
 import z from "zod";
 import { EventPredicate } from "../eventPredicate";
 import type { EventCursor } from "../eventSheet";
-import { MathUtils } from "three";
 
 export type EntityEventPredicateParameters = z.infer<typeof EntityEventPredicateParameters>;
 export const EntityEventPredicateParameters = z.object({

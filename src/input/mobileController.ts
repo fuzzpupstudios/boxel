@@ -1,7 +1,7 @@
 import { MathUtils } from "three";
-import type { GuiDPadLeft } from "../gui/mobile/dPadLeft";
-import type { GuiDPadRight } from "../gui/mobile/dPadRight";
-import type { Topbar } from "../gui/mobile/topbar";
+import type { GuiDPadLeft } from "../gui/prefab/dPadLeft";
+import type { GuiDPadRight } from "../gui/prefab/dPadRight";
+import type { Topbar } from "../gui/prefab/topbar";
 
 export enum MobileButton {
     LEFT, RIGHT, FORWARD, BACKWARD,

@@ -1,6 +1,6 @@
 import z from "zod";
 import { EventAction } from "../eventAction";
-import type { EventSheet, EventCursor } from "../eventSheet";
+import type { EventCursor, EventSheet } from "../eventSheet";
 
 export type CloneBlockActionParameters = z.infer<typeof CloneBlockActionParameters>;
 export const CloneBlockActionParameters = z.object({

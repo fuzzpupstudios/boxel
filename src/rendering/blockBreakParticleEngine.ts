@@ -1,6 +1,6 @@
 import { Box2, Vector2 } from "three";
 import { Side } from "../block/direction";
-import type { TextureAtlas } from "../textures/textureAtlas";
+import type { TextureAtlas } from "../data/textureAtlas";
 import type { World } from "../world/world";
 import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";

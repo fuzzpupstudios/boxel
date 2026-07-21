@@ -1,4 +1,4 @@
-import type { SerializedChunk } from "./persistentWorld"
+import type { SerializedChunk } from "./persistentWorld";
 
 type ChunkUpgrade = (chunk: SerializedChunk) => SerializedChunk;
 

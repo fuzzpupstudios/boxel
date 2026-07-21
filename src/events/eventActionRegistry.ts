@@ -1,22 +1,22 @@
 import { KeyedRegistry } from "objectregistry";
 import { CloneBlockAction } from "./block/cloneBlockAction";
-import { CloseGuiAction } from "./general/closeGuiAction";
-import { OpenGuiAction } from "./general/openGuiAction";
+import { ExplodeAction } from "./block/explodeAction";
 import { RunTriggerAction } from "./block/runTriggerAction";
 import { SetBlockStateIdAction } from "./block/setBlockStateIdAction";
 import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
 import { EventAction } from "./eventAction";
 import type { EventPredicate } from "./eventPredicate";
 import type { EventSheet } from "./eventSheet";
+import { CloseGuiAction } from "./general/closeGuiAction";
+import { OpenGuiAction } from "./general/openGuiAction";
+import { PlaySound2dAction } from "./general/playSound2dAction";
+import { PlaySound3dAction } from "./general/playSound3dAction";
+import { PreventDefaultAction } from "./general/preventDefaultAction";
+import { SetSelectedSlotAction } from "./general/setSelectedSlotAction";
 import { BlockEventPredicate } from "./predicate/blockEventPredicate";
 import { EntityEventPredicate } from "./predicate/entityEventPredicate";
 import { FaceEventPredicate } from "./predicate/faceEventPredicate";
 import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
-import { SetSelectedSlotAction } from "./general/setSelectedSlotAction";
-import { PlaySound3dAction } from "./general/playSound3dAction";
-import { PlaySound2dAction } from "./general/playSound2dAction";
-import { PreventDefaultAction } from "./general/preventDefaultAction";
-import { ExplodeAction } from "./block/explodeAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 

@@ -1,6 +1,6 @@
-import path from "path";
-import HtmlWebpackPlugin from "html-webpack-plugin";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import path from "path";
 
 export default {
     entry: "./src/index.ts",
@@ -30,7 +30,7 @@ export default {
             template: "./src/index.html",
             inject: "body",
             hash: true,
-        }),
+        })
     ],
     output: {
         filename: "[name].[contenthash].js",

@@ -1,8 +1,8 @@
-import { Object3D } from "three";
-import { cameraPosition, color, float, instanceIndex, mix, pass, positionWorld, texture, uniform, vec3, vec4, vertexIndex } from "three/tsl";
-import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, ConstantAlphaFactor, Euler, Float32BufferAttribute, InstancedBufferGeometry, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicMaterial, MeshBasicNodeMaterial, NearestFilter, Node, PassNode, PerspectiveCamera, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
-import type { Assets } from "../textures/assets";
 import Alea from "alea";
+import { Object3D } from "three";
+import { cameraPosition, color, float, instanceIndex, mix, pass, positionWorld, texture, uniform, vec3, vec4 } from "three/tsl";
+import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, Euler, Float32BufferAttribute, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, NearestFilter, Node, PassNode, PerspectiveCamera, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
+import type { Assets } from "../data/assets";
 
 export class Sky {
     public readonly time = uniform(float(0));

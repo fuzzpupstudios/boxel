@@ -1,7 +1,7 @@
 import z from "zod";
+import { blockStateRegistry } from "../../block/blockRegistry";
 import { EventPredicate } from "../eventPredicate";
 import type { EventCursor } from "../eventSheet";
-import { blockStateRegistry } from "../../block/blockRegistry";
 
 export type BlockEventPredicateParameters = z.infer<typeof BlockEventPredicateParameters>;
 export const BlockEventPredicateParameters = z.object({

@@ -1,0 +1,23 @@
+import { Input } from "@pixi/ui";
+import { Assets, BitmapText, TextStyle } from "pixi.js";
+
+export class GuiTextBox extends Input {
+    public constructor(placeholder: string, width: number, height: number) {
+        super({
+            bg: Assets.get("base:ui/input.png"),
+            nineSliceSprite: [3, 3, 3, 3],
+            placeholder,
+            padding: 3,
+            align: "left",
+            textStyle: new TextStyle({
+                fill: 0xffffff,
+                fontFamily: "BoxelFont",
+                fontSize: 12,
+            }),
+            TextClass: BitmapText
+        });
+
+        this.width = width;
+        this.height = height;
+    }
+}

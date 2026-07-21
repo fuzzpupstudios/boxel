@@ -1,9 +1,9 @@
-import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
-import type { DataDrivenJson } from "./entity/data/dataDrivenJson";
-import type { Assets } from "../textures/assets";
-import { Block, BlockState } from "./block";
-import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
+import type { Assets } from "../data/assets";
+import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
+import { Block, BlockState } from "./block";
+import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
+import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
 
 
 export class DataDrivenBlock extends Block {
@@ -29,143 +29,7 @@ export class DataDrivenBlock extends Block {
 
         for(const [ stateKey, jsonState ] of Object.entries(json.states)) {
             if(json.defaultStateProperties != null) {
-                const defaultProperties: DataDrivenJson.BlockState =
-                    JSON.parse(JSON.stringify(json.defaultStateProperties));
-
-                jsonState.attenuation ??= defaultProperties.attenuation!;
-                jsonState.emission ??= defaultProperties.emission!;
-                jsonState.canPlace ??= defaultProperties.canPlace!;
-                jsonState.pickBlockState ??= defaultProperties.pickBlockState!;
-                jsonState.renderAsTexture ??= defaultProperties.renderAsTexture!;
-
-                if(jsonState.tags == null) {
-                    jsonState.tags = defaultProperties.tags!;
-                } else if(defaultProperties.tags != null) {
-                    jsonState.tags.push(...defaultProperties.tags);
-                }
-
-                if(jsonState.collider == null) {
-                    jsonState.collider = defaultProperties.collider!;
-                } else if(defaultProperties.collider != null) {
-                    jsonState.collider.hitboxes.push(...defaultProperties.collider.hitboxes);
-                }
-
-                if(jsonState.events == null) {
-                    jsonState.events = defaultProperties.events!;
-                } else if(defaultProperties.events != null) {
-                    if(typeof jsonState.events == "string" || jsonState.events instanceof Array) {
-                        jsonState.events = { include: jsonState.events };
-                    }
-                    if(typeof defaultProperties.events == "string" || defaultProperties.events instanceof Array) {
-                        defaultProperties.events = { include: defaultProperties.events };
-                    }
-
-                    const jsonEvents = jsonState.events;
-                    const defaultEvents = defaultProperties.events;
-
-                    if(jsonEvents.include == null) {
-                        jsonEvents.include = defaultEvents.include!;
-                    } else if(defaultEvents.include != null) {
-                        if(!(jsonEvents.include instanceof Array)) jsonEvents.include = [ jsonEvents.include ];
-
-                        if(defaultEvents.include instanceof Array) {
-                            jsonEvents.include.unshift(...defaultEvents.include);
-                        } else {
-                            jsonEvents.include.unshift(defaultEvents.include);
-                        }
-                    }
-
-
-                    if(jsonEvents.triggers == null) {
-                        jsonEvents.triggers = defaultEvents.triggers!;
-                    } else if(defaultEvents.triggers != null) {
-                        for(const triggerId of Object.keys(defaultEvents.triggers)) {
-                            if(jsonEvents.triggers[triggerId] == null) {
-                                jsonEvents.triggers[triggerId] = defaultEvents.triggers[triggerId]!;
-                            } else if(defaultEvents.triggers[triggerId] != null) {
-                                if(!(jsonEvents.triggers[triggerId] instanceof Array)) {
-                                    jsonEvents.triggers[triggerId] = [ jsonEvents.triggers[triggerId] ];
-                                }
-                                if(!(defaultEvents.triggers[triggerId] instanceof Array)) {
-                                    defaultEvents.triggers[triggerId] = [ defaultEvents.triggers[triggerId] ];
-                                }
-
-                                jsonEvents.triggers[triggerId].push(...<any>defaultEvents.triggers);
-                            }
-                        }
-                    }
-                }
-
-                if(jsonState.model == null) {
-                    jsonState.model = defaultProperties.model!;
-                } else if(defaultProperties.model != null) {
-                    if(typeof jsonState.model == "string") {
-                        jsonState.model = { include: jsonState.model };
-                    }
-                    if(typeof defaultProperties.model == "string") {
-                        defaultProperties.model = { include: defaultProperties.model };
-                    }
-
-                    const jsonModel = jsonState.model;
-                    const defaultModel = defaultProperties.model;
-
-                    jsonModel.include ??= [];
-                    if(!(jsonModel.include instanceof Array)) {
-                        jsonModel.include = [ jsonModel.include ];
-                    }
-                    if(defaultProperties.model.include instanceof Array) {
-                        jsonModel.include.push(...defaultProperties.model.include);
-                    } else if(defaultProperties.model.include != null) {
-                        jsonModel.include.push(defaultProperties.model.include);
-                    }
-                    jsonModel.occlude ??= defaultModel.occlude!;
-
-                    jsonModel.occludeNorth ??= defaultModel.occludeNorth!;
-                    jsonModel.occludeEast ??= defaultModel.occludeEast!;
-                    jsonModel.occludeSouth ??= defaultModel.occludeSouth!;
-                    jsonModel.occludeWest ??= defaultModel.occludeWest!;
-                    jsonModel.occludeDown ??= defaultModel.occludeDown!;
-                    jsonModel.occludeUp ??= defaultModel.occludeUp!;
-
-                    if(jsonModel.textures == null) {
-                        jsonModel.textures = defaultModel.textures!;
-                    } else if(defaultModel.textures != null) {
-                        for(const [ key, value ] of Object.entries(defaultModel.textures)) {
-                            jsonModel.textures[key] ??= value;
-                        }
-                    }
-
-                    if(jsonModel.north == null) {
-                        jsonModel.north = defaultModel.north!;
-                    } else if(defaultModel.north != null) {
-                        jsonModel.north.push(...defaultModel.north);
-                    }
-                    if(jsonModel.east == null) {
-                        jsonModel.east = defaultModel.east!;
-                    } else if(defaultModel.east != null) {
-                        jsonModel.east.push(...defaultModel.east);
-                    }
-                    if(jsonModel.south == null) {
-                        jsonModel.south = defaultModel.south!;
-                    } else if(defaultModel.south != null) {
-                        jsonModel.south.push(...defaultModel.south);
-                    }
-                    if(jsonModel.west == null) {
-                        jsonModel.west = defaultModel.west!;
-                    } else if(defaultModel.west != null) {
-                        jsonModel.west.push(...defaultModel.west);
-                    }
-                    if(jsonModel.up == null) {
-                        jsonModel.up = defaultModel.up!;
-                    } else if(defaultModel.up != null) {
-                        jsonModel.up.push(...defaultModel.up);
-                    }
-                    if(jsonModel.down == null) {
-                        jsonModel.down = defaultModel.down!;
-                    } else if(defaultModel.down != null) {
-                        jsonModel.down.push(...defaultModel.down);
-                    }
-                }
+                this.applyDefaultProperties(structuredClone(json.defaultStateProperties), jsonState);
             }
             try {
                 const blockState = this.parseState(block, stateKey, jsonState, assets);
@@ -267,5 +131,142 @@ export class DataDrivenBlock extends Block {
             pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]"),
             renderAsTexture
         );
+    }
+
+    private static applyDefaultProperties(defaultProperties: DataDrivenJson.BlockState, jsonState: DataDrivenJson.BlockState) {
+        jsonState.attenuation ??= defaultProperties.attenuation!;
+        jsonState.emission ??= defaultProperties.emission!;
+        jsonState.canPlace ??= defaultProperties.canPlace!;
+        jsonState.pickBlockState ??= defaultProperties.pickBlockState!;
+        jsonState.renderAsTexture ??= defaultProperties.renderAsTexture!;
+
+        if(jsonState.tags == null) {
+            jsonState.tags = defaultProperties.tags!;
+        } else if(defaultProperties.tags != null) {
+            jsonState.tags.push(...defaultProperties.tags);
+        }
+
+        if(jsonState.collider == null) {
+            jsonState.collider = defaultProperties.collider!;
+        } else if(defaultProperties.collider != null) {
+            jsonState.collider.hitboxes.push(...defaultProperties.collider.hitboxes);
+        }
+
+        if(jsonState.events == null) {
+            jsonState.events = defaultProperties.events!;
+        } else if(defaultProperties.events != null) {
+            if(typeof jsonState.events == "string" || jsonState.events instanceof Array) {
+                jsonState.events = { include: jsonState.events };
+            }
+            if(typeof defaultProperties.events == "string" || defaultProperties.events instanceof Array) {
+                defaultProperties.events = { include: defaultProperties.events };
+            }
+
+            const jsonEvents = jsonState.events;
+            const defaultEvents = defaultProperties.events;
+
+            if(jsonEvents.include == null) {
+                jsonEvents.include = defaultEvents.include!;
+            } else if(defaultEvents.include != null) {
+                if(!(jsonEvents.include instanceof Array)) jsonEvents.include = [ jsonEvents.include ];
+
+                if(defaultEvents.include instanceof Array) {
+                    jsonEvents.include.unshift(...defaultEvents.include);
+                } else {
+                    jsonEvents.include.unshift(defaultEvents.include);
+                }
+            }
+
+
+            if(jsonEvents.triggers == null) {
+                jsonEvents.triggers = defaultEvents.triggers!;
+            } else if(defaultEvents.triggers != null) {
+                for(const triggerId of Object.keys(defaultEvents.triggers)) {
+                    if(jsonEvents.triggers[triggerId] == null) {
+                        jsonEvents.triggers[triggerId] = defaultEvents.triggers[triggerId]!;
+                    } else if(defaultEvents.triggers[triggerId] != null) {
+                        if(!(jsonEvents.triggers[triggerId] instanceof Array)) {
+                            jsonEvents.triggers[triggerId] = [ jsonEvents.triggers[triggerId] ];
+                        }
+                        if(!(defaultEvents.triggers[triggerId] instanceof Array)) {
+                            defaultEvents.triggers[triggerId] = [ defaultEvents.triggers[triggerId] ];
+                        }
+
+                        jsonEvents.triggers[triggerId].push(...<any>defaultEvents.triggers);
+                    }
+                }
+            }
+        }
+
+        if(jsonState.model == null) {
+            jsonState.model = defaultProperties.model!;
+        } else if(defaultProperties.model != null) {
+            if(typeof jsonState.model == "string") {
+                jsonState.model = { include: jsonState.model };
+            }
+            if(typeof defaultProperties.model == "string") {
+                defaultProperties.model = { include: defaultProperties.model };
+            }
+
+            const jsonModel = jsonState.model;
+            const defaultModel = defaultProperties.model;
+
+            jsonModel.include ??= [];
+            if(!(jsonModel.include instanceof Array)) {
+                jsonModel.include = [ jsonModel.include ];
+            }
+            if(defaultProperties.model.include instanceof Array) {
+                jsonModel.include.push(...defaultProperties.model.include);
+            } else if(defaultProperties.model.include != null) {
+                jsonModel.include.push(defaultProperties.model.include);
+            }
+            jsonModel.occlude ??= defaultModel.occlude!;
+
+            jsonModel.occludeNorth ??= defaultModel.occludeNorth!;
+            jsonModel.occludeEast ??= defaultModel.occludeEast!;
+            jsonModel.occludeSouth ??= defaultModel.occludeSouth!;
+            jsonModel.occludeWest ??= defaultModel.occludeWest!;
+            jsonModel.occludeDown ??= defaultModel.occludeDown!;
+            jsonModel.occludeUp ??= defaultModel.occludeUp!;
+
+            if(jsonModel.textures == null) {
+                jsonModel.textures = defaultModel.textures!;
+            } else if(defaultModel.textures != null) {
+                for(const [ key, value ] of Object.entries(defaultModel.textures)) {
+                    jsonModel.textures[key] ??= value;
+                }
+            }
+
+            if(jsonModel.north == null) {
+                jsonModel.north = defaultModel.north!;
+            } else if(defaultModel.north != null) {
+                jsonModel.north.push(...defaultModel.north);
+            }
+            if(jsonModel.east == null) {
+                jsonModel.east = defaultModel.east!;
+            } else if(defaultModel.east != null) {
+                jsonModel.east.push(...defaultModel.east);
+            }
+            if(jsonModel.south == null) {
+                jsonModel.south = defaultModel.south!;
+            } else if(defaultModel.south != null) {
+                jsonModel.south.push(...defaultModel.south);
+            }
+            if(jsonModel.west == null) {
+                jsonModel.west = defaultModel.west!;
+            } else if(defaultModel.west != null) {
+                jsonModel.west.push(...defaultModel.west);
+            }
+            if(jsonModel.up == null) {
+                jsonModel.up = defaultModel.up!;
+            } else if(defaultModel.up != null) {
+                jsonModel.up.push(...defaultModel.up);
+            }
+            if(jsonModel.down == null) {
+                jsonModel.down = defaultModel.down!;
+            } else if(defaultModel.down != null) {
+                jsonModel.down.push(...defaultModel.down);
+            }
+        }
     }
 }

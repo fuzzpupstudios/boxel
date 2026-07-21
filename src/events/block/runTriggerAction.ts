@@ -1,7 +1,7 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventSheet, EventCursor } from "../eventSheet";
 import { blockStateRegistry } from "../../block/blockRegistry";
+import { EventAction } from "../eventAction";
+import type { EventCursor, EventSheet } from "../eventSheet";
 
 export type RunTriggerActionParameters = z.infer<typeof RunTriggerActionParameters>;
 export const RunTriggerActionParameters = z.object({

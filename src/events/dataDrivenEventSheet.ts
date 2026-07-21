@@ -1,5 +1,5 @@
-import type { DataDrivenJson } from "../block/entity/data/dataDrivenJson";
-import type { Assets } from "../textures/assets";
+import type { Assets } from "../data/assets";
+import type { DataDrivenJson } from "../data/dataDrivenJson";
 import type { EventAction } from "./eventAction";
 import { eventActionRegistry, eventPredicateRegistry } from "./eventActionRegistry";
 import { EventBranch } from "./eventBranch";

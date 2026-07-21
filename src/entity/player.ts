@@ -1,16 +1,15 @@
-import { Box3, Euler, MathUtils, Quaternion, Vector2, Vector3 } from "three";
+import { Box3, Euler, MathUtils, Vector3 } from "three";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { BoxelGame } from "../boxel";
+import { EventCursor } from "../events/eventSheet";
+import { Inventory, InventorySlot } from "../item/inventory";
+import { itemRegistry } from "../item/itemRegistry";
 import { AABB } from "../physics/AABB";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
-import { PlayingGameStage } from "../stage/impl/playingGameStage";
+import { PlayingGameStage } from "../stage/playing/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
 import { Entity, type TileCollider } from "./entity";
-import { Inventory, InventorySlot } from "../item/inventory";
-import { EventAction } from "../events/eventAction";
-import { EventCursor } from "../events/eventSheet";
-import { itemRegistry } from "../item/itemRegistry";
 
 export class Player extends Entity {
     public readonly hitbox = new Box3(

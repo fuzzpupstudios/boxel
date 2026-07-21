@@ -1,8 +1,8 @@
 import { Box3, Vector3 } from "three";
+import { blockStateRegistry } from "../block/blockRegistry";
+import { AABB } from "../physics/AABB";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
-import { AABB } from "../physics/AABB";
 
 export interface Tickable {
     tick(time: Time): void;

@@ -1,8 +1,8 @@
 import { Box3 } from "three";
-import { Lighting } from "./lighting";
+import { LightingEngine } from "./lightingEngine";
 
 
-export class PointSourceLighting extends Lighting {
+export class PointSourceLighting extends LightingEngine {
     private getPropagatedIntensity(x: number, y: number, z: number) {
         const east = this.lightingGrid.get(x + 1, y, z);
         const west = this.lightingGrid.get(x - 1, y, z);

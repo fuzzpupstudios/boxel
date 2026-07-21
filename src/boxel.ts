@@ -10,24 +10,24 @@ import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./blo
 import { DataDrivenBlock } from "./block/dataDrivenBlock";
 import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
 import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity";
+import { Assets } from "./data/assets";
+import { AudioManager } from "./data/audioManager";
+import { TextureAtlas } from "./data/textureAtlas";
 import { FontLoader } from "./font/fontLoader";
-import { GuiControllerCrosshair } from "./gui/controllerCrosshair";
-import { ControlBinding, Input } from "./input/input";
-import { DataDrivenInventoryGuiType } from "./item/dataDrivenInventoryGuiType";
+import { DataDrivenGuiType } from "./gui/dataDrivenGuiType";
+import { guiTypeRegistry } from "./gui/guiTypeRegistry";
+import { GuiControllerCrosshair } from "./gui/prefab/controllerCrosshair";
+import { ControlBinding, Input, MouseAxis, TouchAxis } from "./input/input";
 import { DataDrivenItem } from "./item/dataDrivenItem";
-import { inventoryGuiTypeRegistry } from "./item/inventoryGuiTypeRegistry";
 import { itemRegistry } from "./item/itemRegistry";
 import type { MainStorage } from "./persistence/mainStorage";
 import { PersistenceManager } from "./persistence/persistenceManager";
 import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
-import { TitleScreenStage } from "./stage/impl/titleScreenStage";
-import { Assets } from "./textures/assets";
-import { AudioManager } from "./textures/audioManager";
-import { TextureAtlas } from "./textures/textureAtlas";
+import { TitleScreenStage } from "./stage/title/titleScreenStage";
 import type { Time } from "./time";
-import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
 import { DataDrivenLightChannel } from "./world/lighting/dataDrivenLightChannel";
+import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
 
 
 export class BoxelGame {
@@ -255,7 +255,7 @@ export class BoxelGame {
 
         for(const [ id, json ] of this.assets.blockEntityTypeRegistry.entries()) {
             try {
-                blockEntityTypeRegistry.register(id, new DataDrivenBlockEntityType(json, this.assets));
+                blockEntityTypeRegistry.register(id, DataDrivenBlockEntityType.parseJson(json));
             } catch(e) {
                 throw new Error("Failed to register block entity " + id, { cause: e });
             }
@@ -280,14 +280,14 @@ export class BoxelGame {
         }
         itemRegistry.lock();
 
-        for(const [ id, json ] of this.assets.inventoryGuiTypeRegistry.entries()) {
+        for(const [ id, json ] of this.assets.guiTypeRegistry.entries()) {
             try {
-                inventoryGuiTypeRegistry.register(id, DataDrivenInventoryGuiType.parseJson(json, this.assets));
+                guiTypeRegistry.register(id, DataDrivenGuiType.parseJson(json, this.assets));
             } catch(e) {
                 throw new Error("Failed to register gui type " + id, { cause: e });
             }
         }
-        inventoryGuiTypeRegistry.lock();
+        guiTypeRegistry.lock();
     }
 
     public onUnfocus() {
@@ -396,6 +396,23 @@ export class BoxelGame {
         } else {
             document.exitFullscreen();
         }
+    }
+    
+    public getPointerPosition(): [ number, number ] {
+        let pointerX = 0, pointerY = 0;
+
+        if(this.input.controllers.size > 0 && this.controllerCrosshair != null) {
+            pointerX = this.controllerCrosshair.crosshairPosition.x * this.settings.guiScale;
+            pointerY = this.controllerCrosshair.crosshairPosition.y * this.settings.guiScale;
+        } else if(this.isDesktop) {
+            pointerX = this.input.getMouseAxis(MouseAxis.X);
+            pointerY = this.input.getMouseAxis(MouseAxis.Y);
+        } else if(this.input.touch != null) {
+            pointerX = this.input.touch.justEndedTouches.filter(v => v.uiTouch).at(-1)?.x ?? this.input.getTouchAxis(TouchAxis.X, true);
+            pointerY = this.input.touch.justEndedTouches.filter(v => v.uiTouch).at(-1)?.y ?? this.input.getTouchAxis(TouchAxis.Y, true);
+        }
+
+        return [ pointerX, pointerY ];
     }
 
     public render(miliseconds: number) {
