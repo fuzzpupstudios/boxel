@@ -1,5 +1,7 @@
 {
     "id": "base:full_block_lit",
+
+    "aoCastWeight": 0,
     
     "textures": {
         "block": "base:block/axes.png"

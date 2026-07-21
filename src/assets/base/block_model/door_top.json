@@ -10,6 +10,7 @@
     },
     
     "occlude": false,
+    "aoCastWeight": 0,
     
     "north": [
         {
