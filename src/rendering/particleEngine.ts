@@ -84,7 +84,7 @@ export class ParticleEngine {
         this.lightingAttr = [];
         for(let i = 0; i < this.lightChannelCount; i++) {
             const array = new Float32Array(ParticleEngine.MAX_PARTICLES);
-            const attribute = new InstancedBufferAttribute(array, this.lightChannelCount);
+            const attribute = new InstancedBufferAttribute(array, 1);
             attribute.setUsage(DynamicDrawUsage);
 
             this.lighting.push(array);
@@ -137,12 +137,12 @@ export class ParticleEngine {
     private updateLight(index: number) {
         const lightChannelCount = this.lightChannelCount;
 
+        const x = Math.floor(this.positions[index * 3]!);
+        const y = Math.floor(this.positions[index * 3 + 1]!);
+        const z = Math.floor(this.positions[index * 3 + 2]!);
+
         for(let i = 0; i < lightChannelCount; i++) {
-            this.lighting[i]![index] = this.world.lighting.lightChannels[i]!.get(
-                Math.floor(this.positions[index * 3]!),
-                Math.floor(this.positions[index * 3 + 1]!),
-                Math.floor(this.positions[index * 3 + 2]!),
-            )
+            this.lighting[i]![index] = this.world.lighting.lightChannels[i]!.get(x, y, z) / 15;
         }
     }
 
@@ -249,6 +249,7 @@ export class ParticleEngine {
 
         this.positionAttr.needsUpdate = true;
         this.sizeAttr.needsUpdate = true;
+        for(const lightingAttr of this.lightingAttr) lightingAttr.needsUpdate = true;
     }
 
     private killParticle(index: number) {
