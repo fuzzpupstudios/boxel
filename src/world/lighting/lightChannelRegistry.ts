@@ -31,8 +31,3 @@ export class LightChannelType {
 }
 
 export const lightChannelRegistry = new KeyedRegistry<LightChannelType>;
-
-lightChannelRegistry.register("base:red", new LightChannelType("base:red", new Color(0xff0000), false, LightingEngineType.POINT_SOURCE));
-lightChannelRegistry.register("base:green", new LightChannelType("base:green", new Color(0x00ff00), false, LightingEngineType.POINT_SOURCE));
-lightChannelRegistry.register("base:blue", new LightChannelType("base:blue", new Color(0x0000ff), false, LightingEngineType.POINT_SOURCE));
-lightChannelRegistry.register("base:sky", new LightChannelType("base:sky", new Color(0xffffff), true, LightingEngineType.CASCADING));

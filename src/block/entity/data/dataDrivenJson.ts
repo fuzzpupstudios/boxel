@@ -142,4 +142,11 @@ export namespace DataDrivenJson {
         events?: EventSheet | string[] | string;
         tags?: string[];
     }
+
+    export interface LightChannelType {
+        id: string;
+        defaultColor: [ number, number, number ];
+        celestial?: boolean;
+        type?: "point_source" | "cascading"
+    }
 }

@@ -26,6 +26,8 @@ import { Assets } from "./textures/assets";
 import { AudioManager } from "./textures/audioManager";
 import { TextureAtlas } from "./textures/textureAtlas";
 import type { Time } from "./time";
+import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
+import { DataDrivenLightChannel } from "./world/lighting/dataDrivenLightChannel";
 
 
 export class BoxelGame {
@@ -172,8 +174,6 @@ export class BoxelGame {
             node = mix(node, pass, pass.a);
         }
 
-        console.log("updated render pipeline");
-
         this.renderPipeline.outputNode = node;
         this.renderPipeline.needsUpdate = true;
     }
@@ -244,6 +244,15 @@ export class BoxelGame {
     }
 
     private registerGameData() {
+        for(const [ id, json ] of this.assets.lightChannelTypeRegistry.entries()) {
+            console.log(id, json);
+            try {
+                lightChannelRegistry.register(id, DataDrivenLightChannel.parseJson(json));
+            } catch(e) {
+                throw new Error("Failed to register light channel type " + id, { cause: e });
+            }
+        }
+
         for(const [ id, json ] of this.assets.blockEntityTypeRegistry.entries()) {
             try {
                 blockEntityTypeRegistry.register(id, new DataDrivenBlockEntityType(json, this.assets));

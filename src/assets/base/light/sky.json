@@ -1,0 +1,6 @@
+{
+    "id": "base:sky",
+    "defaultColor": [ 1, 1, 1 ],
+    "celestial": true,
+    "type": "cascading"
+}

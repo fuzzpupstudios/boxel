@@ -36,7 +36,7 @@ export class Chunk {
         if(lightingChunk != null) return lightingChunk;
         if(this.world == null) return null;
         
-        lightingChunk = this.world.lighting.getChannel(lightChannelId)
+        lightingChunk = this.world.lighting.getChannelOrThrow(lightChannelId)
             .lightingGrid.getChunk(this.x, this.y, this.z);
         if(lightingChunk == null) return null;
 
@@ -172,7 +172,7 @@ export class World {
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
 
-        const skyLight = this.lighting.getChannel("base:sky");
+        const skyLight = this.lighting.getChannelOrThrow("base:sky");
 
         if(columnY >= 0) {
             const minX = columnX << 4;
@@ -234,8 +234,12 @@ export class World {
             this.tiles.chunks.set(chunkKey, chunk.tiles);
 
             for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
-                const lightingGrid = this.lighting.getChannel(lightChannelId).lightingGrid;
-                lightingGrid.chunks.set(chunkKey, lightingChunk);
+                const lightingChannel = this.lighting.getChannel(lightChannelId);
+                if(lightingChannel == null) {
+                    console.warn("Cannot find lighting channel " + lightChannelId);
+                    continue;
+                }
+                lightingChannel.lightingGrid.chunks.set(chunkKey, lightingChunk);
             }
             chunk.setWorld(this);
             this.chunks.set(key, chunk);

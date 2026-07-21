@@ -13,6 +13,7 @@ export class Assets {
     public readonly itemRegistry = new Map<string, DataDrivenJson.Item & DataDrivenJson.TemplateApplicable>;
     public readonly inventoryGuiTypeRegistry = new Map<string, DataDrivenJson.InventoryGuiType & DataDrivenJson.TemplateApplicable>;
     public readonly blockEntityTypeRegistry = new Map<string, DataDrivenJson.BlockEntity & DataDrivenJson.TemplateApplicable>;
+    public readonly lightChannelTypeRegistry = new Map<string, DataDrivenJson.LightChannelType & DataDrivenJson.TemplateApplicable>;
 
     private readonly fileHandlers: Map<RegExp, (entry: FileEntry, ...groups: string[]) => Promise<void>> = new Map([
         [
@@ -83,6 +84,14 @@ export class Assets {
                 const data = await entry.getData(new TextWriter);
                 const json = JsonhReader.parseElementFromString<DataDrivenJson.InventoryGuiType>(data).value;
                 this.inventoryGuiTypeRegistry.set(json.id!, json);
+            }
+        ],
+        [
+            /^assets\/[^\/]+\/light\/.*\.jsonh?$/,
+            async (entry: FileEntry) => {
+                const data = await entry.getData(new TextWriter);
+                const json = JsonhReader.parseElementFromString<DataDrivenJson.LightChannelType>(data).value;
+                this.lightChannelTypeRegistry.set(json.id!, json);
             }
         ],
         [

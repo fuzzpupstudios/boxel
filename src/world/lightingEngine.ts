@@ -22,6 +22,11 @@ export class LightingEngine {
 
     public getChannel(id: string) {
         const index = this.lightChannelMap.get(id);
+        return this.lightChannels[index!] ?? null;
+    }
+
+    public getChannelOrThrow(id: string) {
+        const index = this.lightChannelMap.get(id);
         if(index == null) throw new ReferenceError("Lighting channel " + id + " does not exist");
 
         return this.lightChannels[index]!;
