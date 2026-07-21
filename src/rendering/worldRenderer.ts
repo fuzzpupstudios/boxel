@@ -40,7 +40,7 @@ export class WorldRenderer {
 
         {
             this.terrainMaterial = new MeshBasicNodeMaterial({
-                colorNode: Fn<Node<"vec3">>(() => {
+                colorNode: Fn(() => {
                     const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
 
                     const faceType = attribute<"uint">("faceType", "uint");
@@ -51,13 +51,10 @@ export class WorldRenderer {
                     const sunDot = normalGeometry.dot(this.sky.sunPos.normalize());
                     const moonDot = normalGeometry.dot(this.sky.moonPos.normalize());
                     
-                    const c = 1;
-                    const ao = float(c).div(attribute<"float">("aoFactor", "float").add(c)).oneMinus().toVar("aoCalculated");
+                    const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
 
-                    const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 1).toVar("shadow");
+                    const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 0.75).toVar("shadow");
                     const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
-                    
-                    const direction = positionWorld.sub(cameraPosition).normalize().toVar();
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     

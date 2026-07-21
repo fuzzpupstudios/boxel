@@ -17,11 +17,11 @@ export class LightChannelType {
         public readonly id: string,
         public readonly defaultColor: Color,
         public readonly celestial: boolean,
-        public readonly type: LightingEngineType
+        public readonly engineType: LightingEngineType
     ) { }
 
     public createLighting(grid: LightingGrid, tiles: VoxelGrid): Lighting {
-        switch(this.type) {
+        switch(this.engineType) {
             case LightingEngineType.POINT_SOURCE:
                 return new PointSourceLighting(grid, tiles, this.id, this);
             case LightingEngineType.CASCADING:

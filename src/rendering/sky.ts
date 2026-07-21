@@ -1,5 +1,5 @@
 import { Object3D } from "three";
-import { cameraPosition, color, float, instanceIndex, pass, positionWorld, uniform, vec3, vec4, vertexIndex } from "three/tsl";
+import { cameraPosition, color, float, instanceIndex, mix, pass, positionWorld, texture, uniform, vec3, vec4, vertexIndex } from "three/tsl";
 import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, ConstantAlphaFactor, Euler, Float32BufferAttribute, InstancedBufferGeometry, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicMaterial, MeshBasicNodeMaterial, NearestFilter, Node, PassNode, PerspectiveCamera, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
 import type { Assets } from "../textures/assets";
 import Alea from "alea";
@@ -17,7 +17,6 @@ export class Sky {
 
     public readonly scene = new Scene;
 
-    public fog?: Object3D;
     public sky?: Object3D;
     public sun?: Object3D;
     public moon?: Object3D;
@@ -39,14 +38,14 @@ export class Sky {
         const skyLutTextureSource = this.assets.getTextureOrThrow("base:environment/sky.png");
 
         const skyPos = positionWorld.sub(cameraPosition).normalize();
+        const celestialFade = skyPos.y.div(skyPos.x.pow2().add(skyPos.z.pow2())).remapClamp(-0.2, 0.2, 0, 1).smoothstep(0, 1);
 
-        this.fog = this.createFog(skyPos);
         this.sky = this.createSky(skyPos);
-        this.sun = this.createSun();
-        this.moon = this.createMoon(moonTextureSource);
+        this.sun = this.createSun(celestialFade);
+        this.moon = this.createMoon(celestialFade, moonTextureSource);
         this.stars = this.createStars(4000, seed);
 
-        this.scene.add(this.fog, this.sun, this.moon, this.stars, this.sky);
+        this.scene.add(this.sun, this.moon, this.stars, this.sky);
         
         const lutCtx = new OffscreenCanvas(
             skyLutTextureSource.width, skyLutTextureSource.height
@@ -58,48 +57,40 @@ export class Sky {
             skyLutTextureSource.width, skyLutTextureSource.height);
     }
 
-    private createFog(skyPos: Node<"vec3">) {
-        return new Mesh(
-            new BoxGeometry(1, 1, 1),
-            new MeshBasicNodeMaterial({
-                colorNode: vec4(
-                    this.fogColor,
-                    skyPos.y.div(skyPos.x.pow2().add(skyPos.z.pow2())).remapClamp(0, 0.25, 1, 0).smoothstep(0, 1)
-                ),
-                side: BackSide,
-                transparent: true,
-                blendAlpha: ConstantAlphaFactor
-            })
-        );
-    }
-
     private createSky(skyPos: Node<"vec3">) {
-        const skyColorRaw = this.skyColor.sub(skyPos.dot(this.sunPos.normalize()).remap(-1, 1, 1, 0).smoothstep(0, 1).remapClamp(0, 1, 0, 0.2)).toVar();
+        const skyColorRaw = this.skyColor.mul(skyPos.dot(this.sunPos.normalize()).remap(-1, 1, 0, 1).smoothstep(0, 1).remapClamp(0, 1, 0.5, 1)).toVar();
 
         return new Mesh(
             new BoxGeometry(50, 50, 50),
             new MeshBasicNodeMaterial({
-                colorNode: vec3(
-                    skyColorRaw.r.smoothstep(0, 1),
-                    skyColorRaw.g.smoothstep(0, 1),
-                    skyColorRaw.b.smoothstep(0, 1)
+                colorNode: mix(
+                    vec3(
+                        skyColorRaw.r.smoothstep(0, 1),
+                        skyColorRaw.g.smoothstep(0, 1),
+                        skyColorRaw.b.smoothstep(0, 1)
+                    ),
+                    this.fogColor,
+                    skyPos.y.div(skyPos.x.pow2().add(skyPos.z.pow2())).remapClamp(0.1, 0.6, 1, 0).smoothstep(0, 1)
                 ),
                 side: BackSide
             })
         );
     }
 
-    private createSun() {
+    private createSun(celestialFade: Node<"float">) {
         const sunInner = new Mesh(
             new BoxGeometry(2, 2, 2),
-            new MeshBasicMaterial({ color: 0xffffff })
+            new MeshBasicNodeMaterial({
+                colorNode: vec4(1, 1, 1, celestialFade),
+                transparent: true,
+            })
         );
         const sunOuter = new Mesh(
             new BoxGeometry(2.5, 2.5, 2.5),
-            new MeshBasicMaterial({
-                color: 0xffff00,
+            new MeshBasicNodeMaterial({
+                colorNode: vec4(1, 1, 0, celestialFade),
                 transparent: true,
-                opacity: 0.5,
+                side: BackSide,
                 blending: AdditiveBlending
             })
         );
@@ -110,7 +101,7 @@ export class Sky {
         return sun;
     }
 
-    private createMoon(moonTextureSource: ImageBitmap) {
+    private createMoon(celestialFade: Node<"float">, moonTextureSource: ImageBitmap) {
         const moonTexture = new Texture(moonTextureSource);
         moonTexture.magFilter = NearestFilter;
         moonTexture.needsUpdate = true;
@@ -161,18 +152,22 @@ export class Sky {
 
         const moonInner = new Mesh(
             moonGeometry,
-            new MeshBasicMaterial({
-                map: moonTexture
+            new MeshBasicNodeMaterial({
+                colorNode: vec4(texture(moonTexture).rgb, celestialFade),
+                depthWrite: false,
+                depthTest: false,
+                transparent: true
             })
         );
         const moonOuter = new Mesh(
             new BoxGeometry(2.5, 2.5, 2.5),
-            new MeshBasicMaterial({
-                color: 0xffffff,
+            new MeshBasicNodeMaterial({
+                colorNode: vec4(0.3, 0.3, 0.3, celestialFade),
                 transparent: true,
-                blendAlpha: ConstantAlphaFactor,
-                opacity: 0.05,
-                side: BackSide
+                blending: AdditiveBlending,
+                side: BackSide,
+                depthWrite: false,
+                depthTest: false
             })
         );
 
@@ -340,10 +335,12 @@ export class Sky {
         calculatedSkyColor.g **= 2;
         calculatedSkyColor.b **= 2;
 
+        const skyLuminance = (calculatedSkyColor.r + calculatedSkyColor.g + calculatedSkyColor.b) / 3;
+
         sunlightColor.set(
-            Math.min(calculatedSkyColor.r * 1.5, 1),
-            Math.min(calculatedSkyColor.g * 1.5, 1),
-            Math.min(calculatedSkyColor.b * 1.5, 1)
+            MathUtils.lerp(calculatedSkyColor.r, skyLuminance, 0.9) * 2,
+            MathUtils.lerp(calculatedSkyColor.g, skyLuminance, 0.9) * 2,
+            MathUtils.lerp(calculatedSkyColor.b, skyLuminance, 0.9) * 2
         );
         fogColor.set(
             calculatedSkyColor.r,
@@ -359,7 +356,7 @@ export class Sky {
         this.dayFactor.value = MathUtils.clamp(
             MathUtils.mapLinear(
                 Math.sin(time * Math.PI * 2),
-                -0.025, 0.025, 0, 1
+                -0.1, 0.1, 0, 1
             ), 0, 1
         );
 

@@ -4,16 +4,18 @@ import type { LightingEngine } from "../world/lightingEngine";
 
 export function createLightColorNode(lightingEngine: LightingEngine, celestialStrength: Node<"float">, ao: Node<"float">) {
     let lightNode: Node<"vec3"> = vec3(0, 0, 0);
+    let lightNodeUntonemapped: Node<"vec3"> = vec3(0, 0, 0);
 
     for(const [ lightIndex, lightingChannel ] of lightingEngine.lightChannels.entries()) {
-        let node: Node<"float"> = attribute("light" + lightIndex, "float" as const);
+        const channelAttribute: Node<"float"> = attribute("light" + lightIndex, "float" as const);
 
-        if(lightingChannel.type.celestial) node = node.mul(celestialStrength);
-
-        lightNode = lightNode.add(lightingChannel.color.mul(node))
+        if(lightingChannel.type.celestial) {
+            lightNodeUntonemapped = lightNodeUntonemapped
+                .add(lightingChannel.color.mul(channelAttribute).mul(celestialStrength));
+        } else {
+            lightNode = lightNode.add(lightingChannel.color.mul(channelAttribute));
+        }
     }
 
-    lightNode = lightNode.toVar("lightSum");
-
-    return mix(lightNode.pow3().min(vec3(1.0, 1.0, 1.0)), vec3(0, 0, 0), ao);
+    return mix(lightNode.pow3().add(lightNodeUntonemapped).min(vec3(1, 1, 1)), vec3(0, 0, 0), ao);
 }
