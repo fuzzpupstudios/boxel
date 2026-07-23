@@ -47,7 +47,7 @@ export class CascadingLighting extends LightingEngine {
         let maxAffectedZ = affectedExtent.max.z;
         let queueIndex = 0;
 
-        while(queueIndex < queue.length && queue.length < 250000) {
+        while(queueIndex < queue.length && queue.length < 300000) {
             const tileX = queue[queueIndex++]!;
             const tileY = queue[queueIndex++]!;
             const tileZ = queue[queueIndex++]!;
