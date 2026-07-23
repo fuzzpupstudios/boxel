@@ -7,12 +7,12 @@
     "fastnoise:build": "node ./scripts/build-fastnoise2.mjs",
     "postinstall": "npm run fastnoise:build",
     "prestart": "npm run fastnoise:build",
-    "pack-assets": "cd src && zip -9 -FSr ../assets/base.zip assets -x \\*.aseprite",
-    "start": "npm run pack-assets && webpack-dev-server --open --config webpack.dev.js",
-    "prebuild": "npm run fastnoise:build && mkdir -p assets",
-    "build": "npm run pack-assets && webpack --config webpack.prod.js",
+    "pack-assets": "mkdir -p public/assets && cd src && zip -9 -FSr ../public/assets/base.zip assets -x \\*.aseprite",
+    "start": "npm run pack-assets && vite",
+    "prebuild": "npm run fastnoise:build",
+    "build": "npm run pack-assets && vite build",
     "prewatch": "npm run fastnoise:build",
-    "watch": "webpack --watch",
+    "watch": "vite build --watch",
     "test": "vitest"
   },
   "author": "lexifuzzpup",
@@ -20,18 +20,9 @@
   "devDependencies": {
     "@types/pixi.js": "^4.8.9",
     "@types/three": "^0.184.1",
-    "clean-webpack-plugin": "^4.0.0",
-    "css-loader": "^7.1.4",
-    "file-loader": "^6.2.0",
-    "html-webpack-plugin": "^5.6.7",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.6.2",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9",
-    "webpack": "^5.108.1",
-    "webpack-cli": "^7.1.0",
-    "webpack-dev-server": "^5.2.5",
-    "webpack-merge": "^6.0.1"
+    "vite": "^7.1.0",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.5",

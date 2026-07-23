@@ -22,6 +22,5 @@ RUN rm -rf .cache/fastnoise2 && npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY --from=build /app/assets /usr/share/nginx/html/assets
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
