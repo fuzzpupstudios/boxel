@@ -1,6 +1,6 @@
-import { Container, Geometry, Mesh, Shader, State, Texture } from "pixi.js";
+import { Container, Geometry, Mesh, Shader, State } from "pixi.js";
 import { blockStateRegistry } from "../../block/blockRegistry";
-import type { TextureAtlas } from "../../data/textureAtlas";
+import type { TextureAtlases } from "../../boxel";
 import type { TileFace, TileMesh } from "../../rendering/chunkMesher";
 
 const vertex = `
@@ -56,12 +56,12 @@ export class TileHologramProvider {
     private readonly meshState: State;
     private readonly shader: Shader;
 
-    public constructor(textureAtlas: TextureAtlas) {
+    public constructor(textureAtlases: TextureAtlases) {
         for(const [ id, state ] of blockStateRegistry.entries()) {
             this.tileGeometries.set(id, this.buildModel(state.model.compile()));
         }
 
-        const terrainTexture = Texture.from(textureAtlas.packedTexture.image as HTMLCanvasElement);
+        const terrainTexture = textureAtlases.block.pixiTexture;
         this.shader = Shader.from({
             gl: { vertex, fragment },
             resources: {
@@ -156,10 +156,10 @@ export class TileHologramProvider {
                 normalX, normalY, normalZ
             );
             uvs.push(
-                face.u0, 1 - face.v0,
-                face.u1, 1 - face.v1,
-                face.u2, 1 - face.v2,
-                face.u3, 1 - face.v3
+                face.u0, face.v0,
+                face.u1, face.v1,
+                face.u2, face.v2,
+                face.u3, face.v3
             );
             indices.push(
                 vertexCount + 0, vertexCount + 3, vertexCount + 2,

@@ -1,14 +1,11 @@
 import { parseEvents, parseTags } from "../block/jsonParseUtils";
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import { TextureAtlasSlot } from "../data/textureAtlas";
 import { Item } from "./item";
 
 export class DataDrivenItem extends Item {
     public static parseJson(json: DataDrivenJson.Item, assets: Assets) {
-        const texture = assets.textureRegistry.get(json.texture);
-
-        if(texture == null) throw new ReferenceError("Cannot find texture " + json.texture);
-
         let eventSheet;
         try {
             eventSheet = parseEvents(json.events, assets);
@@ -19,7 +16,7 @@ export class DataDrivenItem extends Item {
         const tags = parseTags(json.tags);
 
         return new DataDrivenItem(
-            texture,
+            new TextureAtlasSlot(json.texture),
             eventSheet,
             tags
         );

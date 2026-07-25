@@ -23,7 +23,6 @@ export class BlockModel {
     public down = new Array<BlockModelFace>;
 
     public textureURIs = new Map<string, string>;
-    public textureSources = new Map<string, ImageBitmap>;
 
     public aoCastWeight?: number;
 
@@ -85,9 +84,6 @@ export class BlockModel {
             model.aoCastWeight = parsedModel.aoCastWeight ?? model.aoCastWeight!;
 
 
-            for(const [ textureSlot, textureSource ] of parsedModel.textureSources) {
-                model.textureSources.set(textureSlot, textureSource);
-            }
             for(const [ textureSlot, textureURI ] of parsedModel.textureURIs) {
                 model.textureURIs.set(textureSlot, textureURI);
             }
@@ -115,7 +111,6 @@ export class BlockModel {
                 throw new ReferenceError("Texture " + textureURI + " doesn't exist");
             }
 
-            model.textureSources.set(textureSlot, textureSource);
             model.textureURIs.set(textureSlot, textureURI);
         }
 
@@ -139,16 +134,9 @@ export class BlockModel {
 
     public setTextureAtlas(atlas: TextureAtlas) {
         for(const face of this.faces()) {
-            // Look up the URI of the face's texture
-            const textureURI = this.textureURIs.get(face.textureSlot) ?? "base:block/axes.png";
-
-            // Find the position of the URI on the atlas
-            const uv = atlas.positions.get(textureURI);
-            if(uv == null) throw new ReferenceError(
-                "Texture atlas position for " + textureURI + " not found");
-
             // Set the face's position on the texture atlas
-            face.setTexturePosition(uv);
+            face.texture.setTexture(this.textureURIs.get(face.textureSlot)!);
+            face.texture.setTextureAtlas(atlas);
         }
     }
 

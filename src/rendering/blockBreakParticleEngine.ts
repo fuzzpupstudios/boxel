@@ -1,6 +1,6 @@
 import { Box2, Vector2 } from "three";
 import { Side } from "../block/direction";
-import type { TextureAtlas } from "../data/textureAtlas";
+import type { TextureAtlases } from "../boxel";
 import type { World } from "../world/world";
 import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";
@@ -13,9 +13,9 @@ export class BlockBreakParticleEngine extends ParticleEngine {
     public constructor(
         world: World,
         worldRenderer: WorldRenderer,
-        textureAtlas: TextureAtlas
+        textureAtlases: TextureAtlases
     ) {
-        super(world, textureAtlas.packedTexture);
+        super(world, textureAtlases.block.threeTexture);
 
         this.tileMeshes = worldRenderer.chunkMesher.getCompiledMeshes();
         

@@ -1,4 +1,5 @@
 import { MathUtils } from "three";
+import type { TextureAtlasSlot } from "../data/textureAtlas";
 import type { TileCollider } from "../entity/entity";
 import type { EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
@@ -29,7 +30,7 @@ export class BlockState {
         public readonly emission: Map<string, number>,
         public readonly attenuation: Map<string, number>,
         public readonly pickBlockStateId: string,
-        public readonly renderAsTexture: ImageBitmap | null
+        public readonly renderAsTexture: TextureAtlasSlot | null
     ) {
         for(const [ id, channel ] of lightChannelRegistry.entries()) {
             this.emission.set(id, MathUtils.clamp(emission.get(id) ?? channel.defaultEmission, 0, 15));

@@ -1,5 +1,6 @@
-import { Box2, MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3 } from "three/webgpu";
+import { MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3 } from "three/webgpu";
 import type { DataDrivenJson } from "../../data/dataDrivenJson";
+import { TextureAtlasSlot } from "../../data/textureAtlas";
 import type { TileFace } from "../../rendering/chunkMesher";
 import { BlockModelVertex } from "./vertex";
 
@@ -12,7 +13,7 @@ export class BlockModelFace {
     public rotation = 0;
     public lit = false;
     public textureSlot = "";
-    public texturePosition: Box2 | null = null;
+    public texture = new TextureAtlasSlot;
     public aoReceiveWeight: number = 1;
 
     public static parseJson(json: DataDrivenJson.BlockStateModelFace, normal: Vector3): BlockModelFace {
@@ -68,11 +69,7 @@ export class BlockModelFace {
         
         face.rotation = this.rotation;
         face.lit = this.lit;
-        face.textureSlot = this.textureSlot;
-        
-        if(this.texturePosition != null) {
-            face.texturePosition = this.texturePosition.clone();
-        }
+        face.texture.copyFrom(this.texture);
 
         return face;
     }
@@ -104,10 +101,6 @@ export class BlockModelFace {
         }
     }
 
-    public setTexturePosition(texturePosition: Box2) {
-        this.texturePosition = texturePosition;
-    }
-
     public shouldCull() {
         const planarX = this.v0.x == this.v1.x && this.v1.x == this.v2.x && this.v2.x == this.v3.x;
         const planarY = this.v0.y == this.v1.y && this.v1.y == this.v2.y && this.v2.y == this.v3.y;
@@ -124,16 +117,15 @@ export class BlockModelFace {
     }
 
     public compile(): TileFace {
-        if(this.texturePosition == null)
-            throw new ReferenceError("Texture position has not been defined");
+        const texturePosition = this.texture.box2;
 
 
         // Map the local uv coordinates of the face to the
         // position passed in via setTexturePosition()
-        const minU = this.texturePosition.min.x;
-        const minV = this.texturePosition.min.y;
-        const maxU = this.texturePosition.max.x;
-        const maxV = this.texturePosition.max.y;
+        const minU = texturePosition.min.x;
+        const minV = texturePosition.max.y;
+        const maxU = texturePosition.max.x;
+        const maxV = texturePosition.min.y;
 
         return {
             cull: this.shouldCull(),

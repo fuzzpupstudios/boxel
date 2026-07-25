@@ -1,9 +1,9 @@
-import { Box2, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
+import { Texture as PixiTexture, Rectangle } from "pixi.js";
+import { Box2, NearestFilter, SRGBColorSpace, Texture as ThreeTexture, Vector2 } from "three";
 
 interface AtlasSlot {
     id: string;
-    texture: Texture;
-    image: TexImageSource;
+    texture: ImageBitmap;
     width: number;
     height: number;
     padX: number;
@@ -14,35 +14,94 @@ interface AtlasSlot {
     y?: number;
 }
 
-export class TextureAtlas {
-    private readonly textures = new Map<string, Texture>();
-    public readonly positions = new Map<string, Box2>();
-    public packedTexture: Texture = new Texture();
+export class TextureAtlasSlot {
+    public box2 = new Box2(new Vector2(0, 0), new Vector2(1, 1));
+    public textureId = "";
 
-    public addTexture(id: string, source: Texture) {
+    public constructor(
+        textureId?: string
+    ) {
+        if(textureId != null) this.setTexture(textureId);
+    }
+
+    public setTexture(textureId: string) {
+        this.textureId = textureId;
+    }
+
+    public copyFrom(other: TextureAtlasSlot) {
+        this.box2.copy(other.box2);
+        this.textureId = other.textureId;
+    }
+
+    public setTextureAtlas(atlas: TextureAtlas) {
+        const texturePosition = atlas.getPosition(this.textureId);
+        if(atlas.packedImage == null) throw new Error("Atlas has not been packed yet");
+        
+        this.box2.copy(texturePosition);
+    }
+
+    public createPixiTexture(atlas: TextureAtlas) {
+        if(atlas.packedImage == null) throw new Error("Atlas has not been packed yet");
+
+        const frame = new Rectangle(
+            this.box2.min.x,
+            this.box2.min.y,
+            this.box2.max.x - this.box2.min.x,
+            this.box2.max.y - this.box2.min.y,
+        );
+        frame.scale(atlas.packedImage!.width, atlas.packedImage!.height);
+
+        return new PixiTexture({ source: atlas.pixiTexture.source, frame });
+    }
+}
+
+export class TextureAtlas {
+    private readonly textures = new Map<string, ImageBitmap>();
+    private readonly positions = new Map<string, Box2>();
+    private defaultSlot: Box2 = new Box2(new Vector2(0, 0), new Vector2(1, 1));
+    public packedImage: ImageBitmap | null = null;
+    public threeTexture = new ThreeTexture;
+    public pixiTexture = new PixiTexture;
+
+    public addTexture(id: string, source: ImageBitmap) {
         this.textures.set(id, source);
     }
 
-    public pack() {
+    public setDefaultTexture(textureId: string) {
+        const newSlot = this.positions.get(textureId);
+        if(newSlot == null) return;
+        
+        this.defaultSlot = newSlot;
+    }
+
+    public getPosition(textureId?: string) {
+        if(textureId == null) return this.defaultSlot;
+
+        const position = this.positions.get(textureId);
+        if(position == null) return this.defaultSlot;
+
+        return position;
+    }
+
+    public async pack() {
         this.positions.clear();
 
         const slots: AtlasSlot[] = [];
 
         for(const [id, texture] of this.textures.entries()) {
-            const image = texture.image as TexImageSource;
-            const width = (image as any).width as number;
-            const height = (image as any).height as number;
+            const width = texture.width;
+            const height = texture.height;
 
             if(!width || !height) {
                 throw new Error(`Texture ${id} must have a loaded image with width and height.`);
             }
 
-            const padX = Math.max(1, Math.ceil(width * 0.5));
-            const padY = Math.max(1, Math.ceil(height * 0.5));
+            const padX = Math.min(Math.max(1, Math.ceil(width * 0.5)), 32);
+            const padY = Math.min(Math.max(1, Math.ceil(height * 0.5)), 32);
             const paddedWidth = width + padX * 2;
             const paddedHeight = height + padY * 2;
 
-            slots.push({ id, texture, image, width, height, padX, padY, paddedWidth, paddedHeight });
+            slots.push({ id, texture, width, height, padX, padY, paddedWidth, paddedHeight });
         }
 
         if(!slots.length) {
@@ -79,46 +138,42 @@ export class TextureAtlas {
             const x = slot.x! + slot.padX;
             const y = slot.y! + slot.padY;
 
-            let image: TexImageSource;
-            if(slot.image instanceof ImageData) {
-                const converted = document.createElement("canvas");
-                converted.width = slot.image.width;
-                converted.height = slot.image.height;
-                converted.getContext("2d")!.putImageData(slot.image, 0, 0);
+            const texture = slot.texture;
 
-                image = converted;
-            } else {
-                image = slot.image;
-            }
+            ctx.drawImage(texture, 0, 0, slot.width, slot.height, x, y, slot.width, slot.height);
 
-            ctx.drawImage(image, 0, 0, slot.width, slot.height, x, y, slot.width, slot.height);
+            ctx.drawImage(texture, 0, 0, 1, slot.height, slot.x!, y, slot.padX, slot.height);
+            ctx.drawImage(texture, slot.width - 1, 0, 1, slot.height, x + slot.width, y, slot.padX, slot.height);
 
-            ctx.drawImage(image, 0, 0, 1, slot.height, slot.x!, y, slot.padX, slot.height);
-            ctx.drawImage(image, slot.width - 1, 0, 1, slot.height, x + slot.width, y, slot.padX, slot.height);
+            ctx.drawImage(texture, 0, 0, slot.width, 1, x, slot.y!, slot.width, slot.padY);
+            ctx.drawImage(texture, 0, slot.height - 1, slot.width, 1, x, y + slot.height, slot.width, slot.padY);
 
-            ctx.drawImage(image, 0, 0, slot.width, 1, x, slot.y!, slot.width, slot.padY);
-            ctx.drawImage(image, 0, slot.height - 1, slot.width, 1, x, y + slot.height, slot.width, slot.padY);
-
-            ctx.drawImage(image, 0, 0, 1, 1, slot.x!, slot.y!, slot.padX, slot.padY);
-            ctx.drawImage(image, slot.width - 1, 0, 1, 1, x + slot.width, slot.y!, slot.padX, slot.padY);
-            ctx.drawImage(image, 0, slot.height - 1, 1, 1, slot.x!, y + slot.height, slot.padX, slot.padY);
-            ctx.drawImage(image, slot.width - 1, slot.height - 1, 1, 1, x + slot.width, y + slot.height, slot.padX, slot.padY);
+            ctx.drawImage(texture, 0, 0, 1, 1, slot.x!, slot.y!, slot.padX, slot.padY);
+            ctx.drawImage(texture, slot.width - 1, 0, 1, 1, x + slot.width, slot.y!, slot.padX, slot.padY);
+            ctx.drawImage(texture, 0, slot.height - 1, 1, 1, slot.x!, y + slot.height, slot.padX, slot.padY);
+            ctx.drawImage(texture, slot.width - 1, slot.height - 1, 1, 1, x + slot.width, y + slot.height, slot.padX, slot.padY);
 
             const u0 = x / atlasSize;
-            const v0 = 1 - (y + slot.height) / atlasSize;
+            const v0 = y / atlasSize;
             const u1 = (x + slot.width) / atlasSize;
-            const v1 = 1 - y / atlasSize;
+            const v1 = (y + slot.height) / atlasSize;
 
             this.positions.set(slot.id, new Box2(new Vector2(u0, v0), new Vector2(u1, v1)));
         }
+        
+        canvas.toBlob(blob => console.log(URL.createObjectURL(blob!)));
 
-        this.packedTexture = new Texture(canvas);
-        this.packedTexture.magFilter = NearestFilter;
-        this.packedTexture.colorSpace = SRGBColorSpace;
+        this.packedImage = await createImageBitmap(canvas);
 
-        this.packedTexture.generateMipmaps = false;
-        this.packedTexture.mipmaps = [canvas, ...this.generateManualMipmaps(canvas, 4)];
-        this.packedTexture.needsUpdate = true;
+        this.threeTexture = new ThreeTexture(this.packedImage);
+        this.threeTexture.magFilter = NearestFilter;
+        this.threeTexture.colorSpace = SRGBColorSpace;
+
+        this.threeTexture.generateMipmaps = false;
+        this.threeTexture.mipmaps = [canvas, ...this.generateManualMipmaps(canvas, 4)];
+        this.threeTexture.needsUpdate = true;
+
+        this.pixiTexture = PixiTexture.from(this.packedImage);
     }
 
     private tryPack(slots: AtlasSlot[], atlasSize: number): boolean {

@@ -152,12 +152,12 @@ export class PlayingGameStage extends GameStage {
 
         this.world = new World;
         this.worldRenderer = new WorldRenderer(
-            this.world, this.game.textureAtlas!, this.camera, this.game.assets);
+            this.world, this.game.textureAtlases!, this.camera, this.game.assets);
         this.chunkLoader = new ChunkLoader(this.world);
         this.playerController = new PlayerController(game);
 
-        this.hologramProvider = new TileHologramProvider(game.textureAtlas!);
-        this.itemSpriteProvider = new GuiItemSpriteProvider();
+        this.hologramProvider = new TileHologramProvider(game.textureAtlases!);
+        this.itemSpriteProvider = new GuiItemSpriteProvider(game.textureAtlases!);
         this.guiManager = new GuiManager(this.hologramProvider, this.itemSpriteProvider);
         this.guiManager.onUpdate.connect(() => {
             this.updateInputLocks();

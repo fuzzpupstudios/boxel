@@ -25,10 +25,15 @@ import { PersistenceManager } from "./persistence/persistenceManager";
 import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
 import { TitleScreenStage } from "./stage/title/titleScreenStage";
-import type { Time } from "./time";
+import { Time } from "./time";
 import { DataDrivenLightChannel } from "./world/lighting/dataDrivenLightChannel";
 import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
 
+
+export interface TextureAtlases {
+    readonly item: TextureAtlas;
+    readonly block: TextureAtlas;
+}
 
 export class BoxelGame {
     public static INSTANCE: BoxelGame = null!;
@@ -44,7 +49,10 @@ export class BoxelGame {
     public readonly persistenceManager = new PersistenceManager;
     public readonly audioManager = new AudioManager(this.assets);
 
-    public textureAtlas: TextureAtlas | null = null;
+    public readonly textureAtlases: TextureAtlases = {
+        block: new TextureAtlas,
+        item: new TextureAtlas
+    };
     public activeStages = new Array<GameStage>;
     public stagePasses = new Array<THREE.Node<"vec4">>;
     public settings: Settings;
@@ -347,7 +355,15 @@ export class BoxelGame {
         });
     
         for(const blockState of blockStateRegistry.values()) {
-            blockState.model.setTextureAtlas(this.textureAtlas!);
+            blockState.model.setTextureAtlas(this.textureAtlases.block);
+            
+            if(blockState.renderAsTexture != null) {
+                blockState.renderAsTexture.setTextureAtlas(this.textureAtlases.item);
+            }
+        }
+    
+        for(const item of itemRegistry.values()) {
+            item.texture.setTextureAtlas(this.textureAtlases.item);
         }
 
         this.queueNextFrame();
@@ -356,19 +372,25 @@ export class BoxelGame {
         this.initialized = true;
     }
 
-    private loadAssets() {
+    private async loadAssets() {
         for(const [ alias, bitmap ] of this.assets.textureRegistry.entries()) {
             PIXI.Assets.cache.set(alias, PIXI.Texture.from(bitmap));
         }
     
-        this.textureAtlas = new TextureAtlas;
         for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
             if(!textureId.split(":")[1]?.startsWith("block/")) continue;
             
-            const loadedTexture = new THREE.Texture(textureSource);
-            this.textureAtlas.addTexture(textureId, loadedTexture);
+            this.textureAtlases.block.addTexture(textureId, textureSource);
         }
-        this.textureAtlas.pack();
+        await this.textureAtlases.block.pack();
+
+    
+        for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
+            if(!textureId.split(":")[1]?.startsWith("item/")) continue;
+            
+            this.textureAtlases.item.addTexture(textureId, textureSource);
+        }
+        await this.textureAtlases.item.pack();
 
         const fontLoader = new FontLoader("BoxelFont");
         for(let characterByteStart = 0; characterByteStart < 0xffff; characterByteStart += 0xff) {
@@ -416,15 +438,8 @@ export class BoxelGame {
     }
 
     public render(miliseconds: number) {
-        const dt = Math.min(miliseconds - this.lastRenderTime, 500);
+        const time: Time = Time.fromMsDifference(this.lastRenderTime, miliseconds, 100);
         this.lastRenderTime = miliseconds;
-
-        const time: Time = {
-            seconds: miliseconds / 1000,
-            miliseconds: miliseconds,
-            deltaMs: dt,
-            deltaTime: dt / 1000
-        }
 
         if(this.input.wasPressed(ControlBinding.FULLSCREEN)) this.toggleFullscreen();
 

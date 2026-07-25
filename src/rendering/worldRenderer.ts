@@ -2,8 +2,8 @@ import { MathUtils, Mesh, Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
 import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
+import type { TextureAtlases } from "../boxel";
 import type { Assets } from "../data/assets";
-import type { TextureAtlas } from "../data/textureAtlas";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
@@ -29,19 +29,21 @@ export class WorldRenderer {
 
     public constructor(
         public readonly world: World,
-        private readonly textureAtlas: TextureAtlas,
+        textureAtlases: TextureAtlases,
         public readonly camera: PerspectiveCamera,
         assets: Assets
     ) {
         this.chunkMesher = new ChunkMesher(world);
         this.sky = new Sky(assets);
 
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlas);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
 
         {
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn(() => {
-                    const terrainColor = texture(textureAtlas.packedTexture, uv()).toVar("terrainColor");
+                    const terrainColor = texture(
+                        textureAtlases.block.threeTexture, uv()
+                    ).toVar("terrainColor");
 
                     const faceType = attribute<"uint">("faceType", "uint");
                     const lit = faceType.bitAnd(1).greaterThan(0);

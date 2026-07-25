@@ -1,19 +1,20 @@
 import { Container, Sprite, Texture } from "pixi.js";
 import { blockStateRegistry } from "../../block/blockRegistry";
+import type { TextureAtlases } from "../../boxel";
 import { itemRegistry } from "../../item/itemRegistry";
 
 export class GuiItemSpriteProvider {
     private readonly textures = new Map<string, Texture>;
 
-    public constructor() {
+    public constructor(atlases: TextureAtlases) {
         for(const [ itemId, item ] of itemRegistry.entries()) {
-            const texture = Texture.from(item.texture);
+            const texture = item.texture.createPixiTexture(atlases.item);
             this.textures.set(itemId, texture);
         }
         for(const [ blockStateId, blockState ] of blockStateRegistry.entries()) {
             if(blockState.renderAsTexture == null) continue;
 
-            const texture = Texture.from(blockState.renderAsTexture);
+            const texture = blockState.renderAsTexture.createPixiTexture(atlases.item);
             this.textures.set(blockStateId, texture);
         }
     }

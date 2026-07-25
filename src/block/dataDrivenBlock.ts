@@ -1,5 +1,6 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import { TextureAtlasSlot } from "../data/textureAtlas";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 import { Block, BlockState } from "./block";
 import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
@@ -87,15 +88,9 @@ export class DataDrivenBlock extends Block {
 
         const pickBlockState = jsonState.pickBlockState ?? stateKey;
 
-        let renderAsTexture: ImageBitmap | null = null;
+        let renderAsTexture: TextureAtlasSlot | null = null;
         if(jsonState.renderAsTexture != null) {
-            const texture = assets.textureRegistry.get(jsonState.renderAsTexture);
-
-            if(texture == null) {
-                throw new ReferenceError("Cannot find renderAsTexture " + jsonState.renderAsTexture);
-            }
-
-            renderAsTexture = texture;
+            renderAsTexture = new TextureAtlasSlot(jsonState.renderAsTexture);
         }
 
         let model;
