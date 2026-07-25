@@ -1,5 +1,6 @@
 import { BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
+import { LightingChunk } from "../world/lighting/lightingGrid";
 import type { World } from "../world/world";
 
 
@@ -40,14 +41,18 @@ export interface TileMesh {
 }
 
 class TileCache {
-    public readonly halo = new Array<string>(18 ** 3);
+    public readonly meshes = new Uint32Array(18 ** 3);
     public readonly haloAo = new Float32Array(18 ** 3);
     public readonly lighting: Float16Array | Float32Array;
     private readonly lightChannelCount: number;
+    private readonly chunkMeshPalette = new Uint32Array(256);
+    private readonly emptyLightingChunk = new LightingChunk;
     
     public constructor(
         private readonly world: World,
-        private readonly aoWeights: Map<string, number>
+        private readonly aoWeights: Float32Array,
+        private readonly tileMeshes: Map<string, number>,
+        private readonly defaultMesh: number
     ) {
         this.lightChannelCount = world.lightingManager.lightChannels.length;
         this.lighting = new (Float16Array || Float32Array)(18 ** 3 * this.lightChannelCount);
@@ -63,32 +68,59 @@ class TileCache {
         const chunkOriginZ = chunkZ << 4;
 
         const world = this.world;
+        const chunkTiles = this.world.tiles.getChunk(chunkX, chunkY, chunkZ);
+        if(chunkTiles == null) return;
+
         const lightChannelCount = this.lightChannelCount;
         const lightChannels = world.lightingManager.lightChannels;
+
+        const lightingChunks = [];
+        for(const lightChannel of lightChannels) {
+            lightingChunks.push(lightChannel.lightingGrid.getChunk(chunkX, chunkY, chunkZ) || this.emptyLightingChunk);
+        }
+
+        for(let i = 0; i < this.chunkMeshPalette.length; i++) {
+            const blockStateId = chunkTiles.palette[i];
+            if(blockStateId != null) {
+                this.chunkMeshPalette[i] = this.tileMeshes.get(blockStateId)!;
+            } else {
+                this.chunkMeshPalette[i] = this.defaultMesh;
+            }
+        }
         const lightStrength = 1 / 15;
 
-        let tile: string;
+        let tile: number;
         for(let x = -1, i = 0, k = 0; x < 17; x++) {
             for(let y = -1; y < 17; y++) {
                 for(let z = -1; z < 17; z++, i++) {
-                    tile = world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ);
-                    this.halo[i] = tile;
-                    this.haloAo[i] = this.aoWeights.get(tile) || 0;
+                    if(x > -1 && x < 16 && y > -1 && y < 16 && z > -1 && z < 16) {
+                        tile = this.chunkMeshPalette[chunkTiles.getTile(x, y, z)!]!;
 
-                    for(let j = 0; j < lightChannelCount; j++, k++) {
-                        this.lighting[k] = lightChannels[j]!.get(
-                            x + chunkOriginX,
-                            y + chunkOriginY,
-                            z + chunkOriginZ
-                        ) * lightStrength;
+                        for(let j = 0; j < lightChannelCount; j++, k++) {
+                            this.lighting[k] = lightingChunks[j]!.get(
+                                x, y, z
+                            ) * lightStrength;
+                        }
+                    } else {
+                        tile = this.tileMeshes.get(world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ))!;
+
+                        for(let j = 0; j < lightChannelCount; j++, k++) {
+                            this.lighting[k] = lightChannels[j]!.get(
+                                x + chunkOriginX,
+                                y + chunkOriginY,
+                                z + chunkOriginZ
+                            ) * lightStrength;
+                        }
                     }
+                    this.meshes[i] = tile;
+                    this.haloAo[i] = this.aoWeights[tile] || 0;
                 }
             }
         }
     }
 
     public at(x: number, y: number, z: number) {
-        return this.halo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
+        return this.meshes[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
     }
     public aoAt(x: number, y: number, z: number) {
         return this.haloAo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
@@ -115,8 +147,9 @@ class TileCache {
 }
 
 export class ChunkMesher {
-    public readonly tileMeshes: Map<string, TileMesh>;
-    private readonly aoWeights: Map<string, number>;
+    private readonly tileMeshes: TileMesh[];
+    private readonly aoWeights: Float32Array;
+    private readonly tileMeshIndices: Map<string, number>;
     private readonly tileCache: TileCache;
     private readonly defaultMesh: TileMesh;
     private readonly lightChannelCount: number;
@@ -128,13 +161,22 @@ export class ChunkMesher {
         public readonly world: World
     ) {
         // Optimize: memoize block models, indexed by their block state's tile id
-        this.tileMeshes = new Map;
-        for(const blockStateId of tileRegistry.values()) {
+        const blockStateIds = Array.from(tileRegistry.values());
+        this.tileMeshes = new Array;
+        this.tileMeshIndices = new Map;
+        this.aoWeights = new Float32Array(blockStateIds.length);
+
+        for(let i = 0; i < blockStateIds.length; i++) {
+            const blockStateId = blockStateIds[i]!;
+
             const blockState = blockStateRegistry.get(blockStateId)!;
+            this.tileMeshIndices.set(blockStateId, i);
             
             try {
                 const compiledModel = blockState.model.compile();
-                this.tileMeshes.set(blockStateId, compiledModel);
+
+                this.tileMeshes[i] = compiledModel;
+                this.aoWeights[i] = compiledModel.aoCastWeight;
             } catch(e) {
                 throw new Error("Failed to compile block model " + blockState, { cause: e });
             }
@@ -142,12 +184,7 @@ export class ChunkMesher {
 
         this.defaultMesh = getUnknownBlockState().model.compile();
 
-        this.aoWeights = new Map();
-        for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
-            this.aoWeights.set(blockStateId, tileMesh!.aoCastWeight);
-        }
-
-        this.tileCache = new TileCache(world, this.aoWeights);
+        this.tileCache = new TileCache(world, this.aoWeights, this.tileMeshIndices, this.tileMeshes.indexOf(this.defaultMesh));
         this.lightChannelCount = world.lightingManager.lightChannels.length;
 
         // ~150 MB maximum mesh size (should be more than enough..?)
@@ -163,8 +200,18 @@ export class ChunkMesher {
         this.geometryIndex = new Uint32Array(MAX_VERTEX_COUNT * (6 / 4));
     }
 
-    private getMesh(tile: string) {
-        return this.tileMeshes.get(tile) || this.defaultMesh;
+    public getCompiledMeshes() {
+        const map = new Map<string, TileMesh>;
+
+        for(const [ blockStateId, tileMeshIndex ] of this.tileMeshIndices.entries()) {
+            map.set(blockStateId, this.tileMeshes[tileMeshIndex]!);
+        }
+
+        return map;
+    }
+
+    private getMesh(tile: number) {
+        return this.tileMeshes[tile] || this.defaultMesh;
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {

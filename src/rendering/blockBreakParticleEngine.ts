@@ -17,7 +17,8 @@ export class BlockBreakParticleEngine extends ParticleEngine {
     ) {
         super(world, textureAtlas.packedTexture);
 
-        this.tileMeshes = worldRenderer.chunkMesher.tileMeshes;
+        this.tileMeshes = worldRenderer.chunkMesher.getCompiledMeshes();
+        
         for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
             const uvRects = new Set([
                 ...tileMesh.north,

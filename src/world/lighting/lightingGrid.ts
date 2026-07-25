@@ -65,19 +65,13 @@ export class LightingGrid {
 }
 
 export class LightingChunk {
-    public readonly nibbles = new Uint8Array(2048);
+    public readonly nibbles = new Uint8Array(4096);
 
     public get(x: number, y: number, z: number): number {
-        const index = x | (y << 4) | (z << 8);
-        const shift = (index & 1) << 2; // 0 or 4
-        return (this.nibbles[index >> 1]! >> shift) & 0x0F;
+        return this.nibbles[x << 8 | y << 4 | z]!;
     }
 
     public set(x: number, y: number, z: number, nibble: number): void {
-        const index = x | (y << 4) | (z << 8);
-        const byteIndex = index >> 1;
-        const shift = (index & 1) << 2; // 0 or 4
-        const mask = 0x0F << shift;
-        this.nibbles[byteIndex] = (this.nibbles[byteIndex]! & ~mask) | ((nibble << shift) & mask);
+        this.nibbles[x << 8 | y << 4 | z] = nibble;
     }
 }

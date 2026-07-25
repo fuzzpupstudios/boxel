@@ -52,11 +52,11 @@ export class PlayingGameStage extends GameStage {
         queues: this.debugMenu.createLine(
             DebugMenuLineAlignment.TOP_LEFT, 0.05,
             (
-                loadingChunks: number, generatingChunks: number, meshingChunks: number,
-                savingChunks: number, unloadingChunks: number
+                receivingChunks: number, loadingChunks: number, generatingChunks: number,
+                meshingChunks: number, savingChunks: number, unloadingChunks: number
             ) =>
-                `Load ${loadingChunks}  Gen ${generatingChunks}  Mesh ${meshingChunks}  ` +
-                `Save ${savingChunks}  Unload ${unloadingChunks}`
+                `Wait ${receivingChunks}  Load ${loadingChunks}  Gen ${generatingChunks}  ` +
+                `Mesh ${meshingChunks}  Save ${savingChunks}  Unload ${unloadingChunks}`
         ),
         particles: this.debugMenu.createLine(
             DebugMenuLineAlignment.TOP_LEFT, 0.05,
@@ -665,7 +665,8 @@ export class PlayingGameStage extends GameStage {
         if(this.debugMenu.view.visible) {
             this.debugMenuLines.queues.setData(
                 this.world.loadingChunks.size,
-                this.chunkLoader.columnsToGenerate.size,
+                this.chunkLoader.columnLoadQueue.size(),
+                this.chunkLoader.columnGenerationQueue.size(),
                 this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
                 this.world.chunksToSave.size,
                 this.chunkLoader.chunksToHide.size

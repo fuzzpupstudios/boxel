@@ -80,7 +80,7 @@ export class World {
     public persistentWorld: PersistentWorld | null = null;
     public readonly chunksToSave = new Set<Chunk>;
     private readonly chunksWithBlockEntities = new Set<Chunk>;
-    public readonly loadingChunks = new Map<number, Promise<Chunk>>;
+    public readonly loadingChunks = new Set<number>;
     public readonly lightingManager = new LightingManager(this);
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {
@@ -214,23 +214,32 @@ export class World {
         return null;
     }
 
-    public loadChunk(chunkX: number, chunkY: number, chunkZ: number): Promise<Chunk> | null {
+    public async loadChunks(chunkPositions: [number, number, number][]) {
         if(this.persistentWorld == null) {
             throw new ReferenceError("No PersistentWorld container present");
         }
+
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        let minZ = Infinity;
+        let maxZ = -Infinity;
+
+        for(const [ x, y, z ] of chunkPositions) {
+            if(!this.persistentWorld.hasChunk(x, y, z)) continue;
+
+            this.loadingChunks.add(VoxelGrid.encodeChunkKey(x, y, z));
+        }
         
-        if(!this.persistentWorld.hasChunk(chunkX, chunkY, chunkZ)) return null;
+        const chunks = await this.persistentWorld.loadChunks(chunkPositions);
 
-        const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
-        let promise = this.loadingChunks.get(key);
+        for(let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i]!;
 
-        if(promise != null) return promise;
-
-        promise = this.persistentWorld.loadChunk(chunkX, chunkY, chunkZ).then((chunk) => {
-            if(chunk == null) throw new Error("Failed to load chunk @ " +
-                chunkX + ", " + chunkY + ", " + chunkZ);
+            const chunkKey = chunk.key;
             
-            const chunkKey = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+            this.loadingChunks.delete(chunkKey);
             this.tiles.chunks.set(chunkKey, chunk.tiles);
 
             for(const [ lightChannelId, lightingChunk ] of chunk.lightingChunks.entries()) {
@@ -242,8 +251,7 @@ export class World {
                 lightingChannel.lightingGrid.chunks.set(chunkKey, lightingChunk);
             }
             chunk.setWorld(this);
-            this.chunks.set(key, chunk);
-            this.loadingChunks.delete(key);
+            this.chunks.set(chunkKey, chunk);
 
             if(chunk.blockEntities.size > 0) {
                 this.chunksWithBlockEntities.add(chunk);
@@ -254,13 +262,19 @@ export class World {
                 }
             }
 
-            this.flagChunksForRender(chunkX - 1, chunkY - 1, chunkZ - 1, chunkX + 1, chunkY + 1, chunkZ + 1);
+            if(chunk.x > maxX) maxX = chunk.x;
+            if(chunk.y > maxY) maxY = chunk.y;
+            if(chunk.z > maxZ) maxZ = chunk.z;
+            if(chunk.x < minX) minX = chunk.x;
+            if(chunk.y < minY) minY = chunk.y;
+            if(chunk.z < minZ) minZ = chunk.z;
+        }
 
-            return chunk;
-        })
-        this.loadingChunks.set(key, promise);
+        if(chunks.length > 0) {
+            this.flagChunksForInitialRender(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1);
+        }
 
-        return promise;
+        return chunks;
     }
 
     public addBlockEntity(blockEntity: BlockEntity) {
@@ -376,6 +390,25 @@ export class World {
 
         this.renderer?.markDirty(chunk, priority);
         this.chunksToSave.add(chunk);
+    }
+
+    public flagChunksForInitialRender(
+        minX: number, minY: number, minZ: number,
+        maxX: number, maxY: number, maxZ: number
+    ) {
+        if(this.renderer === null) return;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let y = minY; y <= maxY; y++) {
+                for(let z = minZ; z <= maxZ; z++) {
+                    const chunk = this.getChunk(x, y, z);
+                    if(chunk === null) continue;
+                    if(this.renderer.renderedChunks.has(chunk)) continue;
+
+                    this.renderer.markDirty(chunk);
+                }
+            }
+        }
     }
 
     public flagChunksForRender(

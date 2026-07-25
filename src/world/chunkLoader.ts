@@ -6,14 +6,16 @@ import type { Chunk, World } from "./world";
 
 export class ChunkLoader {
     public maxColumnGenerations = 1;
+    public maxColumnLoads = 32;
     public maxChunkUnloads = 64;
 
     private readonly origin = new Vector3(0);
     private radius = 128;
     private needsUpdate: boolean = true;
-    public readonly columnsToGenerate = new Map<number, [ number, number, number ]>;
+    public readonly columnsToLoad = new Map<number, [ number, number, number ]>;
     public readonly chunksToHide = new Map<number, Chunk>;
-    private readonly chunkGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
+    public readonly columnGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
+    public readonly columnLoadQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     private updateChunksCooldown: number = 0;
 
     constructor(
@@ -77,7 +79,7 @@ export class ChunkLoader {
         }
     }
 
-    public updateColumnsToLoad() {        
+    public updateColumnsToLoad() {
         const marker = this.origin;
         const originX = marker.x >> 4;
         const originZ = marker.z >> 4;
@@ -100,22 +102,28 @@ export class ChunkLoader {
                     if(distanceSquare > radiusSquare) continue;
 
                     const key = VoxelGrid.encodeChunkKey(x, y, z);
-                    if(this.columnsToGenerate.has(key)) continue;
+                    if(this.columnsToLoad.has(key)) continue;
                     if(this.world.tiles.chunks.has(key)) continue;
 
-                    this.columnsToGenerate.set(key, [ x, y, z ]);
+                    this.columnsToLoad.set(key, [ x, y, z ]);
                 }
             }
         }
 
-        this.chunkGenerationQueue.clear();
-        for(const [key, [ x, y, z ]] of this.columnsToGenerate.entries()) {
+        this.columnGenerationQueue.clear();
+        this.columnLoadQueue.clear();
+        for(const [key, [ x, y, z ]] of this.columnsToLoad.entries()) {
             const distanceSquare =
                 ((x << 4) - this.origin.x) * ((x << 4) - this.origin.x) +
                 ((y << 4) - this.origin.y) * ((y << 4) - this.origin.y) +
                 ((z << 4) - this.origin.z) * ((z << 4) - this.origin.z);
             
-            this.chunkGenerationQueue.enqueue([ distanceSquare, key, x, y, z ]);
+            const item = [ distanceSquare, key, x, y, z ];
+            if(this.world.persistentWorld?.hasChunk(x, y, z)) {
+                this.columnLoadQueue.enqueue(<any>item);
+            } else {
+                this.columnGenerationQueue.enqueue(<any>item);
+            }
         }
     }
 
@@ -133,9 +141,9 @@ export class ChunkLoader {
     public setRadius(radius: number) {
         this.radius = radius;
         this.needsUpdate = true;
-        this.columnsToGenerate.clear();
+        this.columnsToLoad.clear();
         this.chunksToHide.clear();
-        this.chunkGenerationQueue.clear();
+        this.columnGenerationQueue.clear();
     }
 
     public getRadius() {
@@ -158,9 +166,9 @@ export class ChunkLoader {
         }
 
         {
-            const max = Math.min(this.columnsToGenerate.size, this.maxColumnGenerations);
+            const max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations);
             for(let i = 0; i < max; i++) {
-                const [ _, key, x, y, z ] = this.chunkGenerationQueue.dequeue()!;
+                const [ _, key, x, y, z ] = this.columnGenerationQueue.dequeue()!;
 
                 let columnGenerated = false;
                 for(let dy = 0; dy < 8; dy++) {
@@ -168,16 +176,36 @@ export class ChunkLoader {
                         columnGenerated = true;
                         continue;
                     }
-                    const chunkPromise = this.world.loadChunk(x, y + dy, z);
-
-                    if(chunkPromise != null) columnGenerated = true;
                 }
 
                 if(!columnGenerated) {
                     this.world.generateColumn(x, y, z);
                 }
-                this.columnsToGenerate.delete(key);
+                this.columnsToLoad.delete(key);
             }
+        }
+
+        {
+            const max = Math.min(this.columnLoadQueue.size(), this.maxColumnLoads);
+            const positions: [number, number, number][] = [];
+
+            for(let i = 0; i < max; i++) {
+                const [ _, key, x, y, z ] = this.columnLoadQueue.dequeue()!;
+
+                for(let dy = 0; dy < 8; dy++) {
+                    if(!this.world.tiles.getChunk(x, y + dy, z)) {
+                        positions.push([x, y + dy, z]);
+                    }
+                }
+            }
+
+            console.log("load " + positions.length + " chunks");
+                
+            this.world.loadChunks(positions).then((chunks) => {
+                for(const chunk of chunks) {
+                    this.columnsToLoad.delete(chunk.key);
+                }
+            })
         }
 
         {
@@ -192,7 +220,7 @@ export class ChunkLoader {
 
                 this.world.hideChunk(chunk);
                 this.chunksToHide.delete(key);
-                this.columnsToGenerate.delete(key);
+                this.columnsToLoad.delete(key);
             }
         }
     }

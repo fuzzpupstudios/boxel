@@ -2,7 +2,7 @@ import type { SerializedChunk } from "./persistentWorld";
 
 type ChunkUpgrade = (chunk: SerializedChunk) => SerializedChunk;
 
-export const CHUNK_SCHEMA_VERSION = 3;
+export const CHUNK_SCHEMA_VERSION = 4;
 export const chunkUpgrades: ChunkUpgrade[] = [
     // upgrade to 0
     (chunk: SerializedChunk) => {
@@ -81,6 +81,40 @@ export const chunkUpgrades: ChunkUpgrade[] = [
             "base:blue": blueValues.nibbles.buffer,
             "base:sky": skyValues.nibbles.buffer
         };
+        return chunk;
+    },
+    // upgrade to 4
+    (chunk: SerializedChunk) => {
+        class LightingChunk {
+            public readonly oldNibbles = new Uint8Array(2048);
+            public readonly newNibbles = new Uint8Array(4096);
+
+            public getOld(x: number, y: number, z: number): number {
+                const index = x | (y << 4) | (z << 8);
+                const shift = (index & 1) << 2; // 0 or 4
+                return (this.oldNibbles[index >> 1]! >> shift) & 0x0F;
+            }
+
+            public setNew(x: number, y: number, z: number, nibble: number): void {
+                this.newNibbles[x << 8 | y << 4 | z] = nibble;
+            }
+        }
+        
+        for(const [ lightChannelId, lightData ] of Object.entries(chunk.lighting)) {
+            const lighting = new LightingChunk;
+            lighting.oldNibbles.set(new Uint8Array(lightData));
+
+            for(let x = 0; x < 16; x++) {
+                for(let y = 0; y < 16; y++) {
+                    for(let z = 0; z < 16; z++) {
+                        lighting.setNew(x, y, z, lighting.getOld(x, y, z));
+                    }
+                }
+            }
+
+            chunk.lighting[lightChannelId] = lighting.newNibbles.buffer;
+        }
+        
         return chunk;
     }
 ]

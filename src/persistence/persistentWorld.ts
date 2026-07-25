@@ -185,30 +185,42 @@ export class PersistentWorld {
         await transaction.done;
     }
 
-    public async loadChunk(x: number, y: number, z: number) {
+    public async loadChunks(chunks: [number, number, number][]) {
         const db = await this.db;
+        const transaction = db.transaction("chunks", "readonly");
+        const chunksStore = transaction.objectStore("chunks");
 
-        const serializedChunk = await db.get("chunks", [ x, y, z ]);
-        if(serializedChunk == null) return null;
+        const serializedChunks = await Promise.all(chunks.map(pos => chunksStore.get(pos)));
 
-        // perform chunk schema upgrades
-        let upgraded = false;
+        const chunksToSave = [];
+        const deserializedChunks = [];
         
-        if(serializedChunk.version == null) serializedChunk.version = -1;
-        for(let i = serializedChunk.version + 1; i < chunkUpgrades.length; i++) {
-            console.log("upgraded chunk " + serializedChunk.x + ", " +
-                serializedChunk.y + ", " + serializedChunk.z + " to version " + i);
-            upgraded = true;
-            chunkUpgrades[i]!(serializedChunk);
+        for(const serializedChunk of serializedChunks) {
+            if(serializedChunk == null) continue;
+
+            // perform chunk schema upgrades
+            let upgraded = false;
+
+            if(serializedChunk.version == null) serializedChunk.version = -1;
+            for(let i = serializedChunk.version + 1; i <= CHUNK_SCHEMA_VERSION; i++) {
+                console.log("upgraded chunk " + serializedChunk.x + ", " +
+                    serializedChunk.y + ", " + serializedChunk.z + " to version " + i);
+                upgraded = true;
+                chunkUpgrades[i]!(serializedChunk);
+            }
+
+            const chunk = this.deserializeChunk(serializedChunk);
+            
+            if(upgraded) {
+                chunksToSave.push(chunk);
+            }
+
+            deserializedChunks.push(chunk);
         }
 
-        const chunk = this.deserializeChunk(serializedChunk);
-        
-        if(upgraded) {
-            await this.saveChunk(chunk);
-        }
+        await this.saveChunks(chunksToSave);
 
-        return chunk;
+        return deserializedChunks;
     }
 
     private serializeChunk(chunk: Chunk): SerializedChunk {

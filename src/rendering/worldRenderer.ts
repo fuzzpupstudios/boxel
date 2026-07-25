@@ -99,19 +99,13 @@ export class WorldRenderer {
     public render(time: Time) {
         const todo = MathUtils.clamp(this.dirtyChunks.size / 3, this.minChunkUpdates, this.maxChunkUpdates);
         if(this.dirtyChunks.size > 0) {
-            const iterator = this.dirtyChunks.values();
-
             let i = 0;
-            let next: IteratorResult<Chunk>;
-            do {
-                next = iterator.next();
-                if(next.done) break;
-                
-                this.renderChunk(next.value);
-                this.dirtyChunks.delete(next.value);
+            for(const chunk of this.dirtyChunks) {
+                if(i++ > todo) break;
 
-                i++;
-            } while(i < todo);
+                this.renderChunk(chunk);
+                this.dirtyChunks.delete(chunk);
+            }
         }
 
         for(const priorityDirtyChunk of this.priorityDirtyChunks) {
