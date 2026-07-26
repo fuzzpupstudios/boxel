@@ -265,7 +265,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return success;
     }
 
-    public pickupNearbyItems(time: Time, magnetRadius: number, magnetStrength: number, pickupRadius: number) {
+    public pickupNearbyItems(time: Time, magnetRadius: number, magnetStrength: number, pickupRadius: number, pickupMinHeight: number, pickupMaxHeight: number) {
         const minX = (this.position.x - magnetRadius) >> 4;
         const minY = (this.position.y - magnetRadius) >> 4;
         const minZ = (this.position.z - magnetRadius) >> 4;
@@ -292,7 +292,12 @@ export class Player extends Entity<SerializedPlayerEntity> {
                         if(entity.pickupCooldown > 0) continue;
 
                         const distanceSquared = (entity.position.x - targetPosition.x) ** 2 + (entity.position.z - targetPosition.z) ** 2;
-                        if(distanceSquared > magnetRadiusSquared) continue;
+                        const verticalDistance = entity.position.y - this.position.y;
+                        if(
+                            distanceSquared > magnetRadiusSquared ||
+                            verticalDistance < pickupMinHeight ||
+                            verticalDistance > pickupMaxHeight
+                        ) continue;
 
                         if(distanceSquared < pickupRadiusSquared) {
                             this.inventory.addStack(entity.stack);
