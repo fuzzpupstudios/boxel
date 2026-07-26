@@ -10,9 +10,12 @@
                 }
             },
             "events": {
-                "include": [ "base:sound_materials/solid", "base:drop_self" ],
+                "include": [ "base:sound_materials/solid" ],
 
                 "triggers": {
+                    "base:destroy": {
+                        "id": "base:drop_block_item"
+                    },
                     "relay_explode": [
                         {
                             "id": "base:set_block_state_id",

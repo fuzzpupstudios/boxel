@@ -4,6 +4,9 @@
     "triggers": {
         "base:destroy": {
             "id": "base:drop_block_item"
+        },
+        "base:explode": {
+            "id": "base:drop_block_item"
         }
     }
 }
