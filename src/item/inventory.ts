@@ -76,9 +76,20 @@ export class Inventory {
 
     public addStack(stack: ItemStack) {
         for(let i = 0; i < this.slots.length; i++) {
+            const slotStack = this.slots[i]!.stack;
+            if(slotStack.item !== stack.item) continue;
+
+            stack.mergeInto(slotStack);
+            this.onUpdate.emit(i);
+
+            if(stack.isEmpty()) return;
+        }
+
+        for(let i = 0; i < this.slots.length; i++) {
             stack.mergeInto(this.slots[i]!.stack);
             this.onUpdate.emit(i);
-            if(stack.isEmpty()) break;
+            
+            if(stack.isEmpty()) return;
         }
     }
 
