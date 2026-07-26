@@ -10,7 +10,6 @@ import type { ItemEntityRenderer } from "./itemEntityRenderer";
 export type SerializedItemEntity = z.infer<typeof SerializedItemEntity>;
 export const SerializedItemEntity = SerializedEntity.extend({
     stack: SerializedItemStack.default({ item: "base:air[default]", quantity: 0 }),
-    renderTime: z.number().default(0),
     pickupCooldown: z.number().default(0)
 });
 
@@ -22,7 +21,7 @@ export class ItemEntity extends Entity {
     private geometryInstanceId?: number;
     private matrix = new Matrix4;
     private lightColor = new Color;
-    private renderTime = 0;
+    private rotationPhase = Math.random() * 10;
     public pickupCooldown = 0;
 
     public constructor(
@@ -57,10 +56,10 @@ export class ItemEntity extends Entity {
         if(this.geometryInstanceId == null) return;
         if(this.renderer == null) return;
 
-        this.renderTime += time.deltaTime;
+        this.rotationPhase += time.deltaTime;
         
-        const angle = this.renderTime * Math.PI * 0.5;
-        const offsetY = Math.sin(this.renderTime * Math.PI * 2 / 3) * 0.1 + 0.3;
+        const angle = this.rotationPhase * Math.PI * 0.5;
+        const offsetY = Math.sin(this.rotationPhase * Math.PI * 2 / 3) * 0.1 + 0.3;
 
         this.matrix.makeRotationY(angle);
         this.matrix.setPosition(
@@ -100,7 +99,6 @@ export class ItemEntity extends Entity {
     public override serialize(): SerializedItemEntity {
         return Object.assign(super.serialize(), {
             stack: this.stack.serialize(),
-            renderTime: this.renderTime,
             pickupCooldown: this.pickupCooldown
         });
     }
@@ -110,7 +108,6 @@ export class ItemEntity extends Entity {
         super.deserialize(parsedData);
         
         this.stack.deserialize(parsedData.stack);
-        this.renderTime = parsedData.renderTime;
         this.pickupCooldown = parsedData.pickupCooldown;
 
         this.updateDisplayItem();

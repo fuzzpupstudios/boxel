@@ -36,6 +36,8 @@ export class LightingManager {
         let r = 0;
         let g = 0;
         let b = 0;
+        
+        y += 0.5;
 
         for(const channel of this.lightChannels) {
             r += channel.color.value.r * channel.get(x, y, z) / 15;
