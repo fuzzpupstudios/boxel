@@ -211,6 +211,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
         if(cursor.defaultPrevented) {
             this.world.setBlockState(targetX, targetY, targetZ, previousStateId);
             return false;
+        } else {
+            holdingStack.mergeInto(ItemStack.empty(), 1);
         }
 
         return true;
