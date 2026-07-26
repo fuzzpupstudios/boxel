@@ -10,7 +10,18 @@
         "id": "${id}",
 
         "defaultStateProperties": {
-            "events": [ "base:slab", "${sound_events}" ],
+            "events": {
+                "include": [ "base:slab", "${sound_events}" ],
+
+                "triggers": {
+                    "base:destroy": {
+                        "id": "base:drop_item",
+                        "args": {
+                            "stack": "${id}[half=bottom]"
+                        }
+                    }
+                }
+            },
             "pickBlockState": "half=bottom"
         },
 

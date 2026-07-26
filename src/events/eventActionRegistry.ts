@@ -4,6 +4,8 @@ import { ExplodeAction } from "./block/explodeAction";
 import { RunTriggerAction } from "./block/runTriggerAction";
 import { SetBlockStateIdAction } from "./block/setBlockStateIdAction";
 import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
+import { DropBlockItemAction } from "./entity/dropBlockItemAction";
+import { DropItemAction } from "./entity/dropItemAction";
 import { EventAction } from "./eventAction";
 import type { EventPredicate } from "./eventPredicate";
 import type { EventSheet } from "./eventSheet";
@@ -32,6 +34,9 @@ eventActionRegistry.register("base:set_selected_slot", SetSelectedSlotAction);
 eventActionRegistry.register("base:play_sound_3d", PlaySound3dAction);
 eventActionRegistry.register("base:play_sound_2d", PlaySound2dAction);
 eventActionRegistry.register("base:prevent_default", PreventDefaultAction);
+
+eventActionRegistry.register("base:drop_item", DropItemAction);
+eventActionRegistry.register("base:drop_block_item", DropBlockItemAction);
 
 eventActionRegistry.lock();
 

@@ -17,6 +17,7 @@ interface AtlasSlot {
 export class TextureAtlasSlot {
     public box2 = new Box2(new Vector2(0, 0), new Vector2(1, 1));
     public textureId = "";
+    public imageBitmap: ImageBitmap | null = null;
 
     public constructor(
         textureId?: string
@@ -38,6 +39,7 @@ export class TextureAtlasSlot {
         if(atlas.packedImage == null) throw new Error("Atlas has not been packed yet");
         
         this.box2.copy(texturePosition);
+        this.imageBitmap = atlas.getTexture(this.textureId);
     }
 
     public createPixiTexture(atlas: TextureAtlas) {
@@ -65,6 +67,10 @@ export class TextureAtlas {
 
     public addTexture(id: string, source: ImageBitmap) {
         this.textures.set(id, source);
+    }
+
+    public getTexture(id: string) {
+        return this.textures.get(id) ?? null;
     }
 
     public setDefaultTexture(textureId: string) {

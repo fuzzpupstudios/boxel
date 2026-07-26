@@ -34,7 +34,7 @@
     "jsonh-ts": "^3.8.0",
     "objectregistry": "^1.0.3",
     "pixi.js": "^8.14.1",
-    "three": "^0.184.0",
+    "three": "^0.185.1",
     "typed-signals": "^3.0.0",
     "zod": "^4.4.3"
   }

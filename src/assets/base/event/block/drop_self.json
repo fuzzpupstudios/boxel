@@ -1,0 +1,9 @@
+{
+    "id": "base:drop_self",
+    
+    "triggers": {
+        "base:destroy": {
+            "id": "base:drop_block_item"
+        }
+    }
+}

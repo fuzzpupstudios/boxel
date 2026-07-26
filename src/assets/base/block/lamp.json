@@ -1,5 +1,13 @@
 {
     "id": "base:lamp",
+    "defaultStateProperties": {
+        "events": [ "base:sound_materials/solid", "base:drop_self" ],
+        "collider": {
+            "hitboxes": [
+                { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+            ]
+        }
+    },
     "states": {
         "color=white": {
             "model": {
@@ -7,12 +15,6 @@
                 "textures": {
                     "block": "base:block/lamp.png"
                 }
-            },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
             },
             "emission": {
                 "base:red": 15,
@@ -27,12 +29,6 @@
                     "block": "base:block/red_lamp.png"
                 }
             },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            },
             "emission": {
                 "base:red": 15
             }
@@ -43,12 +39,6 @@
                 "textures": {
                     "block": "base:block/green_lamp.png"
                 }
-            },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
             },
             "emission": {
                 "base:green": 15
@@ -61,12 +51,6 @@
                     "block": "base:block/blue_lamp.png"
                 }
             },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            },
             "emission": {
                 "base:blue": 15
             }
@@ -77,12 +61,6 @@
                 "textures": {
                     "block": "base:block/yellow_lamp.png"
                 }
-            },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
             },
             "emission": {
                 "base:yellow": 15
@@ -95,12 +73,6 @@
                     "block": "base:block/purple_lamp.png"
                 }
             },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            },
             "emission": {
                 "base:purple": 15
             }
@@ -111,12 +83,6 @@
                 "textures": {
                     "block": "base:block/sun_lamp.png"
                 }
-            },
-            "events": "base:sound_materials/solid",
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
             },
             "emission": {
                 "base:sky": 15

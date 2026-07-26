@@ -71,4 +71,8 @@ export class ItemStack {
 
         if(this.quantity === 0) this.clear();
     }
+    public set(item: string, quantity: number) {
+        this.item = item;
+        this.quantity = quantity;
+    }
 }

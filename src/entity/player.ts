@@ -1,17 +1,32 @@
 import { Box3, Euler, MathUtils, Vector3 } from "three";
+import z from "zod";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { BoxelGame } from "../boxel";
 import { EventCursor } from "../events/eventSheet";
-import { Inventory, InventorySlot } from "../item/inventory";
+import { Inventory, InventorySlot, SerializedInventory } from "../item/inventory";
 import { itemRegistry } from "../item/itemRegistry";
+import { ItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/playing/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
-import { Entity, type TileCollider } from "./entity";
+import { Entity, SerializedEntity, type TileCollider } from "./entity";
+import { ItemEntity } from "./item";
 
-export class Player extends Entity {
+export type SerializedPlayerEntity = z.infer<typeof SerializedPlayerEntity>;
+export const SerializedPlayerEntity = SerializedEntity.extend({
+    id: z.string(),
+    inventory: SerializedInventory.optional(),
+    selectedSlot: z.int().default(0),
+    pitch: z.number().default(0),
+    yaw: z.number().default(0),
+});
+
+export class Player extends Entity<SerializedPlayerEntity> {
+    public readonly type = "base:player";
+    public readonly automaticPersistentSaving = false;
+
     public readonly hitbox = new Box3(
         new Vector3(-0.3, 0, -0.3),
         new Vector3(0.3, 1.9, 0.3),
@@ -24,6 +39,7 @@ export class Player extends Entity {
     public jumpHeight = 1;
     public yaw = 0;
     public pitch = 0;
+    public id: string = crypto.randomUUID();
 
     public readonly targetedBlock = new RaycastResult;
     public readonly reachDistance = 5;
@@ -118,7 +134,7 @@ export class Player extends Entity {
         this.flying = flying;
     }
 
-    public destroy(): boolean {
+    public destroyed(): boolean {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
         let targetX = this.targetedBlock.voxel.x;
@@ -249,6 +265,85 @@ export class Player extends Entity {
         return success;
     }
 
+    public pickupNearbyItems(time: Time, magnetRadius: number, magnetStrength: number, pickupRadius: number) {
+        const minX = (this.position.x - magnetRadius) >> 4;
+        const minY = (this.position.y - magnetRadius) >> 4;
+        const minZ = (this.position.z - magnetRadius) >> 4;
+        const maxX = (this.position.x + magnetRadius) >> 4;
+        const maxY = (this.position.y + magnetRadius) >> 4;
+        const maxZ = (this.position.z + magnetRadius) >> 4;
+
+        const magnetRadiusSquared = magnetRadius * magnetRadius;
+        const pickupRadiusSquared = pickupRadius * pickupRadius;
+
+        const magnetDirection = new Vector3;
+
+        const targetPosition = this.position.clone();
+        targetPosition.y += (this.aabb.hitbox.min.y + this.aabb.hitbox.max.y) / 2;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let y = minY; y <= maxY; y++) {
+                for(let z = minZ; z <= maxZ; z++) {
+                    const chunk = this.world.getChunk(x, y, z);
+                    if(chunk == null) continue;
+
+                    for(const entity of chunk.entities) {
+                        if(!(entity instanceof ItemEntity)) continue;
+                        if(entity.pickupCooldown > 0) continue;
+
+                        const distanceSquared = (entity.position.x - targetPosition.x) ** 2 + (entity.position.z - targetPosition.z) ** 2;
+                        if(distanceSquared > magnetRadiusSquared) continue;
+
+                        if(distanceSquared < pickupRadiusSquared) {
+                            this.inventory.addStack(entity.stack);
+                            if(entity.stack.isEmpty()) {
+                                entity.remove();
+                            } else {
+                                entity.updateDisplayItem();
+                            }
+                        } else {
+                            magnetDirection.copy(targetPosition);
+                            magnetDirection.sub(entity.position);
+
+                            magnetDirection.normalize();
+                            magnetDirection.multiplyScalar(magnetStrength);
+
+                            entity.velocity.copy(magnetDirection);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public getLookDirection(out = new Vector3) {
+        out.set(0, 0, -1);
+        return out.applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
+    }
+
+    public dropItem(stack: ItemStack, max = 1) {
+        const direction = this.getLookDirection();
+        direction.normalize();
+
+        const entity = new ItemEntity(this.world);
+        entity.position.set(
+            this.position.x,
+            this.position.y + this.eyeHeight - 0.5,
+            this.position.z,
+        );
+        entity.velocity.set(
+            direction.x * 10 + this.velocity.x,
+            direction.y * 10 + this.velocity.y,
+            direction.z * 10 + this.velocity.z
+        );
+        stack.mergeInto(entity.stack, max);
+        entity.updateDisplayItem();
+
+        entity.pickupCooldown = 2;
+
+        this.world.addEntity(entity);
+    }
+
     public tick(time: Time): void {
         {
             const dy = -0.501;
@@ -273,7 +368,7 @@ export class Player extends Entity {
         }
         super.tick(time);
 
-        const direction = new Vector3(0, 0, -1).applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
+        const direction = this.getLookDirection();
         
         if(this.gliding && !this.flying) {
             this.velocity.add(direction.clone().add(new Vector3(0, 0.5, 0)).normalize().multiplyScalar(time.deltaTime * 50));
@@ -281,9 +376,31 @@ export class Player extends Entity {
 
         const raycaster = new VoxelRaycaster(this.world, (<any><unknown>this.aabb).tileColliders);
 
-        const origin = this.aabb.position.clone();
+        const origin = this.position.clone();
         origin.y += this.eyeHeight;
 
         raycaster.cast(origin, direction, this.targetedBlock);
+    }
+
+    public override serialize(): SerializedPlayerEntity {
+        return Object.assign(super.serialize(), {
+            id: this.id,
+            inventory: this.inventory.serialize(),
+            selectedSlot: this.selectedSlot,
+            pitch: this.pitch,
+            yaw: this.yaw,
+        });
+    }
+    public override deserialize(data: Partial<SerializedPlayerEntity>) {
+        data.type ??= this.type;
+        const parsedData = SerializedPlayerEntity.parse(data);
+        super.deserialize(parsedData);
+
+        this.id = parsedData.id;
+        if(parsedData.inventory) this.inventory.deserialize(parsedData.inventory);
+        this.selectedSlot = parsedData.selectedSlot;
+
+        this.pitch = parsedData.pitch;
+        this.yaw = parsedData.yaw;
     }
 }

@@ -15,7 +15,18 @@
                     "block": "${texture}"
                 }
             },
-            "events": [ "base:stair", "${sound_events}" ],
+            "events": {
+                "include": [ "base:stair", "${sound_events}" ],
+
+                "triggers": {
+                    "base:destroy": {
+                        "id": "base:drop_item",
+                        "args": {
+                            "stack": "${id}[direction=west,half=bottom]"
+                        }
+                    }
+                }
+            },
             "pickBlockState": "direction=west,half=bottom"
         },
 

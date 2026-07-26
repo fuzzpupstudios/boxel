@@ -198,8 +198,6 @@ export class ChunkLoader {
                     }
                 }
             }
-
-            console.log("load " + positions.length + " chunks");
                 
             this.world.loadChunks(positions).then((chunks) => {
                 for(const chunk of chunks) {

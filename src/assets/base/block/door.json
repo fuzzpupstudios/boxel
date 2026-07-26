@@ -13,7 +13,18 @@
                 "top": "base:block/door_top.png"
             }
         },
-        "events": [ "base:sound_materials/solid" ],
+        "events": {
+            "include": [ "base:sound_materials/solid" ],
+
+            "triggers": {
+                "base:destroy": {
+                    "id": "base:drop_item",
+                    "args": {
+                        "stack": "base:door[direction=north,open=false,half=bottom]"
+                    }
+                }
+            }
+        },
         "renderAsTexture": "base:item/door.png",
         "attenuation": 1,
         "pickBlockState": "direction=north,open=false,half=bottom"

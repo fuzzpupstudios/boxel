@@ -3,8 +3,10 @@ import z from "zod";
 import type { SerializedBlockEntity } from "../block/entity/blockEntity";
 import { blockEntityTypeRegistry } from "../block/entity/blockEntityRegistry";
 import { UnknownBlockEntityType } from "../block/entity/unknownBlockEntity";
-import { Player } from "../entity/player";
-import { SerializedInventory } from "../item/inventory";
+import { SerializedEntity, type Entity } from "../entity/entity";
+import { entityRegistry } from "../entity/entityTypeRegistry";
+import { SerializedPlayerEntity } from "../entity/player";
+import { UnknownEntity } from "../entity/unknownEntity";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 import { LightingChunk } from "../world/lighting/lightingGrid";
 import { VoxelChunk } from "../world/voxelGrid";
@@ -19,35 +21,14 @@ export interface SerializedChunk {
     tiles: ArrayBuffer,
     lighting: Record<string, ArrayBuffer>,
     palette: string[],
-    blockEntities: SerializedBlockEntity[]
+    blockEntities: SerializedBlockEntity[],
+    entities: SerializedEntity[]
 }
 
 export type WorldMeta = z.infer<typeof WorldMeta>;
 export const WorldMeta = z.object({
     seed: z.number().default(-1),
     time: z.number().default(0.1),
-});
-
-export type WorldPlayer = z.infer<typeof WorldPlayer>;
-export const WorldPlayer = z.object({
-    id: z.string(),
-    position: z.tuple([
-        z.number(),
-        z.number(),
-        z.number()
-    ]).default([ 0, 128, 0 ]),
-    velocity: z.tuple([
-        z.number(),
-        z.number(),
-        z.number()
-    ]).default([ 0, 0, 0 ]),
-    rotation: z.tuple([
-        z.number(),
-        z.number()
-    ]).default([ 0, 0 ]),
-    gliding: z.boolean().default(false),
-    inventory: SerializedInventory.optional(),
-    selectedSlot: z.int().default(0)
 });
 
 interface PersistentWorldSchema extends DBSchema {
@@ -61,7 +42,7 @@ interface PersistentWorldSchema extends DBSchema {
     },
     players: {
         key: string,
-        value: WorldPlayer
+        value: SerializedPlayerEntity
     }
 }
 
@@ -113,27 +94,18 @@ export class PersistentWorld {
         return WorldMeta.parse(meta);
     }
 
-    public async savePlayerSlot(id: string, player: Player) {
+    public async savePlayerSlot(player: SerializedPlayerEntity) {
         const db = await this.db;
 
-        await db.put("players", {
-            id,
-            position: player.aabb.position.toArray(),
-            velocity: player.velocity.toArray(),
-            rotation: [ player.yaw, player.pitch ],
-            gliding: player.gliding,
-            inventory: player.inventory.serialize(),
-            selectedSlot: player.selectedSlot
-        });
+        await db.put("players", player);
     }
 
-    public async loadPlayerSlot(id: string) {
+    public async loadPlayerSlot(id: string): Promise<Partial<SerializedPlayerEntity>> {
         const db = await this.db;
 
         const data = await db.get("players", id);
-        const worldPlayer = WorldPlayer.parse(data ?? { id });
 
-        return worldPlayer;
+        return data ?? { id };
     }
 
     public async init() {
@@ -238,13 +210,22 @@ export class PersistentWorld {
             lighting[lightChannelId] = lightingChunk.nibbles.buffer;
         }
 
+        const serializedEntities = new Array<SerializedEntity>;
+
+        for(const entity of chunk.entities) {
+            if(!entity.automaticPersistentSaving) continue;
+
+            serializedEntities.push(entity.serialize())
+        }
+
         return {
             version: CHUNK_SCHEMA_VERSION,
             x: chunk.x, y: chunk.y, z: chunk.z,
             tiles: chunk.tiles.tiles.buffer,
             palette: chunk.tiles.palette,
             lighting,
-            blockEntities: chunk.blockEntities.values().map(entity => entity.serialize()).toArray()
+            blockEntities: chunk.blockEntities.values().map(entity => entity.serialize()).toArray(),
+            entities: serializedEntities
         }
     }
 
@@ -266,7 +247,7 @@ export class PersistentWorld {
         }
 
         if(this.world == null) {
-            console.warn("PersistentWorld World not set; block entities cannot be loaded");
+            console.warn("PersistentWorld World not set; entities cannot be loaded");
         } else {
             for(const serializedBlockEntity of serialized.blockEntities) {
                 let blockEntityType = blockEntityTypeRegistry.get(serializedBlockEntity.id);
@@ -280,6 +261,23 @@ export class PersistentWorld {
                 );
                 blockEntity.deserialize(serializedBlockEntity);
                 chunk.addBlockEntity(blockEntity);
+            }
+            for(const serializedEntity of serialized.entities) {
+                let EntityConstructor = entityRegistry.get(serializedEntity.type);
+
+                let entity: Entity;
+                if(EntityConstructor == null) {
+                    entity = new UnknownEntity(this.world, serializedEntity.type);
+                } else {
+                    entity = new EntityConstructor(this.world);
+                }
+                if(!entity.automaticPersistentSaving) {
+                    entity.destroy();
+                    continue;
+                }
+
+                entity.deserialize(serializedEntity);
+                chunk.entities.add(entity);
             }
         }
 

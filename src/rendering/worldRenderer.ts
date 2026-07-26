@@ -4,12 +4,13 @@ import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, posi
 import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
 import type { TextureAtlases } from "../boxel";
 import type { Assets } from "../data/assets";
+import { EntityRenderer } from "../entity/entityRenderer";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
-import { createLightColorNode } from "./lightUtils";
+import { createLightColorNode, createSunShadowNode } from "./lightUtils";
 import { Sky } from "./sky";
 
 export class WorldRenderer {
@@ -22,10 +23,12 @@ export class WorldRenderer {
     public readonly dirtyChunks = new Set<Chunk>;
     public readonly priorityDirtyChunks = new Set<Chunk>;
     public readonly renderedChunks = new Map<Chunk, Mesh | null>;
+    public readonly entityRenderer: EntityRenderer;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly renderedChunkKeyList = new Set<number>;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
+    public paused: boolean = true;
 
     public constructor(
         public readonly world: World,
@@ -33,11 +36,6 @@ export class WorldRenderer {
         public readonly camera: PerspectiveCamera,
         assets: Assets
     ) {
-        this.chunkMesher = new ChunkMesher(world);
-        this.sky = new Sky(assets);
-
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
-
         {
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn(() => {
@@ -49,13 +47,10 @@ export class WorldRenderer {
                     const lit = faceType.bitAnd(1).greaterThan(0);
 
                     If(terrainColor.a.lessThan(0.5), () => Discard());
-
-                    const sunDot = normalGeometry.dot(this.sky.sunPos.normalize());
-                    const moonDot = normalGeometry.dot(this.sky.moonPos.normalize());
                     
                     const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
 
-                    const shadow = mix(moonDot, sunDot, this.sky.dayFactor).remap(-1, 1, 0.25, 0.75).toVar("shadow");
+                    const shadow = createSunShadowNode(normalGeometry, this.sky).toVar("shadow");
                     const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
@@ -75,9 +70,18 @@ export class WorldRenderer {
                 transparent: true
             });
         }
+        world.setRenderer(this);
+
+        this.chunkMesher = new ChunkMesher(world);
+        this.sky = new Sky(assets);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
+        this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
 
         this.scene.add(this.targetedBlock.mesh, this.blockBreakParticles.mesh);
-        world.setRenderer(this);
+    }
+
+    public setPaused(paused: boolean) {
+        this.paused = paused;
     }
 
     public create() {
@@ -115,11 +119,15 @@ export class WorldRenderer {
         }
         this.priorityDirtyChunks.clear();
 
+        if(this.paused) return;
+        
         this.blockBreakParticles.tick(time);
         this.sky.updateCamera(this.camera);
 
         this.sky.time.value = this.world.time;
         this.sky.update();
+        
+        this.entityRenderer.render(time);
     }
 
     public removeChunk(chunk: Chunk) {

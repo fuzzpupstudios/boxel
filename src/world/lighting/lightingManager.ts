@@ -1,4 +1,4 @@
-import { Box3, Vector3 } from "three";
+import { Box3, Color, Vector3 } from "three";
 import type { World } from "../world";
 import { lightChannelRegistry } from "./lightChannelRegistry";
 import type { LightingEngine } from "./lightingEngine";
@@ -30,6 +30,24 @@ export class LightingManager {
         if(index == null) throw new ReferenceError("Lighting channel " + id + " does not exist");
 
         return this.lightChannels[index]!;
+    }
+
+    public getColorAt(x: number, y: number, z: number, outColor: Color) {
+        let r = 0;
+        let g = 0;
+        let b = 0;
+
+        for(const channel of this.lightChannels) {
+            r += channel.color.value.r * channel.get(x, y, z) / 15;
+            g += channel.color.value.g * channel.get(x, y, z) / 15;
+            b += channel.color.value.b * channel.get(x, y, z) / 15;
+        }
+
+        return outColor.set(
+            r,
+            g,
+            b
+        );
     }
 
     public updateChunk(x: number, y: number, z: number, markDirty = true) {

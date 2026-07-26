@@ -129,6 +129,10 @@ export class PlayerController {
                 }
             }
         }
+        
+        if(game.input.wasPressed(ControlBinding.DROP_ITEM)) {
+            this.player.dropItem(this.player.inventory.slots[this.player.selectedSlot]!.stack, 1);
+        }
 
         if(game.input.wasPressed(ControlBinding.SLOT_0)) {
             this.player.selectedSlot = 0;
@@ -261,7 +265,7 @@ export class PlayerController {
             this.destroyBlockCooldown -= time.deltaTime;
 
             if(this.destroyBlockCooldown <= 0) {
-                this.player.destroy();
+                this.player.destroyed();
                 this.destroyBlockCooldown = 0.2;
             }
         } else {
@@ -287,9 +291,9 @@ export class PlayerController {
 
         const cursor = new EventCursor(
             this.player.world,
-            Math.floor(this.player.aabb.position.x),
-            Math.floor(this.player.aabb.position.y),
-            Math.floor(this.player.aabb.position.z)
+            Math.floor(this.player.position.x),
+            Math.floor(this.player.position.y),
+            Math.floor(this.player.position.z)
         );
         cursor.entity = this.player;
 

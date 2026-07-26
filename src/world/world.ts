@@ -1,8 +1,8 @@
 import { Vector3 } from "three";
 import { blockStateRegistry } from "../block/blockRegistry";
 import type { BlockEntity } from "../block/entity/blockEntity";
-import { type Tickable } from "../entity/entity";
-import type { Player } from "../entity/player";
+import { Entity, type Tickable } from "../entity/entity";
+import { type SerializedPlayerEntity } from "../entity/player";
 import type { PersistentWorld } from "../persistence/persistentWorld";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
@@ -14,6 +14,7 @@ import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 export class Chunk {
     public readonly key: number;
     public readonly blockEntities = new Set<BlockEntity>;
+    public readonly entities = new Set<Entity>;
     public readonly lightingChunks = new Map<string, LightingChunk>;
     private readonly blockEntityGrid = new Array<BlockEntity>(16 ** 3);
     public world?: World;
@@ -97,6 +98,19 @@ export class World {
         this.renderer = renderer;
     }
 
+    public addEntity(entity: Entity) {
+        entity.setWorld(this);
+        this.tickables.add(entity);
+        this.renderer?.entityRenderer.addEntity(entity);
+        entity.updateChunk();
+    }
+
+    public removeEntity(entity: Entity) {
+        this.tickables.delete(entity);
+        this.renderer?.entityRenderer.removeEntity(entity);
+        entity.destroy();
+    }
+
     public async loadWorld() {
         if(this.persistentWorld == null) {
             throw new ReferenceError("No PersistentWorld container present");
@@ -138,12 +152,12 @@ export class World {
         return this.persistentWorld.loadPlayerSlot(id);
     }
 
-    public async savePlayerSlot(id: string, player: Player) {
+    public async savePlayerSlot(player: SerializedPlayerEntity) {
         if(this.persistentWorld == null) {
             throw new ReferenceError("No PersistentWorld container present");
         }
 
-        await this.persistentWorld.savePlayerSlot(id, player);
+        await this.persistentWorld.savePlayerSlot(player);
     }
 
     public hideChunk(chunk: Chunk) {
@@ -260,6 +274,9 @@ export class World {
                 if(blockEntity.type.tickable) {
                     this.tickables.add(blockEntity);
                 }
+            }
+            for(const entity of chunk.entities) {
+                this.addEntity(entity);
             }
 
             if(chunk.x > maxX) maxX = chunk.x;
@@ -453,6 +470,10 @@ export class World {
 
         for(const tickable of this.tickables) {
             tickable.tick(time);
+            
+            if(tickable instanceof Entity) {
+                if(tickable.chunk != null) this.chunksToSave.add(tickable.chunk);
+            }
         }
     }
 

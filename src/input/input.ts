@@ -17,6 +17,7 @@ export enum ControlBinding {
     CHANGE_PERSPECTIVE,
 
     NEXT_ITEM, PREVIOUS_ITEM,
+    DROP_ITEM,
 
     OPEN_INVENTORY,
     CLOSE_MODAL,
@@ -84,6 +85,7 @@ export class Input {
 
         [ControlBinding.NEXT_ITEM]: "BracketRight",
         [ControlBinding.PREVIOUS_ITEM]: "BracketLeft",
+        [ControlBinding.DROP_ITEM]: "KeyQ",
 
         [ControlBinding.OPEN_INVENTORY]: "KeyE",
         [ControlBinding.CLOSE_MODAL]: "KeyE",
@@ -117,6 +119,7 @@ export class Input {
 
         [ControlBinding.NEXT_ITEM]: ControllerButton.RIGHT_BUMPER,
         [ControlBinding.PREVIOUS_ITEM]: ControllerButton.LEFT_BUMPER,
+        [ControlBinding.DROP_ITEM]: ControllerButton.B,
 
         [ControlBinding.OPEN_INVENTORY]: ControllerButton.X,
         [ControlBinding.CLOSE_MODAL]: ControllerButton.B,

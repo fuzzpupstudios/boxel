@@ -3,6 +3,7 @@ import { MathUtils, PerspectiveCamera } from "three";
 import type { Node } from "three/webgpu";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
+import { ItemHologramProvider } from "../../entity/itemHologram";
 import { Player } from "../../entity/player";
 import { EventCursor } from "../../events/eventSheet";
 import { GuiButton } from "../../gui/element/button";
@@ -26,7 +27,7 @@ import { ItemStack } from "../../item/itemStack";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Settings } from "../../settings";
-import type { Time } from "../../time";
+import { Time } from "../../time";
 import { ChunkLoader } from "../../world/chunkLoader";
 import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
 import { World } from "../../world/world";
@@ -121,6 +122,7 @@ export class PlayingGameStage extends GameStage {
     private paused: boolean = false;
     private worldLoading: boolean = true;
     private autosaveCooldown: number = 0;
+    private blockTickInterval: number = 0;
 
     private longTouched = false;
     private unlockTime = 0;
@@ -140,7 +142,8 @@ export class PlayingGameStage extends GameStage {
 
     private readonly pointerStack = ItemStack.empty();
 
-    private readonly hologramProvider: TileHologramProvider;
+    private readonly tileHologramProvider: TileHologramProvider;
+    private readonly itemHologramProvider: ItemHologramProvider;
     private readonly itemSpriteProvider: GuiItemSpriteProvider;
     private readonly mobileController: MobileController | null = null;
     private readonly dPadLeft: GuiDPadLeft | null = null;
@@ -156,9 +159,11 @@ export class PlayingGameStage extends GameStage {
         this.chunkLoader = new ChunkLoader(this.world);
         this.playerController = new PlayerController(game);
 
-        this.hologramProvider = new TileHologramProvider(game.textureAtlases!);
+        this.tileHologramProvider = new TileHologramProvider(game.textureAtlases!);
         this.itemSpriteProvider = new GuiItemSpriteProvider(game.textureAtlases!);
-        this.guiManager = new GuiManager(this.hologramProvider, this.itemSpriteProvider);
+        this.itemHologramProvider = new ItemHologramProvider(game.textureAtlases!);
+
+        this.guiManager = new GuiManager(this.tileHologramProvider, this.itemSpriteProvider);
         this.guiManager.onUpdate.connect(() => {
             this.updateInputLocks();
         });
@@ -166,7 +171,7 @@ export class PlayingGameStage extends GameStage {
 
         this.holdingBlockPreview = new GuiItemStack(
             ItemStack.empty(),
-            this.hologramProvider,
+            this.tileHologramProvider,
             this.itemSpriteProvider
         );
         this.holdingBlockPreview.scale.set(3);
@@ -182,7 +187,7 @@ export class PlayingGameStage extends GameStage {
         this.gui.addChild(this.guiContainer);
         this.guiContainer.interactive = true;
 
-        this.pointerGuiStack = new GuiItemStack(this.pointerStack, this.hologramProvider, this.itemSpriteProvider);
+        this.pointerGuiStack = new GuiItemStack(this.pointerStack, this.tileHologramProvider, this.itemSpriteProvider);
         this.gui.addChild(this.pointerGuiStack);
         this.pointerGuiStack.interactive = false;
         this.pointerGuiStack.zIndex = 10;
@@ -215,7 +220,7 @@ export class PlayingGameStage extends GameStage {
             const y = (i / 5) | 0;
 
             const stack = ItemStack.of(itemId, 1);
-            const button = new GuiItemStack(stack, this.hologramProvider, this.itemSpriteProvider);
+            const button = new GuiItemStack(stack, this.tileHologramProvider, this.itemSpriteProvider);
 
             button.interactive = true;
             button.on("pointerdown", () => {
@@ -314,12 +319,7 @@ export class PlayingGameStage extends GameStage {
         this.localPlayer = new Player(this.world);
         this.playerController.setPlayer(this.localPlayer);
 
-        this.localPlayer.aabb.position.set(...playerSlot.position);
-        this.localPlayer.velocity.set(...playerSlot.velocity);
-        [ this.localPlayer.yaw, this.localPlayer.pitch ] = playerSlot.rotation;
-        if(playerSlot.inventory) this.localPlayer.inventory.deserialize(playerSlot.inventory);
-        this.localPlayer.selectedSlot = playerSlot.selectedSlot;
-
+        this.localPlayer.deserialize(playerSlot);
 
         const inventories = new Map([
             ["player", this.localPlayer.inventory]
@@ -332,12 +332,20 @@ export class PlayingGameStage extends GameStage {
             hotbar.addChild(this.hotbarSelection);
         }
 
-        this.world.addTickable(this.localPlayer);
-
         this.worldLoading = false;
         this.setPaused(false);
 
         this.worldRenderer.create();
+
+        let lastTickMs = performance.now();
+        this.blockTickInterval = setInterval(() => {
+            const currentTickMs = performance.now();
+            const time = Time.fromMsDifference(lastTickMs, currentTickMs, 1000);
+            lastTickMs = currentTickMs;
+            
+            if(this.paused) return;
+            this.tickFixed(time);
+        }, 1000 / 20);
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
@@ -371,6 +379,8 @@ export class PlayingGameStage extends GameStage {
 
     public setPaused(paused: boolean) {
         this.paused = paused;
+            
+        this.worldRenderer.setPaused(paused);
 
         if(paused) {
             this.pausedContainer.visible = true;
@@ -410,6 +420,12 @@ export class PlayingGameStage extends GameStage {
         if(this.dPadRight != null) {
             this.dPadRight.scale.set(settings.dPadScale);
         }
+    }
+
+    public tickFixed(time: Time) {
+        this.world.tick(time);
+
+        this.localPlayer?.pickupNearbyItems(time, 1, 12, 0.25);
     }
 
     public tick(time: Time) {
@@ -478,6 +494,8 @@ export class PlayingGameStage extends GameStage {
             if(this.guiManager.getOpenModalCount() == 0) {
                 this.playerController.update(time);
             }
+
+            this.localPlayer.tick(time);
             this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock)
                     
             const hotbar = this.guiManager.getOpenGui("base:hotbar");
@@ -491,8 +509,7 @@ export class PlayingGameStage extends GameStage {
             this.holdingBlockPreview.setItemStack(
                 this.localPlayer.inventory.slots[this.localPlayer.selectedSlot]!.stack);
 
-            this.world.tick(time);
-            this.chunkLoader.moveOrigin(this.localPlayer.aabb.position);
+            this.chunkLoader.moveOrigin(this.localPlayer.position);
             this.chunkLoader.update(time);
 
             this.updateCamera(time);
@@ -650,9 +667,9 @@ export class PlayingGameStage extends GameStage {
             1 - 0.5 ** (time.deltaTime * 20)
         );
         this.camera.position.set(
-            this.localPlayer.aabb.position.x,
-            this.localPlayer.aabb.position.y + this.localPlayer.eyeHeight,
-            this.localPlayer.aabb.position.z
+            this.localPlayer.position.x,
+            this.localPlayer.position.y + this.localPlayer.eyeHeight,
+            this.localPlayer.position.z
         );
         this.camera.rotation.set(this.localPlayer.pitch, -this.localPlayer.yaw, 0, "YZX");
     }
@@ -676,9 +693,9 @@ export class PlayingGameStage extends GameStage {
             );
             if(this.localPlayer != null) {
                 this.debugMenuLines.player.position.setData(
-                    this.localPlayer.aabb.position.x,
-                    this.localPlayer.aabb.position.y,
-                    this.localPlayer.aabb.position.z,
+                    this.localPlayer.position.x,
+                    this.localPlayer.position.y,
+                    this.localPlayer.position.z,
                 );
                 this.debugMenuLines.player.rotation.setData(
                     this.localPlayer.pitch,
@@ -686,30 +703,30 @@ export class PlayingGameStage extends GameStage {
                 );
                 // this.debugMenuLines.player.light.setData(
                 //     this.world.lighting.red.get(
-                //         Math.floor(this.localPlayer.aabb.position.x),
-                //         Math.floor(this.localPlayer.aabb.position.y),
-                //         Math.floor(this.localPlayer.aabb.position.z)
+                //         Math.floor(this.localPlayer.position.x),
+                //         Math.floor(this.localPlayer.position.y),
+                //         Math.floor(this.localPlayer.position.z)
                 //     ),
                 //     this.world.lighting.green.get(
-                //         Math.floor(this.localPlayer.aabb.position.x),
-                //         Math.floor(this.localPlayer.aabb.position.y),
-                //         Math.floor(this.localPlayer.aabb.position.z)
+                //         Math.floor(this.localPlayer.position.x),
+                //         Math.floor(this.localPlayer.position.y),
+                //         Math.floor(this.localPlayer.position.z)
                 //     ),
                 //     this.world.lighting.blue.get(
-                //         Math.floor(this.localPlayer.aabb.position.x),
-                //         Math.floor(this.localPlayer.aabb.position.y),
-                //         Math.floor(this.localPlayer.aabb.position.z)
+                //         Math.floor(this.localPlayer.position.x),
+                //         Math.floor(this.localPlayer.position.y),
+                //         Math.floor(this.localPlayer.position.z)
                 //     ),
                 //     this.world.lighting.sun.get(
-                //         Math.floor(this.localPlayer.aabb.position.x),
-                //         Math.floor(this.localPlayer.aabb.position.y),
-                //         Math.floor(this.localPlayer.aabb.position.z)
+                //         Math.floor(this.localPlayer.position.x),
+                //         Math.floor(this.localPlayer.position.y),
+                //         Math.floor(this.localPlayer.position.z)
                 //     )
                 // );
                 this.debugMenuLines.player.chunk.setData(
-                    Math.floor(this.localPlayer.aabb.position.x) >> 4,
-                    Math.floor(this.localPlayer.aabb.position.y) >> 4,
-                    Math.floor(this.localPlayer.aabb.position.z) >> 4
+                    Math.floor(this.localPlayer.position.x) >> 4,
+                    Math.floor(this.localPlayer.position.y) >> 4,
+                    Math.floor(this.localPlayer.position.z) >> 4
                 );
                 if(this.localPlayer.targetedBlock.hit) {
                     this.debugMenuLines.lookingBlock.position.show();
@@ -780,7 +797,7 @@ export class PlayingGameStage extends GameStage {
         await this.world.saveWorld();
         
         if(this.localPlayer != null) {
-            await this.world.savePlayerSlot("local", this.localPlayer);
+            await this.world.savePlayerSlot(this.localPlayer.serialize());
         }
     }
 
@@ -794,5 +811,6 @@ export class PlayingGameStage extends GameStage {
         if(!this.game.isDesktop) {
             this.game.input.detachMobileController();
         }
+        clearInterval(this.blockTickInterval);
     }
 }
