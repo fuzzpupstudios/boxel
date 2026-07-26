@@ -425,7 +425,7 @@ export class PlayingGameStage extends GameStage {
     public tickFixed(time: Time) {
         this.world.tick(time);
 
-        this.localPlayer?.pickupNearbyItems(time, 1, 12, 0.25, -0.5, 2.5);
+        this.localPlayer?.pickupNearbyItems(time, 1.25, 12, 0.25, -0.5, 2.5);
     }
 
     public tick(time: Time) {
