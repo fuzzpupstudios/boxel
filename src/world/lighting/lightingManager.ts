@@ -40,15 +40,15 @@ export class LightingManager {
         y += 0.5;
 
         for(const channel of this.lightChannels) {
-            r += channel.color.value.r * channel.get(x, y, z) / 15;
-            g += channel.color.value.g * channel.get(x, y, z) / 15;
-            b += channel.color.value.b * channel.get(x, y, z) / 15;
+            r += channel.color.value.r * (channel.get(x, y, z) / 15) ** 3;
+            g += channel.color.value.g * (channel.get(x, y, z) / 15) ** 3;
+            b += channel.color.value.b * (channel.get(x, y, z) / 15) ** 3;
         }
 
         return outColor.set(
-            r,
-            g,
-            b
+            Math.min(1, r),
+            Math.min(1, g),
+            Math.min(1, b)
         );
     }
 

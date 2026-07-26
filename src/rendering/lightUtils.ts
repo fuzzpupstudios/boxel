@@ -5,20 +5,20 @@ import type { Sky } from "./sky";
 
 export function createLightColorNode(lightingManager: LightingManager, celestialStrength: Node<"float">, ao: Node<"float">, channels?: Node<"float">[]) {
     let lightNode: Node<"vec3"> = vec3(0, 0, 0);
-    let lightNodeUntonemapped: Node<"vec3"> = vec3(0, 0, 0);
 
     for(const [ lightIndex, lightingChannel ] of lightingManager.lightChannels.entries()) {
-        const channelAttribute: Node<"float"> = channels?.[lightIndex] ?? attribute("light" + lightIndex, "float" as const);
+        let channelAttribute: Node<"float"> = channels?.[lightIndex] ?? attribute("light" + lightIndex, "float" as const);
+        channelAttribute = channelAttribute.pow3().toVar();
 
-        if(lightingChannel.type.celestial) {
-            lightNodeUntonemapped = lightNodeUntonemapped
-                .add(lightingChannel.color.mul(channelAttribute).mul(celestialStrength));
-        } else {
-            lightNode = lightNode.add(lightingChannel.color.mul(channelAttribute));
-        }
+        lightNode = lightNode.add(
+            lightingChannel.color.mul(channelAttribute)
+            .mul(lightingChannel.type.celestial ? celestialStrength : 1)
+        );
     }
 
-    return mix(lightNode.pow3().add(lightNodeUntonemapped).min(vec3(1, 1, 1)), vec3(0, 0, 0), ao);
+    lightNode = lightNode.toVar();
+
+    return mix(lightNode.min(vec3(1, 1, 1)), vec3(0, 0, 0), ao);
 }
 
 export function createSunShadowNode(normal: Node<"vec3">, sky: Sky) {

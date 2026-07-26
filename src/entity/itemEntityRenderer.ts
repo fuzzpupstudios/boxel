@@ -16,7 +16,7 @@ export class ItemEntityRenderer {
         public readonly worldRenderer: WorldRenderer,
         public readonly hologramProvider: ItemHologramProvider
     ) {
-        this.batchedMesh = new BatchedMesh(1024, 32768, 65536, this.createMaterial());
+        this.batchedMesh = new BatchedMesh(4096, 32768, 65536, this.createMaterial());
         this.batchedMesh.frustumCulled = false;
         
         for(const [ item, geometry ] of hologramProvider.entries()) {
