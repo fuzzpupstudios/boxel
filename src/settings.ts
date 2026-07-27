@@ -13,4 +13,7 @@ export const Settings = z.object({
     controllerSensitivity: z.number().default(1),
     controllerGuiSensitivity: z.number().default(1),
     controllerDeadzone: z.number().default(0.1),
+    maxChunkUpdates: z.int().default(16),
+    maxColumnLoads: z.int().default(4),
+    maxColumnGenerations: z.int().default(1),
 });

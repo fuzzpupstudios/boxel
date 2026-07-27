@@ -7,6 +7,7 @@ import type { Time } from "../../time";
 import { GameStage } from "../gameStage";
 import { ControlSettingsScreenStage } from "./controlSettingsGameStage";
 import { GuiSettingsScreenStage } from "./guiSettingsGameStage";
+import { PerformanceSettingsScreenStage } from "./performanceSettingsGameStage";
 import { VideoSettingsScreenStage } from "./videoSettingsGameStage";
 
 export class SettingsScreenStage extends GameStage {
@@ -15,6 +16,7 @@ export class SettingsScreenStage extends GameStage {
     private readonly videoButton: GuiButton;
     private readonly controlsButton: GuiButton;
     private readonly guiSettingsButton: GuiButton;
+    private readonly performanceButton: GuiButton;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -56,12 +58,19 @@ export class SettingsScreenStage extends GameStage {
             this.game.changeStage(new GuiSettingsScreenStage(game));
         });
 
+        this.performanceButton = new GuiButton("Performance", 160, 24);
+        this.performanceButton.on("pointerdown", () => {
+            this.game.audioManager.playMenuClick();
+            this.game.changeStage(new PerformanceSettingsScreenStage(game));
+        });
+
 
         this.gui.addChild(
             this.background, this.titleText,
             this.videoButton,
             this.controlsButton,
             this.guiSettingsButton,
+            this.performanceButton,
             this.backButton
         );
     }
@@ -74,9 +83,10 @@ export class SettingsScreenStage extends GameStage {
         this.titleText.position.set(width / 2, 20);
         this.backButton.position.set(width / 2, height - 20);
 
-        this.videoButton.position.set(width / 2, height / 2 - 30);
-        this.controlsButton.position.set(width / 2, height / 2);
-        this.guiSettingsButton.position.set(width / 2, height / 2 + 30);
+        this.videoButton.position.set(width / 2, height / 2 - 45);
+        this.controlsButton.position.set(width / 2, height / 2 - 15);
+        this.guiSettingsButton.position.set(width / 2, height / 2 + 15);
+        this.performanceButton.position.set(width / 2, height / 2 + 45);
 
         this.background.setSize(width, height);
     }

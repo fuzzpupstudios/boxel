@@ -15,7 +15,7 @@ import { Sky } from "./sky";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
-    public maxChunkUpdates = 32;
+    public maxChunkUpdates = 16;
     public readonly fogDistance = uniform(64);
     public readonly scene = new Scene;
     public readonly sky: Sky;

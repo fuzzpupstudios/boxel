@@ -24,6 +24,31 @@ export abstract class ToggleButtonSetting extends Setting<boolean> {
     }
 }
 
+export abstract class CycleButtonSetting<DataType> extends Setting<DataType> {
+    public readonly element: GuiButton;
+
+    public constructor(title: string, width: number, height: number, values: DataType[]) {
+        super();
+
+        const makeText = () => title + ": " + this.getValue();
+        this.element = new GuiButton(makeText(), width, height);
+
+        this.element.on("pointerdown", (event) => {
+            let index = values.indexOf(this.getValue());
+            if(event.button == 2) {
+                index--;
+            } else {
+                index++;
+            }
+
+            index = ((index % values.length) + values.length) % values.length;
+
+            this.setValue(values[index]!);
+            this.element.text = makeText();
+        })
+    }
+}
+
 export abstract class SliderSetting extends Setting<number> {
     public readonly element: GuiSlider;
 

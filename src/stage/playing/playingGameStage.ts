@@ -412,7 +412,11 @@ export class PlayingGameStage extends GameStage {
 
     public updateSettings(settings: Settings) {
         this.chunkLoader.setRadius(settings.renderDistance);
+        this.chunkLoader.maxColumnLoads = settings.maxColumnLoads;
+        this.chunkLoader.maxColumnGenerations = settings.maxColumnGenerations;
+        
         this.worldRenderer.fogDistance.value = Math.max(8, settings.renderDistance - 32);
+        this.worldRenderer.maxChunkUpdates = settings.maxChunkUpdates;
 
         if(this.dPadLeft != null) {
             this.dPadLeft.scale.set(settings.dPadScale);
