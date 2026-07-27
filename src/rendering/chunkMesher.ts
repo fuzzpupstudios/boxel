@@ -83,7 +83,7 @@ class TileCache {
 
         for(let i = 0; i < this.chunkMeshPalette.length; i++) {
             const blockStateId = chunkTiles.palette[i]!;
-            this.chunkMeshPalette[i] = this.tileMeshes.get(blockStateId) || this.defaultMesh;
+            this.chunkMeshPalette[i] = this.tileMeshes.get(blockStateId) ?? this.defaultMesh;
         }
         const lightStrength = 1 / 15;
 
