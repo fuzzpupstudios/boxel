@@ -75,15 +75,30 @@ export class VoxelChunk {
     public readonly tiles = new Uint8Array(4096);
     public readonly palette = new Array<string>;
     public readonly paletteMap = new Map<string, number>;
+    public entireSingleTile: boolean = true;
     
     public getPaletteValue(item: string): number {
         const paletteItem = this.paletteMap.get(item);
         if(paletteItem != null) return paletteItem;
 
+        this.entireSingleTile = false;
+
         this.paletteMap.set(item, this.palette.length);
         this.palette.push(item);
 
         return this.palette.length - 1;
+    }
+
+    public update() {
+        if(this.entireSingleTile) {
+            const first = this.tiles[0];
+            for(let i = 0; i < this.tiles.length; i++) {
+                if(this.tiles[i] != first) {
+                    this.entireSingleTile = false;
+                    break;
+                }
+            }
+        }
     }
 
     public getBlockStateId(x: number, y: number, z: number): string {

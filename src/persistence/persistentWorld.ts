@@ -238,6 +238,7 @@ export class PersistentWorld {
             voxelChunk.palette[i] = serialized.palette[i]!;
             voxelChunk.paletteMap.set(serialized.palette[i]!, i);
         }
+        voxelChunk.update();
         const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk);
 
         for(const [ lightChannelId, lightingBuffer ] of Object.entries(serialized.lighting)) {

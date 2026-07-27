@@ -1,6 +1,7 @@
 import { BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 import { LightingChunk } from "../world/lighting/lightingGrid";
+import type { VoxelChunk } from "../world/voxelGrid";
 import type { World } from "../world/world";
 
 
@@ -61,14 +62,15 @@ class TileCache {
     public update(
         chunkX: number,
         chunkY: number,
-        chunkZ: number
+        chunkZ: number,
+        chunkTiles: VoxelChunk | null
     ) {
         const chunkOriginX = chunkX << 4;
         const chunkOriginY = chunkY << 4;
         const chunkOriginZ = chunkZ << 4;
 
         const world = this.world;
-        const chunkTiles = this.world.tiles.getChunk(chunkX, chunkY, chunkZ);
+
         if(chunkTiles == null) return;
 
         const lightChannelCount = this.lightChannelCount;
@@ -144,6 +146,7 @@ class TileCache {
 
 export class ChunkMesher {
     private readonly tileMeshes: TileMesh[];
+    private readonly skipRenderMeshes = new Set<string>;
     private readonly aoWeights: Float32Array;
     private readonly tileMeshIndices: Map<string, number>;
     private readonly tileCache: TileCache;
@@ -173,6 +176,10 @@ export class ChunkMesher {
 
                 this.tileMeshes[i] = compiledModel;
                 this.aoWeights[i] = compiledModel.aoCastWeight;
+
+                if(compiledModel.skipRender) {
+                    this.skipRenderMeshes.add(blockStateId);
+                }
             } catch(e) {
                 throw new Error("Failed to compile block model " + blockState, { cause: e });
             }
@@ -211,11 +218,18 @@ export class ChunkMesher {
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {
+        const chunkTiles = this.world.tiles.getChunk(chunkX, chunkY, chunkZ) || null;
+        if(chunkTiles == null) return null;
+        
+        if(chunkTiles.entireSingleTile && this.skipRenderMeshes.has(chunkTiles.palette[0]!)) {
+            return null;
+        }
+
         // Optimize: use an 18x18x18 "halo" tile buffer
         // to cache tiles, so VoxelGrid#tileAt() isn't
         // called so frequently
         const tiles = this.tileCache;
-        tiles.update(chunkX, chunkY, chunkZ);
+        tiles.update(chunkX, chunkY, chunkZ, chunkTiles);
 
         const floatAttributes = this.geometryFloatAttributes;
         const faceType = this.geometryFaceType;

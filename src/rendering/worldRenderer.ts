@@ -1,7 +1,7 @@
 import { MathUtils, Mesh, Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
 import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
-import { MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
+import { BoxGeometry, BufferGeometry, EdgesGeometry, LineBasicNodeMaterial, LineSegments, Material, MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
 import type { TextureAtlases } from "../boxel";
 import type { Assets } from "../data/assets";
 import { EntityRenderer } from "../entity/entityRenderer";
@@ -28,7 +28,11 @@ export class WorldRenderer {
     public readonly renderedChunkKeyList = new Set<number>;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
+    public readonly newChunks = new Map<LineSegments, number>;
+    public readonly newChunkMeshGeometry: BufferGeometry;
+    public readonly newChunkMeshMaterial: Material;
     public paused: boolean = true;
+    public debug: boolean = false;
 
     public constructor(
         public readonly world: World,
@@ -78,10 +82,22 @@ export class WorldRenderer {
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
 
         this.scene.add(this.targetedBlock.mesh, this.blockBreakParticles.mesh);
+
+        this.newChunkMeshGeometry = new EdgesGeometry(new BoxGeometry(16, 16, 16));
+
+        this.newChunkMeshMaterial = new LineBasicNodeMaterial({
+            color: 0xff0000,
+            linewidth: 1,
+            transparent: true,
+            opacity: 1,
+        });
     }
 
     public setPaused(paused: boolean) {
         this.paused = paused;
+    }
+    public setDebug(debug: boolean) {
+        this.debug = debug;
     }
 
     public create() {
@@ -102,25 +118,55 @@ export class WorldRenderer {
         }
     }
 
+    private onChunkUpdate(chunk: Chunk) {
+        if(!this.debug) return;
+
+        const mesh = new LineSegments(this.newChunkMeshGeometry, this.newChunkMeshMaterial);
+        mesh.position.set(chunk.x * 16 + 8, chunk.y * 16 + 8, chunk.z * 16 + 8);
+        this.scene.add(mesh);
+        this.newChunks.set(mesh, 8);
+    }
+
     public render(time: Time) {
+        for(const [ mesh, framesVisible ] of this.newChunks.entries()) {
+            if(framesVisible == 0) {
+                this.scene.remove(mesh);
+                this.newChunks.delete(mesh);
+            } else {
+                mesh.scale.set(
+                    framesVisible / 8,
+                    framesVisible / 8,
+                    framesVisible / 8,
+                )
+                this.newChunks.set(mesh, framesVisible - 1);
+            }
+        }
+
         const todo = MathUtils.clamp(this.dirtyChunks.size / 3, this.minChunkUpdates, this.maxChunkUpdates);
         if(this.dirtyChunks.size > 0) {
             let i = 0;
             for(const chunk of this.dirtyChunks) {
                 if(i++ > todo) break;
 
-                this.renderChunk(chunk);
+                const modified = this.renderChunk(chunk);
                 this.dirtyChunks.delete(chunk);
+
+                if(modified) {
+                    this.onChunkUpdate(chunk);
+                } else {
+                    i--;
+                }
             }
         }
 
-        for(const priorityDirtyChunk of this.priorityDirtyChunks) {
-            this.renderChunk(priorityDirtyChunk);
+        for(const chunk of this.priorityDirtyChunks) {
+            this.renderChunk(chunk);
+            this.onChunkUpdate(chunk);
         }
         this.priorityDirtyChunks.clear();
 
         if(this.paused) return;
-        
+
         this.blockBreakParticles.tick(time);
         this.sky.updateCamera(this.camera);
 
@@ -158,16 +204,21 @@ export class WorldRenderer {
             }
             if(surrounding != 26) return;
         }
-
+        
+        let mesh: Mesh | null | undefined;
+        let geometrySize = 0;
+        
         const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
-        const geometrySize = geometry.getAttribute("position").array.byteLength;
 
-        let mesh = this.renderedChunks.get(chunk);
+        if(geometry != null) {
+            geometrySize = geometry.getAttribute("position").array.byteLength;
+            mesh = this.renderedChunks.get(chunk);
+        }
 
         if(mesh == null) {
             this.renderedChunkKeyList.add(chunk.key);
             
-            if(geometrySize > 0) {
+            if(geometrySize > 0 && geometry != null) {
                 mesh = new Mesh(geometry, this.terrainMaterial);
                 mesh.matrixAutoUpdate = false;
                 
@@ -182,7 +233,7 @@ export class WorldRenderer {
         } else {
             mesh.geometry.dispose();
 
-            if(geometrySize > 0) {
+            if(geometrySize > 0 && geometry != null) {
                 mesh.geometry = geometry;
                 if(mesh.parent == null) {
                     this.scene.add(mesh);
@@ -190,6 +241,12 @@ export class WorldRenderer {
             } else {
                 mesh.removeFromParent();
             }
+        }
+
+        if(geometry == null) {
+            return false;
+        } else {
+            return true;
         }
     }
 }

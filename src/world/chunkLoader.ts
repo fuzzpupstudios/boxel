@@ -17,6 +17,7 @@ export class ChunkLoader {
     public readonly columnGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     public readonly columnLoadQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     private updateChunksCooldown: number = 0;
+    private readonly frameTasks = new Array<Function>;
 
     constructor(
         private readonly world: World
@@ -152,11 +153,13 @@ export class ChunkLoader {
 
     public update(time: Time) {
         if(this.needsUpdate) {
-            this.updateColumnsToLoad();
-            this.updateChunksToHide();
-            this.updateChunksToLoad();
+            this.frameTasks.push(() => this.updateColumnsToLoad());
+            this.frameTasks.push(() => this.updateChunksToHide());
+            this.frameTasks.push(() => this.updateChunksToLoad());
             this.needsUpdate = false;
         }
+
+        this.frameTasks.shift()?.();
 
         this.updateChunksCooldown -= time.deltaTime;
 

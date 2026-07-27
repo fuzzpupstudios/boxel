@@ -681,6 +681,7 @@ export class PlayingGameStage extends GameStage {
     private updateDebugMenu(time: Time) {
         if(this.game.input.wasPressed(ControlBinding.TOGGLE_DEBUG)) {
             this.debugMenu.view.visible = !this.debugMenu.view.visible;
+            this.worldRenderer.setDebug(this.debugMenu.view.visible);
         }
 
         if(this.debugMenu.view.visible) {
