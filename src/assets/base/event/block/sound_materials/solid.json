@@ -25,6 +25,40 @@
                     }
                 }
             }
+        ],
+        "base:step": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": {
+                            "name": "base:block/place/solid",
+                            "pitch": [ 1.3, 1.35 ],
+                            "volume": 0.5
+                        }
+                    }
+                }
+            }
+        ],
+        "base:fall": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": {
+                            "name": "base:block/place/solid",
+                            "pitch": [ 1.2, 1.25 ],
+                            "volume": 1
+                        }
+                    }
+                }
+            }
         ]
     }
 }

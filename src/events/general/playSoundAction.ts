@@ -30,6 +30,7 @@ export const PlaySoundActionParameters = z.union([
         xOffset: z.number().default(0),
         yOffset: z.number().default(0),
         zOffset: z.number().default(0),
+        useEntityPosition: z.boolean().default(false),
         sound: z.union([
             z.string(),
             SoundEntry3d,
@@ -171,12 +172,20 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
         }
 
         if(this.args.spatial) {
-            (<PlaySound3d>sound).play3d(
-                cursor.clientPlatform.audioManager,
-                cursor.x + this.args.xOffset + 0.5,
-                cursor.y + this.args.yOffset + 0.5,
-                cursor.z + this.args.zOffset + 0.5
-            )
+            let x = this.args.xOffset;
+            let y = this.args.yOffset;
+            let z = this.args.zOffset;
+
+            if(this.args.useEntityPosition && cursor.entity != null) {
+                x += cursor.entity?.position.x,
+                y += cursor.entity?.position.y,
+                z += cursor.entity?.position.z
+            } else {
+                x += cursor.x + 0.5,
+                y += cursor.y + 0.5,
+                z += cursor.z + 0.5
+            }
+            (<PlaySound3d>sound).play3d(cursor.clientPlatform.audioManager, x, y, z);
         } else {
             sound.play2d(cursor.clientPlatform.audioManager);
         }
