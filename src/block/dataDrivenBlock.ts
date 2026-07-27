@@ -128,7 +128,10 @@ export class DataDrivenBlock extends Block {
         );
     }
 
-    private static applyDefaultProperties(defaultProperties: DataDrivenJson.BlockState, jsonState: DataDrivenJson.BlockState) {
+    private static applyDefaultProperties(
+        defaultProperties: NonNullable<DataDrivenJson.Block["defaultStateProperties"]>,
+        jsonState: DataDrivenJson.BlockState
+    ) {
         jsonState.attenuation ??= defaultProperties.attenuation!;
         jsonState.emission ??= defaultProperties.emission!;
         jsonState.canPlace ??= defaultProperties.canPlace!;

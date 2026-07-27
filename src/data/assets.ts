@@ -1,7 +1,21 @@
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type FileEntry } from "@zip.js/zip.js";
 import { JsonhReader } from "jsonh-ts";
 import { AudioContext as ThreeAudioContext } from "three";
-import type { DataDrivenJson } from "./dataDrivenJson";
+import z from "zod";
+import { DataDrivenJson } from "./dataDrivenJson";
+
+// Before processTemplates() runs, a templated file only has to provide `id` + `template`;
+// the rest of the shape is filled in once the referenced template is applied.
+const TemplateStub = z.object({
+    id: z.string(),
+    template: DataDrivenJson.TemplateApplicable.shape.template.unwrap(),
+});
+
+const TemplatableBlock = z.union([ DataDrivenJson.Block, TemplateStub ]);
+const TemplatableBlockStateModel = z.union([ DataDrivenJson.BlockStateModel, TemplateStub ]);
+const TemplatableEventSheet = z.union([ DataDrivenJson.EventSheet, TemplateStub ]);
+const TemplatableItem = z.union([ DataDrivenJson.Item, TemplateStub ]);
+const TemplatableGuiType = z.union([ DataDrivenJson.GuiType, TemplateStub ]);
 
 export class Assets {
     public readonly textureRegistry = new Map<string, ImageBitmap>;
@@ -42,39 +56,39 @@ export class Assets {
             /^assets\/[^\/]+\/block\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.Block>(data).value;
-                this.blockRegistry.set(json.id, json);
+                const json = TemplatableBlock.parse(JsonhReader.parseElementFromString(data).value);
+                this.blockRegistry.set(json.id, json as DataDrivenJson.Block & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
             /^assets\/[^\/]+\/block_model\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.BlockStateModel>(data).value;
-                this.blockModelRegistry.set(json.id!, json);
+                const json = TemplatableBlockStateModel.parse(JsonhReader.parseElementFromString(data).value);
+                this.blockModelRegistry.set(json.id!, json as DataDrivenJson.BlockStateModel & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
             /^assets\/[^\/]+\/event\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.EventSheet>(data).value;
-                this.eventSheetRegistry.set(json.id!, json);
+                const json = TemplatableEventSheet.parse(JsonhReader.parseElementFromString(data).value);
+                this.eventSheetRegistry.set(json.id!, json as DataDrivenJson.EventSheet & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
             /^assets\/[^\/]+\/item\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.Item>(data).value;
-                this.itemRegistry.set(json.id, json);
+                const json = TemplatableItem.parse(JsonhReader.parseElementFromString(data).value);
+                this.itemRegistry.set(json.id, json as DataDrivenJson.Item & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
             /^assets\/[^\/]+\/block_entity\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.BlockEntityType>(data).value;
+                const json = DataDrivenJson.BlockEntityType.parse(JsonhReader.parseElementFromString(data).value);
                 this.blockEntityTypeRegistry.set(json.id, json);
             }
         ],
@@ -82,24 +96,25 @@ export class Assets {
             /^assets\/[^\/]+\/ui\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.GuiType>(data).value;
-                this.guiTypeRegistry.set(json.id!, json);
+                const j = JsonhReader.parseElementFromString(data).value;
+                const json = TemplatableGuiType.parse(j);
+                this.guiTypeRegistry.set(json.id, json as DataDrivenJson.GuiType & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
             /^assets\/[^\/]+\/light\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.LightChannelType>(data).value;
-                this.lightChannelTypeRegistry.set(json.id!, json);
+                const json = DataDrivenJson.LightChannelType.parse(JsonhReader.parseElementFromString(data).value);
+                this.lightChannelTypeRegistry.set(json.id, json);
             }
         ],
         [
             /^assets\/[^\/]+\/json_template\/.*\.jsonh?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
-                const json = JsonhReader.parseElementFromString<DataDrivenJson.JsonTemplate>(data).value;
-                this.jsonTemplatesRegistry.set(json.id!, json);
+                const json = DataDrivenJson.JsonTemplate.parse(JsonhReader.parseElementFromString(data).value);
+                this.jsonTemplatesRegistry.set(json.id, json);
             }
         ]
     ]);
@@ -214,15 +229,15 @@ export class Assets {
     }
 
     public processTemplates() {
-        const registries: Map<string, DataDrivenJson.TemplateApplicable>[] = [
-            this.blockRegistry,
-            this.blockModelRegistry,
-            this.eventSheetRegistry,
-            this.guiTypeRegistry,
-            this.itemRegistry
+        const registries: [ Map<string, DataDrivenJson.TemplateApplicable>, z.ZodType<any> ][] = [
+            [ this.blockRegistry, TemplatableBlock ],
+            [ this.blockModelRegistry, TemplatableBlockStateModel ],
+            [ this.eventSheetRegistry, TemplatableEventSheet ],
+            [ this.guiTypeRegistry, TemplatableGuiType ],
+            [ this.itemRegistry, TemplatableItem ],
         ];
 
-        for(const registry of registries) {
+        for(const [ registry, schema ] of registries) {
             for(const [ key, value ] of registry) {
                 if(value.template == null) continue;
 
@@ -230,7 +245,7 @@ export class Assets {
                     const template = this.jsonTemplatesRegistry.get(value.template.id);
                     if(template == null) throw new ReferenceError(
                         "Cannot find template " + value.template.id);
-                    
+
                     const substitutions = new Map(Object.entries(value.template.arguments));
 
                     for(const parameterName of Object.keys(template.parameters)) {
@@ -238,8 +253,8 @@ export class Assets {
 
                         throw new Error("Parameter " + parameterName + " must be defined");
                     }
-        
-                    const applied = this.applyTemplate(template.json, substitutions);
+
+                    const applied = schema.parse(this.applyTemplate(template.json, substitutions));
                     registry.set(key, applied);
                 } catch(e) {
                     throw new Error("Error applying template " + value.template.id +

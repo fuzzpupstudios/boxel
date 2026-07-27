@@ -7,7 +7,7 @@ import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
 import { BlockModel } from "./model/blockModel";
 
-export function parseEvents(events: DataDrivenJson.EventSheet | string[] | string | undefined, assets: Assets) {
+export function parseEvents(events: DataDrivenJson.EventSheetList | undefined, assets: Assets) {
     if(events == null || (events instanceof Array && !events.length)) {
         return DataDrivenEventSheet.parseJson({}, assets);
     }
@@ -17,8 +17,14 @@ export function parseEvents(events: DataDrivenJson.EventSheet | string[] | strin
     }
     if(events instanceof Array) {
         let loadedEvents: EventSheet | undefined;
-        for(const eventSheetId of events) {
-            const resolvedEvents = assets.eventSheetRegistry.get(eventSheetId);
+        for(const eventSheet of events) {
+            let resolvedEvents: DataDrivenJson.EventSheet | undefined;
+
+            if(typeof eventSheet == "string") {
+                resolvedEvents = assets.eventSheetRegistry.get(eventSheet);
+            } else {
+                resolvedEvents = eventSheet;
+            }
             if(resolvedEvents == null) throw new ReferenceError("Cannot resolve event sheet parent " + events);
 
             loadedEvents = DataDrivenEventSheet.parseJson(resolvedEvents, assets, loadedEvents);

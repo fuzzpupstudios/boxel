@@ -20,7 +20,13 @@ export class DataDrivenEventSheet extends EventSheet {
             : (json.include == null ? [] : [ json.include ]);
         
         for(const include of includes) {
-            const includeJson = assets.eventSheetRegistry.get(include);
+            let includeJson: DataDrivenJson.EventSheet | undefined;
+
+            if(typeof include == "string") {
+                includeJson = assets.eventSheetRegistry.get(include);
+            } else {
+                includeJson = include;
+            }
             if(includeJson == null) throw new ReferenceError("Cannot find included sheet " + include);
 
             mergePrevious = this.parseJson(includeJson, assets, mergePrevious);
