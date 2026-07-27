@@ -421,7 +421,26 @@ export class PlayingGameStage extends GameStage {
     public tickFixed(time: Time) {
         this.world.tick(time);
 
-        this.localPlayer?.pickupNearbyItems(time, 1.25, 12, 0.25, -0.5, 2.5);
+        if(this.localPlayer != null) {
+            const player = this.localPlayer;
+
+            const pickedUp = player.pickupNearbyItems(time, 1.25, 12, 0.25, -0.5, 2.5);
+
+            for(let i = 0; i < pickedUp; i++) {
+                const j = Math.floor(Math.random() * 3);
+
+                setTimeout(() => {
+                    const sound = this.game.audioManager.playSound3d(
+                        "base:entity/item_pickup/regular_" + j,
+                        player.position.x,
+                        player.position.y,
+                        player.position.z
+                    );
+                    
+                    sound?.setPlaybackRate(0.6 + Math.random() * 0.2);
+                }, Math.random() * (1000 / 20));
+            }
+        }
     }
 
     public tick(time: Time) {
