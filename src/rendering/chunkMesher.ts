@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute } from "three";
+import { Box3, BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute, Vector3 } from "three";
 import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
 import { LightingChunk } from "../world/lighting/lightingGrid";
 import type { VoxelChunk } from "../world/voxelGrid";
@@ -1080,6 +1080,11 @@ export class ChunkMesher {
 
         // Set indices
         geometry.setIndex(new BufferAttribute(index.slice(0, indexOffset), 1));
+
+        geometry.boundingBox = new Box3(
+            new Vector3(0, 0, 0),
+            new Vector3(16, 16, 16),
+        );
 
         return geometry;
     }

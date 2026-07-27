@@ -5,9 +5,10 @@
         "triggers": {
             "base:use": [
                 {
-                    "id": "base:play_sound_3d",
+                    "id": "base:play_sound",
                     "args": {
-                        "sound": "base:item/party_horn"
+                        "sound": "base:item/party_horn",
+                        "spatial": true
                     }
                 },
                 {

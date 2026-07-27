@@ -4,17 +4,19 @@
     "triggers": {
         "base:place": [
             {
-                "id": "base:play_sound_3d",
+                "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/place/solid"
+                    "sound": "base:block/place/solid",
+                    "spatial": true
                 }
             }
         ],
         "base:destroy": [
             {
-                "id": "base:play_sound_3d",
+                "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/destroy/solid"
+                    "sound": "base:block/destroy/solid",
+                    "spatial": true
                 }
             }
         ]

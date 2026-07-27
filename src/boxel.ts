@@ -13,6 +13,8 @@ import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity"
 import { Assets } from "./data/assets";
 import { AudioManager } from "./data/audioManager";
 import { TextureAtlas } from "./data/textureAtlas";
+import { DataDrivenEventSheet } from "./events/dataDrivenEventSheet";
+import { eventSheetRegistry } from "./events/eventSheetRegistry";
 import { FontLoader } from "./font/fontLoader";
 import { DataDrivenGuiType } from "./gui/dataDrivenGuiType";
 import { guiTypeRegistry } from "./gui/guiTypeRegistry";
@@ -260,6 +262,15 @@ export class BoxelGame {
                 throw new Error("Failed to register light channel type " + id, { cause: e });
             }
         }
+
+        for(const [ id, json ] of this.assets.eventSheetRegistry.entries()) {
+            try {
+                eventSheetRegistry.register(id, DataDrivenEventSheet.parseJson(json, this.assets));
+            } catch(e) {
+                throw new Error("Failed to register block entity " + id, { cause: e });
+            }
+        }
+        eventSheetRegistry.lock();
 
         for(const [ id, json ] of this.assets.blockEntityTypeRegistry.entries()) {
             try {

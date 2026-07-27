@@ -30,9 +30,10 @@
                             }
                         },
                         {
-                            "id": "base:play_sound_3d",
+                            "id": "base:play_sound",
                             "args": {
-                                "sound": "base:block/explosion"
+                                "sound": "base:block/explosion",
+                                "spatial": true
                             }
                         }
                     ],
