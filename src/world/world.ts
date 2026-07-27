@@ -203,7 +203,7 @@ export class World {
         }
         
         for(let y = columnY + 7; y >= columnY; y--) {
-            this.getChunk(columnX, y, columnZ);
+            this.getChunk(columnX, y, columnZ)?.tiles.update();
             this.lightingManager.updateChunk(columnX, y, columnZ, false);
         }
     }

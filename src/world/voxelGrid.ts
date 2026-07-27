@@ -91,12 +91,21 @@ export class VoxelChunk {
 
     public update() {
         if(this.entireSingleTile) {
-            const first = this.tiles[0];
+            const first = this.tiles[0]!;
             for(let i = 0; i < this.tiles.length; i++) {
                 if(this.tiles[i] != first) {
                     this.entireSingleTile = false;
                     break;
                 }
+            }
+
+            if(this.entireSingleTile) {
+                const singleBlockStateId = this.palette[first]!;
+                this.palette.splice(0);
+                this.palette.push(singleBlockStateId);
+                this.paletteMap.clear();
+                this.paletteMap.set(singleBlockStateId, 0);
+                this.tiles.fill(0);
             }
         }
     }
