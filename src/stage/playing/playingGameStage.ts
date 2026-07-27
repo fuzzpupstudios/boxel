@@ -539,7 +539,9 @@ export class PlayingGameStage extends GameStage {
         this.world.lightingManager.getChannelOrThrow("base:sky").color.value.copy(
             this.worldRenderer.sky.sunlightColor.value);
 
-        this.guiManager.update(this.playerController.createEventCursor());
+        if(this.localPlayer != null) {
+            this.guiManager.update(this.localPlayer.createEventCursor());
+        }
         
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
@@ -645,8 +647,8 @@ export class PlayingGameStage extends GameStage {
             }
         }
 
-        if(guiContainer != null && guiGraphic != null) {
-            const cursor = this.playerController.createEventCursor();
+        if(guiContainer != null && guiGraphic != null && this.localPlayer != null) {
+            const cursor = this.localPlayer.createEventCursor();
             
             if(game.input.wasPressed(ControlBinding.PRESS_UI) || game.input.touch?.justStartedTouches.length) {
                 const gui = guiContainer.graphicalInterface;

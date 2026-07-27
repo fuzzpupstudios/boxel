@@ -2,9 +2,10 @@ import { Box3, Color, Matrix4, Vector3 } from "three";
 import z from "zod";
 import { ItemStack, SerializedItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
+import type { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { Time } from "../time";
 import type { World } from "../world/world";
-import { Entity, SerializedEntity, TileCollider } from "./entity";
+import { Entity, SerializedEntity } from "./entity";
 import type { ItemEntityRenderer } from "./itemEntityRenderer";
 
 export type SerializedItemEntity = z.infer<typeof SerializedItemEntity>;
@@ -34,13 +35,13 @@ export class ItemEntity extends Entity {
         this.updateDisplayItem();
     }
 
-    protected override createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB {
+    protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
         return new AABB(
             new Box3(
                 new Vector3(-0.2, 0, -0.2),
                 new Vector3(0.2, 0.4, 0.2)
             ),
-            world, tileColliders
+            world, physicsData
         )
     }
 

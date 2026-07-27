@@ -2,6 +2,7 @@ import { Vector3, type Box3 } from "three";
 import { getUnknownBlockState } from "../block/blockRegistry";
 import type { TileCollider } from "../entity/entity";
 import type { World } from "../world/world";
+import type { PhysicsDataCache } from "./physicsDataCache";
 
 type CollisionResult = -1 | 0 | 1;
 
@@ -12,7 +13,7 @@ export class AABB {
     public constructor(
         public readonly hitbox: Box3,
         public readonly world: World,
-        private readonly tileColliders: Map<string, TileCollider>,
+        private readonly physicsData: PhysicsDataCache,
     ) {}
 
     public collidesWithTile(tileCollider: TileCollider, x: number, y: number, z: number) {
@@ -61,7 +62,7 @@ export class AABB {
                 for(let tz = minTz; tz <= maxTz; tz++) {
                     const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
 
-                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    const collider = this.physicsData.tileColliders.get(tile) || getUnknownBlockState().collider;
                     if(!collider) continue;
 
                     const hitboxes = collider.hitboxes;
@@ -90,7 +91,7 @@ export class AABB {
 
     private getCollider(tx: number, ty: number, tz: number) {
         const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
-        return this.tileColliders.get(tile) || getUnknownBlockState().collider;
+        return this.physicsData.tileColliders.get(tile) || getUnknownBlockState().collider;
     }
 
     private canAttemptStep(stepHeight: number) {
@@ -228,7 +229,7 @@ export class AABB {
                 for(let tz = minTz; tz <= maxTz; tz++) {
                     const tile = this.world.tiles.getBlockStateId(tx, ty, tz);
                     
-                    const collider = this.tileColliders.get(tile) || getUnknownBlockState().collider;
+                    const collider = this.physicsData.tileColliders.get(tile) || getUnknownBlockState().collider;
                     if(!collider) continue;
 
                     const hitboxes = collider.hitboxes;

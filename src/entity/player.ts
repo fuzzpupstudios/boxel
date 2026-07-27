@@ -7,11 +7,12 @@ import { Inventory, InventorySlot, SerializedInventory } from "../item/inventory
 import { itemRegistry } from "../item/itemRegistry";
 import { ItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
+import type { PhysicsDataCache } from "../physics/physicsDataCache";
 import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/playing/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
-import { Entity, SerializedEntity, type TileCollider } from "./entity";
+import { Entity, SerializedEntity } from "./entity";
 import { ItemEntity } from "./item";
 
 export type SerializedPlayerEntity = z.infer<typeof SerializedPlayerEntity>;
@@ -26,6 +27,7 @@ export const SerializedPlayerEntity = SerializedEntity.extend({
 export class Player extends Entity<SerializedPlayerEntity> {
     public readonly type = "base:player";
     public readonly automaticPersistentSaving = false;
+    public readonly runsMovementTriggers = true;
 
     public readonly hitbox = new Box3(
         new Vector3(-0.3, 0, -0.3),
@@ -56,13 +58,13 @@ export class Player extends Entity<SerializedPlayerEntity> {
         }
     }
 
-    protected override createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB {
+    protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
         return new AABB(
             new Box3(
                 new Vector3(-0.3, 0, -0.3),
                 new Vector3(0.3, 1.9, 0.3)
             ),
-            world, tileColliders
+            world, physicsData
         );
     }
 
@@ -381,7 +383,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.velocity.add(direction.clone().add(new Vector3(0, 0.5, 0)).normalize().multiplyScalar(time.deltaTime * 50));
         }
 
-        const raycaster = new VoxelRaycaster(this.world, (<any><unknown>this.aabb).tileColliders);
+        const raycaster = new VoxelRaycaster(this.world, this.world.physicsDataCache);
 
         const origin = this.position.clone();
         origin.y += this.eyeHeight;

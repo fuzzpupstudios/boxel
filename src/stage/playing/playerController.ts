@@ -1,7 +1,6 @@
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import type { Player } from "../../entity/player";
-import { EventCursor } from "../../events/eventSheet";
 import { ControllerAxis } from "../../input/controller";
 import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
 import { ItemStack } from "../../item/itemStack";
@@ -284,19 +283,5 @@ export class PlayerController {
         } else {
             this.placeBlockCooldown = 0;
         }
-    }
-
-    public createEventCursor() {
-        if(this.player == null) throw new ReferenceError("PlayerController is not controlling any Player");
-
-        const cursor = new EventCursor(
-            this.player.world,
-            Math.floor(this.player.position.x),
-            Math.floor(this.player.position.y),
-            Math.floor(this.player.position.z)
-        );
-        cursor.entity = this.player;
-
-        return cursor;
     }
 }

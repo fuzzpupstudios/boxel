@@ -24,6 +24,7 @@ export class EventCursor {
     public faceHitY = 0;
     public yaw = 0;
     public pitch = 0;
+    public usages = 0;
     public defaultPrevented = false;
     public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;

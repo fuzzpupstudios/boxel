@@ -4,6 +4,7 @@ import type { BlockEntity } from "../block/entity/blockEntity";
 import { Entity, type Tickable } from "../entity/entity";
 import { type SerializedPlayerEntity } from "../entity/player";
 import type { PersistentWorld } from "../persistence/persistentWorld";
+import { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
 import type { LightingChunk } from "./lighting/lightingGrid";
@@ -83,6 +84,7 @@ export class World {
     private readonly chunksWithBlockEntities = new Set<Chunk>;
     public readonly loadingChunks = new Set<number>;
     public readonly lightingManager = new LightingManager(this);
+    public readonly physicsDataCache = new PhysicsDataCache;
 
     public setPersistentWorld(persistentWorld: PersistentWorld) {
         persistentWorld.setWorld(this);

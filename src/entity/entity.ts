@@ -1,7 +1,9 @@
 import { Box3, Vector3 } from "three";
 import z from "zod";
-import { blockStateRegistry } from "../block/blockRegistry";
+import type { EventAction } from "../events/eventAction";
+import { EventCursor } from "../events/eventSheet";
 import { AABB } from "../physics/AABB";
+import type { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { Time } from "../time";
 import type { Chunk, World } from "../world/world";
 
@@ -25,6 +27,7 @@ export const SerializedEntity = z.object({
 export abstract class Entity<SerializedType extends SerializedEntity = SerializedEntity> implements Tickable {
     public abstract readonly type: string;
     public readonly automaticPersistentSaving: boolean = true;
+    public readonly runsMovementTriggers: boolean = false;
 
     public world: World;
     public readonly velocity = new Vector3;
@@ -38,25 +41,21 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
     public flying = false;
     public stepHeight = 0.5;
     public chunk: Chunk | null = null;
+    private stepEventCooldown = 0;
+    private readonly physicsData: PhysicsDataCache;
 
     public constructor(world: World) {
         this.world = world;
-        const tileColliders = new Map<string, TileCollider>;
+        this.physicsData = world.physicsDataCache;
 
-        for(const blockStateId of blockStateRegistry.keys()) {
-            const blockState = blockStateRegistry.get(blockStateId)!;
-            
-            tileColliders.set(blockStateId, blockState.collider);
-        }
-
-        this.aabb = this.createAABB(world, tileColliders);
+        this.aabb = this.createAABB(world, this.physicsData);
     }
 
     public get position() {
         return this.aabb.position;
     }
 
-    protected abstract createAABB(world: World, tileColliders: Map<string, TileCollider>): AABB;
+    protected abstract createAABB(world: World, physicsData: PhysicsDataCache): AABB;
     
     public setWorld(world: World) {
         this.world = world;
@@ -108,8 +107,11 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             this.velocity.y += this.world.gravity.y * time.deltaTime * gravityInfluence;
             this.velocity.z += this.world.gravity.z * time.deltaTime * gravityInfluence;
 
+            let fell = false;
+
             const collisionY = this.aabb.moveY(this.velocity.y * time.deltaTime);
             if(collisionY !== 0) this.velocity.y = 0;
+            if(collisionY === -1 && !this.onGround) fell = true;
             this.onGround = collisionY === -1;
             this.lastCollisionY = collisionY;
 
@@ -120,6 +122,20 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime, this.stepHeight);
             if(collisionZ !== 0) this.velocity.z = 0;
             this.lastCollisionZ = collisionZ;
+
+            const walkDistance = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z) * time.deltaTime;
+
+            if(this.runsMovementTriggers) {
+                this.stepEventCooldown -= walkDistance;
+                if(this.stepEventCooldown < 0) {
+                    this.stepEventCooldown += 1;
+                    this.emitStepEvent();
+                }
+
+                if(fell) {
+                    this.emitFallEvent();
+                }
+            }
 
             if(this.onGround) this.gliding = this.flying = false;
 
@@ -150,6 +166,51 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         if(this.chunk == null) {
             this.position.set(previousX, previousY, previousZ);
         }
+    }
+
+    public createEventCursor() {
+        const cursor = new EventCursor(
+            this.world,
+            Math.floor(this.position.x),
+            Math.floor(this.position.y),
+            Math.floor(this.position.z)
+        );
+        cursor.entity = this;
+        return cursor;
+    }
+
+    private emitFloorEvent(triggerMap: Map<string, EventAction[]>) {
+        const minX = Math.floor(this.position.x + this.aabb.hitbox.min.x);
+        const minZ = Math.floor(this.position.z + this.aabb.hitbox.min.z);
+        const maxX = Math.floor(this.position.x + this.aabb.hitbox.max.x);
+        const maxZ = Math.floor(this.position.z + this.aabb.hitbox.max.z);
+        const y = Math.floor(this.position.y + this.aabb.hitbox.min.y - 0.01);
+
+        const cursor = new EventCursor(this.world, 0, 0, 0);
+        cursor.entity = this;
+
+        for(let x = minX; x <= maxX; x++) {
+            for(let z = minZ; z <= maxZ; z++) {
+                const blockStateId = this.world.getBlockState(x, y, z);
+
+                const triggers = triggerMap.get(blockStateId);
+                if(triggers == null) continue;
+                
+                cursor.setPosition(x, y, z);
+                for(const trigger of triggers) {
+                    trigger.run(cursor);
+                }
+                cursor.usages++;
+            }
+        }
+    }
+
+    public emitFallEvent() {
+        this.emitFloorEvent(this.physicsData.fallTriggers);
+    }
+
+    public emitStepEvent() {
+        this.emitFloorEvent(this.physicsData.stepTriggers);
     }
 
     public deserialize(data: SerializedType) {
