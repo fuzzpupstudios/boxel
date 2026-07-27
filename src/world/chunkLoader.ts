@@ -168,25 +168,45 @@ export class ChunkLoader {
             this.updateChunksToLoad();
         }
 
-        {
-            const max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations);
-            for(let i = 0; i < max; i++) {
-                const [ _, key, x, y, z ] = this.columnGenerationQueue.dequeue()!;
+        
+        const minX = (this.origin.x - this.radius - 15) >> 4;
+        const maxX = (this.origin.x + this.radius + 31) >> 4;
+        const minY = (this.origin.y - this.radius - 15) >> 4;
+        const maxY = (this.origin.y + this.radius + 31) >> 4;
+        const minZ = (this.origin.z - this.radius - 15) >> 4;
+        const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
-                let columnGenerated = false;
-                for(let dy = 0; dy < 8; dy++) {
-                    if(this.world.tiles.getChunk(x, y + dy, z)) {
-                        columnGenerated = true;
-                        continue;
-                    }
-                }
+        let max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations);
+        for(let i = 0; i < max; i++) {
+            const next = this.columnGenerationQueue.dequeue();
 
-                if(!columnGenerated) {
-                    this.world.generateColumn(x, y, z);
+            if(next == null) break;
+
+            const [ _, key, x, y, z ] = next;
+            this.columnsToLoad.delete(key);
+
+            if(
+                x < minX || x > maxX ||
+                y < minY || y > maxY ||
+                z < minZ || z > maxZ
+            ) {
+                i--;
+                continue;
+            }
+
+            let columnGenerated = false;
+            for(let dy = 0; dy < 8; dy++) {
+                if(this.world.tiles.getChunk(x, y + dy, z)) {
+                    columnGenerated = true;
+                    continue;
                 }
-                this.columnsToLoad.delete(key);
+            }
+
+            if(!columnGenerated) {
+                this.world.generateColumn(x, y, z);
             }
         }
+        
 
         {
             const max = Math.min(this.columnLoadQueue.size(), this.maxColumnLoads);
