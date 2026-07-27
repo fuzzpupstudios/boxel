@@ -185,9 +185,10 @@ export class ChunkMesher {
             }
         }
 
-        this.defaultMesh = getUnknownBlockState().model.compile();
+        const defaultIndex = this.tileMeshIndices.get(getUnknownBlockState().getFullId()) || 0;
+        this.defaultMesh = this.tileMeshes[defaultIndex]!;
 
-        this.tileCache = new TileCache(world, this.aoWeights, this.tileMeshIndices, this.tileMeshes.indexOf(this.defaultMesh));
+        this.tileCache = new TileCache(world, this.aoWeights, this.tileMeshIndices, defaultIndex);
         this.lightChannelCount = world.lightingManager.lightChannels.length;
 
         // ~150 MB maximum mesh size (should be more than enough..?)
