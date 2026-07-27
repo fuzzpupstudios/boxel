@@ -81,8 +81,8 @@ export class PlayingGameStage extends GameStage {
             ),
             light: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_LEFT, 0.25,
-                (red: number, green: number, blue: number, sky: number) =>
-                    `Light:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+                (values: Map<string, number>) =>
+                    `Light:  ${values.entries().filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
             ),
         },
         lookingBlock: {
@@ -96,18 +96,8 @@ export class PlayingGameStage extends GameStage {
             ),
             light: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_RIGHT, 0.05,
-                (red: number, green: number, blue: number, sky: number) =>
-                    `Light:  R ${red}  G ${green}  B ${blue}  S ${sky}`
-            ),
-            emission: this.debugMenu.createLine(
-                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
-                (red: number, green: number, blue: number, sky: number) =>
-                    `Emission:  R ${red}  G ${green}  B ${blue}  S ${sky}`
-            ),
-            attenuation: this.debugMenu.createLine(
-                DebugMenuLineAlignment.TOP_RIGHT, 0.05,
-                (red: number, green: number, blue: number, sky: number) =>
-                    `Attenuation:  R ${red}  G ${green}  B ${blue}  S ${sky}`
+                (values: Map<string, number>) =>
+                    `Light:  ${values.entries().filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
             ),
             tags: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_RIGHT, 0.05,
@@ -706,28 +696,19 @@ export class PlayingGameStage extends GameStage {
                     this.localPlayer.pitch,
                     this.localPlayer.yaw,
                 );
-                // this.debugMenuLines.player.light.setData(
-                //     this.world.lighting.red.get(
-                //         Math.floor(this.localPlayer.position.x),
-                //         Math.floor(this.localPlayer.position.y),
-                //         Math.floor(this.localPlayer.position.z)
-                //     ),
-                //     this.world.lighting.green.get(
-                //         Math.floor(this.localPlayer.position.x),
-                //         Math.floor(this.localPlayer.position.y),
-                //         Math.floor(this.localPlayer.position.z)
-                //     ),
-                //     this.world.lighting.blue.get(
-                //         Math.floor(this.localPlayer.position.x),
-                //         Math.floor(this.localPlayer.position.y),
-                //         Math.floor(this.localPlayer.position.z)
-                //     ),
-                //     this.world.lighting.sun.get(
-                //         Math.floor(this.localPlayer.position.x),
-                //         Math.floor(this.localPlayer.position.y),
-                //         Math.floor(this.localPlayer.position.z)
-                //     )
-                // );
+
+                if(this.localPlayer.chunk == null) {
+                    this.debugMenuLines.player.light.setData(new Map);
+                } else {
+                    const light = new Map<string, number>;
+                    this.world.lightingManager.getColorMap(
+                        Math.floor(this.localPlayer.position.x),
+                        Math.floor(this.localPlayer.position.y),
+                        Math.floor(this.localPlayer.position.z),
+                        light
+                    )
+                    this.debugMenuLines.player.light.setData(light);
+                }
                 this.debugMenuLines.player.chunk.setData(
                     Math.floor(this.localPlayer.position.x) >> 4,
                     Math.floor(this.localPlayer.position.y) >> 4,
@@ -751,36 +732,16 @@ export class PlayingGameStage extends GameStage {
                     this.debugMenuLines.lookingBlock.stateId.setData(targetedBlockStateId);
 
                     this.debugMenuLines.lookingBlock.light.show();
-                    // this.debugMenuLines.lookingBlock.light.setData(
-                    //     this.world.lighting.red.get(
-                    //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                    //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                    //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    //     ),
-                    //     this.world.lighting.green.get(
-                    //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                    //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                    //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    //     ),
-                    //     this.world.lighting.blue.get(
-                    //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                    //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                    //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    //     ),
-                    //     this.world.lighting.sun.get(
-                    //         this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
-                    //         this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
-                    //         this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z
-                    //     )
-                    // );
+                    const light = new Map<string, number>;
+                    this.world.lightingManager.getColorMap(
+                        this.localPlayer.targetedBlock.voxel.x + this.localPlayer.targetedBlock.side.x,
+                        this.localPlayer.targetedBlock.voxel.y + this.localPlayer.targetedBlock.side.y,
+                        this.localPlayer.targetedBlock.voxel.z + this.localPlayer.targetedBlock.side.z,
+                        light
+                    );
+                    this.debugMenuLines.lookingBlock.light.setData(light);
 
                     if(targetedBlockState != null) {
-                        this.debugMenuLines.lookingBlock.emission.show();
-                        // this.debugMenuLines.lookingBlock.emission.setData(...targetedBlockState.emission);
-
-                        this.debugMenuLines.lookingBlock.attenuation.show();
-                        // this.debugMenuLines.lookingBlock.attenuation.setData(...targetedBlockState.attenuation);
-
                         this.debugMenuLines.lookingBlock.tags.show();
                         this.debugMenuLines.lookingBlock.tags.setData(Array.from(targetedBlockState.tags));
                     }
@@ -789,8 +750,6 @@ export class PlayingGameStage extends GameStage {
                 this.debugMenuLines.lookingBlock.position.hide();
                 this.debugMenuLines.lookingBlock.stateId.hide();
                 this.debugMenuLines.lookingBlock.light.hide();
-                this.debugMenuLines.lookingBlock.emission.hide();
-                this.debugMenuLines.lookingBlock.attenuation.hide();
                 this.debugMenuLines.lookingBlock.tags.hide();
             }
         }

@@ -32,6 +32,12 @@ export class LightingManager {
         return this.lightChannels[index]!;
     }
 
+    public getColorMap(x: number, y: number, z: number, outMap: Map<string, number>) {
+        for(const channel of this.lightChannels) {
+            outMap.set(channel.type.id, channel.get(x, y, z));
+        }
+    }
+
     public getColorAt(x: number, y: number, z: number, outColor: Color) {
         let r = 0;
         let g = 0;
