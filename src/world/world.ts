@@ -233,13 +233,6 @@ export class World {
             throw new ReferenceError("No PersistentWorld container present");
         }
 
-        let minX = Infinity;
-        let maxX = -Infinity;
-        let minY = Infinity;
-        let maxY = -Infinity;
-        let minZ = Infinity;
-        let maxZ = -Infinity;
-
         for(const [ x, y, z ] of chunkPositions) {
             if(!this.persistentWorld.hasChunk(x, y, z)) continue;
 
@@ -279,16 +272,7 @@ export class World {
                 this.addEntity(entity);
             }
 
-            if(chunk.x > maxX) maxX = chunk.x;
-            if(chunk.y > maxY) maxY = chunk.y;
-            if(chunk.z > maxZ) maxZ = chunk.z;
-            if(chunk.x < minX) minX = chunk.x;
-            if(chunk.y < minY) minY = chunk.y;
-            if(chunk.z < minZ) minZ = chunk.z;
-        }
-
-        if(chunks.length > 0) {
-            this.flagChunksForInitialRender(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1);
+            this.flagChunksForInitialRender(chunk.x - 1, chunk.y - 1, chunk.z - 1, chunk.x + 1, chunk.y + 1, chunk.z + 1);
         }
 
         return chunks;

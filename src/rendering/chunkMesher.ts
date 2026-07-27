@@ -1055,6 +1055,8 @@ export class ChunkMesher {
             }
         }
 
+        if(vertexCount == 0) return null;
+
         const geometry = new BufferGeometry();
 
         // Copy float data to Float32Array and make it an InterleavedBuffer

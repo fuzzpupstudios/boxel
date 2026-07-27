@@ -205,20 +205,14 @@ export class WorldRenderer {
             if(surrounding != 26) return;
         }
         
-        let mesh: Mesh | null | undefined;
-        let geometrySize = 0;
+        let mesh = this.renderedChunks.get(chunk);
         
         const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
-
-        if(geometry != null) {
-            geometrySize = geometry.getAttribute("position").array.byteLength;
-            mesh = this.renderedChunks.get(chunk);
-        }
 
         if(mesh == null) {
             this.renderedChunkKeyList.add(chunk.key);
             
-            if(geometrySize > 0 && geometry != null) {
+            if(geometry != null) {
                 mesh = new Mesh(geometry, this.terrainMaterial);
                 mesh.matrixAutoUpdate = false;
                 
@@ -233,7 +227,7 @@ export class WorldRenderer {
         } else {
             mesh.geometry.dispose();
 
-            if(geometrySize > 0 && geometry != null) {
+            if(geometry != null) {
                 mesh.geometry = geometry;
                 if(mesh.parent == null) {
                     this.scene.add(mesh);
