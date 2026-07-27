@@ -309,6 +309,7 @@ export class PlayingGameStage extends GameStage {
         this.localPlayer = new Player(this.world);
         this.playerController.setPlayer(this.localPlayer);
 
+        if(playerSlot.position == null) playerSlot.position = [ 0, 100, 0 ];
         this.localPlayer.deserialize(playerSlot);
 
         const inventories = new Map([
