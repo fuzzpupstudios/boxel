@@ -27,7 +27,6 @@ export const SerializedPlayerEntity = SerializedEntity.extend({
 export class Player extends Entity<SerializedPlayerEntity> {
     public readonly type = "base:player";
     public readonly automaticPersistentSaving = false;
-    public readonly runsMovementTriggers = true;
 
     public readonly hitbox = new Box3(
         new Vector3(-0.3, 0, -0.3),
@@ -392,6 +391,11 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         const origin = this.position.clone();
         origin.y += this.eyeHeight;
+
+        this.runsMovementTriggers = true;
+        if(this.crouching || this.flying) {
+            this.runsMovementTriggers = false;
+        }
 
         raycaster.cast(origin, direction, this.targetedBlock);
     }

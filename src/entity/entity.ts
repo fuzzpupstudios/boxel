@@ -27,7 +27,7 @@ export const SerializedEntity = z.object({
 export abstract class Entity<SerializedType extends SerializedEntity = SerializedEntity> implements Tickable {
     public abstract readonly type: string;
     public readonly automaticPersistentSaving: boolean = true;
-    public readonly runsMovementTriggers: boolean = false;
+    public runsMovementTriggers: boolean = false;
 
     public world: World;
     public readonly velocity = new Vector3;
@@ -126,10 +126,12 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             const walkDistance = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z) * time.deltaTime;
 
             if(this.runsMovementTriggers) {
-                this.stepEventCooldown -= walkDistance;
-                if(this.stepEventCooldown < 0) {
-                    this.stepEventCooldown += 1;
-                    this.emitStepEvent();
+                if(this.onGround) {
+                    this.stepEventCooldown -= walkDistance;
+                    if(this.stepEventCooldown < 0) {
+                        this.stepEventCooldown += 1;
+                        this.emitStepEvent();
+                    }
                 }
 
                 if(fell) {
