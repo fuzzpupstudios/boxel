@@ -36,12 +36,16 @@ export class MainStorage {
     public async set(key: string, value: any) {
         const db = await this.db;
 
-        await db.put("data", { key, value });
+        const transaction = db.transaction("data", "readwrite", { durability: "strict" });
+        const store = transaction.objectStore("data");
+        await store.put({ key, value });
     }
 
     public async delete(key: string) {
         const db = await this.db;
 
-        await db.delete("data", key);
+        const transaction = db.transaction("data", "readwrite", { durability: "strict" });
+        const store = transaction.objectStore("data");
+        await store.delete(key);
     }
 }

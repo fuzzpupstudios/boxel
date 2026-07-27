@@ -67,7 +67,7 @@ export class PersistentWorld {
                 database.createObjectStore("players", {
                     keyPath: "id"
                 });
-            },
+            }
         })
     }
 
@@ -80,7 +80,9 @@ export class PersistentWorld {
 
         const object = Object.assign({ key: "meta" as const }, meta);
 
-        await db.put("meta", object);
+        const transaction = db.transaction("meta", "readwrite", { durability: "strict" });
+        const store = transaction.objectStore("meta");
+        await store.put(object);
     }
 
     public async loadMeta(): Promise<WorldMeta | null> {
@@ -96,8 +98,9 @@ export class PersistentWorld {
 
     public async savePlayerSlot(player: SerializedPlayerEntity) {
         const db = await this.db;
-
-        await db.put("players", player);
+        const transaction = db.transaction("players", "readwrite", { durability: "strict" });
+        const store = transaction.objectStore("players");
+        await store.put(player);
     }
 
     public async loadPlayerSlot(id: string): Promise<Partial<SerializedPlayerEntity>> {
@@ -140,7 +143,7 @@ export class PersistentWorld {
     public async saveChunks(chunks: Iterable<Chunk>) {
         const db = await this.db;
 
-        const transaction = db.transaction("chunks", "readwrite");
+        const transaction = db.transaction("chunks", "readwrite", { durability: "strict" });
         const chunksStore = transaction.objectStore("chunks");
 
         for(const chunk of chunks) {
