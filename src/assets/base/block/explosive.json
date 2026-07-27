@@ -32,8 +32,11 @@
                         {
                             "id": "base:play_sound",
                             "args": {
-                                "sound": "base:block/explosion",
-                                "spatial": true
+                                "spatial": true,
+                                "sound": {
+                                    "name": "base:block/explosion",
+                                    "pitch": [ 0.95, 1 ]
+                                }
                             }
                         }
                     ],

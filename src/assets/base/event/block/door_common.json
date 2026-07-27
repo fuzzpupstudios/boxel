@@ -13,8 +13,11 @@
             {
                 "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/door_open",
-                    "spatial": true
+                    "spatial": true,
+                    "sound": {
+                        "name": "base:block/door_open",
+                        "pitch": [ 0.95, 1 ]
+                    }
                 }
             }
         ],
@@ -30,8 +33,11 @@
             {
                 "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/door_close",
-                    "spatial": true
+                    "spatial": true,
+                    "sound": {
+                        "name": "base:block/door_close",
+                        "pitch": [ 0.95, 1 ]
+                    }
                 }
             }
         ]

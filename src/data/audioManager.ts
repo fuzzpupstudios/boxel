@@ -33,7 +33,7 @@ export class AudioManager {
 
         if(audioBuffer == null) {
             console.warn("Sound " + id + " does not exist");
-            return;
+            return null;
         }
 
         const audio = new Audio(this.listener);

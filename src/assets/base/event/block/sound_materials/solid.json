@@ -6,8 +6,11 @@
             {
                 "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/place/solid",
-                    "spatial": true
+                    "spatial": true,
+                    "sound": {
+                        "name": "base:block/place/solid",
+                        "pitch": [ 0.95, 1 ]
+                    }
                 }
             }
         ],
@@ -15,8 +18,11 @@
             {
                 "id": "base:play_sound",
                 "args": {
-                    "sound": "base:block/destroy/solid",
-                    "spatial": true
+                    "spatial": true,
+                    "sound": {
+                        "name": "base:block/destroy/solid",
+                        "pitch": [ 0.95, 1 ]
+                    }
                 }
             }
         ]
