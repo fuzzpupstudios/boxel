@@ -30,7 +30,7 @@
                             }
                         },
                         {
-                            "id": "base:play_sound_2d",
+                            "id": "base:play_sound_3d",
                             "args": {
                                 "sound": "base:block/explosion"
                             }

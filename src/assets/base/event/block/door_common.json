@@ -11,7 +11,7 @@
                 }
             },
             {
-                "id": "base:play_sound_2d",
+                "id": "base:play_sound_3d",
                 "args": {
                     "sound": "base:block/door_open"
                 }
@@ -27,7 +27,7 @@
                 }
             },
             {
-                "id": "base:play_sound_2d",
+                "id": "base:play_sound_3d",
                 "args": {
                     "sound": "base:block/door_close"
                 }

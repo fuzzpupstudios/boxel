@@ -4,7 +4,7 @@
     "triggers": {
         "base:place": [
             {
-                "id": "base:play_sound_2d",
+                "id": "base:play_sound_3d",
                 "args": {
                     "sound": "base:block/place/solid"
                 }
@@ -12,7 +12,7 @@
         ],
         "base:destroy": [
             {
-                "id": "base:play_sound_2d",
+                "id": "base:play_sound_3d",
                 "args": {
                     "sound": "base:block/destroy/solid"
                 }

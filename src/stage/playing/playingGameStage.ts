@@ -293,6 +293,7 @@ export class PlayingGameStage extends GameStage {
         });
 
         this.camera.add(this.game.audioManager.listener);
+        this.worldRenderer.scene.add(this.game.audioManager.root);
     }
     public getRenderPass(): Node<"vec4"> {
         return this.worldRenderer.getRenderPass();

@@ -7,7 +7,19 @@ export class AudioManager {
 
     constructor(
         public readonly assets: Assets
-    ) {}
+    ) {
+        const context = this.listener.context;
+        const limiter = context.createDynamicsCompressor();
+        limiter.threshold.value = -6;
+        limiter.knee.value = 0;
+        limiter.ratio.value = 20;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.25;
+
+        this.listener.gain.disconnect();
+        this.listener.gain.connect(limiter);
+        limiter.connect(context.destination);
+    }
 
     public playMenuClick() {
         return this.playSound2d("base:ui/menu_click");
