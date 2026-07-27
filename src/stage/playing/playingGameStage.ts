@@ -82,7 +82,7 @@ export class PlayingGameStage extends GameStage {
             light: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_LEFT, 0.25,
                 (values: Map<string, number>) =>
-                    `Light:  ${values.entries()?.filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
+                    `Light:  ${values.entries?.().filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
             ),
         },
         lookingBlock: {
@@ -97,7 +97,7 @@ export class PlayingGameStage extends GameStage {
             light: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_RIGHT, 0.05,
                 (values: Map<string, number>) =>
-                    `Light:  ${values.entries()?.filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
+                    `Light:  ${values.entries?.().filter(v => v[1]).map(([id, value]) => `${id} ${value}`).toArray().join("  ")}`
             ),
             tags: this.debugMenu.createLine(
                 DebugMenuLineAlignment.TOP_RIGHT, 0.05,
@@ -543,7 +543,11 @@ export class PlayingGameStage extends GameStage {
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
         
-        this.updateDebugMenu(time);
+        try {
+            this.updateDebugMenu(time);
+        } catch(e) {
+            console.error(new Error("Failed to update debug menu", { cause: e }));
+        }
     }
 
     private updateOpenGUIs() {
