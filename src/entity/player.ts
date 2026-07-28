@@ -135,7 +135,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         this.flying = flying;
     }
 
-    public destroyed(): boolean {
+    public breakBlock(): boolean {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
         let targetX = this.targetedBlock.voxel.x;
@@ -169,7 +169,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         return true;
     }
-    public place(): boolean {
+    public placeBlock(): boolean {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 
         const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
@@ -219,7 +219,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return true;
     }
 
-    public use(): boolean {
+    public useHand(): boolean {
         const cursor = new EventCursor(
             this.world,
             this.targetedBlock.voxel.x,

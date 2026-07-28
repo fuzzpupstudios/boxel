@@ -264,7 +264,7 @@ export class PlayerController {
             this.destroyBlockCooldown -= time.deltaTime;
 
             if(this.destroyBlockCooldown <= 0) {
-                this.player.destroyed();
+                this.player.breakBlock();
                 this.destroyBlockCooldown = 0.2;
             }
         } else {
@@ -274,9 +274,9 @@ export class PlayerController {
             this.placeBlockCooldown -= time.deltaTime;
 
             if(this.placeBlockCooldown <= 0) {
-                const success = this.player.use();
+                const success = this.player.useHand();
                 if(success) {
-                    this.player.place();
+                    this.player.placeBlock();
                 }
                 this.placeBlockCooldown = 0.2;
             }
