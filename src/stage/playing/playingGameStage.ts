@@ -425,10 +425,12 @@ export class PlayingGameStage extends GameStage {
         if(this.localPlayer != null) {
             const player = this.localPlayer;
 
-            const pickedUp = player.pickupNearbyItems(time, 1.25, 12, 0.25, -0.5, 2.5);
+            const pickedUpStacks = player.pickupNearbyItems(time, 1.25, 12, 0.25, -0.5, 2.5);
 
-            for(let i = 0; i < pickedUp; i++) {
+            for(const stack of pickedUpStacks) {
                 const j = Math.floor(Math.random() * 3);
+                
+                const twinge = (stack.quantity / 1000) ** 0.3;
 
                 setTimeout(() => {
                     const sound = this.game.audioManager.playSound3d(
@@ -438,7 +440,7 @@ export class PlayingGameStage extends GameStage {
                         player.position.z
                     );
                     
-                    sound?.setPlaybackRate(0.6 + Math.random() * 0.2);
+                    sound?.setPlaybackRate(1 + Math.random() * 0.2 - twinge * 0.8);
                 }, Math.random() * (1000 / 20));
             }
         }

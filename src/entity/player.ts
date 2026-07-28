@@ -284,7 +284,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         const targetPosition = this.position.clone();
         targetPosition.y += (this.aabb.hitbox.min.y + this.aabb.hitbox.max.y) / 2;
 
-        let pickedUpCount = 0;
+        let pickedUpStacks = new Array<ItemStack>;
 
         for(let x = minX; x <= maxX; x++) {
             for(let y = minY; y <= maxY; y++) {
@@ -305,13 +305,13 @@ export class Player extends Entity<SerializedPlayerEntity> {
                         ) continue;
 
                         if(distanceSquared < pickupRadiusSquared) {
+                            pickedUpStacks.push(entity.stack.clone());
                             this.inventory.addStack(entity.stack);
                             if(entity.stack.isEmpty()) {
                                 entity.removeFromWorld();
                             } else {
                                 entity.updateDisplayItem();
                             }
-                            pickedUpCount++;
                         } else {
                             magnetDirection.copy(targetPosition);
                             magnetDirection.sub(entity.position);
@@ -326,7 +326,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
             }
         }
 
-        return pickedUpCount;
+        return pickedUpStacks;
     }
 
     public getLookDirection(out = new Vector3) {
