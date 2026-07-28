@@ -1,6 +1,7 @@
 import Alea from "alea";
 import { Box3, Color, Matrix4, Vector3 } from "three";
 import z from "zod";
+import type { Inventory } from "../item/inventory";
 import { ItemStack, SerializedItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
 import type { PhysicsDataCache } from "../physics/physicsDataCache";
@@ -46,6 +47,29 @@ export class ItemEntity extends Entity {
     private rotationPhase = Math.random() * 10;
     public pickupCooldown = 0;
     private mergeCheckCooldown = Math.random();
+
+    public static spewInventory(
+        inventory: Inventory,
+        world: World,
+        x: number, y: number, z: number
+    ) {
+        for(const slot of inventory.slots) {
+            const item = new ItemEntity(world);
+            item.position.set(
+                x + Math.random() * 0.5 - 0.25,
+                y + Math.random() * 0.5 - 0.25,
+                z + Math.random() * 0.5 - 0.25,
+            );
+            item.velocity.set(
+                Math.random() * 6 - 3,
+                6,
+                Math.random() * 6 - 3,
+            );
+            slot.stack.swap(item.stack);
+            item.updateDisplayItem();
+            world.addEntity(item);
+        }
+    }
 
     public constructor(
         world: World

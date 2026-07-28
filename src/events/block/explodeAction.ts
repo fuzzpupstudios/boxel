@@ -1,5 +1,6 @@
 import z from "zod";
 import { blockStateRegistry } from "../../block/blockRegistry";
+import { ItemEntity } from "../../entity/item";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
 
@@ -45,8 +46,9 @@ export class ExplodeAction extends EventAction<ExplodeActionParameters> {
                         radiusSquare
                     ) continue;
 
-                    const previousBlock = cursor.world.getBlockState(x, y, z);
-                    const events = blockStateRegistry.get(previousBlock)?.events;
+                    const previousBlockStateId = cursor.world.getBlockState(x, y, z);
+                    const previousBlockState = blockStateRegistry.get(previousBlockStateId);
+                    const events = previousBlockState?.events;
 
                     let prevented = false;
                     if(events != null && events.triggers.size > 0) {
@@ -61,8 +63,17 @@ export class ExplodeAction extends EventAction<ExplodeActionParameters> {
                     }
 
                     if(!prevented) {
+                        const blockEntity = cursor.world.getBlockEntity(x, y, z);
+                        if(blockEntity != null && blockEntity.hasInventory()) {
+                            ItemEntity.spewInventory(
+                                blockEntity.inventory,
+                                cursor.world,
+                                x + 0.5, y + 0.5, z + 0.5
+                            );
+                        }
+                        
                         cursor.world.setBlockState(x, y, z, "base:air[default]");
-                        cursor.clientPlatform?.blockBreakParticles?.blockDestructionParticles(x, y, z, previousBlock, 0.1);
+                        cursor.clientPlatform?.blockBreakParticles?.blockDestructionParticles(x, y, z, previousBlockStateId, 0.1);
                     }
                 }
             }

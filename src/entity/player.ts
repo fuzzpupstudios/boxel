@@ -155,7 +155,11 @@ export class Player extends Entity<SerializedPlayerEntity> {
         }
 
         if(blockEntity?.hasInventory()) {
-            blockEntity.inventory.dump(this.inventory);
+            ItemEntity.spewInventory(
+                blockEntity.inventory,
+                this.world,
+                targetX + 0.5, targetY + 0.5, targetZ + 0.5
+            );
         }
 
         this.world.setBlockState(targetX, targetY, targetZ, "base:air[default]");
