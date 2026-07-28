@@ -10,7 +10,7 @@
                 }
             },
             "events": {
-                "include": [ "base:sound_materials/solid" ],
+                "include": [ "base:sound_materials/wood" ],
 
                 "triggers": {
                     "base:destroy": {

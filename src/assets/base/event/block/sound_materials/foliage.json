@@ -1,0 +1,94 @@
+{
+    "id": "base:sound_materials/foliage",
+
+    "triggers": {
+        "base:place": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "sound": [
+                        { "name": "base:block/place/foliage/foliage_0", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_1", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_2", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_3", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_4", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_5", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_6", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_7", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_8", "pitch": [ 1.1, 1.25 ] },
+                        { "name": "base:block/place/foliage/foliage_9", "pitch": [ 1.1, 1.25 ] }
+                    ]
+                }
+            }
+        ],
+        "base:destroy": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "sound": [
+                        { "name": "base:block/destroy/foliage/foliage_0", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_1", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_2", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_3", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_4", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_5", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_6", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_7", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_8", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/destroy/foliage/foliage_9", "pitch": [ 0.9, 1.1 ] }
+                    ]
+                }
+            }
+        ],
+        "base:step": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": [
+                            { "name": "base:block/step/foliage/foliage_0", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_1", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_2", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_3", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_4", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_5", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_6", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_7", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_8", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_9", "pitch": [ 0.9, 1.1 ] }
+                        ]
+                    }
+                }
+            }
+        ],
+        "base:fall": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": [
+                            { "name": "base:block/step/foliage/foliage_0", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_1", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_2", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_3", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_4", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_5", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_6", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_7", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_8", "pitch": [ 0.9, 1.1 ] },
+                            { "name": "base:block/step/foliage/foliage_9", "pitch": [ 0.9, 1.1 ] }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,82 @@
+{
+    "id": "base:sound_materials/wood",
+
+    "triggers": {
+        "base:place": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "sound": [
+                        { "name": "base:block/place/wood/wood_0", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/place/wood/wood_1", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/place/wood/wood_2", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/place/wood/wood_3", "pitch": [ 0.9, 1.1 ] }
+                    ]
+                }
+            }
+        ],
+        "base:destroy": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "sound": [
+                        { "name": "base:block/destroy/wood/wood_0", "pitch": [ 0.8, 1 ] },
+                        { "name": "base:block/destroy/wood/wood_1", "pitch": [ 0.8, 1 ] },
+                        { "name": "base:block/destroy/wood/wood_2", "pitch": [ 0.8, 1 ] },
+                        { "name": "base:block/destroy/wood/wood_3", "pitch": [ 0.8, 1 ] }
+                    ]
+                }
+            }
+        ],
+        "base:step": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": [
+                            { "name": "base:block/step/wood/wood_0", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_1", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_2", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_3", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_4", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_5", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_6", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_7", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_8", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_9", "pitch": [ 1.5, 1.7 ] }
+                        ]
+                    }
+                }
+            }
+        ],
+        "base:fall": [
+            {
+                "if": { "usages": { "used": false } },
+                "then": {
+                    "id": "base:play_sound",
+                    "args": {
+                        "spatial": true,
+                        "useEntityPosition": true,
+                        "sound": [
+                            { "name": "base:block/step/wood/wood_0", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_1", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_2", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_3", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_4", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_5", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_6", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_7", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_8", "pitch": [ 1.5, 1.7 ] },
+                            { "name": "base:block/step/wood/wood_9", "pitch": [ 1.5, 1.7 ] }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}
