@@ -1,5 +1,6 @@
 import { BatchedMesh, Color } from "three";
-import { normalWorld, vec4 } from "three/tsl";
+import { Fn } from "three/src/nodes/TSL.js";
+import { Discard, If, mix, normalWorld, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 import { createSunShadowNode } from "../rendering/lightUtils";
 import type { WorldRenderer } from "../rendering/worldRenderer";
@@ -40,7 +41,17 @@ export class ItemEntityRenderer {
         const shadow = createSunShadowNode(normalWorld, worldRenderer.sky).toVar("shadow");
 
         return new MeshBasicNodeMaterial({
-            colorNode: vec4(textureColor.rgb.mul(shadow), textureColor.a),
+            colorNode: Fn(() => {
+                const fogFactor = this.worldRenderer.fogFactor;
+
+                If(fogFactor.greaterThanEqual(1), () => Discard());
+
+                return mix(
+                    vec4(textureColor.rgb.mul(shadow), textureColor.a),
+                    vec4(this.worldRenderer.sky.fogColor, 1),
+                    fogFactor
+                )
+            })(),
             transparent: true,
             alphaTest: 0.5
         });

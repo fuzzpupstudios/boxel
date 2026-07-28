@@ -33,6 +33,7 @@ export class WorldRenderer {
     public readonly newChunkMeshMaterial: Material;
     public paused: boolean = true;
     public debug: boolean = false;
+    public readonly fogFactor: Node<"float">;
 
     public constructor(
         public readonly world: World,
@@ -41,6 +42,7 @@ export class WorldRenderer {
         assets: Assets
     ) {
         {
+            this.fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
             this.terrainMaterial = new MeshBasicNodeMaterial({
                 colorNode: Fn(() => {
                     const terrainColor = texture(
@@ -55,7 +57,7 @@ export class WorldRenderer {
                     const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
 
                     const shadow = createSunShadowNode(normalGeometry, this.sky).toVar("shadow");
-                    const fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+                    const fogFactor = this.fogFactor;
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
                     
