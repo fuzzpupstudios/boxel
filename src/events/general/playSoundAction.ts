@@ -139,8 +139,10 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
 
         const weightSum = (<SoundEntry2d[]>sounds).reduce((p, c) => p + c.weight, 0);
 
+        let cumulativeWeight = 0;
         for(const json of <SoundEntry2d[]>sounds) {
-            const weightIndex = json.weight / weightSum;
+            const weightIndex = (cumulativeWeight + json.weight) / weightSum;
+            cumulativeWeight += json.weight;
 
             let sound: PlaySound2d;
             if(this.args.spatial) {
@@ -166,7 +168,7 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
             do {
                 sound = this.soundList[soundIndex++]!;
             } while(
-                sound.weightIndex > weightThreshold &&
+                sound.weightIndex < weightThreshold &&
                 soundIndex < this.soundList.length
             )
         }
