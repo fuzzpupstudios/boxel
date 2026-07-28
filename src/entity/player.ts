@@ -307,7 +307,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
                         if(distanceSquared < pickupRadiusSquared) {
                             this.inventory.addStack(entity.stack);
                             if(entity.stack.isEmpty()) {
-                                entity.remove();
+                                entity.removeFromWorld();
                             } else {
                                 entity.updateDisplayItem();
                             }

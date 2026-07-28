@@ -85,7 +85,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         this.chunk?.entities.delete(this);
         this.chunk = null;
     }
-    public remove() {
+    public removeFromWorld() {
         this.world.removeEntity(this);
     }
 
