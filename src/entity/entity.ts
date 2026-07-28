@@ -129,7 +129,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
                 if(this.onGround) {
                     this.stepEventCooldown -= walkDistance;
                     if(this.stepEventCooldown < 0) {
-                        this.stepEventCooldown += 1;
+                        this.stepEventCooldown += 1.5;
                         this.emitStepEvent();
                     }
                 }
