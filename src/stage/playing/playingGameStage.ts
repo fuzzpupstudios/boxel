@@ -59,12 +59,13 @@ export class PlayingGameStage extends GameStage {
                 `Wait ${receivingChunks}  Load ${loadingChunks}  Gen ${generatingChunks}  ` +
                 `Mesh ${meshingChunks}  Save ${savingChunks}  Unload ${unloadingChunks}`
         ),
-        particles: this.debugMenu.createLine(
+        counters: this.debugMenu.createLine(
             DebugMenuLineAlignment.TOP_LEFT, 0.05,
             (
-                blockBreakParticles: number
+                blockBreakParticles: number,
+                entities: number
             ) =>
-                `Particles ${blockBreakParticles}`
+                `P ${blockBreakParticles}  E ${entities}`
         ),
         player: {
             position: this.debugMenu.createLine(
@@ -710,8 +711,9 @@ export class PlayingGameStage extends GameStage {
                 this.world.chunksToSave.size,
                 this.chunkLoader.chunksToHide.size
             );
-            this.debugMenuLines.particles.setData(
-                this.worldRenderer.blockBreakParticles.particleCount
+            this.debugMenuLines.counters.setData(
+                this.worldRenderer.blockBreakParticles.particleCount,
+                this.worldRenderer.entityRenderer.entities.size,
             );
             if(this.localPlayer != null) {
                 this.debugMenuLines.player.position.setData(

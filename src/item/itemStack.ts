@@ -75,4 +75,7 @@ export class ItemStack {
         this.item = item;
         this.quantity = quantity;
     }
+    public toString() {
+        return "{ItemStack " + this.item + " x" + this.quantity + "}";
+    }
 }

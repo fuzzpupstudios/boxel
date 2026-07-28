@@ -57,6 +57,9 @@ export class ItemEntityRenderer {
         });
     }
     public addInstance(item: string) {
+        // prevent a crash for ludicrous amounts of items
+        if(this.batchedMesh.instanceCount == this.batchedMesh.maxInstanceCount) return 0;
+
         const index = this.geometryIndices.get(item) ?? this.defaultGeometryIndex;
         const instanceId = this.batchedMesh.addInstance(index);
 
