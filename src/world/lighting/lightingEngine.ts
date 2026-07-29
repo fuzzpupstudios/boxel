@@ -19,9 +19,12 @@ export abstract class LightingEngine {
         public readonly type: LightChannelType
     ) {
         for(const [ blockStateId, blockState ] of blockStateRegistry.entries()) {
-            const emission = blockState.emission.get(channel) ?? 0;
-            const attenuation = blockState.attenuation.get(channel) ?? 1;
-            this.lightProperties.set(blockStateId, (emission & 0xf) << 4 | attenuation & 0xf);
+            let emission = blockState.emission.get(channel) ?? 0;
+            let attenuation = blockState.attenuation.get(channel) ?? 1;
+            
+            emission = MathUtils.clamp(emission, 0x00, 0xf);
+            attenuation = MathUtils.clamp(attenuation, 0x01, 0xf);
+            this.lightProperties.set(blockStateId, emission << 4 | attenuation);
         }
 
         this.color = uniform(type.defaultColor);
@@ -37,7 +40,7 @@ export abstract class LightingEngine {
     }
 
     protected getSourceIntensity(lightProperties: number) {
-        return lightProperties >> 4 & 0xf;
+        return lightProperties >> 4;
     }
 
     public getPoint(x: number, y: number, z: number) {

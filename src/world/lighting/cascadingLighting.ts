@@ -22,7 +22,7 @@ export class CascadingLighting extends LightingEngine {
         const source = this.getSourceIntensity(lightProperties);
         const propagated = Math.max(east, west, cascadingDown, down, north, south);
 
-        return Math.max(0, Math.min(15, Math.max(source, propagated)));
+        return Math.max(0, Math.max(source, propagated));
     }
 
     private enqueue(queue: number[], x: number, y: number, z: number) {
