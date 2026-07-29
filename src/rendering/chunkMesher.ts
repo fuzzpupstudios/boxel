@@ -145,7 +145,8 @@ class TileCache {
 }
 
 export class ChunkMesher {
-    private readonly tileMeshes: TileMesh[];
+    public readonly tileMeshes: Map<string, TileMesh>;
+    private readonly tileMeshList: TileMesh[];
     private readonly skipRenderMeshes = new Set<string>;
     private readonly aoWeights: Float32Array;
     private readonly tileMeshIndices: Map<string, number>;
@@ -161,8 +162,9 @@ export class ChunkMesher {
     ) {
         // Optimize: memoize block models, indexed by their block state's tile id
         const blockStateIds = Array.from(tileRegistry.values());
-        this.tileMeshes = new Array;
+        this.tileMeshList = new Array;
         this.tileMeshIndices = new Map;
+        this.tileMeshes = new Map;
         this.aoWeights = new Float32Array(blockStateIds.length);
 
         for(let i = 0; i < blockStateIds.length; i++) {
@@ -174,8 +176,9 @@ export class ChunkMesher {
             try {
                 const compiledModel = blockState.model.compile();
 
-                this.tileMeshes[i] = compiledModel;
+                this.tileMeshList[i] = compiledModel;
                 this.aoWeights[i] = compiledModel.aoCastWeight;
+                this.tileMeshes.set(blockStateId, compiledModel);
 
                 if(compiledModel.skipRender) {
                     this.skipRenderMeshes.add(blockStateId);
@@ -186,7 +189,7 @@ export class ChunkMesher {
         }
 
         const defaultIndex = this.tileMeshIndices.get(getUnknownBlockState().getFullId()) || 0;
-        this.defaultMesh = this.tileMeshes[defaultIndex]!;
+        this.defaultMesh = this.tileMeshList[defaultIndex]!;
 
         this.tileCache = new TileCache(world, this.aoWeights, this.tileMeshIndices, defaultIndex);
         this.lightChannelCount = world.lightingManager.lightChannels.length;
@@ -208,14 +211,14 @@ export class ChunkMesher {
         const map = new Map<string, TileMesh>;
 
         for(const [ blockStateId, tileMeshIndex ] of this.tileMeshIndices.entries()) {
-            map.set(blockStateId, this.tileMeshes[tileMeshIndex]!);
+            map.set(blockStateId, this.tileMeshList[tileMeshIndex]!);
         }
 
         return map;
     }
 
     private getMesh(tile: number) {
-        return this.tileMeshes[tile] || this.defaultMesh;
+        return this.tileMeshList[tile] || this.defaultMesh;
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {

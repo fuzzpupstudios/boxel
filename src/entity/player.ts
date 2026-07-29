@@ -156,6 +156,25 @@ export class Player extends Entity<SerializedPlayerEntity> {
         let targetY = this.targetedBlock.voxel.y;
         let targetZ = this.targetedBlock.voxel.z;
 
+        for(let i = 0; i < 4; i++) {
+            this.world.renderer?.blockBreakParticles.blockParticle(
+                this.targetedBlock.position.x + (Math.random() - 0.5) * (1 - Math.abs(this.targetedBlock.side.x)) * 0.5,
+                this.targetedBlock.position.y + (Math.random() - 0.5) * (1 - Math.abs(this.targetedBlock.side.y)) * 0.5,
+                this.targetedBlock.position.z + (Math.random() - 0.5) * (1 - Math.abs(this.targetedBlock.side.z)) * 0.5,
+                this.targetedBlock.side.x * 2 + Math.random() * 4 - 2,
+                this.targetedBlock.side.y * 2 + Math.random() * 4 - 2,
+                this.targetedBlock.side.z * 2 + Math.random() * 4 - 2,
+                this.targetedBlock.side,
+                this.world.renderer.chunkMesher.tileMeshes.get(
+                    this.world.getBlockState(
+                        this.targetedBlock.voxel.x,
+                        this.targetedBlock.voxel.y,
+                        this.targetedBlock.voxel.z,
+                    )
+                )
+            )
+        }
+
         const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
         const blockState = blockStateRegistry.get(previousBlockStateId);
         blockState?.events.runTrigger("base:hit", cursor);

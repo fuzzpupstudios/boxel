@@ -21,7 +21,7 @@ export class SetBlockStateIdAction extends EventAction<SetBlockStateIdActionPara
         const z = cursor.z + this.args.zOffset;
 
         if(this.args.showParticles) {
-            cursor.clientPlatform?.blockBreakParticles?.blockDestructionParticles(x, y, z);
+            cursor.clientPlatform?.blockBreakParticles.blockDestructionParticles(x, y, z);
         }
         cursor.world.setBlockState(x, y, z, this.args.blockStateId);
     }

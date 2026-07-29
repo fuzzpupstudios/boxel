@@ -73,7 +73,7 @@ export class ExplodeAction extends EventAction<ExplodeActionParameters> {
                         }
                         
                         cursor.world.setBlockState(x, y, z, "base:air[default]");
-                        cursor.clientPlatform?.blockBreakParticles?.blockDestructionParticles(x, y, z, previousBlockStateId, 0.1);
+                        cursor.clientPlatform?.blockBreakParticles.blockDestructionParticles(x, y, z, previousBlockStateId, 0.1);
                     }
                 }
             }
