@@ -42,6 +42,27 @@
                 }
             }
         ],
+        "base:hit": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "useHitPosition": true,
+                    "sound": [
+                        { "name": "base:block/step/foliage/foliage_0", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_1", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_2", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_3", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_4", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_5", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_6", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_7", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_8", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/foliage/foliage_9", "pitch": [ 0.9, 1.1 ] }
+                    ]
+                }
+            }
+        ],
         "base:step": [
             {
                 "if": { "usages": { "used": false } },

@@ -135,6 +135,30 @@ export class Player extends Entity<SerializedPlayerEntity> {
         this.flying = flying;
     }
 
+    public punch(): boolean {
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
+
+        const cursor = new EventCursor(
+            this.world,
+            this.targetedBlock.voxel.x,
+            this.targetedBlock.voxel.y,
+            this.targetedBlock.voxel.z,
+        );
+        cursor.entity = this;
+        cursor.setFaceDataFromRaycastResult(this.targetedBlock);
+        cursor.setRotation(this.yaw, this.pitch);
+
+        let targetX = this.targetedBlock.voxel.x;
+        let targetY = this.targetedBlock.voxel.y;
+        let targetZ = this.targetedBlock.voxel.z;
+
+        const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
+        const blockState = blockStateRegistry.get(previousBlockStateId);
+        blockState?.events.runTrigger("base:hit", cursor);
+
+        return true;
+    }
+
     public breakBlock(): boolean {
         if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
 

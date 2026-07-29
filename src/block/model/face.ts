@@ -88,7 +88,11 @@ export class BlockModelFace {
     }
 
     public applyMatrix4(matrix: Matrix4) {
-        this.normal.applyMatrix4(matrix.clone().extractRotation(new Matrix4)).normalize();
+        this.normal.applyMatrix4(new Matrix4().extractRotation(matrix));
+        this.normal.x = Math.round(this.normal.x * 1024) / 1024;
+        this.normal.y = Math.round(this.normal.y * 1024) / 1024;
+        this.normal.z = Math.round(this.normal.z * 1024) / 1024;
+        this.normal.normalize();
 
         for(const vertex of this.vertices()) {
             vertex.applyMatrix4(matrix);

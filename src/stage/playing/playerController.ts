@@ -1,9 +1,11 @@
+import { Vector3 } from "three";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
 import type { Player } from "../../entity/player";
 import { ControllerAxis } from "../../input/controller";
 import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
 import { ItemStack } from "../../item/itemStack";
+import type { BlockBreakOutline } from "../../rendering/blockBreakOutline";
 import type { BlockStateOutline } from "../../rendering/blockStateOutline";
 import type { Time } from "../../time";
 
@@ -18,6 +20,9 @@ export class PlayerController {
     private destroyBlockCooldown = 0;
     private touchStationaryTime = 0;
     private touchPlaceEligible = false;
+    private destroyTime = 0;
+    private instabreak = false;
+    private lastTargetedVoxel = new Vector3;
 
     constructor(
         private readonly game: BoxelGame
@@ -205,20 +210,58 @@ export class PlayerController {
     public updateTargetedBlock(targetedBlock: BlockStateOutline) {
         if(this.player == null) return;
 
+        const targetedVoxel = this.player.targetedBlock.voxel;
+
         if(
             this.player.targetedBlock.hit &&
             this.player.targetedBlock.distance < this.player.reachDistance
         ) {
             targetedBlock.mesh.visible = true;
-            targetedBlock.mesh.position.copy(this.player.targetedBlock.voxel)
+            targetedBlock.mesh.position.copy(targetedVoxel)
             const stateKey = this.player.world.getBlockState(
-                this.player.targetedBlock.voxel.x,
-                this.player.targetedBlock.voxel.y,
-                this.player.targetedBlock.voxel.z
-            );
+                targetedVoxel.x, targetedVoxel.y, targetedVoxel.z);
             targetedBlock.setBlockState(blockStateRegistry.get(stateKey)!);
         } else {
             targetedBlock.mesh.visible = false;
+        }
+    }
+
+    public updateBreakingBlock(breakingBlock: BlockBreakOutline) {
+        if(this.player == null) return;
+
+        const targetedVoxel = this.player.targetedBlock.voxel;
+
+        if(
+            this.player.targetedBlock.hit &&
+            this.player.targetedBlock.distance < this.player.reachDistance
+        ) {
+            const targetedBlockStateId = this.player.world.getBlockState(
+                targetedVoxel.x, targetedVoxel.y, targetedVoxel.z);
+
+            const targetedBlockState = blockStateRegistry.get(targetedBlockStateId);
+            if(targetedBlockState == null) return;
+
+            if(!this.lastTargetedVoxel.equals(targetedVoxel)) {
+                this.destroyTime = 0;
+            }
+            if(this.destroyTime >= targetedBlockState.destroyTime) {
+                this.player.breakBlock();
+                this.destroyTime = 0;
+            }
+
+            const progress = this.destroyTime / targetedBlockState.destroyTime;
+            this.lastTargetedVoxel.copy(targetedVoxel);
+
+            breakingBlock.progress.value = progress;
+            breakingBlock.mesh.position.copy(targetedVoxel);
+            const stateKey = this.player.world.getBlockState(
+                targetedVoxel.x,
+                targetedVoxel.y,
+                targetedVoxel.z
+            );
+            breakingBlock.setBlockState(blockStateRegistry.get(stateKey)!);
+        } else {
+            breakingBlock.progress.value = 0;
         }
     }
 
@@ -264,11 +307,19 @@ export class PlayerController {
             this.destroyBlockCooldown -= time.deltaTime;
 
             if(this.destroyBlockCooldown <= 0) {
-                this.player.breakBlock();
+                if(this.instabreak) {
+                    this.player.breakBlock();
+                } else {
+                    this.player.punch();
+                }
                 this.destroyBlockCooldown = 0.2;
+            }
+            if(!this.instabreak) {
+                this.destroyTime += time.deltaTime;
             }
         } else {
             this.destroyBlockCooldown = 0;
+            this.destroyTime = 0;
         }
         if(place) {
             this.placeBlockCooldown -= time.deltaTime;

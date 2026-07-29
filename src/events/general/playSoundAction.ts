@@ -31,6 +31,7 @@ export const PlaySoundActionParameters = z.union([
         yOffset: z.number().default(0),
         zOffset: z.number().default(0),
         useEntityPosition: z.boolean().default(false),
+        useHitPosition: z.boolean().default(false),
         sound: z.union([
             z.string(),
             SoundEntry3d,
@@ -182,6 +183,10 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
                 x += cursor.entity?.position.x,
                 y += cursor.entity?.position.y,
                 z += cursor.entity?.position.z
+            } else if(this.args.useHitPosition && cursor.entity != null) {
+                x += cursor.voxelHitX,
+                y += cursor.voxelHitY,
+                z += cursor.voxelHitZ
             } else {
                 x += cursor.x + 0.5,
                 y += cursor.y + 0.5,

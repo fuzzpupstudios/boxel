@@ -7,6 +7,7 @@ import type { Assets } from "../data/assets";
 import { EntityRenderer } from "../entity/entityRenderer";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
+import { BlockBreakOutline } from "./blockBreakOutline";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
@@ -27,6 +28,7 @@ export class WorldRenderer {
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly renderedChunkKeyList = new Set<number>;
     public readonly targetedBlock = new BlockStateOutline;
+    public readonly breakingBlock: BlockBreakOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
     public readonly newChunks = new Map<LineSegments, number>;
     public readonly newChunkMeshGeometry: BufferGeometry;
@@ -82,8 +84,9 @@ export class WorldRenderer {
         this.sky = new Sky(assets);
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
+        this.breakingBlock = new BlockBreakOutline(assets);
 
-        this.scene.add(this.targetedBlock.mesh, this.blockBreakParticles.mesh);
+        this.scene.add(this.targetedBlock.mesh, this.breakingBlock.mesh, this.blockBreakParticles.mesh);
 
         this.newChunkMeshGeometry = new EdgesGeometry(new BoxGeometry(16, 16, 16));
 

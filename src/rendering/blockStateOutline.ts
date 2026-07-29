@@ -1,8 +1,8 @@
 import { BoxGeometry, EdgesGeometry, LineSegments, Vector3 } from "three";
 import { BufferGeometryUtils } from "three/examples/jsm/Addons.js";
 import { LineBasicNodeMaterial } from "three/webgpu";
-import { BlockState } from "../block/block";
 import { getUnknownBlockState } from "../block/blockRegistry";
+import { BlockState } from "../block/blockState";
 
 export class BlockStateOutline {
     public readonly mesh: LineSegments;
@@ -10,10 +10,7 @@ export class BlockStateOutline {
     private readonly outlines = new Map<BlockState, EdgesGeometry>;
     public currentBlockState: BlockState | null = null;
     private readonly material = new LineBasicNodeMaterial({
-        color: 0x000000,
-        linewidth: 1,
-        transparent: true,
-        opacity: 1,
+        color: 0x000000
     });
 
     public constructor() {

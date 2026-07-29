@@ -54,6 +54,27 @@
                 }
             }
         ],
+        "base:hit": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "useHitPosition": true,
+                    "sound": [
+                        { "name": "base:block/step/wood/wood_0", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_1", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_2", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_3", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_4", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_5", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_6", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_7", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_8", "pitch": [ 1.5, 1.7 ] },
+                        { "name": "base:block/step/wood/wood_9", "pitch": [ 1.5, 1.7 ] }
+                    ]
+                }
+            }
+        ],
         "base:fall": [
             {
                 "if": { "usages": { "used": false } },

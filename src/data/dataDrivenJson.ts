@@ -122,6 +122,7 @@ export namespace DataDrivenJson {
         tags: z.array(z.string()).optional(),
         pickBlockState: z.string().optional(),
         renderAsTexture: z.string().optional(),
+        destroyTime: z.number().default(1)
     });
 
     export type Block = z.infer<typeof Block>;

@@ -28,6 +28,9 @@ export class EventCursor {
     public defaultPrevented = false;
     public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;
+    public voxelHitX = 0;
+    public voxelHitY = 0;
+    public voxelHitZ = 0;
 
     public static setClientPlatform(clientPlatform: ClientEventPlatform) {
         this.clientPlatform = clientPlatform;
@@ -78,6 +81,10 @@ export class EventCursor {
 
         this.faceHitX = projected3D.x;
         this.faceHitY = projected3D.y;
+
+        this.voxelHitX = result.position.x;
+        this.voxelHitY = result.position.y;
+        this.voxelHitZ = result.position.z;
     }
 
     public preventDefault() {
@@ -85,7 +92,7 @@ export class EventCursor {
     }
 }
 
-export abstract class EventSheet {
+export class EventSheet {
     public readonly triggers = new Map<string, EventAction[]>;
 
     public runTrigger(name: string, cursor: EventCursor) {
@@ -100,5 +107,15 @@ export abstract class EventSheet {
     public addTriggerAction(name: string, ...action: EventAction[]) {
         const triggers = this.triggers.getOrInsert(name, []);
         triggers.push(...action);
+    }
+
+    public copyFrom(other: EventSheet) {
+        this.triggers.clear();
+        
+        for(const [ triggerId, actions ] of other.triggers) {
+            for(const action of actions) {
+                this.addTriggerAction(triggerId, action);
+            }
+        }
     }
 }

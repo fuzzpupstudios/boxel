@@ -1,5 +1,6 @@
 import { AutoRegistry, KeyedRegistry } from "objectregistry";
-import { Block, BlockState } from "./block";
+import { Block } from "./block";
+import type { BlockState } from "./blockState";
 
 export const blockRegistry = new KeyedRegistry<Block>();
 export const tileRegistry = new AutoRegistry<string>;

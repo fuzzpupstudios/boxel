@@ -2,7 +2,8 @@ import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../data/textureAtlas";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
-import { Block, BlockState } from "./block";
+import { Block } from "./block";
+import { BlockState } from "./blockState";
 import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
 import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
 
@@ -124,7 +125,8 @@ export class DataDrivenBlock extends Block {
             new Map(Object.entries(emission)),
             new Map(Object.entries(attenuation)),
             pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]"),
-            renderAsTexture
+            renderAsTexture,
+            jsonState.destroyTime
         );
     }
 

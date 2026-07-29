@@ -58,6 +58,31 @@
                 }
             }
         ],
+        "base:hit": [
+            {
+                "id": "base:play_sound",
+                "args": {
+                    "spatial": true,
+                    "useHitPosition": true,
+                    "sound": [
+                        { "name": "base:block/step/stone/stone_0", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_1", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_2", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_3", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_4", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_5", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_6", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_7", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_8", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_9", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_10", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_11", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_12", "pitch": [ 0.9, 1.1 ] },
+                        { "name": "base:block/step/stone/stone_13", "pitch": [ 0.9, 1.1 ] }
+                    ]
+                }
+            }
+        ],
         "base:fall": [
             {
                 "if": { "usages": { "used": false } },

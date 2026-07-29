@@ -514,7 +514,8 @@ export class PlayingGameStage extends GameStage {
             }
 
             this.localPlayer.tick(time);
-            this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock)
+            this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock);
+            this.playerController.updateBreakingBlock(this.worldRenderer.breakingBlock);
                     
             const hotbar = this.guiManager.getOpenGui("base:hotbar");
             hotbar?.updateSlot("player." + this.localPlayer.selectedSlot);

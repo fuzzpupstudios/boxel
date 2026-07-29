@@ -4,7 +4,7 @@ import { EventCursor } from "../../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../../item/inventory";
 import type { Time } from "../../time";
 import type { World } from "../../world/world";
-import type { BlockState } from "../block";
+import type { BlockState } from "../blockState";
 import { BlockEntity, BlockEntityType, type SerializedBlockEntity } from "./blockEntity";
 
 export class DataDrivenBlockEntityType extends BlockEntityType {
