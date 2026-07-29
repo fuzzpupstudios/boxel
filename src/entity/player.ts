@@ -362,7 +362,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return out.applyEuler(new Euler(this.pitch, -this.yaw, 0, "YZX"));
     }
 
-    public dropItem(stack: ItemStack, max = 1) {
+    public dropItem(stack: ItemStack, max = Infinity) {
         const direction = this.getLookDirection();
         direction.normalize();
 

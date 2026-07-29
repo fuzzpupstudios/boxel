@@ -137,6 +137,9 @@ export class PlayerController {
         if(game.input.wasPressed(ControlBinding.DROP_ITEM)) {
             this.player.dropItem(this.player.inventory.slots[this.player.selectedSlot]!.stack, 1);
         }
+        if(game.input.wasPressed(ControlBinding.DROP_STACK)) {
+            this.player.dropItem(this.player.inventory.slots[this.player.selectedSlot]!.stack);
+        }
 
         if(game.input.wasPressed(ControlBinding.SLOT_0)) {
             this.player.selectedSlot = 0;

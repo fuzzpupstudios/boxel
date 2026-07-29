@@ -17,7 +17,7 @@ export enum ControlBinding {
     CHANGE_PERSPECTIVE,
 
     NEXT_ITEM, PREVIOUS_ITEM,
-    DROP_ITEM,
+    DROP_ITEM, DROP_STACK,
 
     OPEN_INVENTORY,
     CLOSE_MODAL,
@@ -166,6 +166,12 @@ export class Input {
         [ControlBinding.PAUSE]: MobileButton.PAUSE,
     };
     public readonly compositeBindings: Partial<Record<ControlBinding, CompositeControl>> = {
+        [ControlBinding.DROP_STACK]: {
+            keyboardKeys: [
+                { key: "ShiftLeft", preventActivate: true },
+                { key: "KeyQ", preventActivate: false },
+            ]
+        },
         [ControlBinding.QUICK_MOVE]: {
             keyboardKeys: [
                 { key: "ShiftLeft", preventActivate: true }
