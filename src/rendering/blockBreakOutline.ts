@@ -1,6 +1,6 @@
 import { Fn } from "three/src/nodes/TSL.js";
 import { Discard, If, texture, uniform, uv, vec2 } from "three/tsl";
-import { BufferGeometry, Float32BufferAttribute, Material, Mesh, MeshBasicNodeMaterial, NearestFilter, Texture } from "three/webgpu";
+import { BoxGeometry, BufferGeometry, Float32BufferAttribute, Material, Mesh, MeshBasicNodeMaterial, NearestFilter, Texture } from "three/webgpu";
 import { getUnknownBlockState } from "../block/blockRegistry";
 import { BlockState } from "../block/blockState";
 import type { Assets } from "../data/assets";
@@ -40,7 +40,7 @@ export class BlockBreakOutline {
             polygonOffsetFactor: -1,
             polygonOffsetUnits: -1
         });
-        this.mesh = new Mesh(new BufferGeometry, this.material);
+        this.mesh = new Mesh(new BoxGeometry, this.material);
     }
 
     public setBlockState(state: BlockState) {
