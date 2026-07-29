@@ -4,7 +4,6 @@ import type { BoxelGame } from "../../boxel";
 import type { Player } from "../../entity/player";
 import { ControllerAxis } from "../../input/controller";
 import { ControlBinding, MouseAxis, TouchAxis } from "../../input/input";
-import { ItemStack } from "../../item/itemStack";
 import type { BlockBreakOutline } from "../../rendering/blockBreakOutline";
 import type { BlockStateOutline } from "../../rendering/blockStateOutline";
 import type { Time } from "../../time";
@@ -21,7 +20,6 @@ export class PlayerController {
     private touchStationaryTime = 0;
     private touchPlaceEligible = false;
     private destroyTime = 0;
-    private instabreak = false;
     private lastTargetedVoxel = new Vector3;
 
     constructor(
@@ -114,24 +112,7 @@ export class PlayerController {
         this.updatePlayerInteractions(time);
 
         if(game.input.wasPressed(ControlBinding.PICK_BLOCK)) {
-            if(this.player.targetedBlock.hit) {
-                const voxelPos = this.player.targetedBlock.voxel;
-                const blockStateId = this.player.world.getBlockState(voxelPos.x, voxelPos.y, voxelPos.z);
-                const blockState = blockStateRegistry.get(blockStateId);
-                const pickBlockStateId = blockState?.pickBlockStateId ?? blockStateId;
-
-                const existingSlot = this.player.inventory.findItem(pickBlockStateId);
-                const selectedSlot = this.player.selectedSlot;
-
-                if(existingSlot >= 0 && existingSlot <= 9) {
-                    this.player.selectedSlot = existingSlot;
-                } else {
-                    const stack = existingSlot == -1
-                        ? ItemStack.of(pickBlockStateId, 1)
-                        : this.player.inventory.slots[existingSlot]!.stack;
-                    this.player.inventory.slots[selectedSlot]?.stack.swap(stack);
-                }
-            }
+            this.player.pickBlock();
         }
         
         if(game.input.wasPressed(ControlBinding.DROP_ITEM)) {
@@ -310,14 +291,14 @@ export class PlayerController {
             this.destroyBlockCooldown -= time.deltaTime;
 
             if(this.destroyBlockCooldown <= 0) {
-                if(this.instabreak) {
+                if(this.player.instabreak) {
                     this.player.breakBlock();
                 } else {
                     this.player.punch();
                 }
                 this.destroyBlockCooldown = 0.2;
             }
-            if(!this.instabreak) {
+            if(!this.player.instabreak) {
                 this.destroyTime += time.deltaTime;
             }
         } else {

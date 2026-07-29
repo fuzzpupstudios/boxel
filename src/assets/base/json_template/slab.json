@@ -15,9 +15,12 @@
 
                 "triggers": {
                     "base:destroy": {
-                        "id": "base:drop_item",
-                        "args": {
-                            "stack": "${id}[half=bottom]"
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": {
+                            "id": "base:drop_item",
+                            "args": {
+                                "stack": "${id}[half=bottom]"
+                            }
                         }
                     }
                 }

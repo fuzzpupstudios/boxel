@@ -18,6 +18,7 @@ import { BlockEventPredicate } from "./predicate/blockEventPredicate";
 import { EntityEventPredicate } from "./predicate/entityEventPredicate";
 import { FaceEventPredicate } from "./predicate/faceEventPredicate";
 import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
+import { PlayerEventPredicate } from "./predicate/playerEventPredicate";
 import { UsagesPredicate } from "./predicate/usagesEventPredicate";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
@@ -48,5 +49,6 @@ eventPredicateRegistry.register("face", FaceEventPredicate);
 eventPredicateRegistry.register("entity", EntityEventPredicate);
 eventPredicateRegistry.register("platform", PlatformEventPredicate);
 eventPredicateRegistry.register("usages", UsagesPredicate);
+eventPredicateRegistry.register("player", PlayerEventPredicate);
 
 eventPredicateRegistry.lock();

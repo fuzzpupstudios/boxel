@@ -8,7 +8,9 @@ export const EntityEventPredicateParameters = z.object({
     minYaw: z.number().default(-Infinity),
     maxYaw: z.number().default(Infinity),
     minPitch: z.number().default(-Infinity),
-    maxPitch: z.number().default(Infinity)
+    maxPitch: z.number().default(Infinity),
+    flying: z.boolean().optional(),
+    gliding: z.boolean().optional(),
 });
 
 export class EntityEventPredicate extends EventPredicate<EntityEventPredicateParameters> {
@@ -29,6 +31,8 @@ export class EntityEventPredicate extends EventPredicate<EntityEventPredicatePar
         }
     }
     public override test(cursor: EventCursor): boolean {
+        if(cursor.entity == null) return false;
+
         if(!this.angleBetween(
             cursor.yaw * 180 / Math.PI,
             this.args.minYaw, this.args.maxYaw
@@ -38,6 +42,13 @@ export class EntityEventPredicate extends EventPredicate<EntityEventPredicatePar
             cursor.pitch * 180 / Math.PI,
             this.args.minPitch, this.args.maxPitch
         )) return false;
+
+        if(this.args.flying != null) {
+            if(this.args.flying != cursor.entity.flying) return false;
+        }
+        if(this.args.gliding != null) {
+            if(this.args.gliding != cursor.entity.gliding) return false;
+        }
 
         return true;
     }

@@ -3,10 +3,12 @@
     
     "triggers": {
         "base:destroy": {
-            "id": "base:drop_block_item"
+            "if": { "player": { "infiniteItems": false } },
+            "then": { "id": "base:drop_block_item" }
         },
         "base:explode": {
-            "id": "base:drop_block_item"
+            "if": { "player": { "infiniteItems": false } },
+            "then": { "id": "base:drop_block_item" }
         }
     }
 }

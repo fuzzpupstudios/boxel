@@ -41,6 +41,10 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public yaw = 0;
     public pitch = 0;
     public id: string = crypto.randomUUID();
+    
+    public infiniteItems = false;
+    public instabreak = false;
+    public canFly = false;
 
     public readonly targetedBlock = new RaycastResult;
     public readonly reachDistance = 5;
@@ -132,7 +136,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         this.gliding = gliding;
     }
     public setFlying(flying: boolean) {
-        this.flying = flying;
+        this.flying = flying && this.canFly;
     }
 
     public punch(): boolean {
@@ -240,7 +244,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         if(cursor.defaultPrevented) {
             this.world.setBlockState(targetX, targetY, targetZ, previousStateId);
             return false;
-        } else {
+        } else if(!this.infiniteItems) {
             holdingStack.mergeInto(ItemStack.empty(), 1);
         }
 
@@ -294,6 +298,33 @@ export class Player extends Entity<SerializedPlayerEntity> {
         }
 
         return success;
+    }
+
+    public pickBlock() {
+        if(this.targetedBlock.hit) {
+            const voxelPos = this.targetedBlock.voxel;
+            const blockStateId = this.world.getBlockState(voxelPos.x, voxelPos.y, voxelPos.z);
+            const blockState = blockStateRegistry.get(blockStateId);
+            const pickBlockStateId = blockState?.pickBlockStateId ?? blockStateId;
+
+            const existingSlot = this.inventory.findItem(pickBlockStateId);
+            const selectedSlot = this.selectedSlot;
+
+            if(existingSlot >= 0 && existingSlot <= 9) {
+                this.selectedSlot = existingSlot;
+            } else {
+                let stack = this.inventory.slots[existingSlot]?.stack;
+                if(stack == null && this.infiniteItems) {
+                    stack = ItemStack.of(pickBlockStateId, 1);
+                    stack.item = pickBlockStateId;
+                    stack.quantity = 1;
+                }
+
+                if(stack != null) {
+                    this.inventory.slots[selectedSlot]?.stack.swap(stack);
+                }
+            }
+        }
     }
 
     public pickupNearbyItems(time: Time, magnetRadius: number, magnetStrength: number, pickupRadius: number, pickupMinHeight: number, pickupMaxHeight: number) {
@@ -386,6 +417,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
     }
 
     public tick(time: Time): void {
+        if(this.flying && !this.canFly) this.setFlying(false);
+
         {
             const dy = -0.501;
             if(this.aabb.collidesAtOffset(0, dy, 0) && this.crouching) {

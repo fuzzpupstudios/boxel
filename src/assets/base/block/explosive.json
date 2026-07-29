@@ -14,7 +14,8 @@
 
                 "triggers": {
                     "base:destroy": {
-                        "id": "base:drop_block_item"
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": { "id": "base:drop_block_item" }
                     },
                     "relay_explode": [
                         {
