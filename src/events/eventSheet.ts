@@ -11,7 +11,7 @@ export interface ClientEventPlatform {
     usingTouchscreen: boolean;
     guiManager: GuiManager;
     audioManager: AudioManager;
-    blockBreakParticles?: BlockBreakParticleEngine
+    blockBreakParticles: BlockBreakParticleEngine
 }
 
 export class EventCursor {
