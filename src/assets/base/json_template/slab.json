@@ -14,13 +14,27 @@
                 "include": [ "base:slab", "${sound_events}" ],
 
                 "triggers": {
-                    "base:destroy": {
+                    "relay_drop": {
                         "if": { "player": { "infiniteItems": false } },
                         "then": {
                             "id": "base:drop_item",
                             "args": {
                                 "stack": "${id}[half=bottom]"
                             }
+                        }
+                    },
+                    "base:destroy": {
+                        "id": "base:run_trigger",
+                        "args": {
+                            "triggerName": "relay_drop",
+                            "self": true
+                        }
+                    },
+                    "base:explode": {
+                        "id": "base:run_trigger",
+                        "args": {
+                            "triggerName": "relay_drop",
+                            "self": true
                         }
                     }
                 }
