@@ -6,52 +6,17 @@
         "axis": "base:block/axes.png"
     },
 
-    "north": [
+    "cuboids": [
         {
-            "pos": [ 1, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "side"
-        }
-    ],
-    "east": [
-        {
-            "pos": [ 1, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "side"
-        }
-    ],
-    "south": [
-        {
-            "pos": [ 0, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "side"
-        }
-    ],
-    "west": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "side"
-        }
-    ],
-    "up": [
-        {
-            "pos": [ 0, 1, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "axis"
-        }
-    ],
-    "down": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "axis"
+            "from": [ 0, 0, 0 ],
+            "to": [ 1, 1, 1 ],
+
+            "north": "side",
+            "east": "side",
+            "south": "side",
+            "west": "side",
+            "up": "axis",
+            "down": "axis"
         }
     ]
 }

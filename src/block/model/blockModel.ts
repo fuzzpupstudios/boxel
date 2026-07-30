@@ -1,6 +1,6 @@
 import { Matrix3, Matrix4, Vector2, Vector3 } from "three";
 import { Assets } from "../../data/assets";
-import type { DataDrivenJson } from "../../data/dataDrivenJson";
+import { DataDrivenJson } from "../../data/dataDrivenJson";
 import type { TextureAtlas } from "../../data/textureAtlas";
 import type { TileMesh } from "../../rendering/chunkMesher";
 import { parseModel } from "../jsonParseUtils";
@@ -97,13 +97,62 @@ export class BlockModel {
         model.occludeDown = json.occludeDown ?? json.occlude ?? model.occludeDown!;
         model.aoCastWeight = json.aoCastWeight ?? model.aoCastWeight!;
 
-
-        model.north.push(...(json.north ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, -1))));
-        model.east.push(...(json.east ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(1, 0, 0))));
-        model.south.push(...(json.south ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 0, 1))));
-        model.west.push(...(json.west ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(-1, 0, 0))));
-        model.up.push(...(json.up ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, 1, 0))));
-        model.down.push(...(json.down ?? []).map(json => BlockModelFace.parseJson(json, new Vector3(0, -1, 0))));
+        for(const cuboid of json.cuboids ?? []) {
+            if(cuboid.north) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.north),
+                    new Vector3(cuboid.to[0], cuboid.from[1], cuboid.from[2]),
+                    new Vector2(cuboid.to[0] - cuboid.from[0], cuboid.to[1] - cuboid.from[1]),
+                    new Vector3(0, 0, -1)
+                );
+                model.north.push(face);
+            }
+            if(cuboid.east) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.east),
+                    new Vector3(cuboid.to[0], cuboid.from[1], cuboid.to[2]),
+                    new Vector2(cuboid.to[2] - cuboid.from[2], cuboid.to[1] - cuboid.from[1]),
+                    new Vector3(1, 0, 0)
+                );
+                model.east.push(face);
+            }
+            if(cuboid.south) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.south),
+                    new Vector3(cuboid.from[0], cuboid.from[1], cuboid.to[2]),
+                    new Vector2(cuboid.to[0] - cuboid.from[0], cuboid.to[1] - cuboid.from[1]),
+                    new Vector3(0, 0, 1)
+                );
+                model.south.push(face);
+            }
+            if(cuboid.west) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.west),
+                    new Vector3(cuboid.from[0], cuboid.from[1], cuboid.from[2]),
+                    new Vector2(cuboid.to[2] - cuboid.from[2], cuboid.to[1] - cuboid.from[1]),
+                    new Vector3(-1, 0, 0)
+                );
+                model.west.push(face);
+            }
+            if(cuboid.up) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.up),
+                    new Vector3(cuboid.from[0], cuboid.to[1], cuboid.to[2]),
+                    new Vector2(cuboid.to[0] - cuboid.from[0], cuboid.to[2] - cuboid.from[2]),
+                    new Vector3(0, 1, 0)
+                );
+                model.up.push(face);
+            }
+            if(cuboid.down) {
+                const face = BlockModelFace.parseJson(
+                    this.parseFace(cuboid.down),
+                    new Vector3(cuboid.from[0], cuboid.from[1], cuboid.from[2]),
+                    new Vector2(cuboid.to[0] - cuboid.from[0], cuboid.to[2] - cuboid.from[2]),
+                    new Vector3(0, -1, 0)
+                );
+                model.down.push(face);
+            }
+        }
 
         for(const [ textureSlot, textureURI ] of Object.entries(json.textures ?? {})) {
             const textureSource = assets.textureRegistry.get(textureURI);
@@ -121,6 +170,14 @@ export class BlockModel {
         model.correctVertexIndices();
 
         return model;
+    }
+    private static parseFace(face: DataDrivenJson.BlockStateModelFace | string) {
+        if(typeof face == "string") {
+            face = DataDrivenJson.BlockStateModelFace.parse({
+                texture: face
+            });
+        }
+        return face;
     }
 
     public *faces() {

@@ -53,7 +53,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/block\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/block\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = TemplatableBlock.parse(JsonhReader.parseElementFromString(data).value);
@@ -61,7 +61,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/block_model\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/block_model\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = TemplatableBlockStateModel.parse(JsonhReader.parseElementFromString(data).value);
@@ -69,7 +69,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/event\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/event\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = TemplatableEventSheet.parse(JsonhReader.parseElementFromString(data).value);
@@ -77,7 +77,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/item\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/item\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = TemplatableItem.parse(JsonhReader.parseElementFromString(data).value);
@@ -85,7 +85,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/block_entity\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/block_entity\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = DataDrivenJson.BlockEntityType.parse(JsonhReader.parseElementFromString(data).value);
@@ -93,7 +93,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/ui\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/ui\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const j = JsonhReader.parseElementFromString(data).value;
@@ -102,7 +102,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/light\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/light\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = DataDrivenJson.LightChannelType.parse(JsonhReader.parseElementFromString(data).value);
@@ -110,7 +110,7 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/json_template\/.*\.jsonh?$/,
+            /^assets\/[^\/]+\/json_template\/.*\.json[ch]?$/,
             async (entry: FileEntry) => {
                 const data = await entry.getData(new TextWriter);
                 const json = DataDrivenJson.JsonTemplate.parse(JsonhReader.parseElementFromString(data).value);

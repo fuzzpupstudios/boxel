@@ -4,53 +4,18 @@
     "textures": {
         "block": "base:block/axes.png"
     },
-    
-    "north": [
+
+    "cuboids": [
         {
-            "pos": [ 1, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
-        }
-    ],
-    "east": [
-        {
-            "pos": [ 1, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
-        }
-    ],
-    "south": [
-        {
-            "pos": [ 0, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
-        }
-    ],
-    "west": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
-        }
-    ],
-    "up": [
-        {
-            "pos": [ 0, 1, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
-        }
-    ],
-    "down": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block"
+            "from": [ 0, 0, 0 ],
+            "to": [ 1, 1, 1 ],
+
+            "north": "block",
+            "east": "block",
+            "south": "block",
+            "west": "block",
+            "up": "block",
+            "down": "block"
         }
     ]
 }

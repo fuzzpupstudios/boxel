@@ -237,35 +237,10 @@ export class DataDrivenBlock extends Block {
                 }
             }
 
-            if(jsonModel.north == null) {
-                jsonModel.north = defaultModel.north!;
-            } else if(defaultModel.north != null) {
-                jsonModel.north.push(...defaultModel.north);
-            }
-            if(jsonModel.east == null) {
-                jsonModel.east = defaultModel.east!;
-            } else if(defaultModel.east != null) {
-                jsonModel.east.push(...defaultModel.east);
-            }
-            if(jsonModel.south == null) {
-                jsonModel.south = defaultModel.south!;
-            } else if(defaultModel.south != null) {
-                jsonModel.south.push(...defaultModel.south);
-            }
-            if(jsonModel.west == null) {
-                jsonModel.west = defaultModel.west!;
-            } else if(defaultModel.west != null) {
-                jsonModel.west.push(...defaultModel.west);
-            }
-            if(jsonModel.up == null) {
-                jsonModel.up = defaultModel.up!;
-            } else if(defaultModel.up != null) {
-                jsonModel.up.push(...defaultModel.up);
-            }
-            if(jsonModel.down == null) {
-                jsonModel.down = defaultModel.down!;
-            } else if(defaultModel.down != null) {
-                jsonModel.down.push(...defaultModel.down);
+            if(jsonModel.cuboids == null) {
+                jsonModel.cuboids = defaultModel.cuboids;
+            } else if(defaultModel.cuboids != null) {
+                defaultModel.cuboids.push(...jsonModel.cuboids);
             }
         }
     }

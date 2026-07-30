@@ -6,59 +6,18 @@
     "textures": {
         "block": "base:block/axes.png"
     },
-    
-    "north": [
+
+    "cuboids": [
         {
-            "pos": [ 1, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
-        }
-    ],
-    "east": [
-        {
-            "pos": [ 1, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
-        }
-    ],
-    "south": [
-        {
-            "pos": [ 0, 0, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
-        }
-    ],
-    "west": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
-        }
-    ],
-    "up": [
-        {
-            "pos": [ 0, 1, 1 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
-        }
-    ],
-    "down": [
-        {
-            "pos": [ 0, 0, 0 ],
-            "size": [ 1, 1 ],
-            "uv": [ 0, 0, 1, 1 ],
-            "texture": "block",
-            "lit": true
+            "from": [ 0, 0, 0 ],
+            "to": [ 1, 1, 1 ],
+
+            "north": { "texture": "block", "lit": true },
+            "east": { "texture": "block", "lit": true },
+            "south": { "texture": "block", "lit": true },
+            "west": { "texture": "block", "lit": true },
+            "up": { "texture": "block", "lit": true },
+            "down": { "texture": "block", "lit": true }
         }
     ]
 }

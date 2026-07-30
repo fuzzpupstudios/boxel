@@ -16,22 +16,18 @@ export class BlockModelFace {
     public texture = new TextureAtlasSlot;
     public aoReceiveWeight: number = 1;
 
-    public static parseJson(json: DataDrivenJson.BlockStateModelFace, normal: Vector3): BlockModelFace {
+    public static parseJson(json: DataDrivenJson.BlockStateModelFace, origin: Vector3, size: Vector2, normal: Vector3): BlockModelFace {
         const face = new BlockModelFace(normal);
 
-        const [ x, y, z ] = json.pos;
-        const [ width, height ] = json.size;
         const [ uvMinX, uvMinY, uvMaxX, uvMaxY ] = json.uv;
-
 
         const quaternion = new Quaternion();
         quaternion.setFromUnitVectors(new Vector3(0, 0, 1), normal);
 
-        const origin = new Vector3(x, y, z);
         face.v0.xyz.copy(new Vector3(0, 0).applyQuaternion(quaternion).add(origin));
-        face.v1.xyz.copy(new Vector3(0, height).applyQuaternion(quaternion).add(origin));
-        face.v2.xyz.copy(new Vector3(width, height).applyQuaternion(quaternion).add(origin));
-        face.v3.xyz.copy(new Vector3(width, 0).applyQuaternion(quaternion).add(origin));
+        face.v1.xyz.copy(new Vector3(0, size.y).applyQuaternion(quaternion).add(origin));
+        face.v2.xyz.copy(new Vector3(size.x, size.y).applyQuaternion(quaternion).add(origin));
+        face.v3.xyz.copy(new Vector3(size.x, 0).applyQuaternion(quaternion).add(origin));
 
         let uv0 = new Vector2(uvMinX, uvMinY);
         let uv1 = new Vector2(uvMinX, uvMaxY);

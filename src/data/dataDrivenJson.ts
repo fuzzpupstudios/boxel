@@ -61,13 +61,24 @@ export namespace DataDrivenJson {
 
     export type BlockStateModelFace = z.infer<typeof BlockStateModelFace>;
     export const BlockStateModelFace = z.object({
-        pos: z.tuple([ z.number(), z.number(), z.number() ]),
-        size: z.tuple([ z.number(), z.number() ]),
-        uv: z.tuple([ z.number(), z.number(), z.number(), z.number() ]),
         texture: z.string(),
+        uv: z.tuple([ z.number(), z.number(), z.number(), z.number() ]).default([ 0, 0, 1, 1 ]),
         rotation: z.number().optional(),
         lit: z.boolean().optional(),
         aoReceiveWeight: z.number().optional(),
+    });
+
+    export type BlockStateModelCuboid = z.infer<typeof BlockStateModelCuboid>;
+    export const BlockStateModelCuboid = z.object({
+        from: z.tuple([ z.number(), z.number(), z.number() ]),
+        to: z.tuple([ z.number(), z.number(), z.number() ]),
+        
+        north: BlockStateModelFace.or(z.string()).optional(),
+        east: BlockStateModelFace.or(z.string()).optional(),
+        south: BlockStateModelFace.or(z.string()).optional(),
+        west: BlockStateModelFace.or(z.string()).optional(),
+        up: BlockStateModelFace.or(z.string()).optional(),
+        down: BlockStateModelFace.or(z.string()).optional()
     });
 
     export type BlockStateModelIncludeEntry = {
@@ -103,12 +114,7 @@ export namespace DataDrivenJson {
 
         textures: z.record(z.string(), z.string()).optional(),
 
-        north: z.array(BlockStateModelFace).optional(),
-        east: z.array(BlockStateModelFace).optional(),
-        south: z.array(BlockStateModelFace).optional(),
-        west: z.array(BlockStateModelFace).optional(),
-        up: z.array(BlockStateModelFace).optional(),
-        down: z.array(BlockStateModelFace).optional(),
+        cuboids: z.array(BlockStateModelCuboid).optional(),
     });
 
     export type BlockState = z.infer<typeof BlockState>;
