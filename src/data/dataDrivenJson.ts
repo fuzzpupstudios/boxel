@@ -149,7 +149,6 @@ export namespace DataDrivenJson {
     export const Block = z.object({
         id: z.string(),
         blockEntity: z.string().optional(),
-        defaultStateProperties: BlockState.optional(),
         states: z.record(z.string(), BlockState),
     });
 

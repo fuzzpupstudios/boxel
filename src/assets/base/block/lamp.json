@@ -1,15 +1,16 @@
 {
     "id": "base:lamp",
-    "defaultStateProperties": {
-        "events": [ "base:material/stone", "base:block/drop_self" ],
-        "collider": {
-            "hitboxes": [
-                { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-            ]
-        }
-    },
     "states": {
+        "#default": {
+            "events": [ "base:material/stone", "base:block/drop_self" ],
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        },
         "color=white": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -23,6 +24,7 @@
             }
         },
         "color=red": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -34,6 +36,7 @@
             }
         },
         "color=green": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -45,6 +48,7 @@
             }
         },
         "color=blue": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -56,6 +60,7 @@
             }
         },
         "color=yellow": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -67,6 +72,7 @@
             }
         },
         "color=purple": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
@@ -78,6 +84,7 @@
             }
         },
         "color=sky": {
+            "parent": "#default",
             "model": {
                 "include": "base:full_block_lit",
                 "textures": {
