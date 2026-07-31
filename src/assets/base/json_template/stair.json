@@ -9,48 +9,30 @@
     "json": {
         "id": "${id}",
 
-        "defaultStateProperties": {
-            "model": {
-                "textures": {
-                    "block": "${texture}"
-                }
-            },
-            "events": {
-                "include": [ "base:stair", "${sound_events}" ],
-
-                "triggers": {
-                    "relay_drop": {
-                        "if": { "player": { "infiniteItems": false } },
-                        "then": {
-                            "id": "base:drop_item",
-                            "args": {
-                                "stack": "${id}[direction=west,half=bottom]"
-                            }
-                        }
-                    },
-                    "base:destroy": {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "relay_drop",
-                            "self": true
-                        }
-                    },
-                    "base:explode": {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "relay_drop",
-                            "self": true
-                        }
-                    }
-                }
-            },
-            "pickBlockState": "direction=west,half=bottom"
-        },
-
         "states": {
-            "direction=south,half=bottom": {
+            "#default": {
                 "model": {
-                    "include": "base:stair"
+                    "include": "base:stair",
+                    "textures": {
+                        "block": "${texture}"
+                    }
+                },
+                "events": {
+                    "include": [ "base:placement/stair", "${sound_events}" ],
+
+                    "triggers": {
+                        "relay_drop": {
+                            "if": { "player": { "infiniteItems": false } },
+                            "then": {
+                                "id": "base:drop_item",
+                                "args": {
+                                    "stack": "${id}[direction=west,half=bottom]"
+                                }
+                            }
+                        },
+                        "base:destroy": "self#relay_drop",
+                        "base:explode": "self#relay_drop"
+                    }
                 },
                 "collider": {
                     "hitboxes": [
@@ -58,129 +40,52 @@
                         { "from": [ 0, 0.5, 0.5 ], "to": [ 1, 1, 1 ] }
                     ]
                 },
-                "tags": [ "hidden" ]
+                "tags": [ "hidden" ],
+                "pickBlockState": "direction=west,half=bottom"
+            },
+
+
+            "direction=south,half=bottom": {
+                "parent": "#default"
             },
             "direction=west,half=bottom": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateY": { "angle": 1, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
-                        { "from": [ 0, 0.5, 0 ], "to": [ 0.5, 1, 1 ] }
-                    ]
-                }
+                "parent": "#default",
+                "transforms": { "rotateY": { "angle": 1, "transformUVs": true } },
+                "tags": [ "^hidden" ]
             },
             "direction=north,half=bottom": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateY": { "angle": 2, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
-                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 0.5 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": { "rotateY": { "angle": 2, "transformUVs": true } }
             },
             "direction=east,half=bottom": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateY": { "angle": 3, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 1 ] },
-                        { "from": [ 0.5, 0.5, 0 ], "to": [ 1, 1, 1 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": { "rotateY": { "angle": 3, "transformUVs": true } }
             },
 
             "direction=south,half=top": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateZ": { "angle": 2, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
-                        { "from": [ 0, 0, 0.5 ], "to": [ 1, 0.5, 1 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": { "rotateZ": { "angle": 2, "transformUVs": true } }
             },
             "direction=west,half=top": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateZ": { "angle": 2, "transformUVs": true } },
-                            { "rotateY": { "angle": 1, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
-                        { "from": [ 0, 0, 0 ], "to": [ 0.5, 0.5, 1 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": {
+                    "rotateZ": { "angle": 2, "transformUVs": true },
+                    "rotateY": { "angle": 1, "transformUVs": true }
+                }
             },
             "direction=north,half=top": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateZ": { "angle": 2, "transformUVs": true } },
-                            { "rotateY": { "angle": 2, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
-                        { "from": [ 0, 0, 0 ], "to": [ 1, 0.5, 0.5 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": {
+                    "rotateZ": { "angle": 2, "transformUVs": true },
+                    "rotateY": { "angle": 2, "transformUVs": true }
+                }
             },
             "direction=east,half=top": {
-                "model": {
-                    "include": {
-                        "model": "base:stair",
-                        "transforms": [
-                            { "rotateZ": { "angle": 2, "transformUVs": true } },
-                            { "rotateY": { "angle": 3, "transformUVs": true } }
-                        ]
-                    }
-                },
-                "collider": {
-                    "hitboxes": [
-                        { "from": [ 0, 0.5, 0 ], "to": [ 1, 1, 1 ] },
-                        { "from": [ 0.5, 0, 0 ], "to": [ 1, 0.5, 1 ] }
-                    ]
-                },
-                "tags": [ "hidden" ]
+                "parent": "#default",
+                "transforms": {
+                    "rotateZ": { "angle": 2, "transformUVs": true },
+                    "rotateY": { "angle": 3, "transformUVs": true }
+                }
             }
         }
     }

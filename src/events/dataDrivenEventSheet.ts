@@ -1,5 +1,6 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import { RunTriggerAction } from "./block/runTriggerAction";
 import type { EventAction } from "./eventAction";
 import { eventActionRegistry, eventPredicateRegistry } from "./eventActionRegistry";
 import { EventBranch } from "./eventBranch";
@@ -64,7 +65,7 @@ export class DataDrivenEventSheet extends EventSheet {
 
     private static parseAction(
         eventSheet: EventSheet,
-        action: DataDrivenJson.EventAction | DataDrivenJson.EventActionWithPredicate
+        action: DataDrivenJson.EventActionOrPredicate
     ): EventAction {
         if(isEventAction(action)) {
             const EventActionConstructor = eventActionRegistry.get(action.id);
@@ -93,6 +94,9 @@ export class DataDrivenEventSheet extends EventSheet {
             );
 
             return branch;
+        }
+        if(typeof action == "string") {
+            return new RunTriggerAction(eventSheet, action);
         }
 
         throw new ReferenceError("Cannot derive event action type");

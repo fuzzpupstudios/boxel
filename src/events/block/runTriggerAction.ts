@@ -4,8 +4,8 @@ import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
 import { eventSheetRegistry } from "../eventSheetRegistry";
 
-export type RunTriggerActionParameters = z.infer<typeof RunTriggerActionParameters>;
-export const RunTriggerActionParameters = z.object({
+export type FullParams = z.infer<typeof FullParams>;
+const FullParams = z.object({
     xOffset: z.number().default(0),
     yOffset: z.number().default(0),
     zOffset: z.number().default(0),
@@ -14,9 +14,33 @@ export const RunTriggerActionParameters = z.object({
     triggerName: z.string()
 });
 
-export class RunTriggerAction extends EventAction<RunTriggerActionParameters> {
-    public constructor(eventSheet: EventSheet, args: RunTriggerActionParameters) {
-        super(eventSheet, RunTriggerActionParameters.parse(args));
+export type RunTriggerActionParameters = z.infer<typeof RunTriggerActionParameters>;
+export const RunTriggerActionParameters = FullParams.or(z.string());
+
+export class RunTriggerAction extends EventAction<FullParams> {
+    public constructor(eventSheet: EventSheet, args: any) {
+        const parsedParams = RunTriggerActionParameters.parse(args);
+
+        if(typeof parsedParams == "string") {
+            super(eventSheet, FullParams.parse({ triggerName: parsedParams }));
+        } else {
+            super(eventSheet, FullParams.parse(parsedParams));
+        }
+
+        const groups = /^([^#]+)#(.*)$/g.exec(this.args.triggerName);
+        
+        if(groups) {
+            const eventSheetId = groups[1];
+            const triggerName = groups[2];
+
+            if(eventSheetId == "self") {
+                this.args.self = true;
+                this.args.triggerName = triggerName!;
+            } else {
+                this.args.eventSheetId = eventSheetId;
+                this.args.triggerName = triggerName!;
+            }
+        }
     }
     public override run(cursor: EventCursor): void {
         if(this.args.self) {

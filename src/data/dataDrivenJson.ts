@@ -28,12 +28,12 @@ export namespace DataDrivenJson {
     });
 
     export type EventActionOrPredicate = z.infer<typeof EventActionOrPredicate>;
-    export const EventActionOrPredicate = z.union([ EventAction, EventActionWithPredicate ]);
+    export const EventActionOrPredicate = z.union([ z.string(), EventAction, EventActionWithPredicate ]);
 
     export type EventSheet = {
         id?: string | undefined,
         include?: EventSheetList | undefined,
-        triggers?: Record<string, EventActionOrPredicate | EventActionOrPredicate[]> | undefined
+        triggers?: Record<string, string | EventActionOrPredicate | EventActionOrPredicate[]> | undefined
     };
     export const EventSheet: z.ZodType<EventSheet> = z.object({
         id: z.string().optional(),
@@ -49,7 +49,11 @@ export namespace DataDrivenJson {
         hitboxes: z.array(z.object({
             from: z.tuple([ z.number(), z.number(), z.number() ]),
             to: z.tuple([ z.number(), z.number(), z.number() ]),
-        })),
+        })).optional(),
+        transforms: z.union([
+            z.array(z.record(z.string(), z.any())),
+            z.record(z.string(), z.any()),
+        ]).optional(),
     });
 
     export type InventoryGuiSlotType = z.infer<typeof InventoryGuiSlotType>;
@@ -102,6 +106,11 @@ export namespace DataDrivenJson {
             z.string(),
         ]).optional(),
 
+        transforms: z.union([
+            z.array(z.record(z.string(), z.any())),
+            z.record(z.string(), z.any()),
+        ]).optional(),
+
         occlude: z.boolean().optional(),
         occludeNorth: z.boolean().optional(),
         occludeEast: z.boolean().optional(),
@@ -119,7 +128,8 @@ export namespace DataDrivenJson {
 
     export type BlockState = z.infer<typeof BlockState>;
     export const BlockState = z.object({
-        model: z.union([ BlockStateModel, z.string() ]),
+        parent: z.string().optional(),
+        model: z.union([ BlockStateModel, z.string() ]).optional(),
         events: EventSheetList.optional(),
         canPlace: z.union([ EventActionPredicateTree, z.boolean() ]).optional(),
         collider: BlockStateCollider.optional(),
@@ -128,14 +138,18 @@ export namespace DataDrivenJson {
         tags: z.array(z.string()).optional(),
         pickBlockState: z.string().optional(),
         renderAsTexture: z.string().optional(),
-        destroyTime: z.number().default(1)
+        destroyTime: z.number().optional(),
+        transforms: z.union([
+            z.array(z.record(z.string(), z.any())),
+            z.record(z.string(), z.any()),
+        ]).optional(),
     });
 
     export type Block = z.infer<typeof Block>;
     export const Block = z.object({
         id: z.string(),
         blockEntity: z.string().optional(),
-        defaultStateProperties: BlockState.partial().optional(),
+        defaultStateProperties: BlockState.optional(),
         states: z.record(z.string(), BlockState),
     });
 

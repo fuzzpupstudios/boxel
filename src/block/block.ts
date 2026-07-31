@@ -3,7 +3,6 @@ import type { BlockEntityType } from "./entity/blockEntity";
 
 export abstract class Block {
     public states: Map<string, BlockState> = new Map;
-    public abstract defaultState: BlockState;
     public abstract id: string;
     public blockEntity: BlockEntityType | null = null;
 

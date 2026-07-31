@@ -1,5 +1,5 @@
 import { blockStateRegistry } from "../block/blockRegistry";
-import type { TileCollider } from "../entity/entity";
+import type { TileCollider } from "../block/collider";
 import type { EventAction } from "../events/eventAction";
 
 export class PhysicsDataCache {

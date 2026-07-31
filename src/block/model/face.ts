@@ -65,6 +65,7 @@ export class BlockModelFace {
         
         face.rotation = this.rotation;
         face.lit = this.lit;
+        face.textureSlot = this.textureSlot;
         face.texture.copyFrom(this.texture);
 
         return face;

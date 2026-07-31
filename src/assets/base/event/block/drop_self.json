@@ -1,5 +1,5 @@
 {
-    "id": "base:drop_self",
+    "id": "base:block/drop_self",
     
     "triggers": {
         "base:destroy": {

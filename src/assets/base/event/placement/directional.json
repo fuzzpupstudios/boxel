@@ -1,63 +1,68 @@
 {
-    "id": "base:slab",
+    "id": "base:placement/directional",
     
     "triggers": {
         "base:place": [
             {
                 "if": {
-                    "face": {
-                        "sides": [ "north", "east", "south", "west" ],
-                        "minY": 0.5
+                    "entity": {
+                        "minYaw": -45,
+                        "maxYaw": 45
                     }
                 },
                 "then": {
                     "id": "base:set_block_state_parameter",
                     "args": {
                         "parameters": {
-                            "half": "top"
+                            "direction": "north"
                         }
                     }
                 }
             },
             {
                 "if": {
-                    "face": {
-                        "sides": [ "north", "east", "south", "west" ],
-                        "maxY": 0.5
+                    "entity": {
+                        "minYaw": 45,
+                        "maxYaw": 135
                     }
                 },
                 "then": {
                     "id": "base:set_block_state_parameter",
                     "args": {
                         "parameters": {
-                            "half": "bottom"
-                        }
-                    }
-                }
-            },
-
-            {
-                "if": {
-                    "face": "down"
-                },
-                "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
-                        "parameters": {
-                            "half": "top"
+                            "direction": "east"
                         }
                     }
                 }
             },
             {
                 "if": {
-                    "face": "up"
+                    "entity": {
+                        "minYaw": 135,
+                        "maxYaw": -135
+                    }
                 },
                 "then": {
                     "id": "base:set_block_state_parameter",
                     "args": {
                         "parameters": {
-                            "half": "bottom"
+                            "direction": "south"
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "entity": {
+                        "minYaw": -135,
+                        "maxYaw": -45
+                    }
+                },
+                "then": {
+                    "id": "base:set_block_state_parameter",
+                    "args": {
+                        "parameters": {
+                            "direction": "west"
                         }
                     }
                 }

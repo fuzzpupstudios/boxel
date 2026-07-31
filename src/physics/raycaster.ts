@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { getUnknownBlockState } from "../block/blockRegistry";
+import type { TileCollider } from "../block/collider";
 import { Side } from "../block/direction";
-import type { TileCollider } from "../entity/entity";
 import type { World } from "../world/world";
 import type { PhysicsDataCache } from "./physicsDataCache";
 

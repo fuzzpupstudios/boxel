@@ -6,9 +6,7 @@
     "occludeSouth": true,
     "aoCastWeight": 0,
 
-    "textures": {
-        "block": "base:block/axes.png"
-    },
+    "textures": {},
 
     "cuboids": [
         {

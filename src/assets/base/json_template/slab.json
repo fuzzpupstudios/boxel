@@ -9,41 +9,31 @@
     "json": {
         "id": "${id}",
 
-        "defaultStateProperties": {
-            "events": {
-                "include": [ "base:slab", "${sound_events}" ],
-
-                "triggers": {
-                    "relay_drop": {
-                        "if": { "player": { "infiniteItems": false } },
-                        "then": {
-                            "id": "base:drop_item",
-                            "args": {
-                                "stack": "${id}[half=bottom]"
-                            }
-                        }
-                    },
-                    "base:destroy": {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "relay_drop",
-                            "self": true
-                        }
-                    },
-                    "base:explode": {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "relay_drop",
-                            "self": true
-                        }
-                    }
-                }
-            },
-            "pickBlockState": "half=bottom"
-        },
-
         "states": {
+            "#default": {
+                "events": {
+                    "include": [ "base:placement/slab", "${sound_events}" ],
+
+                    "triggers": {
+                        "relay_drop": {
+                            "if": { "player": { "infiniteItems": false } },
+                            "then": {
+                                "id": "base:drop_item",
+                                "args": {
+                                    "stack": "${id}[half=bottom]"
+                                }
+                            }
+                        },
+                        "base:destroy": "self#relay_drop",
+                        "base:explode": "self#relay_drop"
+                    }
+                },
+                "pickBlockState": "half=bottom"
+            },
+
+
             "half=bottom": {
+                "parent": "#default",
                 "model": {
                     "include": "base:slab_bottom",
                     "textures": {
@@ -57,6 +47,7 @@
                 }
             },
             "half=top": {
+                "parent": "#default",
                 "model": {
                     "include": "base:slab_top",
                     "textures": {

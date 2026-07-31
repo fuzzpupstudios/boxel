@@ -1,5 +1,5 @@
 {
-    "id": "base:door_common",
+    "id": "base:block/door_common",
     "triggers": {
         "door_open_relay": [
             {

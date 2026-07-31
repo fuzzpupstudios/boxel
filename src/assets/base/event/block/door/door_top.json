@@ -1,7 +1,7 @@
 {
-    "id": "base:door_top",
+    "id": "base:block/door_top",
 
-    "include": "base:door_common",
+    "include": "base:block/door_common",
     
     "triggers": {
         "base:destroy": [

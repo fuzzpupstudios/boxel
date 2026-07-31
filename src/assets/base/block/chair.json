@@ -1,81 +1,55 @@
 {
     "id": "base:chair",
 
-    "defaultStateProperties": {
-        "events": {
-            "include": [ "base:sound_materials/wood", "base:directional" ],
-
-            "triggers": {
-                "relay_drop": {
-                    "if": { "player": { "infiniteItems": false } },
-                    "then": {
-                        "id": "base:drop_item",
-                        "args": {
-                            "stack": "base:chair[direction=west]"
-                        }
-                    }
-                },
-                "base:destroy": {
-                    "id": "base:run_trigger",
-                    "args": {
-                        "triggerName": "relay_drop",
-                        "self": true
-                    }
-                },
-                "base:explode": {
-                    "id": "base:run_trigger",
-                    "args": {
-                        "triggerName": "relay_drop",
-                        "self": true
-                    }
-                }
-            }
-        },
-        "collider": {
-            "hitboxes": [
-                { "from": [ 0.125, 0, 0.125 ], "to": [ 0.875, 0.625, 0.875 ] }
-            ]
-        },
-        "pickBlockState": "direction=west"
-    },
     "states": {
-        "direction=north": {
-            "model": {
-                "include": {
-                    "model": "base:chair",
-                    "transforms": [
-                        { "rotateY": 2 }
-                    ]
+        "#default": {
+            "model": "base:chair",
+            "events": {
+                "include": [ "base:material/wood", "base:placement/directional" ],
+
+                "triggers": {
+                    "relay_drop": {
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": {
+                            "id": "base:drop_item",
+                            "args": {
+                                "stack": "base:chair[direction=west]"
+                            }
+                        }
+                    },
+                    "base:destroy": "self#relay_drop",
+                    "base:explode": "self#relay_drop"
                 }
             },
-            "tags": [ "hidden" ]
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0.125, 0, 0.125 ], "to": [ 0.875, 0.625, 0.875 ] }
+                ]
+            },
+            "tags": [ "hidden" ],
+            "pickBlockState": "direction=west"
+        },
+        "direction=north": {
+            "parent": "#default",
+            "model": {
+                "transforms": { "rotateY": 2 }
+            }
         },
         "direction=east": {
+            "parent": "#default",
             "model": {
-                "include": {
-                    "model": "base:chair",
-                    "transforms": [
-                        { "rotateY": 3 }
-                    ]
-                }
-            },
-            "tags": [ "hidden" ]
+                "transforms": { "rotateY": 3 }
+            }
         },
         "direction=south": {
-            "model": {
-                "include": "base:chair"
-            },
-            "tags": [ "hidden" ]
+            "parent": "#default"
         },
         "direction=west": {
+            "parent": "#default",
             "model": {
-                "include": {
-                    "model": "base:chair",
-                    "transforms": [
-                        { "rotateY": 1 }
-                    ]
-                }
-            }
+                "transforms": { "rotateY": 1 }
+            },
+            "tags": [ "^hidden" ]
         }
     }
 }

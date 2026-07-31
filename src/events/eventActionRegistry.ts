@@ -1,6 +1,7 @@
 import { KeyedRegistry } from "objectregistry";
 import { CloneBlockAction } from "./block/cloneBlockAction";
 import { ExplodeAction } from "./block/explodeAction";
+import { ParticleAction } from "./block/particleAction";
 import { RunTriggerAction } from "./block/runTriggerAction";
 import { SetBlockStateIdAction } from "./block/setBlockStateIdAction";
 import { SetBlockStateParameterAction } from "./block/setBlockStateParameterAction";
@@ -37,6 +38,7 @@ eventActionRegistry.register("base:prevent_default", PreventDefaultAction);
 
 eventActionRegistry.register("base:drop_item", DropItemAction);
 eventActionRegistry.register("base:drop_block_item", DropBlockItemAction);
+eventActionRegistry.register("base:particle", ParticleAction);
 
 eventActionRegistry.lock();
 

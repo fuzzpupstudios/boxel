@@ -5,7 +5,7 @@
         "arguments": {
             "texture": "base:block/planks.png",
             "id": "base:planks_stair",
-            "sound_events": "base:sound_materials/wood"
+            "sound_events": "base:material/wood"
         }
     }
 }

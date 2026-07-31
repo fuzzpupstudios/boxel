@@ -1,5 +1,5 @@
 {
-    "id": "base:sound_materials/solid",
+    "id": "base:material/solid",
 
     "triggers": {
         "base:place": [

@@ -8,7 +8,7 @@
                     "block": "base:block/axes.png"
                 }
             },
-            "events": [ "base:sound_materials/solid", "base:drop_self" ],
+            "events": [ "base:material/solid", "base:block/drop_self" ],
             "collider": {
                 "hitboxes": [
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }

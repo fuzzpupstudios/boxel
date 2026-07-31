@@ -393,6 +393,7 @@ export class BoxelGame {
             
             this.textureAtlases.block.addTexture(textureId, textureSource);
         }
+        this.textureAtlases.block.setDefaultTexture("base:block/axes.png");
         await this.textureAtlases.block.pack();
 
     
@@ -401,6 +402,7 @@ export class BoxelGame {
             
             this.textureAtlases.item.addTexture(textureId, textureSource);
         }
+        this.textureAtlases.item.setDefaultTexture("base:item/axes.png");
         await this.textureAtlases.item.pack();
 
         const fontLoader = new FontLoader("BoxelFont");

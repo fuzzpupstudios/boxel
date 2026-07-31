@@ -1,5 +1,5 @@
 {
-    "id": "base:sound_materials/foliage",
+    "id": "base:material/foliage",
 
     "triggers": {
         "base:place": [

@@ -4,8 +4,8 @@ import { DataDrivenJson } from "../../data/dataDrivenJson";
 import type { TextureAtlas } from "../../data/textureAtlas";
 import type { TileMesh } from "../../rendering/chunkMesher";
 import { parseModel } from "../jsonParseUtils";
+import { blockTransformRegistry } from "../transform/blockTransformRegistry";
 import { BlockModelFace } from "./face";
-import { blockModelTransforms } from "./transforms";
 
 export class BlockModel {
     public occludeNorth?: boolean;
@@ -26,7 +26,7 @@ export class BlockModel {
 
     public aoCastWeight?: number;
 
-    public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets): BlockModel {
+    public static parseJson(json: DataDrivenJson.BlockStateModel, assets: Assets, defaultModel?: BlockModel): BlockModel {
         const includes = new Array<DataDrivenJson.BlockStateModelIncludeEntry>;
 
         for(const include of json.include instanceof Array ? json.include : [ json.include ]) {
@@ -52,41 +52,12 @@ export class BlockModel {
 
         const model = new BlockModel;
 
+        if(defaultModel != null) {
+            this.includeModel(model, defaultModel.clone());
+        }
         for(const include of includes) {
             const parsedModel = parseModel(include.model, assets);
-
-            if(include.transforms != null) {
-                for(const transforms of include.transforms instanceof Array ? include.transforms : [ include.transforms ]) {
-                    for(const [ id, params ] of Object.entries(transforms)) {
-                        const transform = blockModelTransforms[id];
-                        if(transform == null) throw new ReferenceError("Unknown transform " + id);
-
-                        transform(parsedModel, params);
-                    }
-                }
-            }
-
-            model.occludeNorth = parsedModel.occludeNorth ?? model.occludeNorth!;
-            model.occludeEast = parsedModel.occludeEast ?? model.occludeEast!;
-            model.occludeSouth = parsedModel.occludeSouth ?? model.occludeSouth!;
-            model.occludeWest = parsedModel.occludeWest ?? model.occludeWest!;
-            model.occludeUp = parsedModel.occludeUp ?? model.occludeUp!;
-            model.occludeDown = parsedModel.occludeDown ?? model.occludeDown!;
-
-
-            model.north.push(...parsedModel.north);
-            model.east.push(...parsedModel.east);
-            model.south.push(...parsedModel.south);
-            model.west.push(...parsedModel.west);
-            model.up.push(...parsedModel.up);
-            model.down.push(...parsedModel.down);
-
-            model.aoCastWeight = parsedModel.aoCastWeight ?? model.aoCastWeight!;
-
-
-            for(const [ textureSlot, textureURI ] of parsedModel.textureURIs) {
-                model.textureURIs.set(textureSlot, textureURI);
-            }
+            this.includeModel(model, parsedModel, include.transforms);
         }
 
         model.occludeNorth = json.occludeNorth ?? json.occlude ?? model.occludeNorth!;
@@ -155,12 +126,11 @@ export class BlockModel {
         }
 
         for(const [ textureSlot, textureURI ] of Object.entries(json.textures ?? {})) {
-            const textureSource = assets.textureRegistry.get(textureURI);
-            if(textureSource == null) {
-                throw new ReferenceError("Texture " + textureURI + " doesn't exist");
-            }
-
             model.textureURIs.set(textureSlot, textureURI);
+        }
+
+        if(json.transforms != null) {
+            this.applyTransforms(model, json.transforms);
         }
 
         for(const face of model.faces()) {
@@ -170,6 +140,50 @@ export class BlockModel {
         model.correctVertexIndices();
 
         return model;
+    }
+    private static includeModel(
+        baseModel: BlockModel,
+        includedModel: BlockModel,
+        transforms?: Record<string, any> | Record<string, any>[]
+    ) {
+        if(transforms != null) {
+            this.applyTransforms(includedModel, transforms);
+        }
+
+        baseModel.occludeNorth = includedModel.occludeNorth ?? baseModel.occludeNorth!;
+        baseModel.occludeEast = includedModel.occludeEast ?? baseModel.occludeEast!;
+        baseModel.occludeSouth = includedModel.occludeSouth ?? baseModel.occludeSouth!;
+        baseModel.occludeWest = includedModel.occludeWest ?? baseModel.occludeWest!;
+        baseModel.occludeUp = includedModel.occludeUp ?? baseModel.occludeUp!;
+        baseModel.occludeDown = includedModel.occludeDown ?? baseModel.occludeDown!;
+
+
+        baseModel.north.push(...includedModel.north);
+        baseModel.east.push(...includedModel.east);
+        baseModel.south.push(...includedModel.south);
+        baseModel.west.push(...includedModel.west);
+        baseModel.up.push(...includedModel.up);
+        baseModel.down.push(...includedModel.down);
+
+        baseModel.aoCastWeight = includedModel.aoCastWeight ?? baseModel.aoCastWeight!;
+
+        for(const [ textureSlot, textureURI ] of includedModel.textureURIs) {
+            baseModel.textureURIs.set(textureSlot, textureURI);
+        }
+    }
+    private static applyTransforms(parsedModel: BlockModel, transforms: Record<string, any> | Record<string, any>[]) {
+        for(const transformList of transforms instanceof Array ? transforms : [ transforms ]) {
+            for(const [ id, params ] of Object.entries(transformList)) {
+                const TransformConstructor = blockTransformRegistry.get(id);
+                try {
+                    if(TransformConstructor == null) throw new ReferenceError("Unknown transform");
+
+                    new TransformConstructor(params).transformModel(parsedModel);
+                } catch(e) {
+                    throw new Error("Failed to apply model transform " + id, { cause: e });
+                }
+            }
+        }
     }
     private static parseFace(face: DataDrivenJson.BlockStateModelFace | string) {
         if(typeof face == "string") {
@@ -229,11 +243,10 @@ export class BlockModel {
     public rotateX(count: number, pivot: Vector2, transformUVs: boolean) {
         if(count == 0) return;
         
-        const offset = new Vector3(0, pivot.y, pivot.x);
+        const offset = new Vector3(0, pivot.y, 1 - pivot.x);
         this.translate(offset.clone().multiplyScalar(-1), false);
 
         for(let i = 0; i < (count % 4 + 4) % 4; i++) {
-            
             for(const face of this.faces()) {
                 face.applyMatrix4(new Matrix4().makeRotationX(Math.PI * -0.5));
             }
@@ -268,7 +281,7 @@ export class BlockModel {
     public rotateY(count: number, pivot: Vector2, transformUVs: boolean) {
         if(count == 0) return;
         
-        const offset = new Vector3(pivot.x, 0, pivot.y);
+        const offset = new Vector3(pivot.x, 0, 1 - pivot.y);
         this.translate(offset.clone().multiplyScalar(-1), false);
         
         for(let i = 0; i < (count % 4 + 4) % 4; i++) {
@@ -334,6 +347,38 @@ export class BlockModel {
             [ this.west, this.up, this.east, this.down ];
         }
         this.translate(offset, false);
+    }
+
+    public scale(scale: Vector3, anchor: Vector3, transformUVs: boolean) {
+        const matrix4 = new Matrix4().makeScale(scale.x, scale.y, scale.z);
+
+        this.translate(anchor.clone().multiplyScalar(-1), transformUVs);
+        for(const face of this.faces()) {
+            face.applyMatrix4(matrix4);
+        }
+
+        if(transformUVs) {
+            for(const face of this.north) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.x, 1 / scale.y));
+            }
+            for(const face of this.south) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.x, 1 / scale.y));
+            }
+            for(const face of this.east) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.z, 1 / scale.y));
+            }
+            for(const face of this.west) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.z, 1 / scale.y));
+            }
+            for(const face of this.up) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.x, 1 / scale.z));
+            }
+            for(const face of this.down) {
+                face.applyMatrix3(new Matrix3().scale(1 / scale.x, 1 / scale.z));
+            }
+        }
+
+        this.translate(anchor, transformUVs);
     }
 
     public correctVertexIndices() {
@@ -406,5 +451,31 @@ export class BlockModel {
 
             aoCastWeight: this.aoCastWeight ?? 1
         }
+    }
+
+    public clone() {
+        const model = new BlockModel;
+
+        model.occludeNorth = this.occludeNorth!;
+        model.occludeEast = this.occludeEast!;
+        model.occludeSouth = this.occludeSouth!;
+        model.occludeWest = this.occludeWest!;
+        model.occludeUp = this.occludeUp!;
+        model.occludeDown = this.occludeDown!;
+
+        model.north.push(...this.north.map(face => face.clone()));
+        model.east.push(...this.east.map(face => face.clone()));
+        model.south.push(...this.south.map(face => face.clone()));
+        model.west.push(...this.west.map(face => face.clone()));
+        model.up.push(...this.up.map(face => face.clone()));
+        model.down.push(...this.down.map(face => face.clone()));
+
+        for(const [ alias, uri ] of this.textureURIs.entries()) {
+            model.textureURIs.set(alias, uri);
+        }
+
+        model.aoCastWeight = this.aoCastWeight!;
+
+        return model;
     }
 }

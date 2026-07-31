@@ -10,7 +10,7 @@
                 }
             },
             "events": {
-                "include": [ "base:sound_materials/wood", "base:drop_self" ],
+                "include": [ "base:material/wood", "base:block/drop_self" ],
 
                 "triggers": {
                     "base:interact": [

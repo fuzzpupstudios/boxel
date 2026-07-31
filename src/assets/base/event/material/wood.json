@@ -1,5 +1,5 @@
 {
-    "id": "base:sound_materials/wood",
+    "id": "base:material/wood",
 
     "triggers": {
         "base:place": [

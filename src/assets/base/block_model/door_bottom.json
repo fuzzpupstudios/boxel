@@ -1,13 +1,5 @@
 {
     "id": "base:door_bottom",
-    
-    "textures": {
-        "front": "base:block/axes.png",
-        "back": "base:block/axes.png",
-        "side": "base:block/axes.png",
-        "hinge": "base:block/axes.png",
-        "bottom": "base:block/axes.png"
-    },
 
     "occlude": false,
     "aoCastWeight": 0,

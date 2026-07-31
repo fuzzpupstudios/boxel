@@ -29,11 +29,6 @@ export class TextureAtlasSlot {
         this.textureId = textureId;
     }
 
-    public copyFrom(other: TextureAtlasSlot) {
-        this.box2.copy(other.box2);
-        this.textureId = other.textureId;
-    }
-
     public setTextureAtlas(atlas: TextureAtlas) {
         const texturePosition = atlas.getPosition(this.textureId);
         if(atlas.packedImage == null) throw new Error("Atlas has not been packed yet");
@@ -54,6 +49,17 @@ export class TextureAtlasSlot {
         frame.scale(atlas.packedImage!.width, atlas.packedImage!.height);
 
         return new PixiTexture({ source: atlas.pixiTexture.source, frame });
+    }
+
+    public clone(): TextureAtlasSlot {
+        const slot = new TextureAtlasSlot;
+        slot.copyFrom(this);
+        return slot;
+    }
+
+    public copyFrom(other: TextureAtlasSlot) {
+        this.box2.copy(other.box2);
+        this.textureId = other.textureId;
     }
 }
 

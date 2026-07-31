@@ -1,7 +1,7 @@
 {
-    "id": "base:door_bottom",
+    "id": "base:block/door_bottom",
 
-    "include": "base:door_common",
+    "include": "base:block/door_common",
     
     "triggers": {
         "base:destroy": [

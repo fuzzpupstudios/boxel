@@ -1,15 +1,26 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../data/textureAtlas";
+import { ConstantPredicate, type EventPredicate } from "../events/eventPredicate";
+import { EventSheet } from "../events/eventSheet";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 import { Block } from "./block";
 import { BlockState } from "./blockState";
+import { TileCollider } from "./collider";
 import { blockEntityTypeRegistry } from "./entity/blockEntityRegistry";
 import { parseEvents, parseJsonCollider, parseModel, parsePredicate, parseTags } from "./jsonParseUtils";
+import { BlockModel } from "./model/blockModel";
+import { blockTransformRegistry } from "./transform/blockTransformRegistry";
 
+class PlaceholderBlock extends Block {
+    public constructor(
+        public readonly id: string
+    ) {
+        super();
+    }
+}
 
 export class DataDrivenBlock extends Block {
-    public defaultState: BlockState = null!;
     public id: string = "default";
 
     public static parseJson(
@@ -17,231 +28,205 @@ export class DataDrivenBlock extends Block {
         assets: Assets
     ) {
         const block = new DataDrivenBlock;
-
-        let defaultState;
-
         block.id = json.id;
-
+        
         if(json.blockEntity != null) {
             block.blockEntity = blockEntityTypeRegistry.get(json.blockEntity);
             if(block.blockEntity == null) {
                 throw new ReferenceError("Cannot find block entity " + json.blockEntity);
             }
         }
-
+        
         for(const [ stateKey, jsonState ] of Object.entries(json.states)) {
-            if(json.defaultStateProperties != null) {
-                this.applyDefaultProperties(structuredClone(json.defaultStateProperties), jsonState);
-            }
+            if(stateKey[0] == "#") continue;
             try {
                 const blockState = this.parseState(block, stateKey, jsonState, assets);
 
-                block.states.set(stateKey, blockState);
-                defaultState ??= blockState;
+                block.states.set(stateKey, blockState.compile());
             } catch(e) {
                 throw new Error("Failed to parse state " + stateKey, { cause: e });
             }
         }
 
-        if(defaultState == null) {
-            throw new ReferenceError("Default state could not be determined (are there states defined?)");
-        } else {
-            block.defaultState = block.states.get("default") ?? defaultState;
-        }
-
         return block;
     }
-    private static parseState(block: Block, stateKey: string, jsonState: DataDrivenJson.BlockState, assets: Assets) {
-        const collider = parseJsonCollider(
-            jsonState.collider ?? { hitboxes: [] });
+    private static parseState(
+        block: Block,
+        stateKey: string,
+        jsonState: DataDrivenJson.BlockState,
+        assets: Assets
+    ) {
+        const state = new DataDrivenBlockState(block, stateKey);
 
-        const tags = parseTags(jsonState.tags);
+        let defaultState: DataDrivenBlockState | undefined;
 
-        let emission: Record<string, number>;
-        if(jsonState.emission == null) {
-            emission = {};
-            for(const lightChannel of lightChannelRegistry.values()) {
-                emission[lightChannel.id] = lightChannel.defaultEmission;
+        if(jsonState.parent != null) {
+            let parentBlockId = block.id;
+            let parentStateKey = jsonState.parent;
+            
+            const qualified = /^([^:]*:[^:]*)\[([^\]]*)\]$/.exec(jsonState.parent);
+            if(qualified) {
+                parentBlockId = qualified[1]!;
+                parentStateKey = qualified[2]!;
             }
-        } else if(typeof jsonState.emission == "number") {
-            emission = {};
-            for(const lightChannelId of lightChannelRegistry.keys()) {
-                emission[lightChannelId] = jsonState.emission;
-            }
-        } else {
-            emission = jsonState.emission
+
+            const parentBlockJson = assets.blockRegistry.get(parentBlockId);
+            if(parentBlockJson == null) throw new Error("Cannot find parent block id " + parentBlockId);
+
+            const parentBlockStateJson = parentBlockJson.states[parentStateKey] ?? parentBlockJson.states["#" + parentStateKey];
+            if(parentBlockStateJson == null) throw new Error("Cannot find parent state key " + parentStateKey);
+
+            defaultState = this.parseState(
+                new PlaceholderBlock(parentBlockId),
+                parentStateKey,
+                parentBlockStateJson,
+                assets
+            );
         }
 
-        let attenuation: Record<string, number>;
-        if(jsonState.attenuation == null) {
-            attenuation = {};
-            for(const lightChannel of lightChannelRegistry.values()) {
-                attenuation[lightChannel.id] = lightChannel.defaultAttenuation;
-            }
-        } else if(typeof jsonState.attenuation == "number") {
-            attenuation = {};
-            for(const lightChannelId of lightChannelRegistry.keys()) {
-                attenuation[lightChannelId] = jsonState.attenuation;
-            }
-        } else {
-            attenuation = jsonState.attenuation
+        if(jsonState.collider != null) {    
+            state.collider = parseJsonCollider(jsonState.collider, defaultState?.collider);
+        } else if(defaultState?.collider != null) {
+            state.collider = defaultState.collider.clone();
         }
 
-        const pickBlockState = jsonState.pickBlockState ?? stateKey;
+        for(const tag of parseTags(jsonState.tags, defaultState?.tags)) {
+            state.tags.add(tag);
+        }
 
-        let renderAsTexture: TextureAtlasSlot | null = null;
+        if(defaultState != null) {
+            for(const [ lightChannelId, value ] of defaultState.emission.entries()) {
+                state.emission.set(lightChannelId, value);
+            }
+        }
+        if(jsonState.emission != null) {
+            if(typeof jsonState.emission == "number") {
+                for(const lightChannelId of lightChannelRegistry.keys()) {
+                    state.emission.set(lightChannelId, jsonState.emission);
+                }
+            } else {
+                for(const [ lightChannelId, value ] of Object.entries(jsonState.emission)) {
+                    state.emission.set(lightChannelId, value);
+                }
+            }
+        }
+
+        if(defaultState != null) {
+            for(const [ lightChannelId, value ] of defaultState.attenuation.entries()) {
+                state.attenuation.set(lightChannelId, value);
+            }
+        }
+        if(jsonState.attenuation != null) {
+            if(typeof jsonState.attenuation == "number") {
+                for(const lightChannelId of lightChannelRegistry.keys()) {
+                    state.attenuation.set(lightChannelId, jsonState.attenuation);
+                }
+            } else {
+                for(const [ lightChannelId, value ] of Object.entries(jsonState.attenuation)) {
+                    state.attenuation.set(lightChannelId, value);
+                }
+            }
+        }
+
+        if(jsonState.pickBlockState != null) {
+            state.pickBlockStateId = jsonState.pickBlockState;
+        } else if(defaultState?.pickBlockStateId != null) {
+            state.pickBlockStateId = defaultState.pickBlockStateId;
+        }
+        
         if(jsonState.renderAsTexture != null) {
-            renderAsTexture = new TextureAtlasSlot(jsonState.renderAsTexture);
+            state.renderAsTexture = new TextureAtlasSlot(jsonState.renderAsTexture);
+        } else if(defaultState?.renderAsTexture != null) {
+            state.renderAsTexture = defaultState.renderAsTexture.clone();
         }
 
-        let model;
         try {
-            model = parseModel(jsonState.model, assets);
+            state.model = parseModel(jsonState.model, assets, defaultState?.model);
         } catch(e) {
             throw new Error("Failed to parse model", { cause: e });
         }
 
-        let eventSheet;
         try {
-            eventSheet = parseEvents(jsonState.events, assets);
+            state.events = parseEvents(jsonState.events, assets, defaultState?.events);
         } catch(e) {
             throw new Error("Failed to parse events " + jsonState.events, { cause: e });
         }
         
-        let canPlacePredicate;
-        try {
-            canPlacePredicate = parsePredicate(jsonState.canPlace);
-        } catch(e) {
-            throw new Error("Failed to parse canPlace predicate", { cause: e });
+        if(jsonState.canPlace != null) {
+            try {
+                state.canPlacePredicate = parsePredicate(jsonState.canPlace);
+            } catch(e) {
+                throw new Error("Failed to parse canPlace predicate", { cause: e });
+            }
+        } else if(defaultState?.canPlacePredicate != null) {
+            state.canPlacePredicate = defaultState.canPlacePredicate;
         }
 
-        return new BlockState(
-            block, stateKey,
-            model,
-            eventSheet,
-            canPlacePredicate,
-            collider,
-            tags,
-            new Map(Object.entries(emission)),
-            new Map(Object.entries(attenuation)),
-            pickBlockState.includes(":") ? pickBlockState : (block.id + "[" + pickBlockState + "]"),
-            renderAsTexture,
-            jsonState.destroyTime
-        );
-    }
-
-    private static applyDefaultProperties(
-        defaultProperties: NonNullable<DataDrivenJson.Block["defaultStateProperties"]>,
-        jsonState: DataDrivenJson.BlockState
-    ) {
-        jsonState.attenuation ??= defaultProperties.attenuation!;
-        jsonState.emission ??= defaultProperties.emission!;
-        jsonState.canPlace ??= defaultProperties.canPlace!;
-        jsonState.pickBlockState ??= defaultProperties.pickBlockState!;
-        jsonState.renderAsTexture ??= defaultProperties.renderAsTexture!;
-
-        if(jsonState.tags == null) {
-            jsonState.tags = defaultProperties.tags!;
-        } else if(defaultProperties.tags != null) {
-            jsonState.tags.push(...defaultProperties.tags);
+        if(jsonState.destroyTime != null) {
+            state.destroyTime = jsonState.destroyTime;
+        } else if(defaultState?.destroyTime != null) {
+            state.destroyTime = defaultState.destroyTime;
         }
 
-        if(jsonState.collider == null) {
-            jsonState.collider = defaultProperties.collider!;
-        } else if(defaultProperties.collider != null) {
-            jsonState.collider.hitboxes.push(...defaultProperties.collider.hitboxes);
-        }
+        if(jsonState.transforms != null) {
+            const transformList = jsonState.transforms instanceof Array ? jsonState.transforms : [ jsonState.transforms ];
+            
+            for(const transform of transformList) {
+                for(const [ transformId, args ] of Object.entries(transform)) {
+                    const TransformConstructor = blockTransformRegistry.get(transformId);
 
-        if(jsonState.events == null) {
-            jsonState.events = defaultProperties.events!;
-        } else if(defaultProperties.events != null) {
-            if(typeof jsonState.events == "string" || jsonState.events instanceof Array) {
-                jsonState.events = { include: jsonState.events };
-            }
-            if(typeof defaultProperties.events == "string" || defaultProperties.events instanceof Array) {
-                defaultProperties.events = { include: defaultProperties.events };
-            }
+                    try {
+                        if(TransformConstructor == null) throw new Error("Unknown transform");
 
-            const jsonEvents = jsonState.events;
-            const defaultEvents = defaultProperties.events;
-
-            if(jsonEvents.include == null) {
-                jsonEvents.include = defaultEvents.include!;
-            } else if(defaultEvents.include != null) {
-                if(!(jsonEvents.include instanceof Array)) jsonEvents.include = [ jsonEvents.include ];
-
-                if(defaultEvents.include instanceof Array) {
-                    jsonEvents.include.unshift(...defaultEvents.include);
-                } else {
-                    jsonEvents.include.unshift(defaultEvents.include);
-                }
-            }
-
-
-            if(jsonEvents.triggers == null) {
-                jsonEvents.triggers = defaultEvents.triggers!;
-            } else if(defaultEvents.triggers != null) {
-                for(const triggerId of Object.keys(defaultEvents.triggers)) {
-                    if(jsonEvents.triggers[triggerId] == null) {
-                        jsonEvents.triggers[triggerId] = defaultEvents.triggers[triggerId]!;
-                    } else if(defaultEvents.triggers[triggerId] != null) {
-                        if(!(jsonEvents.triggers[triggerId] instanceof Array)) {
-                            jsonEvents.triggers[triggerId] = [ jsonEvents.triggers[triggerId] ];
-                        }
-                        if(!(defaultEvents.triggers[triggerId] instanceof Array)) {
-                            defaultEvents.triggers[triggerId] = [ defaultEvents.triggers[triggerId] ];
-                        }
-
-                        jsonEvents.triggers[triggerId].push(...<any>defaultEvents.triggers);
+                        const transformInstance = new TransformConstructor(args);
+                        if(state.model != null) transformInstance.transformModel(state.model);
+                        if(state.collider != null) transformInstance.transformCollider(state.collider);
+                    } catch(e) {
+                        throw new Error("Failed to apply block state transform " + transformId, { cause: e });
                     }
                 }
             }
         }
 
-        if(jsonState.model == null) {
-            jsonState.model = defaultProperties.model!;
-        } else if(defaultProperties.model != null) {
-            if(typeof jsonState.model == "string") {
-                jsonState.model = { include: jsonState.model };
-            }
-            if(typeof defaultProperties.model == "string") {
-                defaultProperties.model = { include: defaultProperties.model };
-            }
+        return state;
+    }
+}
 
-            const jsonModel = jsonState.model;
-            const defaultModel = defaultProperties.model;
+export class DataDrivenBlockState {
+    public model?: BlockModel;
+    public events?: EventSheet;
+    public canPlacePredicate?: EventPredicate;
+    public collider?: TileCollider;
+    public tags = new Set<string>;
+    public emission = new Map<string, number>;
+    public attenuation = new Map<string, number>;
+    public pickBlockStateId?: string;
+    public renderAsTexture?: TextureAtlasSlot;
+    public destroyTime?: number;
 
-            jsonModel.include ??= [];
-            if(!(jsonModel.include instanceof Array)) {
-                jsonModel.include = [ jsonModel.include ];
-            }
-            if(defaultProperties.model.include instanceof Array) {
-                jsonModel.include.push(...defaultProperties.model.include);
-            } else if(defaultProperties.model.include != null) {
-                jsonModel.include.push(defaultProperties.model.include);
-            }
-            jsonModel.occlude ??= defaultModel.occlude!;
+    public constructor(
+        public block: Block,
+        public stateKey: string
+    ) {}
 
-            jsonModel.occludeNorth ??= defaultModel.occludeNorth!;
-            jsonModel.occludeEast ??= defaultModel.occludeEast!;
-            jsonModel.occludeSouth ??= defaultModel.occludeSouth!;
-            jsonModel.occludeWest ??= defaultModel.occludeWest!;
-            jsonModel.occludeDown ??= defaultModel.occludeDown!;
-            jsonModel.occludeUp ??= defaultModel.occludeUp!;
+    public compile() {
+        const pickBlockState = this.pickBlockStateId ?? this.stateKey;
 
-            if(jsonModel.textures == null) {
-                jsonModel.textures = defaultModel.textures!;
-            } else if(defaultModel.textures != null) {
-                for(const [ key, value ] of Object.entries(defaultModel.textures)) {
-                    jsonModel.textures[key] ??= value;
-                }
-            }
+        const state = new BlockState(
+            this.block,
+            this.stateKey,
+            this.model ?? new BlockModel,
+            this.events ?? new EventSheet,
+            this.canPlacePredicate ?? new ConstantPredicate(true),
+            this.collider ?? new TileCollider,
+            this.tags ?? new Set,
+            this.emission ?? new Map,
+            this.attenuation ?? new Map,
+            /^[^:]+:[^\[]+\[[^\]]*\]$/.test(pickBlockState) ? pickBlockState : (this.block.id + "[" + pickBlockState + "]"),
+            this.renderAsTexture ?? null,
+            this.destroyTime ?? 1
+        );
 
-            if(jsonModel.cuboids == null) {
-                jsonModel.cuboids = defaultModel.cuboids;
-            } else if(defaultModel.cuboids != null) {
-                defaultModel.cuboids.push(...jsonModel.cuboids);
-            }
-        }
+        return state;
     }
 }

@@ -1,8 +1,8 @@
 import type { TextureAtlasSlot } from "../data/textureAtlas";
-import type { TileCollider } from "../entity/entity";
 import type { EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
 import type { Block } from "./block";
+import type { TileCollider } from "./collider";
 import type { BlockModel } from "./model/blockModel";
 
 export class BlockState {

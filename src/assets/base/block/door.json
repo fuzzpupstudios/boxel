@@ -1,355 +1,154 @@
 {
     "id": "base:door",
 
-    "defaultStateProperties": {
-        "model": {
-            "occlude": false,
-            "textures": {
-                "front": "base:block/door_front.png",
-                "back": "base:block/door_back.png",
-                "side": "base:block/door_side.png",
-                "hinge": "base:block/door_hinge.png",
-                "bottom": "base:block/door_bottom.png",
-                "top": "base:block/door_top.png"
-            }
-        },
-        "events": {
-            "include": [ "base:sound_materials/wood" ],
-
-            "triggers": {
-                "base:destroy": {
-                    "if": { "player": { "infiniteItems": false } },
-                    "then": {
-                        "id": "base:drop_item",
-                        "args": {
-                            "stack": "base:door[direction=north,open=false,half=bottom]"
-                        }
-                    }
-                }
-            }
-        },
-        "renderAsTexture": "base:item/door.png",
-        "attenuation": 1,
-        "pickBlockState": "direction=north,open=false,half=bottom"
-    },
-
     "states": {
-        "direction=north,open=false,half=bottom": {
+        "#default": {
+            "model": {
+                "occlude": false,
+                "textures": {
+                    "front": "base:block/door_front.png",
+                    "back": "base:block/door_back.png",
+                    "side": "base:block/door_side.png",
+                    "hinge": "base:block/door_hinge.png",
+                    "bottom": "base:block/door_bottom.png",
+                    "top": "base:block/door_top.png"
+                }
+            },
+            "events": {
+                "include": [ "base:material/wood" ],
+
+                "triggers": {
+                    "relay_drop": {
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": {
+                            "id": "base:drop_item",
+                            "args": {
+                                "stack": "base:door[direction=north,open=false,half=bottom]"
+                            }
+                        }
+                    },
+                    "base:destroy": "self#relay_drop",
+                    "base:explode": "self#relay_drop"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0.875 ], "to": [ 1, 2, 1 ] }
+                ]
+            },
+            "canPlace": false,
+            "tags": [ "base:door", "hidden" ],
+            "attenuation": 1,
+            "pickBlockState": "direction=north,open=false,half=bottom"
+        },
+        "#open=false,half=bottom": {
+            "parent": "#default",
             "model": {
                 "include": "base:door_bottom"
             },
-            "canPlace": {
-                "block": {
-                    "at": [ 0, 1, 0 ],
-                    "has_tag": "replaceable"
-                }
-            },
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/closed" ],
+            "events": [ "base:block/door_bottom" ],
             "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0.875 ], "to": [ 1, 1, 1 ] }
-                ]
+                "transforms": {
+                    "slice": { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                }
             }
         },
-        "direction=north,open=false,half=top": {
+        "#open=false,half=top": {
+            "parent": "#default",
             "model": {
                 "include": "base:door_top"
             },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
+            "events": [ "base:block/door_top" ],
             "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0.875 ], "to": [ 1, 1, 1 ] }
-                ]
+                "transforms": {
+                    "slice": { "from": [ 0, 1, 0 ], "to": [ 1, 2, 1 ], "origin": [ 0, 1, 0 ] }
+                }
             }
         },
 
-        "direction=north,open=true,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
-                    ]
+        "#open=true,half=bottom": {
+            "parent": "#open=false,half=bottom",
+            "transforms": { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.0625 ] } },
+            "tags": [ "base:door/open" ]
+        },
+        "#open=true,half=top": {
+            "parent": "#open=false,half=top",
+            "transforms": { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.0625 ] } },
+            "tags": [ "base:door/open" ]
+        },
+
+
+
+        "direction=north,open=false,half=bottom": {
+            "parent": "#open=false,half=bottom",
+            "tags": [ "^hidden" ],
+            "canPlace": {
+                "block": {
+                    "at": [ 0, 1, 0 ],
+                    "has_tag": "replaceable"
                 }
             },
-            "canPlace": false,
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0.875, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "renderAsTexture": "base:item/door.png"
+        },
+        "direction=north,open=false,half=top": {
+            "parent": "#open=false,half=top"
+        },
+        "direction=north,open=true,half=bottom": {
+            "parent": "#open=true,half=bottom"
         },
         "direction=north,open=true,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0.875, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=true,half=top"
         },
-
-
 
         "direction=east,open=false,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": 1 }
-                    ]
-                }
-            },
-            "canPlace": {
-                "block": {
-                    "at": [ 0, 1, 0 ],
-                    "has_tag": "replaceable"
-                }
-            },
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 0.125, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=false,half=bottom",
+            "transforms": { "rotateY": 1 }
         },
         "direction=east,open=false,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": 1 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 0.125, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=false,half=top",
+            "transforms": { "rotateY": 1 }
         },
-
         "direction=east,open=true,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 1 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0.875 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=true,half=bottom",
+            "transforms": { "rotateY": 1 }
         },
         "direction=east,open=true,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 1 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0.875 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=true,half=top",
+            "transforms": { "rotateY": 1 }
         },
-
-
 
         "direction=south,open=false,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": 2 }
-                    ]
-                }
-            },
-            "canPlace": {
-                "block": {
-                    "at": [ 0, 1, 0 ],
-                    "has_tag": "replaceable"
-                }
-            },
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 0.125 ] }
-                ]
-            }
+            "parent": "#open=false,half=bottom",
+            "transforms": { "rotateY": 2 }
         },
         "direction=south,open=false,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": 2 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 0.125 ] }
-                ]
-            }
+            "parent": "#open=false,half=top",
+            "transforms": { "rotateY": 2 }
         },
-
         "direction=south,open=true,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 2 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 0.125, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=true,half=bottom",
+            "transforms": { "rotateY": 2 }
         },
         "direction=south,open=true,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 2 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 0.125, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=true,half=top",
+            "transforms": { "rotateY": 2 }
         },
-
-
 
         "direction=west,open=false,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": 3 }
-                    ]
-                }
-            },
-            "canPlace": {
-                "block": {
-                    "at": [ 0, 1, 0 ],
-                    "has_tag": "replaceable"
-                }
-            },
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0.875, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=false,half=bottom",
+            "transforms": { "rotateY": 3 }
         },
         "direction=west,open=false,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": 3 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/closed", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0.875, 0, 0 ], "to": [ 1, 1, 1 ] }
-                ]
-            }
+            "parent": "#open=false,half=top",
+            "transforms": { "rotateY": 3 }
         },
-
         "direction=west,open=true,half=bottom": {
-            "model": {
-                "include": {
-                    "model": "base:door_bottom",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 3 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_bottom" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 0.125 ] }
-                ]
-            }
+            "parent": "#open=true,half=bottom",
+            "transforms": { "rotateY": 3 }
         },
         "direction=west,open=true,half=top": {
-            "model": {
-                "include": {
-                    "model": "base:door_top",
-                    "transforms": [
-                        { "rotateY": { "angle": 1, "pivot": [ 0.9375, 0.9375 ] } },
-                        { "rotateY": 3 }
-                    ]
-                }
-            },
-            "canPlace": false,
-            "events": [ "base:door_top" ],
-            "tags": [ "base:door", "base:door/open", "hidden" ],
-            "collider": {
-                "hitboxes": [
-                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 0.125 ] }
-                ]
-            }
+            "parent": "#open=true,half=top",
+            "transforms": { "rotateY": 3 }
         }
     }
 }

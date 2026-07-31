@@ -1,4 +1,4 @@
-import { Box3, Vector3 } from "three";
+import { Vector3 } from "three";
 import z from "zod";
 import type { EventAction } from "../events/eventAction";
 import { EventCursor } from "../events/eventSheet";
@@ -9,9 +9,6 @@ import type { Chunk, World } from "../world/world";
 
 export interface Tickable {
     tick(time: Time): void;
-}
-export class TileCollider {
-    public readonly hitboxes = new Array<Box3>;
 }
 
 export type SerializedEntity = z.infer<typeof SerializedEntity>;

@@ -19,8 +19,8 @@ export abstract class LightingEngine {
         public readonly type: LightChannelType
     ) {
         for(const [ blockStateId, blockState ] of blockStateRegistry.entries()) {
-            let emission = blockState.emission.get(channel) ?? 0;
-            let attenuation = blockState.attenuation.get(channel) ?? 1;
+            let emission = blockState.emission.get(channel) ?? type.defaultEmission;
+            let attenuation = blockState.attenuation.get(channel) ?? type.defaultAttenuation;
             
             emission = MathUtils.clamp(emission, 0x00, 0xf);
             attenuation = MathUtils.clamp(attenuation, 0x01, 0xf);
