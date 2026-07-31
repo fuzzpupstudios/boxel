@@ -1,0 +1,20 @@
+{
+    "id": "base:door",
+
+    "occlude": false,
+    "aoCastWeight": 0,
+
+    "cuboids": [
+        {
+            "from": [ 0, 0, 0.875 ],
+            "to": [ 1, 2, 1 ],
+
+            "north": { "texture": "back" },
+            "south": { "texture": "front" },
+            "east": { "texture": "hinge" },
+            "west": { "texture": "side" },
+            "down": { "texture": "bottom" },
+            "up": { "texture": "top" }
+        }
+    ]
+}

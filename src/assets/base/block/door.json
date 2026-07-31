@@ -4,6 +4,7 @@
     "states": {
         "#default": {
             "model": {
+                "include": "base:door",
                 "occlude": false,
                 "textures": {
                     "front": "base:block/door_front.png",
@@ -43,26 +44,16 @@
         },
         "#open=false,half=bottom": {
             "parent": "#default",
-            "model": {
-                "include": "base:door_bottom"
-            },
             "events": [ "base:block/door_bottom" ],
-            "collider": {
-                "transforms": {
-                    "slice": { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
-                }
+            "transforms": {
+                "slice": { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
             }
         },
         "#open=false,half=top": {
             "parent": "#default",
-            "model": {
-                "include": "base:door_top"
-            },
             "events": [ "base:block/door_top" ],
-            "collider": {
-                "transforms": {
-                    "slice": { "from": [ 0, 1, 0 ], "to": [ 1, 2, 1 ], "origin": [ 0, 1, 0 ] }
-                }
+            "transforms": {
+                "slice": { "from": [ 0, 1, 0 ], "to": [ 1, 2, 1 ], "origin": [ 0, 1, 0 ] }
             }
         },
 

@@ -1,4 +1,4 @@
-import { Matrix3, Matrix4, Vector2, Vector3 } from "three";
+import { Box3, Matrix3, Matrix4, Vector2, Vector3 } from "three";
 import { Assets } from "../../data/assets";
 import { DataDrivenJson } from "../../data/dataDrivenJson";
 import type { TextureAtlas } from "../../data/textureAtlas";
@@ -379,6 +379,15 @@ export class BlockModel {
         }
 
         this.translate(anchor, transformUVs);
+    }
+
+    public slice(section: Box3) {
+        for(const key of [ "north", "east", "south", "west", "up", "down" ] as const) {
+            this[key] = this[key].flatMap(face => {
+                const sliced = face.slice(section);
+                return sliced != null ? [ sliced ] : [];
+            });
+        }
     }
 
     public correctVertexIndices() {

@@ -1,4 +1,4 @@
-import { MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3 } from "three/webgpu";
+import { Box3, MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3 } from "three/webgpu";
 import type { DataDrivenJson } from "../../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../../data/textureAtlas";
 import type { TileFace } from "../../rendering/chunkMesher";
@@ -100,6 +100,72 @@ export class BlockModelFace {
         for(const vertex of this.vertices()) {
             vertex.applyMatrix3(matrix);
         }
+    }
+
+    public slice(section: Box3): BlockModelFace | null {
+        const axes = [ "x", "y", "z" ] as const;
+        const axisIndex = axes.findIndex(a => Math.abs(this.normal[a]) > 0.5);
+        const axis = axes[axisIndex]!;
+        const axisA = axes[(axisIndex + 1) % 3]!;
+        const axisB = axes[(axisIndex + 2) % 3]!;
+
+        const constant = this.v0.xyz[axis];
+        if(constant < section.min[axis] || constant > section.max[axis]) return null;
+
+        const vertices = [ this.v0, this.v1, this.v2, this.v3 ];
+
+        let minA = Infinity, maxA = -Infinity, minB = Infinity, maxB = -Infinity;
+        for(const vertex of vertices) {
+            minA = Math.min(minA, vertex.xyz[axisA]);
+            maxA = Math.max(maxA, vertex.xyz[axisA]);
+            minB = Math.min(minB, vertex.xyz[axisB]);
+            maxB = Math.max(maxB, vertex.xyz[axisB]);
+        }
+
+        const clippedMinA = Math.max(minA, section.min[axisA]);
+        const clippedMaxA = Math.min(maxA, section.max[axisA]);
+        const clippedMinB = Math.max(minB, section.min[axisB]);
+        const clippedMaxB = Math.min(maxB, section.max[axisB]);
+
+        if(clippedMinA >= clippedMaxA || clippedMinB >= clippedMaxB) return null;
+
+        // The (xyz -> uv) mapping across a rectangular face is affine, so the corner
+        // uv's exactly reconstruct it via bilinear interpolation, even after uv
+        // rotation/scale/translation transforms have been applied.
+        const cornerUV: Record<"min" | "max", Record<"min" | "max", Vector2>> = {
+            min: { min: new Vector2, max: new Vector2 },
+            max: { min: new Vector2, max: new Vector2 }
+        };
+        for(const vertex of vertices) {
+            const sideA = vertex.xyz[axisA] == minA ? "min" : "max";
+            const sideB = vertex.xyz[axisB] == minB ? "min" : "max";
+            cornerUV[sideA][sideB].copy(vertex.uv);
+        }
+
+        const face = this.clone();
+        const pairs: [ BlockModelVertex, BlockModelVertex ][] = [
+            [ this.v0, face.v0 ],
+            [ this.v1, face.v1 ],
+            [ this.v2, face.v2 ],
+            [ this.v3, face.v3 ]
+        ];
+
+        for(const [ original, target ] of pairs) {
+            const sideA = original.xyz[axisA] == minA ? "min" : "max";
+            const sideB = original.xyz[axisB] == minB ? "min" : "max";
+
+            target.xyz[axisA] = sideA == "min" ? clippedMinA : clippedMaxA;
+            target.xyz[axisB] = sideB == "min" ? clippedMinB : clippedMaxB;
+
+            const ta = maxA == minA ? 0 : (target.xyz[axisA] - minA) / (maxA - minA);
+            const tb = maxB == minB ? 0 : (target.xyz[axisB] - minB) / (maxB - minB);
+
+            const uvMin = new Vector2().lerpVectors(cornerUV.min.min, cornerUV.max.min, ta);
+            const uvMax = new Vector2().lerpVectors(cornerUV.min.max, cornerUV.max.max, ta);
+            target.uv.lerpVectors(uvMin, uvMax, tb);
+        }
+
+        return face;
     }
 
     public shouldCull() {
