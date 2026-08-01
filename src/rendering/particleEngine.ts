@@ -1,7 +1,7 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
 import { attribute, billboarding, float, positionGeometry, texture, uv } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
-import { blockStateRegistry, tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../block/collider";
 import type { Time } from "../time";
 import type { World } from "../world/world";
@@ -51,7 +51,7 @@ export class ParticleEngine {
         }
 
         this.tileColliders = new Map;
-        for(const blockStateKey of tileRegistry.values()) {
+        for(const blockStateKey of blockStateRegistry.keys()) {
             const blockState = blockStateRegistry.get(blockStateKey)!;
             
             this.tileColliders.set(blockStateKey, blockState.collider);

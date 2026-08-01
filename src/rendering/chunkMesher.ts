@@ -1,5 +1,5 @@
 import { Box3, BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute, Vector3 } from "three";
-import { blockStateRegistry, getUnknownBlockState, tileRegistry } from "../block/blockRegistry";
+import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 import { LightingChunk } from "../world/lighting/lightingGrid";
 import type { VoxelChunk } from "../world/voxelGrid";
 import type { World } from "../world/world";
@@ -161,7 +161,7 @@ export class ChunkMesher {
         public readonly world: World
     ) {
         // Optimize: memoize block models, indexed by their block state's tile id
-        const blockStateIds = Array.from(tileRegistry.values());
+        const blockStateIds = Array.from(blockStateRegistry.keys());
         this.tileMeshList = new Array;
         this.tileMeshIndices = new Map;
         this.tileMeshes = new Map;

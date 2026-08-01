@@ -86,6 +86,17 @@ export class TextureAtlas {
         this.defaultSlot = newSlot;
     }
 
+    public reset() {
+        this.textures.clear();
+        this.positions.clear();
+        this.defaultSlot = new Box2(new Vector2(0, 0), new Vector2(1, 1));
+        this.packedImage = null;
+        this.threeTexture.dispose();
+        this.pixiTexture.destroy(true);
+        this.threeTexture = new ThreeTexture;
+        this.pixiTexture = new PixiTexture;
+    }
+
     public getPosition(textureId?: string) {
         if(textureId == null) return this.defaultSlot;
 

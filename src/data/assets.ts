@@ -1,7 +1,7 @@
-import { BlobReader, BlobWriter, TextWriter, ZipReader, type FileEntry } from "@zip.js/zip.js";
 import { JsonhReader } from "jsonh-ts";
 import { AudioContext as ThreeAudioContext } from "three";
 import z from "zod";
+import type { AssetPack } from "./assetPack";
 import { DataDrivenJson } from "./dataDrivenJson";
 
 // Before processTemplates() runs, a templated file only has to provide `id` + `template`;
@@ -18,6 +18,7 @@ const TemplatableItem = z.union([ DataDrivenJson.Item, TemplateStub ]);
 const TemplatableGuiType = z.union([ DataDrivenJson.GuiType, TemplateStub ]);
 
 export class Assets {
+    public readonly assetPacks = new Array<AssetPack>;
     public readonly textureRegistry = new Map<string, ImageBitmap>;
     public readonly audioRegistry = new Map<string, AudioBuffer>;
     public readonly jsonTemplatesRegistry = new Map<string, DataDrivenJson.JsonTemplate>;
@@ -29,20 +30,18 @@ export class Assets {
     public readonly blockEntityTypeRegistry = new Map<string, DataDrivenJson.BlockEntityType & DataDrivenJson.TemplateApplicable>;
     public readonly lightChannelTypeRegistry = new Map<string, DataDrivenJson.LightChannelType & DataDrivenJson.TemplateApplicable>;
 
-    private readonly fileHandlers: Map<RegExp, (entry: FileEntry, ...groups: string[]) => Promise<void>> = new Map([
+    private readonly fileHandlers: Map<RegExp, (blob: Blob, ...groups: string[]) => Promise<void>> = new Map([
         [
-            /^assets\/([^\/]+)\/texture\/(.*\.(?:(png)|(jpe?g)|(bmp)|(gif)|(webp)))$/,
-            async (entry: FileEntry, namespace: string, name: string) => {
-                const data = await entry.getData(new BlobWriter);
-                const image = await createImageBitmap(data);
+            /^([^\/]+)\/texture\/(.*\.(?:(png)|(jpe?g)|(bmp)|(gif)|(webp)))$/,
+            async (blob: Blob, namespace: string, name: string) => {
+                const image = await createImageBitmap(blob);
                 this.textureRegistry.set(namespace + ":" + name, image);
             }
         ],
         [
-            /^assets\/([^\/]+)\/sound\/(.*)\.(?:(wav)|(mp3)|(ogg)|(flac)|(m4a))$/,
-            async (entry: FileEntry, namespace: string, name: string) => {
-                const data = await entry.getData(new BlobWriter);
-                const buffer = await data.arrayBuffer();
+            /^([^\/]+)\/sound\/(.*)\.(?:(wav)|(mp3)|(ogg)|(flac)|(m4a))$/,
+            async (blob: Blob, namespace: string, name: string) => {
+                const buffer = await blob.arrayBuffer();
 
                 const audioContext = <AudioContext>ThreeAudioContext.getContext();
                 const audioBuffer: AudioBuffer = await new Promise((res, rej) => {
@@ -53,89 +52,111 @@ export class Assets {
             }
         ],
         [
-            /^assets\/[^\/]+\/block\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/block\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = TemplatableBlock.parse(JsonhReader.parseElementFromString(data).value);
                 this.blockRegistry.set(json.id, json as DataDrivenJson.Block & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
-            /^assets\/[^\/]+\/block_model\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/block_model\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = TemplatableBlockStateModel.parse(JsonhReader.parseElementFromString(data).value);
                 this.blockModelRegistry.set(json.id!, json as DataDrivenJson.BlockStateModel & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
-            /^assets\/[^\/]+\/event\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/event\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = TemplatableEventSheet.parse(JsonhReader.parseElementFromString(data).value);
                 this.eventSheetRegistry.set(json.id!, json as DataDrivenJson.EventSheet & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
-            /^assets\/[^\/]+\/item\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/item\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = TemplatableItem.parse(JsonhReader.parseElementFromString(data).value);
                 this.itemRegistry.set(json.id, json as DataDrivenJson.Item & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
-            /^assets\/[^\/]+\/block_entity\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/block_entity\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = DataDrivenJson.BlockEntityType.parse(JsonhReader.parseElementFromString(data).value);
                 this.blockEntityTypeRegistry.set(json.id, json);
             }
         ],
         [
-            /^assets\/[^\/]+\/ui\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/ui\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const j = JsonhReader.parseElementFromString(data).value;
                 const json = TemplatableGuiType.parse(j);
                 this.guiTypeRegistry.set(json.id, json as DataDrivenJson.GuiType & DataDrivenJson.TemplateApplicable);
             }
         ],
         [
-            /^assets\/[^\/]+\/light\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/light\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = DataDrivenJson.LightChannelType.parse(JsonhReader.parseElementFromString(data).value);
                 this.lightChannelTypeRegistry.set(json.id, json);
             }
         ],
         [
-            /^assets\/[^\/]+\/json_template\/.*\.json[ch]?$/,
-            async (entry: FileEntry) => {
-                const data = await entry.getData(new TextWriter);
+            /^[^\/]+\/json_template\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
                 const json = DataDrivenJson.JsonTemplate.parse(JsonhReader.parseElementFromString(data).value);
                 this.jsonTemplatesRegistry.set(json.id, json);
             }
         ]
     ]);
 
-    public async loadPack(blob: Blob) {
-        const zipFileReader = new BlobReader(blob);
-        const reader = new ZipReader(zipFileReader);
+    public clearPacks() {
+        this.assetPacks.splice(0);
+    }
+    public addPack(pack: AssetPack) {
+        this.assetPacks.push(pack);
+    }
+    public removePack(pack: AssetPack) {
+        this.assetPacks.splice(this.assetPacks.indexOf(pack), 1);
+    }
 
-        const entries = await reader.getEntries();
+    public async reload() {
+        this.textureRegistry.clear();
+        this.audioRegistry.clear();
+        this.jsonTemplatesRegistry.clear();
+        this.blockRegistry.clear();
+        this.blockModelRegistry.clear();
+        this.eventSheetRegistry.clear();
+        this.itemRegistry.clear();
+        this.guiTypeRegistry.clear();
+        this.blockEntityTypeRegistry.clear();
+        this.lightChannelTypeRegistry.clear();
 
-        for await(const entry of entries) {
-            if(entry.directory) continue;
-            
+        for await(const pack of this.assetPacks) {
+            await this.applyPack(pack);
+        }
+
+        this.processTemplates();
+    }
+
+    private async applyPack(pack: AssetPack) {
+        for await(const [ filename, blob ] of pack.files.entries()) {
             for(const [ regex, handler ] of this.fileHandlers.entries()) {
-                const groups = regex.exec(entry.filename);
+                const groups = regex.exec(filename);
 
                 if(groups) {
                     try {
-                        await handler(entry, ...groups.slice(1))
+                        await handler(blob, ...groups.slice(1))
                     } catch(e) {
-                        throw new Error("Failed to read file " + entry.filename, { cause: e });
+                        throw new Error("Failed to read file " + filename, { cause: e });
                     };
                     break;
                 }
@@ -228,7 +249,7 @@ export class Assets {
         return object;
     }
 
-    public processTemplates() {
+    private processTemplates() {
         const registries: [ Map<string, DataDrivenJson.TemplateApplicable>, z.ZodType<any> ][] = [
             [ this.blockRegistry, TemplatableBlock ],
             [ this.blockModelRegistry, TemplatableBlockStateModel ],

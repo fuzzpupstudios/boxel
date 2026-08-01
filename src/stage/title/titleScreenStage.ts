@@ -6,6 +6,7 @@ import { GuiText } from "../../gui/element/text";
 import type { Time } from "../../time";
 import { CreditsScreenStage } from "../credits/creditsGameStage";
 import { GameStage } from "../gameStage";
+import { ModManagementGameStage } from "../mods/modManagementGameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { WorldSelectStage } from "../world/worldSelectStage";
 
@@ -15,6 +16,7 @@ export class TitleScreenStage extends GameStage {
     private readonly watermark: GuiText;
     private readonly playButton: GuiButton;
     private readonly settingsButton: GuiButton;
+    private readonly modsButton: GuiButton;
     private readonly creditsButton: GuiButton;
     private readonly fullscreenButton: IconButton;
     private readonly background: Sprite;
@@ -67,6 +69,12 @@ export class TitleScreenStage extends GameStage {
             this.game.changeStage(new SettingsScreenStage(this.game));
         });
 
+        this.modsButton = new GuiButton("Mods", 100, 30);
+        this.modsButton.on("pointerdown", () => {
+            this.game.audioManager.playMenuClick();
+            this.game.changeStage(new ModManagementGameStage(this.game));
+        });
+
         this.creditsButton = new GuiButton("Credits", 100, 30);
         this.creditsButton.on("pointerdown", () => {
             this.game.audioManager.playMenuClick();
@@ -87,17 +95,18 @@ export class TitleScreenStage extends GameStage {
 
         this.gui.addChild(
             this.background, this.titleText,
-            this.playButton, this.settingsButton, this.creditsButton,
+            this.playButton, this.settingsButton, this.modsButton, this.creditsButton,
             this.watermark, this.versionText,
             this.fullscreenButton
         );
     }
 
     public resize(width: number, height: number, pixelRatio: number): void {
-        this.titleText.position.set(width / 2, height / 2 - 40);
-        this.playButton.position.set(width / 2, height / 2 + 10);
-        this.settingsButton.position.set(width / 2, height / 2 + 42);
-        this.creditsButton.position.set(width / 2, height / 2 + 74);
+        this.titleText.position.set(width / 2, height / 2 - 50);
+        this.playButton.position.set(width / 2, height / 2 + 0);
+        this.settingsButton.position.set(width / 2, height / 2 + 32);
+        this.modsButton.position.set(width / 2, height / 2 + 64);
+        this.creditsButton.position.set(width / 2, height / 2 + 96);
         this.fullscreenButton.position.set(width - 10, 10);
         this.background.setSize(width, height);
         this.watermark.position.set(0, height);

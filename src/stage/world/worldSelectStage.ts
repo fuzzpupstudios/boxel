@@ -214,19 +214,15 @@ export class WorldSelectStage extends GameStage {
         } else {
             this.savedData = SavedWorlds.parse(savedData ?? {});
         }
-        
-        this.worldsList.removeItems();
 
-        if(this.worldsList.list == null) {
-            return;
-        }
+        const cards = new Array<WorldCard>;
 
         const sortedWorlds = this.savedData.worlds.toSorted((a, b) => b.played - a.played);
         for(let i = 0; i < sortedWorlds.length; i++) {
             const world: SavedWorld = sortedWorlds[i]!;
             const card = new WorldCard(world);
 
-            this.worldsList.list.addChild(card);
+            cards.push(card);
 
             card.playButton.addListener("pointerdown", () => {
                 this.game.audioManager.playMenuClick();
@@ -250,6 +246,8 @@ export class WorldSelectStage extends GameStage {
             })
         }
 
+        this.worldsList.removeItems();
+        this.worldsList.addItems(cards);
         this.worldsList.resize(true);
         this.worldsList.scrollTop();
     }
@@ -262,17 +260,15 @@ export class WorldSelectStage extends GameStage {
 
     public resize(width: number, height: number, pixelRatio: number): void {
         this.titleText.position.set(width / 2, 20);
-        this.backButton.position.set(width / 2 - 60, height - 20);
-        this.createWorldButton.position.set(width / 2 + 60, height - 20);
+        this.backButton.position.set(width / 2 - 52, height - 20);
+        this.createWorldButton.position.set(width / 2 + 52, height - 20);
         this.background.setSize(width, height);
 
-        const worldsListWidth = WorldCard.WIDTH + 16;
-        const worldsListHeight = Math.max(20, height - 100);
-        const worldsListX = (width - worldsListWidth) * 0.5;
-        const worldsListY = 50;
+        const listWidth = WorldCard.WIDTH + 16;
+        const listHeight = Math.max(20, height - 100);
 
-        this.worldsList.setSize(worldsListWidth, worldsListHeight);
-        this.worldsList.position.set(worldsListX, worldsListY);
+        this.worldsList.setSize(listWidth, listHeight);
+        this.worldsList.position.set((width - listWidth) * 0.5, 50);
     }
 
     public tick(time: Time): void {

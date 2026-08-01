@@ -26,4 +26,7 @@ export abstract class GameStage {
     public updateSettings(settings: Settings) {
         
     }
+    public reloadAssets() {
+        
+    }
 }

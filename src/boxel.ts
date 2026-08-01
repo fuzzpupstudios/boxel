@@ -6,12 +6,14 @@ import "pixi.js/sprite-nine-slice";
 import "pixi.js/text-bitmap";
 import { mix, vec4 } from "three/tsl";
 import * as THREE from "three/webgpu";
-import { blockRegistry, blockStateRegistry, registerAllBlockStates } from "./block/blockRegistry";
+import { blockRegistry, blockStateRegistry, reloadAllBlockStates } from "./block/blockRegistry";
 import { DataDrivenBlock } from "./block/dataDrivenBlock";
 import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
 import { DataDrivenBlockEntityType } from "./block/entity/dataDrivenBlockEntity";
+import { AssetPack } from "./data/assetPack";
 import { Assets } from "./data/assets";
 import { AudioManager } from "./data/audioManager";
+import { ModManager } from "./data/modManager";
 import { TextureAtlas } from "./data/textureAtlas";
 import { DataDrivenEventSheet } from "./events/dataDrivenEventSheet";
 import { eventSheetRegistry } from "./events/eventSheetRegistry";
@@ -22,7 +24,7 @@ import { GuiControllerCrosshair } from "./gui/prefab/controllerCrosshair";
 import { ControlBinding, Input, MouseAxis, TouchAxis } from "./input/input";
 import { DataDrivenItem } from "./item/dataDrivenItem";
 import { itemRegistry } from "./item/itemRegistry";
-import type { MainStorage } from "./persistence/mainStorage";
+import { MainStorage } from "./persistence/mainStorage";
 import { PersistenceManager } from "./persistence/persistenceManager";
 import { Settings } from "./settings";
 import { GameStage } from "./stage/gameStage";
@@ -48,6 +50,8 @@ export class BoxelGame {
 
     public readonly input: Input;
     public readonly assets = new Assets;
+    public readonly modManager: ModManager;
+    public readonly mainStorage = new MainStorage;
     public readonly persistenceManager = new PersistenceManager;
     public readonly audioManager = new AudioManager(this.assets);
 
@@ -67,7 +71,6 @@ export class BoxelGame {
     private viewportWidth = 1;
     private viewportHeight = 1;
     public viewportPixelRatio = 1;
-    public mainStorage: MainStorage | null = null;
     public guiWidth: number = 0;
     public guiHeight: number = 0;
     public initialized: boolean = false;
@@ -99,6 +102,8 @@ export class BoxelGame {
         
         this.input = new Input;
         this.settings = Settings.parse({});
+
+        this.modManager = new ModManager(this.mainStorage, this.assets);
 
         PIXI.TextureStyle.defaultOptions.scaleMode = "nearest";
     }
@@ -253,7 +258,8 @@ export class BoxelGame {
         }
     }
 
-    private registerGameData() {
+    private reloadGameData() {
+        lightChannelRegistry.reset();
         for(const [ id, json ] of this.assets.lightChannelTypeRegistry.entries()) {
             console.log(id, json);
             try {
@@ -262,7 +268,9 @@ export class BoxelGame {
                 throw new Error("Failed to register light channel type " + id, { cause: e });
             }
         }
+        lightChannelRegistry.lock();
 
+        eventSheetRegistry.reset();
         for(const [ id, json ] of this.assets.eventSheetRegistry.entries()) {
             try {
                 eventSheetRegistry.register(id, DataDrivenEventSheet.parseJson(json, this.assets));
@@ -272,6 +280,7 @@ export class BoxelGame {
         }
         eventSheetRegistry.lock();
 
+        blockEntityTypeRegistry.reset();
         for(const [ id, json ] of this.assets.blockEntityTypeRegistry.entries()) {
             try {
                 blockEntityTypeRegistry.register(id, DataDrivenBlockEntityType.parseJson(json));
@@ -281,6 +290,7 @@ export class BoxelGame {
         }
         blockEntityTypeRegistry.lock();
 
+        blockRegistry.reset();
         for(const [ id, json ] of this.assets.blockRegistry.entries()) {
             try {
                 blockRegistry.register(id, DataDrivenBlock.parseJson(json, this.assets));
@@ -290,6 +300,7 @@ export class BoxelGame {
         }
         blockRegistry.lock();
 
+        itemRegistry.reset();
         for(const [ id, json ] of this.assets.itemRegistry.entries()) {
             try {
                 itemRegistry.register(id, DataDrivenItem.parseJson(json, this.assets));
@@ -299,6 +310,7 @@ export class BoxelGame {
         }
         itemRegistry.lock();
 
+        guiTypeRegistry.reset();
         for(const [ id, json ] of this.assets.guiTypeRegistry.entries()) {
             try {
                 guiTypeRegistry.register(id, DataDrivenGuiType.parseJson(json, this.assets));
@@ -307,6 +319,8 @@ export class BoxelGame {
             }
         }
         guiTypeRegistry.lock();
+
+        reloadAllBlockStates();
     }
 
     public onUnfocus() {
@@ -314,17 +328,17 @@ export class BoxelGame {
     }
 
     public async start() {
-        this.mainStorage = this.persistenceManager.openMainStorage();
         this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
-        const blob = await fetch("assets/base.zip?" + btoa(this.version)).then(v => v.blob());
-        await this.assets.loadPack(blob);
+        const basePack = await fetch("assets/base.zip?" + btoa(this.version))
+            .then(v => v.blob())
+            .then(blob => AssetPack.fromBlob(blob));
+        
+        await this.modManager.load();
+        await this.modManager.addModFile("base.zip", basePack, true);
+        await this.modManager.save();
 
-        this.assets.processTemplates();
-
-        this.loadAssets();
-        this.registerGameData();
-        registerAllBlockStates();
+        await this.reloadAssets();
 
         await this.threeRenderer.init();
         await this.gui.init({
@@ -364,18 +378,6 @@ export class BoxelGame {
             
             return target != null && target != this.guiBackground;
         });
-    
-        for(const blockState of blockStateRegistry.values()) {
-            blockState.model.setTextureAtlas(this.textureAtlases.block);
-            
-            if(blockState.renderAsTexture != null) {
-                blockState.renderAsTexture.setTextureAtlas(this.textureAtlases.item);
-            }
-        }
-    
-        for(const item of itemRegistry.values()) {
-            item.texture.setTextureAtlas(this.textureAtlases.item);
-        }
 
         this.queueNextFrame();
 
@@ -383,11 +385,18 @@ export class BoxelGame {
         this.initialized = true;
     }
 
-    private async loadAssets() {
+    public async reloadAssets() {
+        await this.modManager.updateInstalledPacks();
+        await this.assets.reload();
+
+        for(const alias of this.assets.textureRegistry.keys()) {
+            if(PIXI.Assets.cache.has(alias)) PIXI.Assets.cache.remove(alias);
+        }
         for(const [ alias, bitmap ] of this.assets.textureRegistry.entries()) {
             PIXI.Assets.cache.set(alias, PIXI.Texture.from(bitmap));
         }
     
+        this.textureAtlases.block.reset();
         for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
             if(!textureId.split(":")[1]?.startsWith("block/")) continue;
             
@@ -397,6 +406,7 @@ export class BoxelGame {
         await this.textureAtlases.block.pack();
 
     
+        this.textureAtlases.item.reset();
         for(const [ textureId, textureSource ] of this.assets.textureRegistry.entries()) {
             if(!textureId.split(":")[1]?.startsWith("item/")) continue;
             
@@ -419,6 +429,24 @@ export class BoxelGame {
         }
         console.log("Loading " + fontLoader.pages.length + " font page(s)");
         fontLoader.load();
+
+        this.reloadGameData();
+    
+        for(const blockState of blockStateRegistry.values()) {
+            blockState.model.setTextureAtlas(this.textureAtlases.block);
+            
+            if(blockState.renderAsTexture != null) {
+                blockState.renderAsTexture.setTextureAtlas(this.textureAtlases.item);
+            }
+        }
+    
+        for(const item of itemRegistry.values()) {
+            item.texture.setTextureAtlas(this.textureAtlases.item);
+        }
+
+        for(const gameStage of this.activeStages) {
+            gameStage.reloadAssets();
+        }
     }
 
     private queueNextFrame() {

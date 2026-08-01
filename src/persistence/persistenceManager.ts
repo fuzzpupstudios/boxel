@@ -1,4 +1,3 @@
-import { MainStorage } from "./mainStorage";
 import { PersistentWorld } from "./persistentWorld";
 
 export class PersistenceManager {
@@ -6,9 +5,6 @@ export class PersistenceManager {
 
     public openWorld(worldId: string) {
         return new PersistentWorld(worldId);
-    }
-    public openMainStorage() {
-        return new MainStorage();
     }
     public async closeWorld(persistentWorld: PersistentWorld) {
         await persistentWorld.close();
