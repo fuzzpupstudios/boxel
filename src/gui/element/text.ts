@@ -4,14 +4,18 @@ export interface GuiTextOptions {
     text?: string;
     fontScale?: number;
     align?: TextStyleAlign;
-    fill?: Color
+    fill?: Color,
+    fontStyle?: FontStyle
 }
+
+type FontStyle = "normal" | "italic" | "oblique";
 
 export class GuiText extends Container {
     private _fontScale: number = 1;
     private _align: TextStyleAlign = "left";
     private _fill: Color = new Color(0xffffff);
     private _text: string = "";
+    private _fontStyle: FontStyle = "normal";
     public readonly shadow: BitmapText;
     public readonly mainText: BitmapText;
 
@@ -30,7 +34,6 @@ export class GuiText extends Container {
             }),
             children: [ shadow ]
         });
-        shadow.anchor = mainText.anchor;
 
         const optionsClone = Object.assign({
             children: [ shadow, mainText ]
@@ -39,6 +42,7 @@ export class GuiText extends Container {
         delete optionsClone.fontScale;
         delete optionsClone.align;
         delete optionsClone.fill;
+        delete optionsClone.fontStyle;
         super(optionsClone);
 
         this.shadow = shadow;
@@ -49,6 +53,7 @@ export class GuiText extends Container {
         this.fontScale = options.fontScale ?? this._fontScale;
         this.align = options.align ?? this._align;
         this.fill = options.fill ?? this._fill;
+        this.fontStyle = options.fontStyle ?? this._fontStyle;
     }
 
     public setAnchor(x: number, y: number = x) {
@@ -90,11 +95,23 @@ export class GuiText extends Container {
 
     public set fill(color: Color) {
         this.mainText.style.fill = color;
+        this.shadow.style.fill = new Color(color).multiply(0x444444);
         
         this._fill = color;
     }
 
     public get fill() {
         return this._fill;
+    }
+
+    public set fontStyle(fontStyle: FontStyle) {
+        this.mainText.style.fontStyle = fontStyle;
+        this.shadow.style.fontStyle = fontStyle;
+        
+        this._fontStyle = fontStyle;
+    }
+
+    public get fontStyle() {
+        return this._fontStyle;
     }
 }
