@@ -171,8 +171,8 @@ export class ChunkLoader {
         
         const minX = (this.origin.x - this.radius - 15) >> 4;
         const maxX = (this.origin.x + this.radius + 31) >> 4;
-        const minY = (this.origin.y - this.radius - 15) >> 4;
-        const maxY = (this.origin.y + this.radius + 31) >> 4;
+        const minY = (this.origin.y - this.radius - 15) >> 6 << 2;
+        const maxY = (this.origin.y + this.radius + 31) >> 6 << 2;
         const minZ = (this.origin.z - this.radius - 15) >> 4;
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
