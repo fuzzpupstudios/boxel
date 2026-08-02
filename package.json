@@ -32,6 +32,7 @@
     "idb": "^8.0.3",
     "javascript-time-ago": "^2.6.4",
     "jsonh-ts": "^3.8.0",
+    "mimetics": "^1.0.5",
     "objectregistry": "^1.0.5",
     "pixi.js": "^8.14.1",
     "three": "^0.185.1",
