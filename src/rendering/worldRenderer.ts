@@ -12,8 +12,9 @@ import { BlockBreakOutline } from "./blockBreakOutline";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
-import { createLightColorNode, createSunShadowNode } from "./lightUtils";
-import { Sky } from "./sky";
+import { createLightColorNode } from "./lightUtils";
+import { EarthSky } from "./sky/earthSky";
+import type { Sky } from "./sky/sky";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
@@ -59,7 +60,7 @@ export class WorldRenderer {
                     
                     const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
 
-                    const shadow = createSunShadowNode(normalGeometry, this.sky).toVar("shadow");
+                    const shadow = this.sky.createSunShadowNode(normalGeometry).toVar("shadow");
                     const fogFactor = this.fogFactor;
 
                     If(fogFactor.greaterThanEqual(1), () => Discard());
@@ -82,7 +83,7 @@ export class WorldRenderer {
         world.setRenderer(this);
 
         this.chunkMesher = new ChunkMesher(world);
-        this.sky = new Sky(assets);
+        this.sky = new EarthSky(assets);
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
         this.breakingBlock = new BlockBreakOutline(assets);

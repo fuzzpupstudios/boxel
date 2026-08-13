@@ -1,17 +1,13 @@
 import Alea from "alea";
 import { Object3D } from "three";
-import { cameraPosition, color, float, instanceIndex, mix, pass, positionWorld, texture, uniform, vec3, vec4 } from "three/tsl";
-import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, Euler, Float32BufferAttribute, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, NearestFilter, Node, PassNode, PerspectiveCamera, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
-import type { Assets } from "../data/assets";
+import { cameraPosition, float, instanceIndex, mix, positionWorld, texture, uniform, vec3, vec4 } from "three/tsl";
+import { AdditiveBlending, BackSide, BoxGeometry, BufferGeometry, Color, Euler, Float32BufferAttribute, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, NearestFilter, Node, Quaternion, Scene, Texture, Vector3 } from "three/webgpu";
+import { Sky } from "./sky";
 
-export class Sky {
-    public readonly time = uniform(float(0));
+export class EarthSky extends Sky {
     public readonly sunPos = uniform(vec3(0));
     public readonly moonPos = uniform(vec3(0));
 
-    public readonly skyColor = uniform(color(0, 0, 0));
-    public readonly fogColor = uniform(color(0, 0, 0));
-    public readonly sunlightColor = uniform(color(0, 0, 0));
     public readonly dayFactor = uniform(float(0));
     public readonly starThreshold = uniform(float(0));
 
@@ -22,16 +18,7 @@ export class Sky {
     public moon?: Object3D;
     public stars?: Object3D;
 
-    public readonly renderPass: PassNode;
-    public readonly camera = new PerspectiveCamera;
-
     private skyColorLUT?: ImageData;
-
-    public constructor(
-        private readonly assets: Assets
-    ) {
-        this.renderPass = pass(this.scene, this.camera);
-    }
 
     public create(seed: number) {
         const moonTextureSource = this.assets.getTextureOrThrow("base:environment/moon.png");
@@ -241,13 +228,6 @@ export class Sky {
         return mesh;
     }
 
-    public updateCamera(baseCamera: PerspectiveCamera) {
-        this.camera.fov = baseCamera.fov;
-        this.camera.aspect = baseCamera.aspect;
-        this.camera.quaternion.copy(baseCamera.quaternion);
-        this.camera.updateProjectionMatrix();
-    }
-
     private getSkyColor(time: number, fog: number): Color {
         if(this.skyColorLUT == null) return new Color;
         const LUT = this.skyColorLUT;
@@ -369,5 +349,12 @@ export class Sky {
             ),
             0, 1
         );
+    }
+
+    public override createSunShadowNode(normal: Node<"vec3">) {
+        const sunDot = normal.dot(this.sunPos.normalize());
+        const moonDot = normal.dot(this.moonPos.normalize());
+
+        return mix(moonDot, sunDot, this.dayFactor).remap(-1, 1, 0.25, 0.75);
     }
 }

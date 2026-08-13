@@ -188,22 +188,6 @@ export class World {
 
     public generateColumn(columnX: number, columnY: number, columnZ: number) {
         this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
-
-        const skyLight = this.lightingManager.getChannelOrThrow("base:sky");
-
-        if(columnY >= 0) {
-            const minX = columnX << 4;
-            const minZ = columnZ << 4;
-            const maxX = (columnX + 1) << 4;
-            const maxZ = (columnZ + 1) << 4;
-            const maxY = (columnY + 8) << 4;
-
-            for(let x = minX; x < maxX; x++) {
-                for(let z = minZ; z < maxZ; z++) {
-                    skyLight.set(x, maxY - 1, z, 15);
-                }
-            }
-        }
         
         for(let y = columnY + 7; y >= columnY; y--) {
             this.getChunk(columnX, y, columnZ)?.tiles.update();

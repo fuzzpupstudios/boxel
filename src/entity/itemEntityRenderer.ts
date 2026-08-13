@@ -2,7 +2,6 @@ import { BatchedMesh, Color } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
 import { Discard, If, mix, normalWorld, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
-import { createSunShadowNode } from "../rendering/lightUtils";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { World } from "../world/world";
 import type { ItemHologramProvider } from "./itemHologram";
@@ -38,7 +37,7 @@ export class ItemEntityRenderer {
         const worldRenderer = this.world.renderer!;
         const textureColor = this.hologramProvider.colorNode;
 
-        const shadow = createSunShadowNode(normalWorld, worldRenderer.sky).toVar("shadow");
+        const shadow = worldRenderer.sky.createSunShadowNode(normalWorld).toVar("shadow");
 
         return new MeshBasicNodeMaterial({
             colorNode: Fn(() => {

@@ -17,6 +17,23 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
         for(let chunkY = columnY + 7; chunkY >= columnY; chunkY--) {
             this.generate(world, columnX, chunkY, columnZ, heights);
         }
+        
+        
+        if(columnY >= 0) {
+            const skyLight = world.lightingManager.getChannelOrThrow("base:sky");
+            
+            const minX = columnX << 4;
+            const minZ = columnZ << 4;
+            const maxX = (columnX + 1) << 4;
+            const maxZ = (columnZ + 1) << 4;
+            const maxY = (columnY + 8) << 4;
+
+            for(let x = minX; x < maxX; x++) {
+                for(let z = minZ; z < maxZ; z++) {
+                    skyLight.set(x, maxY - 1, z, 15);
+                }
+            }
+        }
 
         world.markChunksDirty(columnX - 1, columnY - 1, columnZ - 1, columnX + 1, columnY + 9, columnZ + 1);
     }
