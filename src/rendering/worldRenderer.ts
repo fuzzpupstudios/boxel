@@ -6,6 +6,7 @@ import type { TextureAtlases } from "../boxel";
 import type { Assets } from "../data/assets";
 import { EntityRenderer } from "../entity/entityRenderer";
 import type { Time } from "../time";
+import type { ChunkKey } from "../world/keying";
 import { Chunk, World } from "../world/world";
 import { BlockBreakOutline } from "./blockBreakOutline";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
@@ -26,7 +27,7 @@ export class WorldRenderer {
     public readonly renderedChunks = new Map<Chunk, Mesh | null>;
     public readonly entityRenderer: EntityRenderer;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
-    public readonly renderedChunkKeyList = new Set<number>;
+    public readonly renderedChunkKeyList = new Set<ChunkKey>;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly breakingBlock: BlockBreakOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;

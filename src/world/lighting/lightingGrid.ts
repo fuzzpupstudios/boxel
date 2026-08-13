@@ -1,5 +1,7 @@
+import { encodeChunkKey, type ChunkKey } from "../keying";
+
 export class LightingGrid {
-    public readonly chunks = new Map<number, LightingChunk>();
+    public readonly chunks = new Map<ChunkKey, LightingChunk>();
 
     /** Get a lighting value at global coordinates */
     public get(x: number, y: number, z: number): number {
@@ -7,7 +9,7 @@ export class LightingGrid {
         const chunkY = y >> 4;
         const chunkZ = z >> 4;
         
-        const chunk = this.chunks.get(LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
+        const chunk = this.chunks.get(encodeChunkKey(chunkX, chunkY, chunkZ));
         if(!chunk) return 0;
 
         const localX = x & 15;
@@ -23,7 +25,7 @@ export class LightingGrid {
         const chunkY = y >> 4;
         const chunkZ = z >> 4;
 
-        const key = LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
         if(!chunk) {
             chunk = new LightingChunk();
@@ -39,12 +41,12 @@ export class LightingGrid {
 
     /** Get a VoxelChunk by chunk coordinates */
     public getChunk(chunkX: number, chunkY: number, chunkZ: number): LightingChunk | undefined {
-        return this.chunks.get(LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
+        return this.chunks.get(encodeChunkKey(chunkX, chunkY, chunkZ));
     }
 
     /** Get a VoxelChunk by chunk coordinates, or create it if it doesn't exist */
     public getChunkOrCreate(chunkX: number, chunkY: number, chunkZ: number): LightingChunk {
-        const key = LightingGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = encodeChunkKey(chunkX, chunkY, chunkZ);
 
         let chunk = this.chunks.get(key);
         
@@ -54,13 +56,6 @@ export class LightingGrid {
         }
 
         return chunk;
-    }
-
-    /** Encode 3D chunk coordinates into a single number for map key */
-    public static encodeChunkKey(x: number, y: number, z: number): number {
-        // Using bit-packing: x (high 10 bits) | y (mid 10 bits) | z (low 10 bits)
-        // Supports ±512 chunks range
-        return ((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF);
     }
 }
 

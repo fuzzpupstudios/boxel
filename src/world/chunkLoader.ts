@@ -1,7 +1,7 @@
 import { MinPriorityQueue } from "@datastructures-js/priority-queue";
 import { Vector3 } from "three";
 import type { Time } from "../time";
-import { VoxelGrid } from "./voxelGrid";
+import { encodeChunkKey, type ChunkKey } from "./keying";
 import type { Chunk, World } from "./world";
 
 export class ChunkLoader {
@@ -12,8 +12,8 @@ export class ChunkLoader {
     private readonly origin = new Vector3(0);
     private radius = 128;
     private needsUpdate: boolean = true;
-    public readonly columnsToLoad = new Map<number, [ number, number, number ]>;
-    public readonly chunksToHide = new Map<number, Chunk>;
+    public readonly columnsToLoad = new Map<ChunkKey, [ number, number, number ]>;
+    public readonly chunksToHide = new Map<ChunkKey, Chunk>;
     public readonly columnGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     public readonly columnLoadQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     private updateChunksCooldown: number = 0;
@@ -63,7 +63,7 @@ export class ChunkLoader {
         for(let x = minX; x <= maxX; x++) {
             for(let z = minZ; z <= maxZ; z++) {
                 for(let y = minY; y <= maxY; y++) {
-                    const key = VoxelGrid.encodeChunkKey(x, y, z);
+                    const key = encodeChunkKey(x, y, z);
                     if(!this.world.tiles.chunks.has(key)) continue;
                     if(this.world.renderer.renderedChunkKeyList.has(key)) continue;
 
@@ -102,7 +102,7 @@ export class ChunkLoader {
                     
                     if(distanceSquare > radiusSquare) continue;
 
-                    const key = VoxelGrid.encodeChunkKey(x, y, z);
+                    const key = encodeChunkKey(x, y, z);
                     if(this.columnsToLoad.has(key)) continue;
                     if(this.world.tiles.chunks.has(key)) continue;
 
@@ -177,6 +177,7 @@ export class ChunkLoader {
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
         let max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations);
+
         for(let i = 0; i < max; i++) {
             const next = this.columnGenerationQueue.dequeue();
 
@@ -184,7 +185,6 @@ export class ChunkLoader {
 
             const [ _, key, x, y, z ] = next;
             this.columnsToLoad.delete(key);
-
             if(
                 x < minX || x > maxX ||
                 y < minY || y > maxY ||

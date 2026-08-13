@@ -1,9 +1,11 @@
+import { encodeChunkKey, type ChunkKey } from "./keying";
+
 export class VoxelGrid {
     private static readonly CHUNK_SIZE_LOG2 = 4;
     private static readonly CHUNK_SIZE = 1 << VoxelGrid.CHUNK_SIZE_LOG2;
     private static readonly CHUNK_MASK = VoxelGrid.CHUNK_SIZE - 1;
 
-    public readonly chunks = new Map<number, VoxelChunk>();
+    public readonly chunks = new Map<ChunkKey, VoxelChunk>();
     public defaultBlockState = "base:air[default]";
 
     /** Get a tile value at global coordinates */
@@ -12,7 +14,7 @@ export class VoxelGrid {
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
         
-        const chunk = this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
+        const chunk = this.chunks.get(encodeChunkKey(chunkX, chunkY, chunkZ));
         if(!chunk) return this.defaultBlockState;
 
         const localX = x & VoxelGrid.CHUNK_MASK;
@@ -28,7 +30,7 @@ export class VoxelGrid {
         const chunkY = y >> VoxelGrid.CHUNK_SIZE_LOG2;
         const chunkZ = z >> VoxelGrid.CHUNK_SIZE_LOG2;
 
-        const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
         if(!chunk) {
             chunk = new VoxelChunk();
@@ -45,12 +47,12 @@ export class VoxelGrid {
 
     /** Get a VoxelChunk by chunk coordinates */
     public getChunk(chunkX: number, chunkY: number, chunkZ: number): VoxelChunk | undefined {
-        return this.chunks.get(VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ));
+        return this.chunks.get(encodeChunkKey(chunkX, chunkY, chunkZ));
     }
 
     /** Get a VoxelChunk by chunk coordinates, or create it if it doesn't exist */
     public getChunkOrCreate(chunkX: number, chunkY: number, chunkZ: number): VoxelChunk {
-        const key = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = encodeChunkKey(chunkX, chunkY, chunkZ);
 
         let chunk = this.chunks.get(key);
         
@@ -61,13 +63,6 @@ export class VoxelGrid {
         }
 
         return chunk;
-    }
-
-    /** Encode 3D chunk coordinates into a single number for map key */
-    public static encodeChunkKey(x: number, y: number, z: number): number {
-        // Using bit-packing: x (high 10 bits) | y (mid 10 bits) | z (low 10 bits)
-        // Supports ±512 chunks range
-        return ((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF);
     }
 }
 

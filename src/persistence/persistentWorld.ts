@@ -7,6 +7,7 @@ import { SerializedEntity, type Entity } from "../entity/entity";
 import { entityRegistry } from "../entity/entityTypeRegistry";
 import { SerializedPlayerEntity } from "../entity/player";
 import { UnknownEntity } from "../entity/unknownEntity";
+import { encodeChunkKey, type ChunkKey } from "../world/keying";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 import { LightingChunk } from "../world/lighting/lightingGrid";
 import { VoxelChunk } from "../world/voxelGrid";
@@ -49,7 +50,7 @@ interface PersistentWorldSchema extends DBSchema {
 export class PersistentWorld {
     public static readonly SCHEMA_VERSION = 1;
     private readonly db: Promise<IDBPDatabase<PersistentWorldSchema>>;
-    private readonly allKeys = new Set<number>;
+    private readonly allKeys = new Set<ChunkKey>;
     private world: World | null = null;
 
     public constructor(
@@ -118,7 +119,7 @@ export class PersistentWorld {
 
         this.allKeys.clear();
         for(const key of allKeys) {
-            const encodedKey = this.encodeChunkKey(key[0], key[1], key[2]);
+            const encodedKey = encodeChunkKey(key[0], key[1], key[2]);
             this.allKeys.add(encodedKey);
         }
     }
@@ -127,12 +128,8 @@ export class PersistentWorld {
         db.close();
     }
 
-    private encodeChunkKey(x: number, y: number, z: number): number {
-        return ((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF);
-    }
-
     public hasChunk(x: number, y: number, z: number) {
-        const encodedKey = this.encodeChunkKey(x, y, z);
+        const encodedKey = encodeChunkKey(x, y, z);
         return this.allKeys.has(encodedKey);
     }
 
@@ -152,7 +149,7 @@ export class PersistentWorld {
             chunksStore
                 .put(serializedChunk)
                 .then(([ x, y, z ]) => {
-                    const encodedKey = this.encodeChunkKey(x, y, z);
+                    const encodedKey = encodeChunkKey(x, y, z);
                     this.allKeys.add(encodedKey);
                 })
         }

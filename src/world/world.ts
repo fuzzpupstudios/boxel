@@ -7,13 +7,14 @@ import type { PersistentWorld } from "../persistence/persistentWorld";
 import { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
+import { encodeChunkKey, type ChunkKey } from "./keying";
 import type { LightingChunk } from "./lighting/lightingGrid";
 import { LightingManager } from "./lighting/lightingManager";
 import { TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 
 export class Chunk {
-    public readonly key: number;
+    public readonly key: ChunkKey;
     public readonly blockEntities = new Set<BlockEntity>;
     public readonly entities = new Set<Entity>;
     public readonly lightingChunks = new Map<string, LightingChunk>;
@@ -26,7 +27,7 @@ export class Chunk {
         public readonly z: number,
         public readonly tiles: VoxelChunk,
     ) {
-        this.key = VoxelGrid.encodeChunkKey(x, y, z);
+        this.key = encodeChunkKey(x, y, z);
     }
 
     public setWorld(world: World) {
@@ -75,14 +76,14 @@ export class World {
     public readonly tickables = new Set<Tickable>;
     public readonly gravity = new Vector3(0, -32, 0);
     public renderer: WorldRenderer | null = null;
-    public readonly chunks = new Map<number, Chunk>;
+    public readonly chunks = new Map<ChunkKey, Chunk>;
     private terrainGenerator: TerrainGenerator = TerrainGenerator.DEFAULT;
     public seed: number = (Math.random() * (2 ** 31 - 1)) | 0;
     public time: number = 0;
     public persistentWorld: PersistentWorld | null = null;
     public readonly chunksToSave = new Set<Chunk>;
     private readonly chunksWithBlockEntities = new Set<Chunk>;
-    public readonly loadingChunks = new Set<number>;
+    public readonly loadingChunks = new Set<ChunkKey>;
     public readonly lightingManager = new LightingManager(this);
     public readonly physicsDataCache = new PhysicsDataCache;
 
@@ -211,7 +212,7 @@ export class World {
     }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {
-        const chunkKey = VoxelGrid.encodeChunkKey(chunkX, chunkY, chunkZ);
+        const chunkKey = encodeChunkKey(chunkX, chunkY, chunkZ);
 
         // Check if the chunk is cached in the world
         let chunk = this.chunks.get(chunkKey);
@@ -238,7 +239,7 @@ export class World {
         for(const [ x, y, z ] of chunkPositions) {
             if(!this.persistentWorld.hasChunk(x, y, z)) continue;
 
-            this.loadingChunks.add(VoxelGrid.encodeChunkKey(x, y, z));
+            this.loadingChunks.add(encodeChunkKey(x, y, z));
         }
         
         const chunks = await this.persistentWorld.loadChunks(chunkPositions);
