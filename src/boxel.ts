@@ -261,7 +261,6 @@ export class BoxelGame {
     private reloadGameData() {
         lightChannelRegistry.reset();
         for(const [ id, json ] of this.assets.lightChannelTypeRegistry.entries()) {
-            console.log(id, json);
             try {
                 lightChannelRegistry.register(id, DataDrivenLightChannel.parseJson(json));
             } catch(e) {

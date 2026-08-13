@@ -183,8 +183,6 @@ export class TextureAtlas {
 
             this.positions.set(slot.id, new Box2(new Vector2(u0, v0), new Vector2(u1, v1)));
         }
-        
-        canvas.toBlob(blob => console.log(URL.createObjectURL(blob!)));
 
         this.packedImage = await createImageBitmap(canvas);
 

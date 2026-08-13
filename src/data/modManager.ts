@@ -73,7 +73,6 @@ export class ModManager {
             } else {
                 console.log("Installing " + mod.pack.descriptor.name);
                 this.assets.addPack(mod.pack);
-                console.log(mod);
             }
         }
     }

@@ -178,7 +178,7 @@ export class PersistentWorld {
 
             if(serializedChunk.version == null) serializedChunk.version = -1;
             for(let i = serializedChunk.version + 1; i <= CHUNK_SCHEMA_VERSION; i++) {
-                console.log("upgraded chunk " + serializedChunk.x + ", " +
+                console.log("Upgraded chunk " + serializedChunk.x + ", " +
                     serializedChunk.y + ", " + serializedChunk.z + " to version " + i);
                 upgraded = true;
                 chunkUpgrades[i]!(serializedChunk);
