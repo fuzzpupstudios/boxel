@@ -1,0 +1,22 @@
+{
+    "id": "base:ceiling_light",
+    "states": {
+        "variant=1x1": {
+            "model": {
+                "include": "base:full_block_lit",
+                "textures": {
+                    "block": "base:block/ceiling/1x1_ceiling_light.png"
+                }
+            },
+            "events": [ "base:material/wood", "base:block/drop_self" ],
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            },
+            "emission": {
+                "base:office": 15
+            }
+        }
+    }
+}

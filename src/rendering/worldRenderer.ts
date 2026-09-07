@@ -1,4 +1,6 @@
 import { MathUtils, Mesh, Scene } from "three";
+import { bloom } from "three/examples/jsm/tsl/display/BloomNode.js";
+import { sharpen } from "three/examples/jsm/tsl/display/SharpenNode.js";
 import { Fn } from "three/src/nodes/TSL.js";
 import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
 import { BoxGeometry, BufferGeometry, EdgesGeometry, LineBasicNodeMaterial, LineSegments, Material, MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
@@ -13,8 +15,8 @@ import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
 import { createLightColorNode } from "./lightUtils";
-import { EarthSky } from "./sky/earthSky";
 import type { Sky } from "./sky/sky";
+import { VoidSky } from "./sky/voidSky";
 
 export class WorldRenderer {
     public minChunkUpdates = 4;
@@ -83,7 +85,7 @@ export class WorldRenderer {
         world.setRenderer(this);
 
         this.chunkMesher = new ChunkMesher(world);
-        this.sky = new EarthSky(assets);
+        this.sky = new VoidSky(assets);
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
         this.breakingBlock = new BlockBreakOutline(assets);
@@ -114,7 +116,13 @@ export class WorldRenderer {
     public getRenderPass(): Node<"vec4"> {
         const sky = this.sky.renderPass;
         const ground = pass(this.scene, this.camera);
-        return vec4(mix(sky.rgb, ground.rgb, ground.a), 1);
+
+        const baseColor = vec4(mix(sky.rgb, ground.rgb, ground.a), 1);
+        const bloomPass = bloom(baseColor, 0.2, 0.1, 0.8);
+
+        const sharpColor: Node<"vec4"> = sharpen(baseColor, 100, false);
+
+        return sharpColor.add(bloomPass).min(vec4(1));
     }
 
     public markDirty(chunk: Chunk, priority: boolean = false) {

@@ -1,0 +1,20 @@
+{
+    "id": "base:wallpaper",
+    "states": {
+        "type=office": {
+            "model": {
+                "include": "base:axis_block",
+                "textures": {
+                    "side": "base:block/wallpaper/office.png",
+                    "axis": "base:block/plywood.png"
+                }
+            },
+            "events": [ "base:material/wood", "base:block/drop_self" ],
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

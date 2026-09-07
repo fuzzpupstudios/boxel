@@ -1,0 +1,5 @@
+{
+    "id": "base:office",
+    "defaultColor": [ 1, 1, 1 ],
+    "type": "cascading"
+}

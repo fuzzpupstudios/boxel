@@ -28,8 +28,8 @@ import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Settings } from "../../settings";
 import { Time } from "../../time";
+import { BoxelTerrainGenerator } from "../../world/boxelTerrainGenerator";
 import { ChunkLoader } from "../../world/chunkLoader";
-import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
 import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
@@ -303,7 +303,7 @@ export class PlayingGameStage extends GameStage {
         this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
 
         this.world.setPersistentWorld(this.persistentWorld);
-        this.world.setTerrainGenerator(new SimpleTerrainGenerator());
+        this.world.setTerrainGenerator(new BoxelTerrainGenerator());
 
         await this.world.loadWorld();
         

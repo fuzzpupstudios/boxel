@@ -1,0 +1,19 @@
+{
+    "id": "base:ceiling_tile",
+    "states": {
+        "variant=1x1": {
+            "model": {
+                "include": "base:full_block",
+                "textures": {
+                    "block": "base:block/ceiling/1x1_ceiling_tile.png"
+                }
+            },
+            "events": [ "base:material/wood", "base:block/drop_self" ],
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

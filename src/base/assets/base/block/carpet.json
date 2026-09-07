@@ -1,0 +1,19 @@
+{
+    "id": "base:carpet",
+    "states": {
+        "type=office": {
+            "model": {
+                "include": "base:full_block",
+                "textures": {
+                    "block": "base:block/floor/carpet.png"
+                }
+            },
+            "events": [ "base:material/wood", "base:block/drop_self" ],
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
