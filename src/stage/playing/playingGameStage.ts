@@ -35,6 +35,7 @@ import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
+import { CaveTerrainGenerator } from "../../world/caveTerrainGenerator";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -303,7 +304,7 @@ export class PlayingGameStage extends GameStage {
         this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
 
         this.world.setPersistentWorld(this.persistentWorld);
-        this.world.setTerrainGenerator(new SimpleTerrainGenerator());
+        this.world.setTerrainGenerator(new CaveTerrainGenerator());
 
         await this.world.loadWorld();
         

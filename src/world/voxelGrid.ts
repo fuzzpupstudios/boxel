@@ -117,4 +117,16 @@ export class VoxelChunk {
     public setTile(x: number, y: number, z: number, value: number) {
         this.tiles[x << 8 | y << 4 | z] = value;
     }
+    public fill(id: string) {
+        this.tiles.fill(0);
+        this.paletteMap.clear();
+        this.paletteMap.set(id, 0);
+
+        if(this.entireSingleTile) {
+            this.palette[0] = id;
+        } else {
+            this.entireSingleTile = true;
+            this.palette.splice(0, this.palette.length, id);
+        }
+    }
 }

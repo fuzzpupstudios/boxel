@@ -1,5 +1,5 @@
 import { FastNoiseNode } from "../fastnoise/fastnoise2";
-import { TerrainGenerator } from "./terrainGenerator";
+import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "./terrainGenerator";
 import type { World } from "./world";
 
 export class SimpleTerrainGenerator extends TerrainGenerator {
@@ -26,7 +26,7 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
             const minZ = columnZ << 4;
             const maxX = (columnX + 1) << 4;
             const maxZ = (columnZ + 1) << 4;
-            const maxY = (columnY + 8) << 4;
+            const maxY = (columnY + COLUMN_CHUNK_HEIGHT) << 4;
 
             for(let x = minX; x < maxX; x++) {
                 for(let z = minZ; z < maxZ; z++) {
