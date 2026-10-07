@@ -230,14 +230,7 @@ export class PersistentWorld {
     }
 
     private deserializeChunk(serialized: SerializedChunk): Chunk {
-        const voxelChunk = new VoxelChunk;
-        
-        voxelChunk.tiles.set(new Uint8Array(serialized.tiles));
-
-        for(let i = 0; i < serialized.palette.length; i++) {
-            voxelChunk.palette[i] = serialized.palette[i]!;
-            voxelChunk.paletteMap.set(serialized.palette[i]!, i);
-        }
+        const voxelChunk = VoxelChunk.fromData(new Uint8Array(serialized.tiles), serialized.palette);
         voxelChunk.update();
         const chunk = new Chunk(serialized.x, serialized.y, serialized.z, voxelChunk);
 

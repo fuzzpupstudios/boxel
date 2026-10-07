@@ -17,7 +17,6 @@ import { EarthSky } from "./sky/earthSky";
 import type { Sky } from "./sky/sky";
 
 export class WorldRenderer {
-    public minChunkUpdates = 4;
     public maxChunkUpdates = 16;
     public readonly fogDistance = uniform(64);
     public readonly scene = new Scene;
@@ -149,7 +148,7 @@ export class WorldRenderer {
             }
         }
 
-        const todo = MathUtils.clamp(this.dirtyChunks.size / 3, this.minChunkUpdates, this.maxChunkUpdates);
+        const todo = Math.min(this.dirtyChunks.size / 3, this.maxChunkUpdates);
         if(this.dirtyChunks.size > 0) {
             let i = 0;
             for(const chunk of this.dirtyChunks) {
@@ -209,7 +208,7 @@ export class WorldRenderer {
                     }
                 }
             }
-            if(surrounding != 26) return;
+            if(surrounding != 26) return false;
         }
         
         let mesh = this.renderedChunks.get(chunk);

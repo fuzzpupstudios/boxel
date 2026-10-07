@@ -33,7 +33,7 @@ export class VoxelGrid {
         const key = encodeChunkKey(chunkX, chunkY, chunkZ);
         let chunk = this.chunks.get(key);
         if(!chunk) {
-            chunk = new VoxelChunk();
+            chunk = VoxelChunk.fromNew();
             chunk.getPaletteValue(this.defaultBlockState);
             this.chunks.set(key, chunk);
         }
@@ -57,7 +57,7 @@ export class VoxelGrid {
         let chunk = this.chunks.get(key);
         
         if(chunk == null) {
-            chunk = new VoxelChunk();
+            chunk = VoxelChunk.fromNew();
             chunk.getPaletteValue(this.defaultBlockState);
             this.chunks.set(key, chunk);
         }
@@ -67,10 +67,32 @@ export class VoxelGrid {
 }
 
 export class VoxelChunk {
-    public readonly tiles = new Uint8Array(4096);
-    public readonly palette = new Array<string>;
-    public readonly paletteMap = new Map<string, number>;
-    public entireSingleTile: boolean = true;
+    public static fromData(tiles: Uint8Array<ArrayBuffer>, palette: string[]) {
+        const paletteMap = new Map<string, number>;
+        for(let i = 0; i < palette.length; i++) paletteMap.set(palette[i]!, i);
+
+        return new VoxelChunk(
+            tiles,
+            palette,
+            paletteMap,
+            palette.length == 1
+        );
+    }
+    public static fromNew() {
+        return new VoxelChunk(
+            new Uint8Array(4096),
+            new Array,
+            new Map,
+            true
+        );
+    }
+
+    private constructor(
+        public readonly tiles: Uint8Array<ArrayBuffer>,
+        public readonly palette: Array<string>,
+        public readonly paletteMap: Map<string, number>,
+        public entireSingleTile: boolean
+    ) {}
     
     public getPaletteValue(item: string): number {
         const paletteItem = this.paletteMap.get(item);

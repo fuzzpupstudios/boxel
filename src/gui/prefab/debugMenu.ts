@@ -103,8 +103,7 @@ export class DebugMenu {
             if(!line.visible) continue;
             if(!line.tryUpdate(time)) continue;
 
-            textLine.text = line.toString();
-
+            textLine.text = `${line}`;
         }
     }
 

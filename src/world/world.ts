@@ -10,7 +10,7 @@ import type { Time } from "../time";
 import { encodeChunkKey, type ChunkKey } from "./keying";
 import type { LightingChunk } from "./lighting/lightingGrid";
 import { LightingManager } from "./lighting/lightingManager";
-import { TerrainGenerator } from "./terrainGenerator";
+import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "./terrainGenerator";
 import { VoxelChunk, VoxelGrid } from "./voxelGrid";
 
 export class Chunk {
@@ -186,13 +186,15 @@ export class World {
         }
     }
 
-    public generateColumn(columnX: number, columnY: number, columnZ: number) {
-        this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
-        
-        for(let y = columnY + 7; y >= columnY; y--) {
-            this.getChunk(columnX, y, columnZ)?.tiles.update();
-            this.lightingManager.updateChunk(columnX, y, columnZ, false);
-        }
+    public generateColumn(columnX: number, columnY: number, columnZ: number, callback: () => void) {
+        this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ, () => {
+            for(let y = columnY + COLUMN_CHUNK_HEIGHT - 1; y >= columnY; y--) {
+                this.getChunk(columnX, y, columnZ)?.tiles.update();
+                this.lightingManager.updateChunk(columnX, y, columnZ, false);
+            }
+            this.flagChunksForInitialRender(columnX - 1, columnY - 1, columnZ - 1, columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1);
+            callback();
+        });
     }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {

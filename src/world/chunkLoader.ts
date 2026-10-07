@@ -16,8 +16,8 @@ export class ChunkLoader {
     public readonly chunksToHide = new Map<ChunkKey, Chunk>;
     public readonly columnGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
     public readonly columnLoadQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
-    private updateChunksCooldown: number = 0;
     private readonly frameTasks = new Array<Function>;
+    private readonly columnsGenerating = new Set<ChunkKey>;
 
     constructor(
         private readonly world: World
@@ -41,42 +41,6 @@ export class ChunkLoader {
             ) continue;
             
             this.chunksToHide.set(chunk.key, chunk);
-        }
-    }
-
-    public updateChunksToLoad() {
-        if(this.world.renderer === null) return;
-
-        const marker = this.origin;
-        const originX = marker.x >> 4;
-        const originY = marker.y >> 4;
-        const originZ = marker.z >> 4;
-        const minX = (marker.x - this.radius) >> 4;
-        const maxX = (marker.x + this.radius) >> 4;
-        const minY = (marker.y - this.radius) >> 4;
-        const maxY = (marker.y + this.radius) >> 4;
-        const minZ = (marker.z - this.radius) >> 4;
-        const maxZ = (marker.z + this.radius) >> 4;
-
-        const radiusSquare = (this.radius * this.radius) >> 8;
-
-        for(let x = minX; x <= maxX; x++) {
-            for(let z = minZ; z <= maxZ; z++) {
-                for(let y = minY; y <= maxY; y++) {
-                    const key = encodeChunkKey(x, y, z);
-                    if(!this.world.tiles.chunks.has(key)) continue;
-                    if(this.world.renderer.renderedChunkKeyList.has(key)) continue;
-
-                    const distanceSquare =
-                        (x - originX) * (x - originX) +
-                        (y - originY) * (y - originY) +
-                        (z - originZ) * (z - originZ);
-                    
-                    if(distanceSquare > radiusSquare) continue;
-
-                    this.world.flagChunkForRender(x, y, z);
-                }
-            }
         }
     }
 
@@ -104,6 +68,7 @@ export class ChunkLoader {
 
                     const key = encodeChunkKey(x, y, z);
                     if(this.columnsToLoad.has(key)) continue;
+                    if(this.columnsGenerating.has(key)) continue;
                     if(this.world.tiles.chunks.has(key)) continue;
 
                     this.columnsToLoad.set(key, [ x, y, z ]);
@@ -155,18 +120,10 @@ export class ChunkLoader {
         if(this.needsUpdate) {
             this.frameTasks.push(() => this.updateColumnsToLoad());
             this.frameTasks.push(() => this.updateChunksToHide());
-            this.frameTasks.push(() => this.updateChunksToLoad());
             this.needsUpdate = false;
         }
 
         this.frameTasks.shift()?.();
-
-        this.updateChunksCooldown -= time.deltaTime;
-
-        if(this.updateChunksCooldown < 0) {
-            this.updateChunksCooldown = 10;
-            this.updateChunksToLoad();
-        }
 
         
         const minX = (this.origin.x - this.radius - 15) >> 4;
@@ -176,7 +133,7 @@ export class ChunkLoader {
         const minZ = (this.origin.z - this.radius - 15) >> 4;
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
-        let max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations);
+        let max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations - this.columnsGenerating.size);
 
         for(let i = 0; i < max; i++) {
             const next = this.columnGenerationQueue.dequeue();
@@ -185,6 +142,9 @@ export class ChunkLoader {
 
             const [ _, key, x, y, z ] = next;
             this.columnsToLoad.delete(key);
+
+            if(this.columnsGenerating.has(key)) continue;
+            
             if(
                 x < minX || x > maxX ||
                 y < minY || y > maxY ||
@@ -203,7 +163,10 @@ export class ChunkLoader {
             }
 
             if(!columnGenerated) {
-                this.world.generateColumn(x, y, z);
+                this.columnsGenerating.add(key);
+                this.world.generateColumn(x, y, z, () => {
+                    this.columnsGenerating.delete(key);
+                })
             }
         }
         

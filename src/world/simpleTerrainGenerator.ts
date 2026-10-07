@@ -8,7 +8,7 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
     private readonly heightmapNoise = FastNoiseNode.fromEncodedNodeTree("DQkGDA==");
     private readonly caveNoise = FastNoiseNode.fromEncodedNodeTree("KQAB@BCRkJDQkGBAuamZm+DAPXo7A/CwrXI70TAACAvwQ=");
 
-    public generateColumn(world: World, columnX: number, columnY: number, columnZ: number): void {
+    public async generateColumn(world: World, columnX: number, columnY: number, columnZ: number) {
         const heights = this.heightmapNoise.generateUniformGrid2D(
             columnX * 16, columnZ * 16, 16, 16, 1, 1, world.seed, this.heightmap).values;
         
@@ -34,8 +34,6 @@ export class SimpleTerrainGenerator extends TerrainGenerator {
                 }
             }
         }
-
-        world.markChunksDirty(columnX - 1, columnY - 1, columnZ - 1, columnX + 1, columnY + 9, columnZ + 1);
     }
     
     public generate(world: World, chunkX: number, chunkY: number, chunkZ: number, heights: Float32Array): void {

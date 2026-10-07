@@ -100,8 +100,8 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             if(this.gliding) gravityInfluence = 0.2;
             if(this.flying) gravityInfluence = 0;
 
-            this.velocity.x += this.world.gravity.x * time.deltaTime * gravityInfluence;
             this.velocity.y += this.world.gravity.y * time.deltaTime * gravityInfluence;
+            this.velocity.x += this.world.gravity.x * time.deltaTime * gravityInfluence;
             this.velocity.z += this.world.gravity.z * time.deltaTime * gravityInfluence;
 
             let fell = false;
