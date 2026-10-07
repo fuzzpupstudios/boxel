@@ -133,40 +133,42 @@ export class ChunkLoader {
         const minZ = (this.origin.z - this.radius - 15) >> 4;
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
-        let max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations - this.columnsGenerating.size);
+        {
+            const max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations - this.columnsGenerating.size);
 
-        for(let i = 0; i < max; i++) {
-            const next = this.columnGenerationQueue.dequeue();
+            for(let i = 0; i < max; i++) {
+                const next = this.columnGenerationQueue.dequeue();
 
-            if(next == null) break;
+                if(next == null) break;
 
-            const [ _, key, x, y, z ] = next;
-            this.columnsToLoad.delete(key);
+                const [ _, key, x, y, z ] = next;
+                this.columnsToLoad.delete(key);
 
-            if(this.columnsGenerating.has(key)) continue;
-            
-            if(
-                x < minX || x > maxX ||
-                y < minY || y > maxY ||
-                z < minZ || z > maxZ
-            ) {
-                i--;
-                continue;
-            }
-
-            let columnGenerated = false;
-            for(let dy = 0; dy < 8; dy++) {
-                if(this.world.tiles.getChunk(x, y + dy, z)) {
-                    columnGenerated = true;
+                if(this.columnsGenerating.has(key)) continue;
+                
+                if(
+                    x < minX || x > maxX ||
+                    y < minY || y > maxY ||
+                    z < minZ || z > maxZ
+                ) {
+                    i--;
                     continue;
                 }
-            }
 
-            if(!columnGenerated) {
-                this.columnsGenerating.add(key);
-                this.world.generateColumn(x, y, z, () => {
-                    this.columnsGenerating.delete(key);
-                })
+                let columnGenerated = false;
+                for(let dy = 0; dy < 8; dy++) {
+                    if(this.world.tiles.getChunk(x, y + dy, z)) {
+                        columnGenerated = true;
+                        break;
+                    }
+                }
+
+                if(!columnGenerated) {
+                    this.columnsGenerating.add(key);
+                    this.world.generateColumn(x, y, z, () => {
+                        this.columnsGenerating.delete(key);
+                    })
+                }
             }
         }
         

@@ -192,7 +192,11 @@ export class World {
                 this.getChunk(columnX, y, columnZ)?.tiles.update();
                 this.lightingManager.updateChunk(columnX, y, columnZ, false);
             }
-            this.flagChunksForInitialRender(columnX - 1, columnY - 1, columnZ - 1, columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1);
+            this.flagChunksForInitialRender(
+                columnX - 1, columnY - 1, columnZ - 1,
+                columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1,
+                true // flag chunks for saving as well
+            );
             callback();
         });
     }
@@ -384,7 +388,8 @@ export class World {
 
     public flagChunksForInitialRender(
         minX: number, minY: number, minZ: number,
-        maxX: number, maxY: number, maxZ: number
+        maxX: number, maxY: number, maxZ: number,
+        save: boolean = false
     ) {
         if(this.renderer === null) return;
 
@@ -396,6 +401,7 @@ export class World {
                     if(this.renderer.renderedChunks.has(chunk)) continue;
 
                     this.renderer.markDirty(chunk);
+                    if(save) this.chunksToSave.add(chunk);
                 }
             }
         }
