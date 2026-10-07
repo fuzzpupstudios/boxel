@@ -1,7 +1,7 @@
 import Alea from "alea";
 import { type NoiseFunction3D, createNoise3D } from "simplex-noise";
 import { MathUtils } from "three";
-import { encodeChunkKey } from "../keying";
+import { encodeChunkKey, type ChunkKey } from "../keying";
 import { COLUMN_CHUNK_HEIGHT } from "../terrainGenerator";
 import type { VoxelChunk, VoxelGrid } from "../voxelGrid";
 
@@ -41,7 +41,7 @@ interface ChunkWorms {
 const NO_WORMS: PerlinWorm[] = [];
 
 export class WormLayer {
-    private readonly chunkWormMap = new Map<number, ChunkWorms>();
+    private readonly chunkWormMap = new Map<ChunkKey, ChunkWorms>();
     private readonly chunkReachXZ: number;
     private readonly chunkReachY: number;
     private worldSeed: number | null = null;
@@ -145,7 +145,7 @@ export class WormLayer {
     }
 
     private getSource(seed: number, chunkX: number, chunkY: number, chunkZ: number): ChunkWorms {
-        const key = <number>encodeChunkKey(chunkX, chunkY, chunkZ);
+        const key = encodeChunkKey(chunkX, chunkY, chunkZ);
         let source = this.chunkWormMap.get(key);
 
         if(source != null) {
@@ -156,7 +156,7 @@ export class WormLayer {
             return source;
         }
 
-        source = this.simulateSource(seed, key, chunkX, chunkY, chunkZ);
+        source = this.simulateSource(seed, chunkX, chunkY, chunkZ);
         this.chunkWormMap.set(key, source);
 
         if(this.chunkWormMap.size > this.options.cacheSize) {
@@ -166,12 +166,12 @@ export class WormLayer {
         return source;
     }
 
-    private simulateSource(seed: number, key: number, chunkX: number, chunkY: number, chunkZ: number): ChunkWorms {
+    private simulateSource(seed: number, chunkX: number, chunkY: number, chunkZ: number): ChunkWorms {
         const options = this.options;
         const noise = this.noise!;
         const chunkWorms: ChunkWorms = { chunkX, chunkY, chunkZ, worms: NO_WORMS };
 
-        const random = Alea(seed + key + options.seed);
+        const random = Alea(seed + ((chunkX & 0x7FF) << 21) | ((chunkY & 0x3FF) << 11) | (chunkZ & 0x7FF) + options.seed);
         if(random() > options.chance) return chunkWorms;
 
         chunkWorms.worms = [];

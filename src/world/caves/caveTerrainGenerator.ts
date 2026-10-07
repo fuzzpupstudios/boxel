@@ -5,7 +5,7 @@ import { World } from "../world";
 
 interface GenerationMessage {
     type: "generate_complete",
-    key: number,
+    key: ChunkKey,
     tiles: Uint8Array<ArrayBuffer>[],
     palettes: string[][]
 }
