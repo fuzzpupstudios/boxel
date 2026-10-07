@@ -1,0 +1,49 @@
+{
+    "id": "base:limestone_stone",
+    "states": {
+        "default": {
+            "model": {
+                "textures": {
+                    "side": "base:block/stone/limestone.png",
+                    "top": "base:block/stone/limestone_top.png",
+                    "bottom": "base:block/stone/limestone_bottom.png"
+                },
+
+                "cuboids": [
+                    {
+                        "from": [ 0, 0, 0 ],
+                        "to": [ 1, 1, 1 ],
+
+                        "north": "side",
+                        "east": "side",
+                        "south": "side",
+                        "west": "side",
+                        "up": "top",
+                        "down": "bottom"
+                    }
+                ]
+            },
+            "events": {
+                "include": [ "base:material/stone" ],
+                "triggers": {
+                    "relay_drop": {
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": {
+                            "id": "base:drop_item",
+                            "args": {
+                                "stack": "base:cobblestone[default]"
+                            }
+                        }
+                    },
+                    "base:destroy": "relay_drop",
+                    "base:explode": "relay_drop"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}

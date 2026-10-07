@@ -1,0 +1,35 @@
+{
+    "id": "base:sedimentary_stone",
+    "states": {
+        "default": {
+            "model": {
+                "include": "base:axis_block",
+                "textures": {
+                    "side": "base:block/stone/sedimentary.png",
+                    "axis": "base:block/stone/sedimentary_axis.png"
+                }
+            },
+            "events": {
+                "include": [ "base:material/stone" ],
+                "triggers": {
+                    "relay_drop": {
+                        "if": { "player": { "infiniteItems": false } },
+                        "then": {
+                            "id": "base:drop_item",
+                            "args": {
+                                "stack": "base:cobblestone[default]"
+                            }
+                        }
+                    },
+                    "base:destroy": "relay_drop",
+                    "base:explode": "relay_drop"
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
