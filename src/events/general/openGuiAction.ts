@@ -4,9 +4,8 @@ import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
 import type { Inventory } from "../../item/inventory";
 import { EventAction } from "../eventAction";
 import { EventCursor, type EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
-import type { GuiContainerEvents } from "../../gui/guiContainer";
 import { isInteger, isString, parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type OpenGuiActionParameters = z.infer<typeof OpenGuiActionParameters>;
 export const OpenGuiActionParameters = z.object({
@@ -46,7 +45,7 @@ export class OpenGuiAction extends EventAction {
         const offsetY = this.offsetY(cursor);
         const offsetZ = this.offsetZ(cursor);
 
-        const { world, x, y, z, entity } = cursor;
+        const { x, y, z, entity } = cursor;
 
         for(const [ inventoryId, inventorySource ] of this.inventories) {
             let inventory: Inventory | null = null;
@@ -73,18 +72,6 @@ export class OpenGuiAction extends EventAction {
         const guiType = guiTypeRegistry.get(gui);
         if(guiType == null) throw new ReferenceError("Unknown gui type " + gui);
 
-        let guiContainerEvents: GuiContainerEvents = {
-            onSlotChanged: () => { }
-        };
-        if(entity instanceof Player) {
-            guiContainerEvents.onSlotChanged = slot => {
-                const newCursor = new EventCursor(world, x, y, z);
-                newCursor.entity = entity;
-                
-                slot.processChange(newCursor);
-            }
-        }
-
-        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories), guiContainerEvents);
+        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories));
     }
 }

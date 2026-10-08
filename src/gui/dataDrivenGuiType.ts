@@ -19,7 +19,11 @@ export class DataDrivenGuiType extends GuiType {
         }
 
         for(const [ groupName, groupSlots ] of Object.entries(json.quickMoveGroups ?? {})) {
-            const groupSlotsList = guiType.quickMoveGroups.getOrInsert(groupName, []);
+            let groupSlotsList = guiType.quickMoveGroups[groupName];
+
+            if(groupSlotsList == null) {
+                groupSlotsList = guiType.quickMoveGroups[groupName] = [];
+            }
 
             for(const slotId of groupSlots) {
                 groupSlotsList.push(this.parseSlotId(slotId, guiType));

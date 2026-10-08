@@ -12,7 +12,7 @@ import { GuiItemStack } from "../../gui/element/itemStack";
 import { GuiText } from "../../gui/element/text";
 import { TileHologramProvider } from "../../gui/element/tileHologram";
 import { isGuiGraphicContainer } from "../../gui/graphic/graphic";
-import { GuiContainer, GuiSlotContainer, InventoryEvent } from "../../gui/guiContainer";
+import { GuiContainer, GuiSlotContainer } from "../../gui/element/guiContainer";
 import { GuiManager } from "../../gui/guiManager";
 import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
 import { DebugMenu, DebugMenuLineAlignment } from "../../gui/prefab/debugMenu";
@@ -36,6 +36,8 @@ import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
 import { CaveTerrainGenerator } from "../../world/caves/caveTerrainGenerator";
+import { InventoryEvent } from "../../gui/guiCursor";
+import { Inventory, InventorySlot } from "../../item/inventory";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -132,8 +134,6 @@ export class PlayingGameStage extends GameStage {
     private readonly pointerGuiStack: GuiItemStack;
     private readonly itemGivePanel: Container;
 
-    private readonly pointerStack = ItemStack.empty();
-
     private readonly tileHologramProvider: TileHologramProvider;
     private readonly itemHologramProvider: ItemHologramProvider;
     private readonly itemSpriteProvider: GuiItemSpriteProvider;
@@ -179,7 +179,7 @@ export class PlayingGameStage extends GameStage {
         this.gui.addChild(this.guiContainer);
         this.guiContainer.interactive = true;
 
-        this.pointerGuiStack = new GuiItemStack(this.pointerStack, this.tileHologramProvider, this.itemSpriteProvider);
+        this.pointerGuiStack = new GuiItemStack(ItemStack.empty(), this.tileHologramProvider, this.itemSpriteProvider);
         this.gui.addChild(this.pointerGuiStack);
         this.pointerGuiStack.interactive = false;
         this.pointerGuiStack.zIndex = 10;
@@ -217,8 +217,14 @@ export class PlayingGameStage extends GameStage {
             button.interactive = true;
             button.on("pointerdown", () => {
                 const clone = stack.clone();
-                clone.mergeInto(this.pointerStack);
-                if(!clone.isEmpty()) this.pointerStack.clear();
+                if(this.game.input.isPressed(ControlBinding.CROUCH)) {
+                    clone.quantity = 1000;
+                }
+                const pointerSlot = this.localPlayer?.pointerInventory.slots[0];
+                if(pointerSlot != null) {
+                    clone.mergeInto(pointerSlot.stack);
+                    pointerSlot.update();
+                }
             });
 
             button.position.set(x * 16, y * 16);
@@ -315,6 +321,11 @@ export class PlayingGameStage extends GameStage {
         this.localPlayer = new Player(this.world);
         this.playerController.setPlayer(this.localPlayer);
 
+        this.pointerGuiStack.stack = this.localPlayer.pointerInventory.slots[0].stack;
+        this.localPlayer.pointerInventory.onUpdate.connect(slotId => {
+            if(slotId == 0) this.pointerGuiStack.updateDisplayItem();
+        })
+
         if(playerSlot.position == null) playerSlot.position = [ 0, 100, 0 ];
         this.localPlayer.deserialize(playerSlot);
 
@@ -323,14 +334,8 @@ export class PlayingGameStage extends GameStage {
         ]);
         const hotbarGuiType = guiTypeRegistry.get("base:hotbar");
         if(hotbarGuiType != null) {
-            const hotbar = this.guiManager.openGui(hotbarGuiType.createGui(inventories), {
-                onSlotChanged: (slot) => {
-                    const cursor = new EventCursor(this.world, ...this.localPlayer!.position.toArray());
-                    cursor.entity = this.localPlayer!;
-
-                    slot.processChange(cursor);
-                },
-            });
+            const hotbarGui = hotbarGuiType.createGui(inventories);
+            const hotbar = this.guiManager.openGui(hotbarGui);
 
             this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
             hotbar.addChild(this.hotbarSelection);
@@ -503,8 +508,8 @@ export class PlayingGameStage extends GameStage {
             const topModal = this.guiManager.getTopModal();
             if(topModal != null) {
                 if(game.input.wasPressed(ControlBinding.CLOSE_MODAL) || game.input.wasPressed(ControlBinding.BACK)) {
-                    this.guiManager.closeGui(topModal.graphicalInterface.type.id);
-                    this.localPlayer.inventory.addStack(this.pointerStack);
+                    this.guiManager.closeGui(topModal.gui.type.id);
+                    this.localPlayer.inventory.addStack(this.localPlayer.pointerInventory.slots[0].stack);
                 }
             } else {
                 if(game.input.wasPressed(ControlBinding.OPEN_INVENTORY)) {
@@ -514,14 +519,7 @@ export class PlayingGameStage extends GameStage {
                         ["player", this.localPlayer.inventory]
                     ]);
                     const gui = inventoryType.createGui(inventories);
-                    this.guiManager.openGui(gui, {
-                        onSlotChanged: (slot) => {
-                            const cursor = new EventCursor(this.world, ...this.localPlayer!.position.toArray());
-                            cursor.entity = this.localPlayer!;
-
-                            slot.processChange(cursor);
-                        },
-                    });
+                    this.guiManager.openGui(gui);
                 }
             }
 
@@ -543,8 +541,11 @@ export class PlayingGameStage extends GameStage {
                 8
             );
 
-            this.holdingBlockPreview.setItemStack(
-                this.localPlayer.inventory.slots[this.localPlayer.selectedSlot]!.stack);
+            const selectedStack = this.localPlayer.inventory.slots[this.localPlayer.selectedSlot].stack;
+            if(this.holdingBlockPreview.stack != selectedStack) {
+                this.holdingBlockPreview.stack = selectedStack;
+                this.holdingBlockPreview.updateDisplayItem();
+            }
 
             this.chunkLoader.moveOrigin(this.localPlayer.position);
             this.chunkLoader.update(time);
@@ -614,77 +615,81 @@ export class PlayingGameStage extends GameStage {
         let guiGraphic: Container | null = target;
         while(guiGraphic != null && !isGuiGraphicContainer(guiGraphic)) guiGraphic = guiGraphic.parent;
 
-        if(guiContainer == null || slotContainer == null) {
-            const inventoryEvent = new InventoryEvent(this.pointerStack, null, null);
+        const pointerSlot = this.localPlayer?.pointerInventory.slots[0];
 
-            this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
-        } else {
-            const gui = guiContainer.graphicalInterface;
-            const guiSlot = slotContainer.guiSlot;
+        if(pointerSlot != null) {
+            if(guiContainer == null || slotContainer == null) {
+                const inventoryEvent = new InventoryEvent(pointerSlot, null, null);
 
-            const inventoryEvent = new InventoryEvent(this.pointerStack, guiSlot.type.id, gui);
+                this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
+            } else {
+                const gui = guiContainer.gui;
+                const guiSlot = slotContainer.guiSlot;
 
-            this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
+                const inventoryEvent = new InventoryEvent(pointerSlot, guiSlot.type.id, gui);
 
-            let swapStack = false;
-            let dropOne = false;
-            let splitStack = false;
-            let quickMove = false;
+                this.guiManager.guiCursor.onSelectSlot.emit(inventoryEvent);
 
-            if(game.isDesktop) {
-                swapStack = game.input.wasPressed(ControlBinding.SWAP_STACK);
-                dropOne = game.input.wasPressed(ControlBinding.DROP_ONE);
-                splitStack = game.input.wasPressed(ControlBinding.SPLIT_STACK);
-                quickMove = game.input.wasPressed(ControlBinding.QUICK_MOVE);
-            } else if(this.game.input.touch != null) {
-                const slotStack = guiSlot.slot.stack;
-                const endedTouch = this.game.input.touch.justEndedTouches.at(-1);
-                
-                if(endedTouch?.uiTouch) {
-                    if(!this.longTouched) {
-                        if(this.pointerStack.isEmpty()) {
-                            swapStack = true;
-                        } else {
-                            if(slotStack == null || slotStack.isEmpty()) {
+                let swapStack = false;
+                let dropOne = false;
+                let splitStack = false;
+                let quickMove = false;
+
+                if(game.isDesktop) {
+                    swapStack = game.input.wasPressed(ControlBinding.SWAP_STACK);
+                    dropOne = game.input.wasPressed(ControlBinding.DROP_ONE);
+                    splitStack = game.input.wasPressed(ControlBinding.SPLIT_STACK);
+                    quickMove = game.input.wasPressed(ControlBinding.QUICK_MOVE);
+                } else if(this.game.input.touch != null) {
+                    const slotStack = guiSlot.slot.stack;
+                    const endedTouch = this.game.input.touch.justEndedTouches.at(-1);
+                    
+                    if(endedTouch?.uiTouch) {
+                        if(!this.longTouched) {
+                            if(pointerSlot.stack.isEmpty()) {
                                 swapStack = true;
                             } else {
-                                dropOne = true;
-                            }
-                        }
-                    }
-                } else {
-                    const firstTouch = this.game.input.getFirstTouch(true);
-
-                    if(firstTouch != null && firstTouch.duration > 0.5) {
-                        if(!this.longTouched) {
-                            this.longTouched = true;
-                            if(this.pointerStack.isEmpty()) {
-                                splitStack = true;
-                            } else {
                                 if(slotStack == null || slotStack.isEmpty()) {
-                                    dropOne = true;
-                                } else {
                                     swapStack = true;
+                                } else {
+                                    dropOne = true;
                                 }
                             }
                         }
                     } else {
-                        this.longTouched = false;
+                        const firstTouch = this.game.input.getFirstTouch(true);
+
+                        if(firstTouch != null && firstTouch.duration > 0.5) {
+                            if(!this.longTouched) {
+                                this.longTouched = true;
+                                if(pointerSlot.stack.isEmpty()) {
+                                    splitStack = true;
+                                } else {
+                                    if(slotStack == null || slotStack.isEmpty()) {
+                                        dropOne = true;
+                                    } else {
+                                        swapStack = true;
+                                    }
+                                }
+                            }
+                        } else {
+                            this.longTouched = false;
+                        }
                     }
                 }
-            }
 
-            if(quickMove && !inventoryEvent.consumed) {
-                this.guiManager.guiCursor.onQuickMove.emit(inventoryEvent);
-            }
-            if(swapStack && !inventoryEvent.consumed) {
-                this.guiManager.guiCursor.onSwapStack.emit(inventoryEvent);
-            }
-            if(dropOne && !inventoryEvent.consumed) {
-                this.guiManager.guiCursor.onDropOne.emit(inventoryEvent);
-            }
-            if(splitStack && !inventoryEvent.consumed) {
-                this.guiManager.guiCursor.onSplitStack.emit(inventoryEvent);
+                if(quickMove && !inventoryEvent.consumed) {
+                    this.guiManager.guiCursor.onQuickMove.emit(inventoryEvent);
+                }
+                if(swapStack && !inventoryEvent.consumed) {
+                    this.guiManager.guiCursor.onSwapStack.emit(inventoryEvent);
+                }
+                if(dropOne && !inventoryEvent.consumed) {
+                    this.guiManager.guiCursor.onDropOne.emit(inventoryEvent);
+                }
+                if(splitStack && !inventoryEvent.consumed) {
+                    this.guiManager.guiCursor.onSplitStack.emit(inventoryEvent);
+                }
             }
         }
 
@@ -692,7 +697,7 @@ export class PlayingGameStage extends GameStage {
             const cursor = this.localPlayer.createEventCursor();
             
             if(game.input.wasPressed(ControlBinding.PRESS_UI) || game.input.touch?.justStartedTouches.length) {
-                const gui = guiContainer.graphicalInterface;
+                const gui = guiContainer.gui;
                 const graphicId = guiGraphic.graphicId;
 
                 const graphic = gui.graphics.get(graphicId);

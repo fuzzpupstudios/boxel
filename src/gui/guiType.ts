@@ -2,6 +2,7 @@ import { Texture } from "pixi.js";
 import type { EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
 import type { Inventory, InventorySlot } from "../item/inventory";
+import { Gui } from "./gui";
 
 
 export interface GuiInventorySlotType {
@@ -21,22 +22,9 @@ export interface GuiGraphicType {
     renderIf: EventPredicate;
 }
 
-export class GuiInventorySlot {
-    public constructor(
-        public slot: InventorySlot,
-        public type: GuiInventorySlotType
-    ) {}
-}
-
-export class GuiGraphic {
-    public constructor(
-        public type: GuiGraphicType
-    ) {}
-}
-
 export abstract class GuiType {
     public readonly inventories = new Set<string>;
-    public readonly quickMoveGroups = new Map<string, string[]>;
+    public readonly quickMoveGroups: Record<string, string[]> = {};
     public readonly slots = new Set<GuiInventorySlotType>;
     public readonly graphics = new Set<GuiGraphicType>;
     public texture: Texture = Texture.EMPTY;
@@ -81,58 +69,7 @@ export abstract class GuiType {
         });
     }
 
-    public createGui(inventories: Map<string, Inventory>): GraphicalInterface {
-        return new GraphicalInterface(this, inventories);
-    }
-}
-
-export class GraphicalInterface {
-    public readonly slots = new Map<string, GuiInventorySlot>;
-    public readonly graphics = new Map<string, GuiGraphic>;
-
-    public constructor(
-        public readonly type: GuiType,
-        public readonly inventories: Map<string, Inventory>
-    ) {
-        for(const slotType of type.slots) {
-            const [ inventoryId, slotIndexString ] = slotType.id.split(".");
-            if(inventoryId == null || slotIndexString == null) {
-                throw new ReferenceError("Invalid slot format " + slotType.id);
-            }
-            const inventory = this.inventories.get(inventoryId);
-
-            if(inventory != null) {
-                const inventorySlot = inventory.slots[+slotIndexString];
-                if(inventorySlot == null) {
-                    console.warn("Cannot find slot " + slotType.id);
-                } else {
-                    const slot = new GuiInventorySlot(inventorySlot, slotType);
-                    this.slots.set(slotType.id, slot);
-                }
-            }
-        }
-        for(const graphicType of type.graphics) {
-            const graphic = new GuiGraphic(graphicType);
-            this.graphics.set(graphicType.id, graphic);
-        }
-    }
-
-    public updateSlot(slotId: string) {
-        const [ inventoryId, slotIndexString ] = slotId.split(".");
-        if(inventoryId == null || slotIndexString == null) return;
-        
-        const inventory = this.inventories.get(inventoryId);
-        if(inventory == null) return;
-
-        inventory.onUpdate.emit(+slotIndexString);
-    }
-
-    public updateSlotByRef(slot: InventorySlot) {        
-        for(const inventory of this.inventories.values()) {
-            const index = inventory.slots.indexOf(slot);
-            if(index === -1) continue;
-
-            inventory.onUpdate.emit(index);
-        }
+    public createGui(inventories: Map<string, Inventory>): Gui {
+        return new Gui(this, inventories);
     }
 }

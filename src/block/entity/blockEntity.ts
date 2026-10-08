@@ -22,7 +22,7 @@ export interface BlockEntityWithInventory {
 }
 
 export class BlockEntity implements Tickable {
-    protected blockState: BlockState;
+    public blockState: BlockState | null = null;
     public constructor(
         public readonly type: BlockEntityType,
         public readonly world: World,
@@ -30,7 +30,6 @@ export class BlockEntity implements Tickable {
         public readonly y: number,
         public readonly z: number
     ) {
-        this.blockState = null!;
         this.updateBlockState();
     }
 

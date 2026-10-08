@@ -19,6 +19,7 @@ export type SerializedPlayerEntity = z.infer<typeof SerializedPlayerEntity>;
 export const SerializedPlayerEntity = SerializedEntity.extend({
     id: z.string(),
     inventory: SerializedInventory.optional(),
+    pointerInventory: SerializedInventory.optional(),
     selectedSlot: z.int().default(0),
     pitch: z.number().default(0),
     yaw: z.number().default(0),
@@ -52,6 +53,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public sprinting: boolean = false;
     public selectedSlot: number = 0;
     public readonly inventory = new Inventory;
+    public readonly pointerInventory = new Inventory;
 
     public constructor(world: World) {
         super(world);
@@ -59,6 +61,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         for(let i = 0; i < 50; i++) {
             this.inventory.addSlot(new InventorySlot);
         }
+        this.pointerInventory.addSlot(new InventorySlot);
     }
 
     protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
@@ -383,12 +386,14 @@ export class Player extends Entity<SerializedPlayerEntity> {
                         ) continue;
 
                         if(distanceSquared < pickupRadiusSquared) {
-                            pickedUpStacks.push(entity.slot.stack.clone());
-                            this.inventory.addStack(entity.slot.stack);
-                            if(entity.slot.stack.isEmpty()) {
+                            const pickedUpStack = entity.getStack().clone();
+                            const changed = entity.inventory.dump(this.inventory);
+
+                            pickedUpStack.quantity = changed;
+                            pickedUpStacks.push(pickedUpStack);
+                            
+                            if(entity.inventory.isEmpty()) {
                                 entity.removeFromWorld();
-                            } else {
-                                entity.slot.processChange(null!);
                             }
                         } else {
                             magnetDirection.copy(targetPosition);
@@ -427,8 +432,14 @@ export class Player extends Entity<SerializedPlayerEntity> {
             direction.y * 10 + this.velocity.y,
             direction.z * 10 + this.velocity.z
         );
-        stack.mergeInto(entity.slot.stack, max);
-        entity.slot.processChange(null!);
+
+        console.log("drop stack " + stack, max);
+
+        const droppingStack = stack.split(max);
+        console.log("dropping " + droppingStack);
+        entity.inventory.addStack(droppingStack);
+        console.log("merging " + droppingStack + " into " + stack);
+        droppingStack.mergeInto(stack); // return leftover non-dropped items to the inventory
 
         entity.pickupCooldown = 2;
 
@@ -484,6 +495,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return Object.assign(super.serialize(), {
             id: this.id,
             inventory: this.inventory.serialize(),
+            pointerInventory: this.pointerInventory.serialize(),
             selectedSlot: this.selectedSlot,
             pitch: this.pitch,
             yaw: this.yaw,
@@ -496,6 +508,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         this.id = parsedData.id;
         if(parsedData.inventory) this.inventory.deserialize(parsedData.inventory);
+        if(parsedData.pointerInventory) this.pointerInventory.deserialize(parsedData.pointerInventory);
         this.selectedSlot = parsedData.selectedSlot;
 
         this.pitch = parsedData.pitch;

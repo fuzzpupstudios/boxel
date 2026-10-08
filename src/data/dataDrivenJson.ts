@@ -157,6 +157,8 @@ export namespace DataDrivenJson {
         extract: z.boolean().optional(),
         insert: z.boolean().optional(),
         onChange: z.string().optional(),
+        onInsert: z.string().optional(),
+        onExtract: z.string().optional()
     });
 
     export type BlockEntityType = z.infer<typeof BlockEntityType>;

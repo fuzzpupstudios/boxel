@@ -260,6 +260,7 @@ export class World {
                 if(blockEntity.type.tickable) {
                     this.tickables.add(blockEntity);
                 }
+                blockEntity.updateBlockState();
             }
             for(const entity of chunk.entities) {
                 this.addEntity(entity);

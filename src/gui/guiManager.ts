@@ -1,10 +1,11 @@
 import { Container } from "pixi.js";
 import { Signal } from "typed-signals";
 import { EventCursor } from "../events/eventSheet";
+import { GuiContainer } from "./element/guiContainer";
 import type { GuiItemSpriteProvider } from "./element/itemSprite";
 import type { TileHologramProvider } from "./element/tileHologram";
-import { GuiContainer, GuiCursor, type GuiContainerEvents } from "./guiContainer";
-import type { GraphicalInterface } from "./guiType";
+import type { Gui } from "./gui";
+import { GuiCursor } from "./guiCursor";
 
 export class GuiManager {
     public readonly openGuis = new Map<string, GuiContainer>;
@@ -35,18 +36,17 @@ export class GuiManager {
         this.onUpdate.emit();
     }
     public getTopModal() {
-        return this.openGuis.values().filter(gui => gui.graphicalInterface.type.modal).toArray().pop();
+        return this.openGuis.values().filter(gui => gui.gui.type.modal).toArray().pop();
     }
     public getOpenModalCount() {
-        return this.openGuis.values().reduce((a, gui) => gui.graphicalInterface.type.modal ? a + 1 : a, 0);
+        return this.openGuis.values().reduce((a, gui) => gui.gui.type.modal ? a + 1 : a, 0);
     }
-    public openGui(gui: GraphicalInterface, events: GuiContainerEvents) {
+    public openGui(gui: Gui) {
         const id = gui.type.id;
         const guiContainer = new GuiContainer(gui,
             this.hologramProvider,
             this.itemSpriteProvider,
-            this.guiCursor,
-            events
+            this.guiCursor
         );
 
         if(this.openGuis.has(id)) this.closeGui(id);
@@ -71,7 +71,7 @@ export class GuiManager {
         this.lastPixelRatio = pixelRatio;
 
         for(const gui of this.openGuis.values()) {
-            const type = gui.graphicalInterface.type;
+            const type = gui.gui.type;
 
             gui.position.set(
                 width * type.anchor[0] + type.offset[0],

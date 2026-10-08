@@ -57,6 +57,9 @@ export class ItemStack {
         this.item = otherItem;
         this.quantity = otherQuantity;
     }
+    public equals(other: ItemStack) {
+        return this.item === other.item && this.quantity === other.quantity;
+    }
     public mergeInto(other: ItemStack, max = Infinity) {
         if(!other.isEmpty() && other.item != this.item) return 0;
 
@@ -69,6 +72,15 @@ export class ItemStack {
         if(this.quantity === 0) this.clear();
 
         return toGive;
+    }
+    public split(max: number): ItemStack {
+        const stack = this.clone();
+
+        const toMove = Math.min(this.quantity, max);
+        stack.quantity = toMove;
+        this.quantity -= toMove;
+
+        return stack;
     }
     public set(item: string, quantity: number) {
         this.item = item;

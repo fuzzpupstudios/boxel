@@ -4,55 +4,104 @@ import { EventCursor } from "../../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../../item/inventory";
 import type { Time } from "../../time";
 import type { World } from "../../world/world";
-import { blockStateRegistry } from "../blockRegistry";
 import type { BlockState } from "../blockState";
 import { BlockEntity, BlockEntityType, type SerializedBlockEntity } from "./blockEntity";
 
-export class DataDrivenBlockEntityType extends BlockEntityType {
-    public override readonly tickable: boolean;
-    public override readonly id: string;
-    public readonly inventory?: Inventory;
+class BlockEntityInventoryHelper {
+    public readonly slots = new Array<InventorySlot>;
+    public onUpdate?: (blockEntity: BlockEntity, inventory: Inventory, slot: number) => void;
+    public onInsert?: (blockEntity: BlockEntity, inventory: Inventory, slot: number) => void;
+    public onExtract?: (blockEntity: BlockEntity, inventory: Inventory, slot: number) => void;
 
+    public addSlot(slot: InventorySlot) {
+        this.slots.push(slot);
+    }
+
+    public createInventory(blockEntity: BlockEntity) {
+        const inventory = new Inventory;
+
+        for(const slot of this.slots) {
+            inventory.addSlot(slot.clone());
+        }
+
+        inventory.onUpdate.connect(slotId => {
+            this.onUpdate?.(blockEntity, inventory, slotId);
+        })
+        inventory.onInsert.connect(slotId => {
+            this.onInsert?.(blockEntity, inventory, slotId);
+        })
+        inventory.onExtract.connect(slotId => {
+            this.onExtract?.(blockEntity, inventory, slotId);
+        })
+
+        return inventory;
+    }
+}
+
+export class DataDrivenBlockEntityType extends BlockEntityType {
     public static parseJson(json: DataDrivenJson.BlockEntityType) {
-        let inventory: Inventory | undefined;
+        let inventoryHelper: BlockEntityInventoryHelper | undefined;
         
         if(json.slots != null) {
-            inventory = new Inventory;
+            inventoryHelper = new BlockEntityInventoryHelper;
 
-            for(const jsonSlot of json.slots) {
+            for(let i = 0; i < json.slots.length; i++) {
+                const jsonSlot = json.slots[i];
+
                 const slot = new InventorySlot;
                 slot.allowInsert = jsonSlot.insert ?? slot.allowInsert;
                 slot.allowExtract = jsonSlot.extract ?? slot.allowExtract;
 
-                if(jsonSlot.onChange != null) {
-                    const onChangeTrigger = jsonSlot.onChange;
+                inventoryHelper.addSlot(slot);
+            }
 
-                    slot.onChange = cursor => {
-                        const blockStateId = cursor.world.getBlockState(cursor.x, cursor.y, cursor.z);
-                        const blockState = blockStateRegistry.get(blockStateId);
-                        
-                        blockState?.events.runTrigger(onChangeTrigger, cursor);
-                    }
-                }
-                inventory.addSlot(slot);
+            const onChangeTriggers = json.slots.map(slot => slot.onChange);
+            inventoryHelper.onUpdate = (blockEntity, inventory, slot) => {
+                const onChangeTrigger = onChangeTriggers[slot];
+                if(onChangeTrigger == null) return;
+
+                const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
+                cursor.variables.set("$slot", inventory.slots[slot]);
+
+                blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
+            }
+
+            const onInsertTriggers = json.slots.map(slot => slot.onInsert);
+            inventoryHelper.onInsert = (blockEntity, inventory, slot) => {
+                const onChangeTrigger = onInsertTriggers[slot];
+                if(onChangeTrigger == null) return;
+
+                const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
+                cursor.variables.set("$slot", inventory.slots[slot]);
+
+                blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
+            }
+
+            const onExtractTriggers = json.slots.map(slot => slot.onExtract);
+            inventoryHelper.onExtract = (blockEntity, inventory, slot) => {
+                const onChangeTrigger = onExtractTriggers[slot];
+                if(onChangeTrigger == null) return;
+
+                const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
+                cursor.variables.set("$slot", inventory.slots[slot]);
+
+                blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
             }
         }
 
         return new DataDrivenBlockEntityType(
             json.id,
             json.tickable ?? false,
-            inventory
+            inventoryHelper
         )
     }
     
-    public constructor(
-        id: string, tickable: boolean, inventory?: Inventory
+    private constructor(
+        public override readonly id: string,
+        public override readonly tickable: boolean,
+        public readonly inventoryHelper?: BlockEntityInventoryHelper
     ) {
         super();
-
-        this.id = id;
-        this.tickable = tickable;
-        this.inventory = inventory!;
     }
     
     public create(world: World, x: number, y: number, z: number): DataDrivenBlockEntity {
@@ -65,18 +114,17 @@ interface SerializedDataDrivenBlockEntity extends SerializedBlockEntity {
 }
 
 export class DataDrivenBlockEntity extends BlockEntity {
-    public readonly inventory?: Inventory;
+    public readonly inventory: Inventory | null = null;
     private tickEvents: EventAction[] = [];
-    private eventCursor?: EventCursor;
+    private eventCursor: EventCursor | null = null;
 
     public constructor(type: DataDrivenBlockEntityType, world: World, x: number, y: number, z: number) {
         super(type, world, x, y, z);
 
-        if(type.inventory != null) {
-            this.inventory = type.inventory.clone();
+        if(type.inventoryHelper != null) {
+            this.inventory = type.inventoryHelper.createInventory(this);
         }
-
-        this.updateBlockState(this.blockState);
+        this.updateEventMemo();
     }
 
     public override serialize(): SerializedDataDrivenBlockEntity {
@@ -97,27 +145,35 @@ export class DataDrivenBlockEntity extends BlockEntity {
 
     public updateBlockState(state?: string | BlockState) {
         super.updateBlockState(state);
+        this.updateEventMemo();
+    }
 
-        this.tickEvents = this.blockState.events.triggers.get("base:block_entity/tick") ?? [];
-        this.eventCursor = new EventCursor(this.world, this.x, this.y, this.z);
+    private updateEventMemo() {
+        if(this.blockState == null) {
+            this.tickEvents = [];
+            this.eventCursor = null;
+        } else {
+            this.tickEvents = this.blockState.events.triggers.get("base:block_entity/tick") ?? [];
+            this.eventCursor = new EventCursor(this.world, this.x, this.y, this.z);
+        }
     }
 
     public override init(): void {
         if(this.eventCursor == null) throw new Error("Block state init() called before event cursor was set");
-        this.blockState.events.runTrigger("base:block_entity/init", this.eventCursor);
+        this.blockState?.events.runTrigger("base:block_entity/init", this.eventCursor);
     }
 
     public override tick(time: Time) {
         if(this.eventCursor == null) return;
 
         for(let i = 0; i < this.tickEvents.length; i++) {
-            this.tickEvents[i]!.run(this.eventCursor);
+            this.tickEvents[i].run(this.eventCursor);
         }
     }
 
     public override deinit(): void {
         if(this.eventCursor == null) throw new Error("Block state deinit() called before event cursor was set");
 
-        this.blockState.events.runTrigger("base:block_entity/remove", this.eventCursor);
+        this.blockState?.events.runTrigger("base:block_entity/remove", this.eventCursor);
     }
 }

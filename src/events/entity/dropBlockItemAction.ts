@@ -4,6 +4,7 @@ import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
 import n from "../eventVariableTypes";
 import { isInteger, isNumber, parameter } from "../eventVariable";
+import { ItemStack } from "../../item/itemStack";
 
 export type DropBlockItemActionParameters = z.infer<typeof DropBlockItemActionParameters>;
 export const DropBlockItemActionParameters = z.object({
@@ -64,7 +65,8 @@ export class DropBlockItemAction extends EventAction {
             this.velocityY(cursor) + this.randomVelocityY(cursor) * (Math.random() * 2 - 1),
             this.velocityZ(cursor) + this.randomVelocityZ(cursor) * (Math.random() * 2 - 1),
         );
-        entity.slot.stack.set(blockStateId, this.quantity(cursor));
+        const stack = ItemStack.of(blockStateId, this.quantity(cursor));
+        entity.inventory.addStack(stack);
 
         cursor.world.addEntity(entity);
     }

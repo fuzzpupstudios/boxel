@@ -28,9 +28,9 @@ export class MergeSlotStackAction extends EventAction {
 
         const transferred = fromSlot.stack.mergeInto(toSlot.stack);
 
-        if(transferred != 0) {
-            fromSlot.processChange(cursor);
-            toSlot.processChange(cursor);
+        if(transferred !== 0) {
+            fromSlot.onExtract();
+            toSlot.onInsert();
         }
     }
 }

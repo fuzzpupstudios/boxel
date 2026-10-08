@@ -1,7 +1,7 @@
 import Alea from "alea";
 import { Box3, Color, Matrix4, Vector3 } from "three";
 import z from "zod";
-import { InventorySlot, type Inventory } from "../item/inventory";
+import { Inventory, InventorySlot } from "../item/inventory";
 import { ItemStack, SerializedItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
 import type { PhysicsDataCache } from "../physics/physicsDataCache";
@@ -38,7 +38,7 @@ for(let i = 0; i < 1000; i++) {
 export class ItemEntity extends Entity {
     public readonly type = "base:item";
 
-    public readonly slot = new InventorySlot(ItemStack.empty());
+    public readonly inventory: Inventory;
     private readonly renderer: ItemEntityRenderer | null;
     private geometryInstanceIds = new Array<number>;
     private readonly matrix = new Matrix4;
@@ -53,8 +53,9 @@ export class ItemEntity extends Entity {
         world: World,
         x: number, y: number, z: number
     ) {
-        for(const slot of inventory.slots) {
+        while(!inventory.isEmpty()) {
             const item = new ItemEntity(world);
+
             item.position.set(
                 x + Math.random() * 0.5 - 0.25,
                 y + Math.random() * 0.5 - 0.25,
@@ -65,8 +66,9 @@ export class ItemEntity extends Entity {
                 6,
                 Math.random() * 6 - 3,
             );
-            slot.stack.swap(item.slot.stack);
-            item.updateDisplayItem();
+
+            inventory.dump(item.inventory);
+            
             world.addEntity(item);
         }
     }
@@ -77,11 +79,12 @@ export class ItemEntity extends Entity {
         super(world);
 
         this.renderer = world.renderer?.entityRenderer.itemEntityRenderer ?? null;
+
+        this.inventory = new Inventory();
+        this.inventory.addSlot(new InventorySlot(ItemStack.empty()));
+        this.inventory.onUpdate.connect(() => this.updateDisplayItem());
         
         this.updateDisplayItem();
-        this.slot.onChange = () => {
-            this.updateDisplayItem();
-        }
     }
 
     protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
@@ -108,6 +111,10 @@ export class ItemEntity extends Entity {
         }
     }
 
+    public getStack() {
+        return this.inventory.slots[0].stack;
+    }
+
     private mergeNearbyItems(radius: number) {
         const minX = (this.position.x - radius) >> 4;
         const minY = (this.position.y - radius) >> 4;
@@ -127,15 +134,18 @@ export class ItemEntity extends Entity {
                     
                     for(const entity of chunk.entities) {
                         if(!(entity instanceof ItemEntity)) continue;
-                        if(entity.slot.stack.item != this.slot.stack.item) continue;
+
+                        const otherStack = entity.getStack();
+                        const myStack = entity.getStack();
+
+                        if(otherStack.item != myStack.item) continue;
                         if(entity == this) continue;
 
                         if(entity.position.distanceToSquared(this.position) < raidusSquared) {
-                            entity.slot.stack.mergeInto(this.slot.stack);
+                            otherStack.mergeInto(myStack);
                             changed = true;
 
-
-                            if(entity.slot.stack.isEmpty()) {
+                            if(otherStack.isEmpty()) {
                                 entity.removeFromWorld();
                             } else {
                                 return;
@@ -198,21 +208,22 @@ export class ItemEntity extends Entity {
 
     private updateDisplayItem() {
         if(this.renderer == null) return;
+        const stack = this.getStack();
 
-        const count = Math.ceil(((this.slot.stack.quantity / 1000) ** 0.34) * 10);
+        const count = Math.ceil(((stack.quantity / 1000) ** 0.34) * 10);
 
         for(const i of this.geometryInstanceIds.splice(0)) {
             this.renderer.deleteInstance(i);
         }
 
         for(let i = 0; i < count; i++) {
-            this.geometryInstanceIds.push(this.renderer.addInstance(this.slot.stack.item));
+            this.geometryInstanceIds.push(this.renderer.addInstance(stack.item));
         }
     }
     
     public override serialize(): SerializedItemEntity {
         return Object.assign(super.serialize(), {
-            stack: this.slot.stack.serialize(),
+            stack: this.getStack().serialize(),
             pickupCooldown: this.pickupCooldown
         });
     }
@@ -221,9 +232,9 @@ export class ItemEntity extends Entity {
         const parsedData = SerializedItemEntity.parse(data);
         super.deserialize(parsedData);
         
-        this.slot.stack.deserialize(parsedData.stack);
+        this.getStack().deserialize(parsedData.stack);
         this.pickupCooldown = parsedData.pickupCooldown;
 
-        this.updateDisplayItem();
+        this.inventory.onUpdate.emit(0);
     }
 }

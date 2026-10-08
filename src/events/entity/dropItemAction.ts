@@ -57,9 +57,9 @@ export class DropItemAction extends EventAction {
             this.velocityZ(cursor) + this.randomVelocityZ(cursor) * (Math.random() * 2 - 1),
         );
         const slot = this.slot(cursor);
-        entity.slot.stack.swap(slot.stack);
-        slot.processChange(cursor);
-        entity.slot.processChange(cursor);
+
+        entity.inventory.addStack(slot.stack);
+        slot.update();
 
         cursor.world.addEntity(entity);
     }

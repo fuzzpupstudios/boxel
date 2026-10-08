@@ -9,7 +9,7 @@ export class GuiItemStack extends Container {
     public readonly itemSprite: GuiItemSprite;
     public readonly counter: GuiText;
     public constructor(
-        public readonly stack: ItemStack,
+        public stack: ItemStack,
         private readonly hologramProvider: TileHologramProvider,
         private readonly itemSpriteProvider: GuiItemSpriteProvider
     ) {
@@ -39,11 +39,6 @@ export class GuiItemStack extends Container {
         this.itemSprite = itemSprite;
         this.counter = counter;
 
-        this.updateDisplayItem();
-    }
-
-    public setItemStack(stack: ItemStack) {
-        this.stack.swap(stack.clone());
         this.updateDisplayItem();
     }
 
