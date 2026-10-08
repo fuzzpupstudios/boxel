@@ -383,12 +383,12 @@ export class Player extends Entity<SerializedPlayerEntity> {
                         ) continue;
 
                         if(distanceSquared < pickupRadiusSquared) {
-                            pickedUpStacks.push(entity.stack.clone());
-                            this.inventory.addStack(entity.stack);
-                            if(entity.stack.isEmpty()) {
+                            pickedUpStacks.push(entity.slot.stack.clone());
+                            this.inventory.addStack(entity.slot.stack);
+                            if(entity.slot.stack.isEmpty()) {
                                 entity.removeFromWorld();
                             } else {
-                                entity.updateDisplayItem();
+                                entity.slot.processChange(null!);
                             }
                         } else {
                             magnetDirection.copy(targetPosition);
@@ -427,8 +427,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
             direction.y * 10 + this.velocity.y,
             direction.z * 10 + this.velocity.z
         );
-        stack.mergeInto(entity.stack, max);
-        entity.updateDisplayItem();
+        stack.mergeInto(entity.slot.stack, max);
+        entity.slot.processChange(null!);
 
         entity.pickupCooldown = 2;
 

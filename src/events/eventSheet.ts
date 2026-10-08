@@ -28,6 +28,7 @@ export class EventCursor {
     public defaultPrevented = false;
     public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;
+    public variables = new Map<string, unknown>;
     public voxelHitX = 0;
     public voxelHitY = 0;
     public voxelHitZ = 0;

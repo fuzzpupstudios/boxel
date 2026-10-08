@@ -21,6 +21,7 @@ import { FaceEventPredicate } from "./predicate/faceEventPredicate";
 import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
 import { PlayerEventPredicate } from "./predicate/playerEventPredicate";
 import { UsagesPredicate } from "./predicate/usagesEventPredicate";
+import { MergeSlotStackAction } from "./item/mergeSlotStackAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -39,6 +40,8 @@ eventActionRegistry.register("base:prevent_default", PreventDefaultAction);
 eventActionRegistry.register("base:drop_item", DropItemAction);
 eventActionRegistry.register("base:drop_block_item", DropBlockItemAction);
 eventActionRegistry.register("base:particle", ParticleAction);
+
+eventActionRegistry.register("base:merge_item_stack", MergeSlotStackAction);
 
 eventActionRegistry.lock();
 

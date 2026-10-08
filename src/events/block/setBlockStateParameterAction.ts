@@ -1,6 +1,8 @@
 import z from "zod";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
+import n from "../eventVariableTypes";
+import { isInteger, isPrimitive, parameter } from "../eventVariable";
 
 export type SetBlockStateParameterActionParameters = z.infer<typeof SetBlockStateParameterActionParameters>;
 export const SetBlockStateParameterActionParameters = z.object({
@@ -10,15 +12,35 @@ export const SetBlockStateParameterActionParameters = z.object({
     parameters: z.record(z.string(), z.string())
 });
 
-export class SetBlockStateParameterAction extends EventAction<SetBlockStateParameterActionParameters> {
-    public constructor(eventSheet: EventSheet, args: SetBlockStateParameterActionParameters) {
-        super(eventSheet, SetBlockStateParameterActionParameters.parse(args));
+export class SetBlockStateParameterAction extends EventAction {
+    private readonly xOffset: n.Argument<number>;
+    private readonly yOffset: n.Argument<number>;
+    private readonly zOffset: n.Argument<number>;
+    private readonly blockParameters: Map<string, n.Argument<string | number | boolean>>;
+
+    public constructor(eventSheet: EventSheet, args: unknown) {
+        super(eventSheet);
+
+        const parsed = SetBlockStateParameterActionParameters.parse(args);
+
+        this.xOffset = parameter(parsed.xOffset, isInteger);
+        this.yOffset = parameter(parsed.yOffset, isInteger);
+        this.zOffset = parameter(parsed.zOffset, isInteger);
+
+        this.blockParameters = new Map;
+        for(const [ param, value ] of Object.entries(parsed.parameters)) {
+            this.blockParameters.set(param, parameter(value, isPrimitive));
+        }
     }
     public override run(cursor: EventCursor): void {
+        const xOffset = this.xOffset(cursor);
+        const yOffset = this.yOffset(cursor);
+        const zOffset = this.zOffset(cursor);
+
         const blockStateId = cursor.world.getBlockState(
-            cursor.x + this.args.xOffset,
-            cursor.y + this.args.yOffset,
-            cursor.z + this.args.zOffset
+            cursor.x + xOffset,
+            cursor.y + yOffset,
+            cursor.z + zOffset
         );
 
         const bracketPos = blockStateId.indexOf("[");
@@ -33,8 +55,8 @@ export class SetBlockStateParameterAction extends EventAction<SetBlockStateParam
             params.set(key, value);
         }
 
-        for(const [ key, value ] of Object.entries(this.args.parameters)) {
-            params.set(key, value);
+        for(const [ key, value ] of this.blockParameters) {
+            params.set(key, value(cursor).toString());
         }
         
         const newParameterString = params
@@ -44,9 +66,9 @@ export class SetBlockStateParameterAction extends EventAction<SetBlockStateParam
             .join(",");
         
         cursor.world.setBlockState(
-            cursor.x + this.args.xOffset,
-            cursor.y + this.args.yOffset,
-            cursor.z + this.args.zOffset,
+            cursor.x + xOffset,
+            cursor.y + yOffset,
+            cursor.z + zOffset,
             baseBlock + "[" + newParameterString + "]"
         );
     }

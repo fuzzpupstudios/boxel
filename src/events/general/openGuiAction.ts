@@ -3,38 +3,62 @@ import { Player } from "../../entity/player";
 import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
 import type { Inventory } from "../../item/inventory";
 import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import { EventCursor, type EventSheet } from "../eventSheet";
+import n from "../eventVariableTypes";
+import type { GuiContainerEvents } from "../../gui/guiContainer";
+import { isInteger, isString, parameter } from "../eventVariable";
 
 export type OpenGuiActionParameters = z.infer<typeof OpenGuiActionParameters>;
 export const OpenGuiActionParameters = z.object({
-    gui: z.string(),
-    xOffset: z.int().default(0),
-    yOffset: z.int().default(0),
-    zOffset: z.int().default(0),
+    gui: n.String,
+    xOffset: n.Integer.default(0),
+    yOffset: n.Integer.default(0),
+    zOffset: n.Integer.default(0),
     inventories: z.record(
         z.string(),
         z.enum([ "none", "player_inventory", "block_entity" ])
     ).default({})
 });
 
-export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
-    public constructor(eventSheet: EventSheet, args: OpenGuiActionParameters) {
-        super(eventSheet, OpenGuiActionParameters.parse(args));
+export class OpenGuiAction extends EventAction {
+    private readonly gui: n.Argument<string>;
+    private readonly offsetX: n.Argument<number>;
+    private readonly offsetY: n.Argument<number>;
+    private readonly offsetZ: n.Argument<number>;
+    private readonly inventories: Map<string, "none" | "player_inventory" | "block_entity">;
+
+
+    public constructor(eventSheet: EventSheet, args: unknown) {
+        super(eventSheet);
+        const parsed = OpenGuiActionParameters.parse(args);
+
+        this.gui = parameter(parsed.gui, isString);
+        this.offsetX = parameter(parsed.xOffset, isInteger);
+        this.offsetY = parameter(parsed.yOffset, isInteger);
+        this.offsetZ = parameter(parsed.zOffset, isInteger);
+        this.inventories = new Map(Object.entries(parsed.inventories));
     }
     public override run(cursor: EventCursor): void {
         const inventories = new Map<string, Inventory>;
 
-        for(const [ inventoryId, inventorySource ] of Object.entries(this.args.inventories)) {
+        const gui = this.gui(cursor);
+        const offsetX = this.offsetX(cursor);
+        const offsetY = this.offsetY(cursor);
+        const offsetZ = this.offsetZ(cursor);
+
+        const { world, x, y, z, entity } = cursor;
+
+        for(const [ inventoryId, inventorySource ] of this.inventories) {
             let inventory: Inventory | null = null;
 
-            if(inventorySource == "player_inventory" && cursor.entity instanceof Player) {
-                inventory = cursor.entity.inventory;
+            if(inventorySource == "player_inventory" && entity instanceof Player) {
+                inventory = entity.inventory;
             }
             if(inventorySource == "block_entity") {
                 const blockEntity = cursor.world.getBlockEntity(
-                    cursor.x + this.args.xOffset,
-                    cursor.y + this.args.yOffset,
-                    cursor.z + this.args.zOffset
+                    x + offsetX,
+                    y + offsetY,
+                    z + offsetZ
                 );
                 if(blockEntity != null && blockEntity.hasInventory()) {
                     inventory = blockEntity.inventory;
@@ -46,9 +70,21 @@ export class OpenGuiAction extends EventAction<OpenGuiActionParameters> {
             }
         }
 
-        const guiType = guiTypeRegistry.get(this.args.gui);
-        if(guiType == null) throw new ReferenceError("Unknown gui type " + this.args.gui);
+        const guiType = guiTypeRegistry.get(gui);
+        if(guiType == null) throw new ReferenceError("Unknown gui type " + gui);
 
-        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories));
+        let guiContainerEvents: GuiContainerEvents = {
+            onSlotChanged: () => { }
+        };
+        if(entity instanceof Player) {
+            guiContainerEvents.onSlotChanged = slot => {
+                const newCursor = new EventCursor(world, x, y, z);
+                newCursor.entity = entity;
+                
+                slot.processChange(newCursor);
+            }
+        }
+
+        cursor.clientPlatform?.guiManager.openGui(guiType.createGui(inventories), guiContainerEvents);
     }
 }

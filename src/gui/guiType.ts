@@ -126,4 +126,13 @@ export class GraphicalInterface {
 
         inventory.onUpdate.emit(+slotIndexString);
     }
+
+    public updateSlotByRef(slot: InventorySlot) {        
+        for(const inventory of this.inventories.values()) {
+            const index = inventory.slots.indexOf(slot);
+            if(index === -1) continue;
+
+            inventory.onUpdate.emit(index);
+        }
+    }
 }

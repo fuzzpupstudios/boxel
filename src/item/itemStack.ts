@@ -1,13 +1,10 @@
 import z from "zod";
 
+export type SerializedItemStack = z.infer<typeof SerializedItemStack>;
 export const SerializedItemStack = z.object({
     item: z.string().default("base:air[default]"),
     quantity: z.int().default(0)
 });
-export interface SerializedItemStack {
-    item: string;
-    quantity: number;
-}
 
 export class ItemStack {
     public static DEFAULT_ITEM = "base:air[default]";
@@ -26,7 +23,7 @@ export class ItemStack {
     public item = ItemStack.DEFAULT_ITEM;
     public quantity = 0;
 
-    public serialize() {
+    public serialize(): SerializedItemStack {
         return {
             item: this.item,
             quantity: this.quantity
@@ -61,7 +58,7 @@ export class ItemStack {
         this.quantity = otherQuantity;
     }
     public mergeInto(other: ItemStack, max = Infinity) {
-        if(!other.isEmpty() && other.item != this.item) return;
+        if(!other.isEmpty() && other.item != this.item) return 0;
 
         const toGive = Math.min(1000 - other.quantity, Math.min(max, this.quantity));
 
@@ -70,6 +67,8 @@ export class ItemStack {
         this.quantity -= toGive;
 
         if(this.quantity === 0) this.clear();
+
+        return toGive;
     }
     public set(item: string, quantity: number) {
         this.item = item;

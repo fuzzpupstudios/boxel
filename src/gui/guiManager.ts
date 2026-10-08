@@ -3,7 +3,7 @@ import { Signal } from "typed-signals";
 import { EventCursor } from "../events/eventSheet";
 import type { GuiItemSpriteProvider } from "./element/itemSprite";
 import type { TileHologramProvider } from "./element/tileHologram";
-import { GuiContainer, GuiCursor } from "./guiContainer";
+import { GuiContainer, GuiCursor, type GuiContainerEvents } from "./guiContainer";
 import type { GraphicalInterface } from "./guiType";
 
 export class GuiManager {
@@ -40,12 +40,13 @@ export class GuiManager {
     public getOpenModalCount() {
         return this.openGuis.values().reduce((a, gui) => gui.graphicalInterface.type.modal ? a + 1 : a, 0);
     }
-    public openGui(gui: GraphicalInterface) {
+    public openGui(gui: GraphicalInterface, events: GuiContainerEvents) {
         const id = gui.type.id;
         const guiContainer = new GuiContainer(gui,
             this.hologramProvider,
             this.itemSpriteProvider,
-            this.guiCursor
+            this.guiCursor,
+            events
         );
 
         if(this.openGuis.has(id)) this.closeGui(id);

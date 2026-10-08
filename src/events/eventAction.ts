@@ -1,9 +1,8 @@
 import type { EventCursor, EventSheet } from "./eventSheet";
 
-export abstract class EventAction<EventParameters = {}> {
+export abstract class EventAction {
     public constructor(
-        protected readonly eventSheet: EventSheet,
-        protected readonly args: EventParameters
+        protected readonly eventSheet: EventSheet
     ) {}
     public abstract run(cursor: EventCursor): void;
 }

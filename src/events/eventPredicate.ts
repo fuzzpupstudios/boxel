@@ -1,15 +1,15 @@
 import type { EventCursor } from "./eventSheet";
 
-export abstract class EventPredicate<EventParameters = {}> {
-    public constructor(
-        protected readonly args: EventParameters
-    ) {}
+export abstract class EventPredicate {
     public abstract test(cursor: EventCursor): boolean;
 }
 
-export class ConstantPredicate extends EventPredicate<boolean> {
+export class ConstantPredicate extends EventPredicate {
+    constructor(public readonly value: boolean) {
+        super();
+    }
     public test(cursor: EventCursor): boolean {
-        return this.args;
+        return this.value;
     }
 }
 
@@ -17,7 +17,7 @@ export class AndPredicate extends EventPredicate {
     public constructor(
         private readonly predicates: EventPredicate[]
     ) {
-        super({});
+        super();
     }
     public test(cursor: EventCursor): boolean {
         for(const predicate of this.predicates) {
@@ -31,7 +31,7 @@ export class OrPredicate extends EventPredicate {
     public constructor(
         private readonly predicates: EventPredicate[]
     ) {
-        super({});
+        super();
     }
     public test(cursor: EventCursor): boolean {
         for(const predicate of this.predicates) {

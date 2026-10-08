@@ -2,6 +2,8 @@ import z from "zod";
 import type { AudioManager } from "../../data/audioManager";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
+import n from "../eventVariableTypes";
+import { isNumber, parameter } from "../eventVariable";
 
 type SoundEntry2d = z.infer<typeof SoundEntry2d>;
 const SoundEntry2d = z.object({
@@ -22,37 +24,6 @@ const SoundEntry3d = SoundEntry2d.extend({
     refDistance: z.number().default(4),
     rolloffFactor: z.number().default(1)
 });
-
-export type PlaySoundActionParameters = z.infer<typeof PlaySoundActionParameters>;
-export const PlaySoundActionParameters = z.union([
-    z.object({
-        spatial: z.literal(true),
-        xOffset: z.number().default(0),
-        yOffset: z.number().default(0),
-        zOffset: z.number().default(0),
-        useEntityPosition: z.boolean().default(false),
-        useHitPosition: z.boolean().default(false),
-        sound: z.union([
-            z.string(),
-            SoundEntry3d,
-            z.array(z.union([
-                z.string(),
-                SoundEntry3d
-            ]))
-        ])
-    }),
-    z.object({
-        spatial: z.literal(false).optional(),
-        sound: z.union([
-            z.string(),
-            SoundEntry2d,
-            z.array(z.union([
-                z.string(),
-                SoundEntry2d
-            ]))
-        ])
-    }),
-]);
 
 class PlaySound2d {
     public readonly sound: string;
@@ -119,19 +90,70 @@ class PlaySound3d extends PlaySound2d {
     }
 }
 
-export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
-    private readonly soundList = new Array<PlaySound2d>;
-    
-    public constructor(eventSheet: EventSheet, args: PlaySoundActionParameters) {
-        super(eventSheet, PlaySoundActionParameters.parse(args));
+export type PlaySoundActionParameters = z.infer<typeof PlaySoundActionParameters>;
+export const PlaySoundActionParameters = z.union([
+    z.object({
+        spatial: z.literal(true),
+        xOffset: n.Number.default(0),
+        yOffset: n.Number.default(0),
+        zOffset: n.Number.default(0),
+        useEntityPosition: n.Boolean.default(false),
+        useHitPosition: n.Boolean.default(false),
+        sound: z.union([
+            z.string(),
+            SoundEntry3d,
+            z.array(z.union([
+                z.string(),
+                SoundEntry3d
+            ]))
+        ])
+    }),
+    z.object({
+        spatial: z.literal(false).optional(),
+        sound: z.union([
+            z.string(),
+            SoundEntry2d,
+            z.array(z.union([
+                z.string(),
+                SoundEntry2d
+            ]))
+        ])
+    }),
+]);
 
-        let sounds = this.args.sound;
+export class PlaySoundAction extends EventAction {
+    private readonly soundList = new Array<PlaySound2d>;
+
+    private readonly sound3d?: {
+        xOffset: n.Argument<number>,
+        yOffset: n.Argument<number>,
+        zOffset: n.Argument<number>,
+        useEntityPosition: n.Argument<boolean>,
+        useHitPosition: n.Argument<boolean>
+    };
+    
+    public constructor(eventSheet: EventSheet, args: unknown) {
+        super(eventSheet);
+
+        const parsed = PlaySoundActionParameters.parse(args);
+
+        if(parsed.spatial) {
+            this.sound3d = {
+                xOffset: parameter(parsed.xOffset, isNumber),
+                yOffset: parameter(parsed.yOffset, isNumber),
+                zOffset: parameter(parsed.zOffset, isNumber),
+                useEntityPosition: parameter(parsed.useEntityPosition),
+                useHitPosition: parameter(parsed.useHitPosition)
+            }
+        }
+
+        let sounds = parsed.sound;
         if(!(sounds instanceof Array)) sounds = [ sounds ];
 
         for(let i = 0; i < sounds.length; i++) {
             if(typeof sounds[i] !== "string") continue;
 
-            if(this.args.spatial) {
+            if(parsed.spatial) {
                 sounds[i] = SoundEntry3d.parse({ name: sounds[i] });
             } else {
                 sounds[i] = SoundEntry2d.parse({ name: sounds[i] });
@@ -146,7 +168,7 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
             cumulativeWeight += json.weight;
 
             let sound: PlaySound2d;
-            if(this.args.spatial) {
+            if(parsed.spatial) {
                 sound = new PlaySound3d(<SoundEntry3d>json, weightIndex);
             } else {
                 sound = new PlaySound2d(<SoundEntry2d>json, weightIndex);
@@ -174,16 +196,16 @@ export class PlaySoundAction extends EventAction<PlaySoundActionParameters> {
             )
         }
 
-        if(this.args.spatial) {
-            let x = this.args.xOffset;
-            let y = this.args.yOffset;
-            let z = this.args.zOffset;
+        if(this.sound3d) {
+            let x = this.sound3d.xOffset(cursor);
+            let y = this.sound3d.yOffset(cursor);
+            let z = this.sound3d.zOffset(cursor);
 
-            if(this.args.useEntityPosition && cursor.entity != null) {
+            if(this.sound3d.useEntityPosition(cursor) && cursor.entity != null) {
                 x += cursor.entity?.position.x,
                 y += cursor.entity?.position.y,
                 z += cursor.entity?.position.z
-            } else if(this.args.useHitPosition && cursor.entity != null) {
+            } else if(this.sound3d.useHitPosition(cursor) && cursor.entity != null) {
                 x += cursor.voxelHitX,
                 y += cursor.voxelHitY,
                 z += cursor.voxelHitZ

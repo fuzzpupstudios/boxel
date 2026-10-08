@@ -8,6 +8,7 @@ import { TileHologramProvider } from "./element/tileHologram";
 import type { GuiGraphicContainer } from "./graphic/graphic";
 import { guiGraphicRegistry } from "./graphic/graphicRegistry";
 import type { GraphicalInterface, GuiInventorySlot } from "./guiType";
+import type { InventorySlot } from "../item/inventory";
 
 export class InventoryEvent {
     public consumed = false;
@@ -39,7 +40,7 @@ export class GuiCursor {
 
 export class GuiSlotContainer extends Container {
     public readonly hoverSprite: Sprite;
-    public readonly itemStack: GuiItemStack;
+    public readonly guiItemStack: GuiItemStack;
 
     public constructor(
         public readonly guiSlot: GuiInventorySlot,
@@ -57,28 +58,32 @@ export class GuiSlotContainer extends Container {
         hoverSprite.alpha = 0;
         hoverSprite.blendMode = "add";
 
-        const itemStack = new GuiItemStack(guiSlot.slot.stack, hologramProvider, itemSpriteProvider);
-        itemStack.scale.set(size / 16);
-        itemStack.position.set(halfSize, halfSize);
+        const guiItemStack = new GuiItemStack(guiSlot.slot.stack, hologramProvider, itemSpriteProvider);
+        guiItemStack.scale.set(size / 16);
+        guiItemStack.position.set(halfSize, halfSize);
 
         super({
-            children: [ hoverSprite, itemStack ],
+            children: [ hoverSprite, guiItemStack ],
             interactiveChildren: false
         });
 
         this.hoverSprite = hoverSprite;
-        this.itemStack = itemStack;
+        this.guiItemStack = guiItemStack;
         this.eventMode = "static";
         this.hitArea = new Rectangle(0, 0, size, size);
     }
 
     public updateDisplayItem() {
-        this.itemStack.updateDisplayItem();
+        this.guiItemStack.updateDisplayItem();
     }
 
     public setSelected(selected: boolean) {
         this.hoverSprite.alpha = selected ? 0.5 : 0;
     }
+}
+
+export interface GuiContainerEvents {
+    onSlotChanged: (slot: InventorySlot) => void
 }
 
 export class GuiContainer extends Container {
@@ -97,7 +102,8 @@ export class GuiContainer extends Container {
         public readonly graphicalInterface: GraphicalInterface,
         hologramProvider: TileHologramProvider,
         itemSpriteProvider: GuiItemSpriteProvider,
-        private readonly guiCursor: GuiCursor
+        private readonly guiCursor: GuiCursor,
+        events: GuiContainerEvents
     ) {
         const guiType = graphicalInterface.type;
         const background = new Sprite(guiType.texture);
@@ -137,8 +143,10 @@ export class GuiContainer extends Container {
 
             if(slot == null) return;
 
-            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
-            if(slotStack == null) return;
+            const guiSlot = graphicalInterface.slots.get(slot);
+            if(guiSlot == null) return;
+
+            const slotStack = guiSlot.slot.stack;
             
             if(slotStack.isEmpty() || slotStack.item != pointerStack.item) {
                 pointerStack.swap(slotStack);
@@ -146,6 +154,7 @@ export class GuiContainer extends Container {
                 pointerStack.mergeInto(slotStack);
             }
 
+            events.onSlotChanged(guiSlot.slot);
             graphicalInterface.updateSlot(slot);
             event.consume();
         });
@@ -159,13 +168,15 @@ export class GuiContainer extends Container {
             const slot = event.slot;
             if(slot == null) return;
 
-            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
-            if(slotStack == null) return;
+            const guiSlot = graphicalInterface.slots.get(slot);
+            if(guiSlot == null) return;
+            const slotStack = guiSlot.slot.stack;
 
             if(slotStack.isEmpty()) return;
             
             slotStack.mergeInto(pointerStack, Math.ceil(slotStack.quantity / 2));
 
+            events.onSlotChanged(guiSlot.slot);
             graphicalInterface.updateSlot(slot);
             event.consume();
         });
@@ -179,11 +190,13 @@ export class GuiContainer extends Container {
             const slot = event.slot;
             if(slot == null) return;
 
-            const slotStack = graphicalInterface.slots.get(slot)?.slot.stack;
-            if(slotStack == null) return;
+            const guiSlot = graphicalInterface.slots.get(slot);
+            if(guiSlot == null) return;
+            const slotStack = guiSlot.slot.stack;
             
             pointerStack.mergeInto(slotStack, 1);
 
+            events.onSlotChanged(guiSlot.slot);
             graphicalInterface.updateSlot(slot);
             event.consume();
         });
@@ -211,10 +224,12 @@ export class GuiContainer extends Container {
 
             for(let i = 0; i < newGroup.length && !slotStack.isEmpty(); i++) {
                 const otherSlotId = newGroup[i]!;
-                const otherSlot = graphicalInterface.slots.get(otherSlotId)?.slot;
-                if(otherSlot == null) continue;
+                const guiSlot = graphicalInterface.slots.get(slot);
+                if(guiSlot == null) return;
+                const otherStack = guiSlot.slot.stack;
 
-                slotStack.mergeInto(otherSlot.stack);
+                otherStack.mergeInto(otherStack);
+                events.onSlotChanged(guiSlot.slot);
                 graphicalInterface.updateSlot(otherSlotId);
             }
 

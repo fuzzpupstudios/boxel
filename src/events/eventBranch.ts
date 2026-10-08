@@ -15,6 +15,6 @@ export class EventBranch extends EventAction {
         public readonly ifTrueActions: EventAction[],
         public readonly ifFalseActions: EventAction[]
     ) {
-        super(null!, {});
+        super(null!);
     }
 }

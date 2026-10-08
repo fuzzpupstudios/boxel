@@ -3,45 +3,63 @@ import { ItemEntity } from "../../entity/item";
 import { ItemStack, SerializedItemStack } from "../../item/itemStack";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
+import n from "../eventVariableTypes";
+import { isNumber, parameter, parameterItemStack } from "../eventVariable";
+import type { InventorySlot } from "../../item/inventory";
 
 export type DropItemActionParameters = z.infer<typeof DropItemActionParameters>;
 export const DropItemActionParameters = z.object({
-    xOffset: z.number().default(0),
-    yOffset: z.number().default(0),
-    zOffset: z.number().default(0),
-    velocity: z.tuple([ z.number(), z.number(), z.number() ]).default([ 0, 6, 0 ]),
-    randomVelocity: z.tuple([ z.number(), z.number(), z.number() ]).default([ 2, 0, 2 ]),
-    stack: z.string().or(SerializedItemStack).optional()
+    xOffset: n.Number.default(0),
+    yOffset: n.Number.default(0),
+    zOffset: n.Number.default(0),
+    velocity: z.tuple([ n.Number, n.Number, n.Number ]).default([ 0, 6, 0 ]),
+    randomVelocity: z.tuple([ n.Number, n.Number, n.Number ]).default([ 2, 0, 2 ]),
+    stack: n.InventorySlot
 });
 
-export class DropItemAction extends EventAction<DropItemActionParameters> {
-    private readonly stack: ItemStack;
+export class DropItemAction extends EventAction {
+    private readonly offsetX: n.Argument<number>;
+    private readonly offsetY: n.Argument<number>;
+    private readonly offsetZ: n.Argument<number>;
+    private readonly velocityX: n.Argument<number>;
+    private readonly velocityY: n.Argument<number>;
+    private readonly velocityZ: n.Argument<number>;
+    private readonly randomVelocityX: n.Argument<number>;
+    private readonly randomVelocityY: n.Argument<number>;
+    private readonly randomVelocityZ: n.Argument<number>;
+    private readonly slot: n.Argument<InventorySlot>;
 
-    public constructor(eventSheet: EventSheet, args: DropItemActionParameters) {
-        super(eventSheet, DropItemActionParameters.parse(args));
+    public constructor(eventSheet: EventSheet, args: unknown) {
+        super(eventSheet);
+        const parsed = DropItemActionParameters.parse(args);
 
-        if(typeof this.args.stack === "string") {
-            this.stack = ItemStack.of(this.args.stack);
-        } else if(this.args.stack != null) {
-            this.stack = ItemStack.of(this.args.stack.item, this.args.stack.quantity);
-        } else {
-            this.stack = ItemStack.empty();
-        }
+        this.offsetX = parameter(parsed.xOffset, isNumber);
+        this.offsetY = parameter(parsed.yOffset, isNumber);
+        this.offsetZ = parameter(parsed.zOffset, isNumber);
+        this.velocityX = parameter(parsed.velocity[0], isNumber);
+        this.velocityY = parameter(parsed.velocity[1], isNumber);
+        this.velocityZ = parameter(parsed.velocity[2], isNumber);
+        this.randomVelocityX = parameter(parsed.randomVelocity[0], isNumber);
+        this.randomVelocityY = parameter(parsed.randomVelocity[1], isNumber);
+        this.randomVelocityZ = parameter(parsed.randomVelocity[2], isNumber);
+        this.slot = parameterItemStack(parsed.stack);
     }
     public override run(cursor: EventCursor): void {
         const entity = new ItemEntity(cursor.world);
         entity.position.set(
-            cursor.x + this.args.xOffset + 0.5,
-            cursor.y + this.args.yOffset,
-            cursor.z + this.args.zOffset + 0.5
+            cursor.x + this.offsetX(cursor) + 0.5,
+            cursor.y + this.offsetY(cursor),
+            cursor.z + this.offsetZ(cursor) + 0.5
         );
         entity.velocity.set(
-            this.args.velocity[0] + this.args.randomVelocity[0] * (Math.random() * 2 - 1),
-            this.args.velocity[1] + this.args.randomVelocity[1] * (Math.random() * 2 - 1),
-            this.args.velocity[2] + this.args.randomVelocity[2] * (Math.random() * 2 - 1),
+            this.velocityX(cursor) + this.randomVelocityX(cursor) * (Math.random() * 2 - 1),
+            this.velocityY(cursor) + this.randomVelocityY(cursor) * (Math.random() * 2 - 1),
+            this.velocityZ(cursor) + this.randomVelocityZ(cursor) * (Math.random() * 2 - 1),
         );
-        entity.stack.copyFrom(this.stack);
-        entity.updateDisplayItem();
+        const slot = this.slot(cursor);
+        entity.slot.stack.swap(slot.stack);
+        slot.processChange(cursor);
+        entity.slot.processChange(cursor);
 
         cursor.world.addEntity(entity);
     }

@@ -1,7 +1,7 @@
 import Alea from "alea";
 import { Box3, Color, Matrix4, Vector3 } from "three";
 import z from "zod";
-import type { Inventory } from "../item/inventory";
+import { InventorySlot, type Inventory } from "../item/inventory";
 import { ItemStack, SerializedItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
 import type { PhysicsDataCache } from "../physics/physicsDataCache";
@@ -38,7 +38,7 @@ for(let i = 0; i < 1000; i++) {
 export class ItemEntity extends Entity {
     public readonly type = "base:item";
 
-    public readonly stack = ItemStack.empty();
+    public readonly slot = new InventorySlot(ItemStack.empty());
     private readonly renderer: ItemEntityRenderer | null;
     private geometryInstanceIds = new Array<number>;
     private readonly matrix = new Matrix4;
@@ -65,7 +65,7 @@ export class ItemEntity extends Entity {
                 6,
                 Math.random() * 6 - 3,
             );
-            slot.stack.swap(item.stack);
+            slot.stack.swap(item.slot.stack);
             item.updateDisplayItem();
             world.addEntity(item);
         }
@@ -79,6 +79,9 @@ export class ItemEntity extends Entity {
         this.renderer = world.renderer?.entityRenderer.itemEntityRenderer ?? null;
         
         this.updateDisplayItem();
+        this.slot.onChange = () => {
+            this.updateDisplayItem();
+        }
     }
 
     protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
@@ -124,15 +127,15 @@ export class ItemEntity extends Entity {
                     
                     for(const entity of chunk.entities) {
                         if(!(entity instanceof ItemEntity)) continue;
-                        if(entity.stack.item != this.stack.item) continue;
+                        if(entity.slot.stack.item != this.slot.stack.item) continue;
                         if(entity == this) continue;
 
                         if(entity.position.distanceToSquared(this.position) < raidusSquared) {
-                            entity.stack.mergeInto(this.stack);
+                            entity.slot.stack.mergeInto(this.slot.stack);
                             changed = true;
 
 
-                            if(entity.stack.isEmpty()) {
+                            if(entity.slot.stack.isEmpty()) {
                                 entity.removeFromWorld();
                             } else {
                                 return;
@@ -193,23 +196,23 @@ export class ItemEntity extends Entity {
         }
     }
 
-    public updateDisplayItem() {
+    private updateDisplayItem() {
         if(this.renderer == null) return;
 
-        const count = Math.ceil(((this.stack.quantity / 1000) ** 0.34) * 10);
+        const count = Math.ceil(((this.slot.stack.quantity / 1000) ** 0.34) * 10);
 
         for(const i of this.geometryInstanceIds.splice(0)) {
             this.renderer.deleteInstance(i);
         }
 
         for(let i = 0; i < count; i++) {
-            this.geometryInstanceIds.push(this.renderer.addInstance(this.stack.item));
+            this.geometryInstanceIds.push(this.renderer.addInstance(this.slot.stack.item));
         }
     }
     
     public override serialize(): SerializedItemEntity {
         return Object.assign(super.serialize(), {
-            stack: this.stack.serialize(),
+            stack: this.slot.stack.serialize(),
             pickupCooldown: this.pickupCooldown
         });
     }
@@ -218,7 +221,7 @@ export class ItemEntity extends Entity {
         const parsedData = SerializedItemEntity.parse(data);
         super.deserialize(parsedData);
         
-        this.stack.deserialize(parsedData.stack);
+        this.slot.stack.deserialize(parsedData.stack);
         this.pickupCooldown = parsedData.pickupCooldown;
 
         this.updateDisplayItem();

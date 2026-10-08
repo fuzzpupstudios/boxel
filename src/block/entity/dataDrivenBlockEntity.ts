@@ -4,6 +4,7 @@ import { EventCursor } from "../../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../../item/inventory";
 import type { Time } from "../../time";
 import type { World } from "../../world/world";
+import { blockStateRegistry } from "../blockRegistry";
 import type { BlockState } from "../blockState";
 import { BlockEntity, BlockEntityType, type SerializedBlockEntity } from "./blockEntity";
 
@@ -22,6 +23,17 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
                 const slot = new InventorySlot;
                 slot.allowInsert = jsonSlot.insert ?? slot.allowInsert;
                 slot.allowExtract = jsonSlot.extract ?? slot.allowExtract;
+
+                if(jsonSlot.onChange != null) {
+                    const onChangeTrigger = jsonSlot.onChange;
+
+                    slot.onChange = cursor => {
+                        const blockStateId = cursor.world.getBlockState(cursor.x, cursor.y, cursor.z);
+                        const blockState = blockStateRegistry.get(blockStateId);
+                        
+                        blockState?.events.runTrigger(onChangeTrigger, cursor);
+                    }
+                }
                 inventory.addSlot(slot);
             }
         }

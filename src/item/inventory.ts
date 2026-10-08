@@ -1,5 +1,6 @@
 import { Signal } from "typed-signals";
 import z from "zod";
+import { EventCursor } from "../events/eventSheet";
 import { ItemStack, SerializedItemStack } from "./itemStack";
 
 export const SerializedInventory = z.object({
@@ -10,6 +11,7 @@ export interface SerializedInventory {
 }
 
 export class InventorySlot {
+    public onChange?: (cursor: EventCursor) => void;
     public allowInsert: boolean = true;
     public allowExtract: boolean = true;
     
@@ -28,8 +30,15 @@ export class InventorySlot {
         slot.stack.copyFrom(this.stack);
         slot.allowInsert = this.allowInsert;
         slot.allowExtract = this.allowExtract;
+        if(this.onChange != null) slot.onChange = this.onChange;
 
         return slot;
+    }
+    public processChange(cursor: EventCursor) {
+        if(this.onChange == null) return;
+
+        cursor.variables.set("$slot", this);
+        this.onChange(cursor);
     }
 }
 

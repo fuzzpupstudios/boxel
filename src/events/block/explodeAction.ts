@@ -3,21 +3,36 @@ import { blockStateRegistry } from "../../block/blockRegistry";
 import { ItemEntity } from "../../entity/item";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
+import n from "../eventVariableTypes";
+import { isNumber, parameter } from "../eventVariable";
 
 export type ExplodeActionParameters = z.infer<typeof ExplodeActionParameters>;
 export const ExplodeActionParameters = z.object({
-    xOffset: z.number().default(0),
-    yOffset: z.number().default(0),
-    zOffset: z.number().default(0),
-    radius: z.number().default(4)
+    xOffset: n.Number.default(0),
+    yOffset: n.Number.default(0),
+    zOffset: n.Number.default(0),
+    radius: n.Number.default(4)
 });
 
-export class ExplodeAction extends EventAction<ExplodeActionParameters> {
-    public constructor(eventSheet: EventSheet, args: ExplodeActionParameters) {
-        super(eventSheet, ExplodeActionParameters.parse(args));
+export class ExplodeAction extends EventAction {
+    private readonly xOffset: n.Argument<number>;
+    private readonly yOffset: n.Argument<number>;
+    private readonly zOffset: n.Argument<number>;
+    private readonly radius: n.Argument<number>;
+    public constructor(eventSheet: EventSheet, args: unknown) {
+        super(eventSheet);
+
+        const parsed = ExplodeActionParameters.parse(args);
+        this.xOffset = parameter(parsed.xOffset, isNumber);
+        this.yOffset = parameter(parsed.yOffset, isNumber);
+        this.zOffset = parameter(parsed.zOffset, isNumber);
+        this.radius = parameter(parsed.radius, isNumber);
     }
     public override run(cursor: EventCursor): void {
-        const { xOffset, yOffset, zOffset, radius } = this.args;
+        const xOffset = this.xOffset(cursor);
+        const yOffset = this.yOffset(cursor);
+        const zOffset = this.zOffset(cursor);
+        const radius = this.radius(cursor);
 
         const originalX = cursor.x;
         const originalY = cursor.y;

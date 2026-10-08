@@ -2,38 +2,53 @@ import z from "zod";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import { EventPredicate } from "../eventPredicate";
 import type { EventCursor } from "../eventSheet";
+import n from "../eventVariableTypes";
+import { isInteger, isString, parameter } from "../eventVariable";
 
 export type BlockEventPredicateParameters = z.infer<typeof BlockEventPredicateParameters>;
 export const BlockEventPredicateParameters = z.object({
     at: z.tuple([
-        z.number(),
-        z.number(),
-        z.number(),
+        n.Integer,
+        n.Integer,
+        n.Integer,
     ]).default([ 0, 0, 0 ]),
-    has_tag: z.string().optional(),
-    is: z.string().optional(),
+    has_tag: n.String.optional(),
+    is: n.String.optional(),
 })
 
-export class BlockEventPredicate extends EventPredicate<BlockEventPredicateParameters> {
-    public constructor(args: BlockEventPredicateParameters) {
-        super(BlockEventPredicateParameters.parse(args));
+export class BlockEventPredicate extends EventPredicate {
+    private readonly offsetX: n.Argument<number>;
+    private readonly offsetY: n.Argument<number>;
+    private readonly offsetZ: n.Argument<number>;
+    private readonly blockHasTag?: n.Argument<string>;
+    private readonly blockIs?: n.Argument<string>;
+
+    public constructor(args: unknown) {
+        super();
+
+        const parsed = BlockEventPredicateParameters.parse(args);
+        this.offsetX = parameter(parsed.at[0], isInteger);
+        this.offsetY = parameter(parsed.at[1], isInteger);
+        this.offsetZ = parameter(parsed.at[2], isInteger);
+        if(parsed.has_tag != null) this.blockHasTag = parameter(parsed.has_tag, isString);
+        if(parsed.is != null) this.blockIs = parameter(parsed.is, isString);
     }
     public override test(cursor: EventCursor): boolean {
         const blockStateId = cursor.world.getBlockState(
-            cursor.x + this.args.at[0],
-            cursor.y + this.args.at[1],
-            cursor.z + this.args.at[2]
+            cursor.x + this.offsetX(cursor),
+            cursor.y + this.offsetY(cursor),
+            cursor.z + this.offsetZ(cursor)
         );
 
-        if(this.args.is) {
-            if(blockStateId != this.args.is) return false;
+        if(this.blockIs) {
+            if(blockStateId != this.blockIs(cursor)) return false;
         }
 
         const blockState = blockStateRegistry.get(blockStateId);
         if(blockState == null) return false;
 
-        if(this.args.has_tag) {
-            if(!blockState.tags.has(this.args.has_tag)) return false;
+        if(this.blockHasTag) {
+            if(!blockState.tags.has(this.blockHasTag(cursor))) return false;
         }
 
         return true;

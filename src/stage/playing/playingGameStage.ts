@@ -323,7 +323,14 @@ export class PlayingGameStage extends GameStage {
         ]);
         const hotbarGuiType = guiTypeRegistry.get("base:hotbar");
         if(hotbarGuiType != null) {
-            const hotbar = this.guiManager.openGui(hotbarGuiType.createGui(inventories));
+            const hotbar = this.guiManager.openGui(hotbarGuiType.createGui(inventories), {
+                onSlotChanged: (slot) => {
+                    const cursor = new EventCursor(this.world, ...this.localPlayer!.position.toArray());
+                    cursor.entity = this.localPlayer!;
+
+                    slot.processChange(cursor);
+                },
+            });
 
             this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
             hotbar.addChild(this.hotbarSelection);
@@ -507,7 +514,14 @@ export class PlayingGameStage extends GameStage {
                         ["player", this.localPlayer.inventory]
                     ]);
                     const gui = inventoryType.createGui(inventories);
-                    this.guiManager.openGui(gui);
+                    this.guiManager.openGui(gui, {
+                        onSlotChanged: (slot) => {
+                            const cursor = new EventCursor(this.world, ...this.localPlayer!.position.toArray());
+                            cursor.entity = this.localPlayer!;
+
+                            slot.processChange(cursor);
+                        },
+                    });
                 }
             }
 

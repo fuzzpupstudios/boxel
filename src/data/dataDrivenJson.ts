@@ -156,8 +156,6 @@ export namespace DataDrivenJson {
     export const BlockEntitySlot = z.object({
         extract: z.boolean().optional(),
         insert: z.boolean().optional(),
-        onInsert: z.string().optional(),
-        onExtract: z.string().optional(),
         onChange: z.string().optional(),
     });
 
