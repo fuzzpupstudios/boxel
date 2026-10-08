@@ -1,0 +1,32 @@
+{
+    "id": "base:block_entity/furnace",
+    
+    "triggers": {
+        "#update": [
+            {
+                "id": "base:merge_item_stack",
+                "args": {
+                    "from": {
+                        "$get": {
+                            "slot_stack": {
+                                "block_entity": [ 0, 0, 0 ],
+                                "slot": 0
+                            }
+                        }
+                    },
+
+                    "to": {
+                        "$get": {
+                            "slot_stack": {
+                                "block_entity": [ 0, 0, 0 ],
+                                "slot": 2
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "#insert_item": "#update",
+        "#extract_item": "#update"
+    }
+}

@@ -1,0 +1,117 @@
+{
+    "id": "base:furnace_inventory",
+    "texture": "base:ui/furnace_inventory.png",
+    "modal": true,
+    "anchor": [ 0.5, 0.5 ],
+    "offset": [ 0, 0 ],
+    "inventories": [ "furnace", "player" ],
+    "quickMoveGroups": {
+        "furnace_inventory": [
+            "furnace.0", "furnace.1"
+        ],
+        "player_inventory": [
+            "player.0", "player.1", "player.2", "player.3", "player.4", "player.5", "player.6", "player.7", "player.8", "player.9",
+            "player.10", "player.11", "player.12", "player.13", "player.14", "player.15", "player.16", "player.17", "player.18", "player.19",
+            "player.20", "player.21", "player.22", "player.23", "player.24", "player.25", "player.26", "player.27", "player.28", "player.29",
+            "player.30", "player.31", "player.32", "player.33", "player.34", "player.35", "player.36", "player.37", "player.38", "player.39",
+            "player.40", "player.41", "player.42", "player.43", "player.44", "player.45", "player.46", "player.47", "player.48", "player.49"
+        ]
+    },
+    "slots": [
+        { "id": "furnace.0", "pos": [ 62, 71 ], "size": 20 },
+        { "id": "furnace.1", "pos": [ 62, 101 ], "size": 20 },
+        { "id": "furnace.2", "pos": [ 185, 86 ], "size": 20 },
+
+        
+        { "id": "player.10", "pos": [ 16, 169 ], "size": 20 },
+        { "id": "player.11", "pos": [ 39, 169 ], "size": 20 },
+        { "id": "player.12", "pos": [ 62, 169 ], "size": 20 },
+        { "id": "player.13", "pos": [ 85, 169 ], "size": 20 },
+        { "id": "player.14", "pos": [ 108, 169 ], "size": 20 },
+        { "id": "player.15", "pos": [ 131, 169 ], "size": 20 },
+        { "id": "player.16", "pos": [ 154, 169 ], "size": 20 },
+        { "id": "player.17", "pos": [ 177, 169 ], "size": 20 },
+        { "id": "player.18", "pos": [ 200, 169 ], "size": 20 },
+        { "id": "player.19", "pos": [ 223, 169 ], "size": 20 },
+        
+        { "id": "player.20", "pos": [ 16, 192 ], "size": 20 },
+        { "id": "player.21", "pos": [ 39, 192 ], "size": 20 },
+        { "id": "player.22", "pos": [ 62, 192 ], "size": 20 },
+        { "id": "player.23", "pos": [ 85, 192 ], "size": 20 },
+        { "id": "player.24", "pos": [ 108, 192 ], "size": 20 },
+        { "id": "player.25", "pos": [ 131, 192 ], "size": 20 },
+        { "id": "player.26", "pos": [ 154, 192 ], "size": 20 },
+        { "id": "player.27", "pos": [ 177, 192 ], "size": 20 },
+        { "id": "player.28", "pos": [ 200, 192 ], "size": 20 },
+        { "id": "player.29", "pos": [ 223, 192 ], "size": 20 },
+        
+        { "id": "player.30", "pos": [ 16, 215 ], "size": 20 },
+        { "id": "player.31", "pos": [ 39, 215 ], "size": 20 },
+        { "id": "player.32", "pos": [ 62, 215 ], "size": 20 },
+        { "id": "player.33", "pos": [ 85, 215 ], "size": 20 },
+        { "id": "player.34", "pos": [ 108, 215 ], "size": 20 },
+        { "id": "player.35", "pos": [ 131, 215 ], "size": 20 },
+        { "id": "player.36", "pos": [ 154, 215 ], "size": 20 },
+        { "id": "player.37", "pos": [ 177, 215 ], "size": 20 },
+        { "id": "player.38", "pos": [ 200, 215 ], "size": 20 },
+        { "id": "player.39", "pos": [ 223, 215 ], "size": 20 },
+        
+        { "id": "player.40", "pos": [ 16, 238 ], "size": 20 },
+        { "id": "player.41", "pos": [ 39, 238 ], "size": 20 },
+        { "id": "player.42", "pos": [ 62, 238 ], "size": 20 },
+        { "id": "player.43", "pos": [ 85, 238 ], "size": 20 },
+        { "id": "player.44", "pos": [ 108, 238 ], "size": 20 },
+        { "id": "player.45", "pos": [ 131, 238 ], "size": 20 },
+        { "id": "player.46", "pos": [ 154, 238 ], "size": 20 },
+        { "id": "player.47", "pos": [ 177, 238 ], "size": 20 },
+        { "id": "player.48", "pos": [ 200, 238 ], "size": 20 },
+        { "id": "player.49", "pos": [ 223, 238 ], "size": 20 },
+        
+        { "id": "player.0", "pos": [ 16, 261 ], "size": 20 },
+        { "id": "player.1", "pos": [ 39, 261 ], "size": 20 },
+        { "id": "player.2", "pos": [ 62, 261 ], "size": 20 },
+        { "id": "player.3", "pos": [ 85, 261 ], "size": 20 },
+        { "id": "player.4", "pos": [ 108, 261 ], "size": 20 },
+        { "id": "player.5", "pos": [ 131, 261 ], "size": 20 },
+        { "id": "player.6", "pos": [ 154, 261 ], "size": 20 },
+        { "id": "player.7", "pos": [ 177, 261 ], "size": 20 },
+        { "id": "player.8", "pos": [ 200, 261 ], "size": 20 },
+        { "id": "player.9", "pos": [ 223, 261 ], "size": 20 }
+    ],
+    "graphics": {
+        "title": {
+            "type": "text",
+            "pos": [ 120, 24 ],
+
+            "text": "Furnace",
+            "align": "center",
+            "anchor": [ 0.5, 0.5 ],
+            "fontScale": 2
+        },
+        "open_inventory": {
+            "type": "icon_button",
+            "pos": [ 10, 10 ],
+
+            "texture": "base:ui/close_button.png",
+
+            "renderIf": {
+                "platform": {
+                    "usingTouchscreen": true
+                }
+            },
+
+            "events": {
+                "triggers": {
+                    "base:ui/press_down": [
+                        {
+                            "id": "base:close_gui",
+                            "args": {
+                                "gui": "base:furnace_inventory"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

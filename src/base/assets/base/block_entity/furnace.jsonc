@@ -1,0 +1,29 @@
+{
+    "id": "base:furnace",
+
+    "slots": [
+        // ingredient
+        {
+            "onChange": "#insert_item"
+        },
+        // fuel
+        {
+            "onChange": "#insert_item"
+        },
+        // output
+        {
+            "insert": false,
+            "onExtract": "#extract_item"
+        }
+    ],
+    "data": {
+        "cook_time": {
+            "type": "number",
+            "default": 0
+        },
+        "fuel_time": {
+            "type": "number",
+            "default": 0
+        }
+    }
+}

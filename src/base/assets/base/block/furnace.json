@@ -1,0 +1,40 @@
+{
+    "id": "base:furnace",
+    "blockEntity": "base:furnace",
+    "states": {
+        "default": {
+            "model": {
+                "include": "base:full_block",
+                "textures": {
+                    "block": "base:block/crate.png"
+                }
+            },
+            "events": {
+                "include": [ "base:material/stone", "base:block/drop_self", "base:block_entity/furnace" ],
+
+                "triggers": {
+                    "base:interact": [
+                        {
+                            "id": "base:open_gui",
+                            "args": {
+                                "inventories": {
+                                    "furnace": "block_entity",
+                                    "player": "player_inventory"
+                                },
+                                "gui": "base:furnace_inventory"
+                            }
+                        },
+                        {
+                            "id": "base:prevent_default"
+                        }
+                    ]
+                }
+            },
+            "collider": {
+                "hitboxes": [
+                    { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
+                ]
+            }
+        }
+    }
+}
