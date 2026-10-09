@@ -26,7 +26,7 @@ export const ParticleActionParameters = z.object({
         "up" as const,
         "down" as const,
         "inherit" as const
-    ]).or(n.Parameter).default("inherit")
+    ]).or(n.InnerParameter).default("inherit")
 });
 
 export class ParticleAction extends EventAction {
