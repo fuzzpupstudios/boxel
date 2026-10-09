@@ -15,16 +15,19 @@ export abstract class BlockEntityType {
 export interface SerializedBlockEntity {
     id: string;
     x: number, y: number, z: number;
+    data: Record<string, any>;
 }
 
 export interface BlockEntityWithInventory {
     inventory: Inventory;
 }
 
-export class BlockEntity implements Tickable {
+export class BlockEntity<CustomType extends BlockEntityType = BlockEntityType> implements Tickable {
     public blockState: BlockState | null = null;
+    public readonly customData: Record<string, any> = {};
+
     public constructor(
-        public readonly type: BlockEntityType,
+        public readonly type: CustomType,
         public readonly world: World,
         public readonly x: number,
         public readonly y: number,
@@ -52,12 +55,13 @@ export class BlockEntity implements Tickable {
     public deinit() { }
 
     public deserialize(data: SerializedBlockEntity) {
-
+        Object.assign(this.customData, data.data);
     }
     public serialize(): SerializedBlockEntity {
         return {
             id: this.type.id,
             x: this.x, y: this.y, z: this.z,
+            data: this.customData
         }
     }
 }

@@ -161,11 +161,28 @@ export namespace DataDrivenJson {
         onExtract: z.string().optional()
     });
 
+    export type BlockEntityCustomData = z.infer<typeof BlockEntityCustomData>;
+    export const BlockEntityCustomData = z.union([
+        z.object({
+            type: z.literal("number"),
+            default: z.number()
+        }),
+        z.object({
+            type: z.literal("string"),
+            default: z.string()
+        }),
+        z.object({
+            type: z.literal("boolean"),
+            default: z.boolean()
+        })
+    ]);
+
     export type BlockEntityType = z.infer<typeof BlockEntityType>;
     export const BlockEntityType = z.object({
         id: z.string(),
         slots: z.array(BlockEntitySlot).optional(),
         tickable: z.boolean().optional(),
+        data: z.record(z.string(), BlockEntityCustomData).optional()
     });
 
     export type InventoryGuiGraphicType = z.infer<typeof InventoryGuiGraphicType>;

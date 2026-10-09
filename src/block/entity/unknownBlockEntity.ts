@@ -1,6 +1,6 @@
 import { Inventory } from "../../item/inventory";
 import type { World } from "../../world/world";
-import { BlockEntity, BlockEntityType } from "./blockEntity";
+import { BlockEntity, BlockEntityType, type SerializedBlockEntity } from "./blockEntity";
 
 export class UnknownBlockEntityType extends BlockEntityType {
     public override readonly tickable = false;
@@ -16,22 +16,17 @@ export class UnknownBlockEntityType extends BlockEntityType {
     }
 }
 
-export interface SerializedBlockEntity {
-    id: string;
-    x: number, y: number, z: number;
-}
-
 export interface BlockEntityWithInventory {
     inventory: Inventory;
 }
 
 export class UnknownBlockEntity extends BlockEntity {
-    public data?: SerializedBlockEntity;
+    public originalData?: SerializedBlockEntity;
 
-    public deserialize(data: SerializedBlockEntity) {
-        this.data = data;    
+    public deserialize(originalData: SerializedBlockEntity) {
+        this.originalData = originalData;    
     }
     public serialize(): SerializedBlockEntity {
-        return Object.assign(this.data ?? {}, super.serialize());
+        return this.originalData ?? super.serialize();
     }
 }

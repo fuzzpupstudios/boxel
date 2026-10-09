@@ -89,9 +89,12 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
             }
         }
 
+        const types = new Map(Object.entries(json.data ?? {}));
+
         return new DataDrivenBlockEntityType(
             json.id,
             json.tickable ?? false,
+            types,
             inventoryHelper
         )
     }
@@ -99,7 +102,8 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
     private constructor(
         public override readonly id: string,
         public override readonly tickable: boolean,
-        public readonly inventoryHelper?: BlockEntityInventoryHelper
+        public readonly types: Map<string, DataDrivenJson.BlockEntityCustomData>,
+        public readonly inventoryHelper?: BlockEntityInventoryHelper,
     ) {
         super();
     }
@@ -113,7 +117,7 @@ interface SerializedDataDrivenBlockEntity extends SerializedBlockEntity {
     inventory?: SerializedInventory;
 }
 
-export class DataDrivenBlockEntity extends BlockEntity {
+export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType> {
     public readonly inventory: Inventory | null = null;
     private tickEvents: EventAction[] = [];
     private eventCursor: EventCursor | null = null;
@@ -138,8 +142,14 @@ export class DataDrivenBlockEntity extends BlockEntity {
     }
 
     public override deserialize(data: SerializedDataDrivenBlockEntity) {
+        super.deserialize(data);
+        
         if(data.inventory != null && this.inventory != null) {
             this.inventory.deserialize(data.inventory);
+        }
+
+        for(const [ name, declaration ] of this.type.types) {
+            this.customData[name] ??= declaration.default;
         }
     }
 
@@ -165,7 +175,7 @@ export class DataDrivenBlockEntity extends BlockEntity {
 
     public override tick(time: Time) {
         if(this.eventCursor == null) return;
-
+        
         for(let i = 0; i < this.tickEvents.length; i++) {
             this.tickEvents[i].run(this.eventCursor);
         }
