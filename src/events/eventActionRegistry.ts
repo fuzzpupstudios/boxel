@@ -24,6 +24,7 @@ import { UsagesPredicate } from "./predicate/usagesEventPredicate";
 import { MergeSlotStackAction } from "./item/mergeSlotStackAction";
 import { EqualsEventPredicate, GreaterThanEqualsEventPredicate, GreaterThanEventPredicate, LessThanEqualsEventPredicate, LessThanEventPredicate } from "./predicate/comparisonEventPredicate";
 import { SetBlockEntityDataAction } from "./block/setBlockEntityDataAction";
+import { DebugLogAction } from "./block/debugLogAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -43,7 +44,9 @@ eventActionRegistry.register("base:drop_item", DropItemAction);
 eventActionRegistry.register("base:drop_block_item", DropBlockItemAction);
 eventActionRegistry.register("base:particle", ParticleAction);
 
+eventActionRegistry.register("base:merge_slot_stack", MergeSlotStackAction);
 eventActionRegistry.register("base:set_block_entity_data", SetBlockEntityDataAction);
+eventActionRegistry.register("base:debug_log", DebugLogAction);
 
 eventActionRegistry.lock();
 

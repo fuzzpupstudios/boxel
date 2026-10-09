@@ -45,17 +45,14 @@ export class DataDrivenEventSheet extends EventSheet {
 
         if(json.triggers != null) {
             for(const [ triggerId, eventActions ] of Object.entries(json.triggers)) {
-                try {
-                    eventSheet.addTriggerAction(
-                        triggerId,
-                        ...(
-                            eventActions instanceof Array
-                            ? eventActions.map(action => this.parseAction(eventSheet, action))
-                            : [ this.parseAction(eventSheet, eventActions) ]
-                        )
-                    );
-                } catch(e) {
-                    throw new Error("Failed to parse action in " + triggerId, { cause: e });
+                const eventActionsArray = eventActions instanceof Array ? eventActions : [ eventActions ];
+
+                for(let i = 0; i < eventActionsArray.length; i++) {
+                    try {
+                        eventSheet.addTriggerAction(triggerId, this.parseAction(eventSheet, eventActionsArray[i]));
+                    } catch(e) {
+                        throw new Error("Failed to parse action " + i + " in " + triggerId, { cause: e });
+                    }
                 }
             }
         }
@@ -81,19 +78,23 @@ export class DataDrivenEventSheet extends EventSheet {
             }
         }
         if(isEventActionWithPredicate(action)) {
-            const branch = new EventBranch(
-                DataDrivenEventSheet.parsePredicate(action.if),
-                action.then instanceof Array
-                 ? action.then.map(action => this.parseAction(eventSheet, action))
-                 : [ this.parseAction(eventSheet, action.then) ],
-                action.else
-                 ? action.else instanceof Array
-                    ? action.else.map(action => this.parseAction(eventSheet, action))
-                    : [ this.parseAction(eventSheet, action.else) ]
-                 : [],
-            );
+            try {
+                const branch = new EventBranch(
+                    DataDrivenEventSheet.parsePredicate(action.if),
+                    action.then instanceof Array
+                    ? action.then.map(action => this.parseAction(eventSheet, action))
+                    : [ this.parseAction(eventSheet, action.then) ],
+                    action.else
+                    ? action.else instanceof Array
+                        ? action.else.map(action => this.parseAction(eventSheet, action))
+                        : [ this.parseAction(eventSheet, action.else) ]
+                    : [],
+                );
 
-            return branch;
+                return branch;
+            } catch(e) {
+                throw new Error("Failed to create branch", { cause: e });
+            }
         }
         if(typeof action == "string") {
             return new RunTriggerAction(eventSheet, action);
@@ -106,16 +107,15 @@ export class DataDrivenEventSheet extends EventSheet {
         predicate: DataDrivenJson.EventActionPredicateTree | DataDrivenJson.EventActionPredicateTree[]
     ) {
         if(!(predicate instanceof Array)) predicate = [ predicate ];
-        const parsedPredicates = predicate.map(predicate => this.parsePredicate(predicate));
 
         if(predicateId == "and") {
-            return new AndPredicate(parsedPredicates);
+            return new AndPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
         if(predicateId == "or") {
-            return new OrPredicate(parsedPredicates);
+            return new OrPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
         if(predicateId == "not") {
-            return new NotPredicate(parsedPredicates);
+            return new NotPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
 
         return null;
@@ -137,7 +137,11 @@ export class DataDrivenEventSheet extends EventSheet {
                         predicateList.push(special);
                     }
                 } else {
-                    predicateList.push(new EventPredicateConstructor(json));
+                    try {
+                        predicateList.push(new EventPredicateConstructor(json));
+                    } catch(e) {
+                        throw new Error("Failed to construct predicate " + predicateId, { cause: e })
+                    }
                 }
             }
         }

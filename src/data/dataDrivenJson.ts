@@ -4,7 +4,7 @@ export namespace DataDrivenJson {
     export type EventAction = z.infer<typeof EventAction>;
     export const EventAction = z.object({
         id: z.string(),
-        args: z.record(z.string(), z.any()).optional(),
+        args: z.any().optional(),
     });
 
     export type EventActionPredicateTree = Record<string, EventActionPredicateTree[] | {}>;
