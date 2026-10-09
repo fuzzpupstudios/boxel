@@ -22,6 +22,7 @@ import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
 import { PlayerEventPredicate } from "./predicate/playerEventPredicate";
 import { UsagesPredicate } from "./predicate/usagesEventPredicate";
 import { MergeSlotStackAction } from "./item/mergeSlotStackAction";
+import { EqualsEventPredicate, GreaterThanEqualsEventPredicate, GreaterThanEventPredicate, LessThanEqualsEventPredicate, LessThanEventPredicate } from "./predicate/comparisonEventPredicate";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
 
@@ -55,5 +56,10 @@ eventPredicateRegistry.register("entity", EntityEventPredicate);
 eventPredicateRegistry.register("platform", PlatformEventPredicate);
 eventPredicateRegistry.register("usages", UsagesPredicate);
 eventPredicateRegistry.register("player", PlayerEventPredicate);
+eventPredicateRegistry.register("greater_than", GreaterThanEventPredicate);
+eventPredicateRegistry.register("greater_than_equal", GreaterThanEqualsEventPredicate);
+eventPredicateRegistry.register("less_than", LessThanEventPredicate);
+eventPredicateRegistry.register("less_than_equal", LessThanEqualsEventPredicate);
+eventPredicateRegistry.register("equal", EqualsEventPredicate);
 
 eventPredicateRegistry.lock();
