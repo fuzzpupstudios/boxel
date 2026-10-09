@@ -6,10 +6,10 @@ import { isInteger, isPrimitive, parameter } from "../eventVariable";
 
 export type SetBlockStateParameterActionParameters = z.infer<typeof SetBlockStateParameterActionParameters>;
 export const SetBlockStateParameterActionParameters = z.object({
-    xOffset: z.number().default(0),
-    yOffset: z.number().default(0),
-    zOffset: z.number().default(0),
-    parameters: z.record(z.string(), z.string())
+    xOffset: n.Integer.default(0),
+    yOffset: n.Integer.default(0),
+    zOffset: n.Integer.default(0),
+    parameters: z.record(z.string(), n.Primitive)
 });
 
 export class SetBlockStateParameterAction extends EventAction {
