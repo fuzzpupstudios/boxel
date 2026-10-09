@@ -1,12 +1,11 @@
 import z from "zod";
-import { ItemStack } from "../../item/itemStack";
+import { InventorySlot } from "../../item/inventory";
 import { EventParamGetter } from "../eventParamGetter";
 import type { EventCursor } from "../eventSheet";
 import { isInteger, parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
-import { InventorySlot } from "../../item/inventory";
 
-export const SlotStackEventParamGetterParams = z.object({
+export const InventorySlotEventParamGetterParams = z.object({
     slot: n.Integer,
 }).and(z.union([
     z.object({
@@ -14,7 +13,7 @@ export const SlotStackEventParamGetterParams = z.object({
     })
 ]))
 
-export class SlotStackEventParamGetter extends EventParamGetter<InventorySlot> {
+export class InventorySlotEventParamGetter extends EventParamGetter<InventorySlot> {
     private readonly slot: n.Argument<number>;
     private readonly blockEntity?: {
         x: n.Argument<number>,
@@ -25,7 +24,7 @@ export class SlotStackEventParamGetter extends EventParamGetter<InventorySlot> {
     public constructor(params: unknown) {
         super();
         
-        const parsed = SlotStackEventParamGetterParams.parse(params);
+        const parsed = InventorySlotEventParamGetterParams.parse(params);
 
         this.slot = parameter(parsed.slot, isInteger);
         if(parsed.block_entity != null) {
