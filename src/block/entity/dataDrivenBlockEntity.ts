@@ -170,6 +170,10 @@ export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType
 
     public override init(): void {
         if(this.eventCursor == null) throw new Error("Block state init() called before event cursor was set");
+
+        for(const [ name, declaration ] of this.type.types) {
+            this.customData[name] = declaration.default;
+        }
         this.blockState?.events.runTrigger("base:block_entity/init", this.eventCursor);
     }
 

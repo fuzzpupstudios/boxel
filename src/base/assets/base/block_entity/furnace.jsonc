@@ -21,7 +21,7 @@
     "data": {
         "cook_time": {
             "type": "number",
-            "default": 0
+            "default": -1
         },
         "fuel_time": {
             "type": "number",
