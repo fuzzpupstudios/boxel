@@ -72,7 +72,7 @@ export class DataDrivenEventSheet extends EventSheet {
             }
 
             try {
-                return new EventActionConstructor(eventSheet, action.args ?? {});
+                return new EventActionConstructor(eventSheet, action.args ?? {}, action.capture ?? {});
             } catch(e) {
                 throw new Error("Failed to create action " + action.id, { cause: e });
             }

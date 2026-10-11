@@ -17,7 +17,11 @@ export class MergeSlotStackAction extends EventAction {
     private readonly to: n.Argument<InventorySlot>;
     private readonly limit: n.Argument<number>;
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
+    public constructor(
+        eventSheet: EventSheet,
+        args: unknown, 
+        private readonly capture: Record<string, string>
+    ) {
         super(eventSheet);
         const parsed = MergeSlotStackActionParameters.parse(args);
 
@@ -34,6 +38,10 @@ export class MergeSlotStackAction extends EventAction {
         if(transferred !== 0) {
             fromSlot.onExtract();
             toSlot.onInsert();
+        }
+
+        if("transferred" in this.capture) {
+            cursor.variables.set(this.capture.transferred, transferred);
         }
     }
 }

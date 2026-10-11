@@ -1,10 +1,12 @@
 import z from "zod";
+import type { RecursiveRecord } from "../utilTypes";
 
 export namespace DataDrivenJson {
     export type EventAction = z.infer<typeof EventAction>;
     export const EventAction = z.object({
         id: z.string(),
         args: z.any().optional(),
+        capture: z.record(z.string(), z.string()).optional(),
     });
 
     export type EventActionPredicateTree = Record<string, EventActionPredicateTree[] | {}>;
