@@ -1,19 +1,20 @@
 {
     "id": "base:furnace",
+    "tickable": true,
 
     "slots": [
         // ingredient
         {
-            "onChange": "#insert_item"
+            "onInsert": "wake"
         },
         // fuel
         {
-            "onChange": "#insert_item"
+            "onInsert": "wake"
         },
         // output
         {
             "insert": false,
-            "onExtract": "#extract_item"
+            "onExtract": "wake"
         }
     ],
     "data": {

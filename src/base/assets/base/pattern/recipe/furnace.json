@@ -1,0 +1,15 @@
+{
+    "id": "base:recipe/furnace",
+
+    "shape": {
+        "input": "string",
+        "output": "string"
+    },
+
+    "entries": [
+        {
+            "input": "base:cobblestone[default]",
+            "output": "base:sedimentary_stone[default]"
+        }
+    ]
+}
