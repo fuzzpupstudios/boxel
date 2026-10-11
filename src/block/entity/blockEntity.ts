@@ -40,8 +40,8 @@ export class BlockEntity<CustomType extends BlockEntityType = BlockEntityType> i
         if(state == null) state = this.world.getBlockState(this.x, this.y, this.z);
         if(typeof state == "string") {
             const resolvedState = blockStateRegistry.get(state)!;
-            if(resolvedState == null) throw new ReferenceError("Block state " + state + " not found");
-            state = resolvedState;
+            
+            state = resolvedState ?? null;
         }
         this.blockState = state;
     }
