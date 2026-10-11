@@ -4,7 +4,7 @@ import { eventParamGetterRegistry } from "./eventParamGetterRegistry";
 import type { EventCursor } from "./eventSheet";
 import n from "./eventVariableTypes";
 
-function isParameter(obj: any): obj is n.Parameter {
+export function isParameter(obj: any): obj is n.Parameter {
     if(obj == null || typeof obj !== "object") return false;
     return "$get" in obj;
 }
@@ -64,21 +64,58 @@ export function parameter<T>(value: n.InnerParameter | T, validator?: (value: an
     }
 }
 
-export function parameterItemStack(value: n.InventorySlot | null) {
+export function parameterOuter<T>(value: n.Parameter, validator?: (value: any) => value is T): n.Argument<T> {
+    if(typeof value.$get == "string") {
+        return parameterVariable(value.$get, validator);
+    } else {
+        return parameter(value.$get, validator);
+    }
+}
+
+export function parameterRecursive<T>(value: any): n.Argument<T> {
     if(isParameter(value)) {
-        if(typeof value.$get == "string") {
-            return parameterVariable(value.$get, isInventorySlot);
+        return parameterOuter(value);
+    }
+
+    const keys = Object.keys(value);
+
+    const base: any = {};
+    const variables = new Map<string, any>;
+
+    for(const key of keys) {
+        const innerValue = value[key];
+
+        if(typeof innerValue == "object" && innerValue != null) {
+            variables.set(key, parameterRecursive<T>(innerValue));
         } else {
-            return parameter(value.$get, isInventorySlot);
+            base[key] = innerValue;
         }
+    }
+    
+    return (cursor: EventCursor) => {
+        const constructed: any = Object.assign({}, base);
+
+        for(const [ key, argument ] of variables) {
+            constructed[key] = argument(cursor);
+        }
+
+        return constructed;
+    }
+}
+
+export function parameterInventorySlot(value: n.InventorySlot | null): n.Argument<InventorySlot> {
+    if(isParameter(value)) {
+        return parameterOuter(value, isInventorySlot);
     } else {
         if(value == null) {
             return () => new InventorySlot;
         } if(typeof value == "string") {
             return () => new InventorySlot(ItemStack.of(value));
         } else {
-            const { item, quantity } = value;
-            return () => new InventorySlot(ItemStack.of(item, quantity));
+            const item = typeof value.item == "string" ? parameter(value.item) : parameterOuter(value.item, isString);
+            const quantity = parameter(value.quantity);
+
+            return cursor => new InventorySlot(ItemStack.of(item(cursor), quantity(cursor)));
         }
     }
 }

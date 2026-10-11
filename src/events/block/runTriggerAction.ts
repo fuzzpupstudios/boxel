@@ -4,7 +4,7 @@ import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
 import { eventSheetRegistry } from "../eventSheetRegistry";
 import n from "../eventVariableTypes";
-import { isInteger, parameter } from "../eventVariable";
+import { isInteger, isString, parameter } from "../eventVariable";
 
 
 export type RunTriggerActionParameters = z.infer<typeof RunTriggerActionParameters>;
@@ -14,7 +14,7 @@ export const RunTriggerActionParameters = z.object({
     zOffset: n.Number.default(0),
     self: n.Boolean.default(false),
     eventSheetId: z.string().optional(),
-    triggerName: z.string()
+    triggerName: n.String
 });
 
 export class RunTriggerAction extends EventAction {
@@ -22,8 +22,8 @@ export class RunTriggerAction extends EventAction {
     private readonly yOffset: n.Argument<number>;
     private readonly zOffset: n.Argument<number>;
     private readonly self: n.Argument<boolean>;
-    private readonly eventSheetId: string | null;
-    private readonly triggerName: string;
+    private readonly eventSheetId?: n.Argument<string>;
+    private readonly triggerName: n.Argument<string>;
 
     public constructor(eventSheet: EventSheet, args: unknown) {
         super(eventSheet);
@@ -34,27 +34,33 @@ export class RunTriggerAction extends EventAction {
         this.yOffset = parameter(parsed.yOffset, isInteger);
         this.zOffset = parameter(parsed.zOffset, isInteger);
         this.self = parameter(parsed.self);
-        this.eventSheetId = parsed.eventSheetId ?? null;
-        this.triggerName = parsed.triggerName;
+        if(parsed.eventSheetId != null) this.eventSheetId = parameter(parsed.eventSheetId, isString);
 
-        const groups = /^([^#]+)#(.*)$/g.exec(parsed.triggerName);
-        
-        if(groups) {
-            const eventSheetId = groups[1];
-            const triggerName = groups[2];
+        if(typeof parsed.triggerName == "string") {
+            const groups = /^([^#]+)#(.*)$/g.exec(parsed.triggerName);
+            
+            if(groups) {
+                const eventSheetId = groups[1];
+                const triggerName = groups[2];
 
-            if(eventSheetId == "self") {
-                this.self = parameter(true);
-                this.triggerName = triggerName!;
+                if(eventSheetId == "self") {
+                    this.self = parameter(true);
+                } else if(eventSheetId != null) {
+                    this.eventSheetId = parameter(eventSheetId);
+                }
+                this.triggerName = parameter(triggerName);
             } else {
-                this.eventSheetId = eventSheetId ?? null;
-                this.triggerName = triggerName!;
+                this.triggerName = parameter(parsed.triggerName);
             }
+        } else {
+            this.triggerName = parameter(parsed.triggerName, isString);
         }
     }
     public override run(cursor: EventCursor): void {
+        const triggerName = this.triggerName(cursor);
+
         if(this.self(cursor)) {
-            this.eventSheet.runTrigger(this.triggerName, cursor);
+            this.eventSheet.runTrigger(triggerName, cursor);
             return;
         }
 
@@ -64,9 +70,10 @@ export class RunTriggerAction extends EventAction {
 
         let eventSheet: EventSheet | null = null;
 
-        if(this.eventSheetId != null) {
-            eventSheet = eventSheetRegistry.get(this.eventSheetId);
-            if(eventSheet == null) throw new ReferenceError("Cannot find event sheet " + this.eventSheetId);
+        if(this.eventSheetId) {
+            const eventSheetId = this.eventSheetId(cursor);
+            eventSheet = eventSheetRegistry.get(eventSheetId);
+            if(eventSheet == null) throw new ReferenceError("Cannot find event sheet " + eventSheetId);
         } else {
             const blockStateId = cursor.world.getBlockState(
                 cursor.x + xOffset,
@@ -83,7 +90,7 @@ export class RunTriggerAction extends EventAction {
         if(!eventSheet) return;
 
         cursor.addOffset(xOffset, yOffset, zOffset);
-        eventSheet.runTrigger(this.triggerName, cursor);
+        eventSheet.runTrigger(triggerName, cursor);
         cursor.removeOffset(xOffset, yOffset, zOffset);
     }
 }

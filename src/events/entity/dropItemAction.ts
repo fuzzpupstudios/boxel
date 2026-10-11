@@ -1,10 +1,9 @@
 import z from "zod";
 import { ItemEntity } from "../../entity/item";
-import { ItemStack, SerializedItemStack } from "../../item/itemStack";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
 import n from "../eventVariableTypes";
-import { isNumber, parameter, parameterItemStack } from "../eventVariable";
+import { isNumber, parameter, parameterInventorySlot } from "../eventVariable";
 import type { InventorySlot } from "../../item/inventory";
 
 export type DropItemActionParameters = z.infer<typeof DropItemActionParameters>;
@@ -42,7 +41,7 @@ export class DropItemAction extends EventAction {
         this.randomVelocityX = parameter(parsed.randomVelocity[0], isNumber);
         this.randomVelocityY = parameter(parsed.randomVelocity[1], isNumber);
         this.randomVelocityZ = parameter(parsed.randomVelocity[2], isNumber);
-        this.slot = parameterItemStack(parsed.stack);
+        this.slot = parameterInventorySlot(parsed.stack);
     }
     public override run(cursor: EventCursor): void {
         const entity = new ItemEntity(cursor.world);

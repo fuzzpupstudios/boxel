@@ -2,7 +2,7 @@ import z from "zod";
 import type { InventorySlot } from "../../item/inventory";
 import { EventAction } from "../eventAction";
 import type { EventCursor, EventSheet } from "../eventSheet";
-import { parameter, parameterItemStack } from "../eventVariable";
+import { parameter, parameterInventorySlot } from "../eventVariable";
 import n from "../eventVariableTypes";
 
 export type MergeSlotStackActionParameters = z.infer<typeof MergeSlotStackActionParameters>;
@@ -25,8 +25,8 @@ export class MergeSlotStackAction extends EventAction {
         super(eventSheet);
         const parsed = MergeSlotStackActionParameters.parse(args);
 
-        this.from = parameterItemStack(parsed.from);
-        this.to = parameterItemStack(parsed.to);
+        this.from = parameterInventorySlot(parsed.from);
+        this.to = parameterInventorySlot(parsed.to);
         this.limit = parameter(parsed.limit);
     }
     public override run(cursor: EventCursor): void {

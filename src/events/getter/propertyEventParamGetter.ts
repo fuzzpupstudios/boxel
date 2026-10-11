@@ -1,11 +1,11 @@
 import z from "zod";
 import { EventParamGetter } from "../eventParamGetter";
 import type { EventCursor } from "../eventSheet";
-import { isString, parameter } from "../eventVariable";
+import { isString, parameter, parameterVariable } from "../eventVariable";
 import n from "../eventVariableTypes";
 
 export const PropertyParamGetterParams = z.object({
-    object: n.InnerParameter,
+    value: n.InnerParameter.or(z.string()),
     path: n.String
 });
 
@@ -19,7 +19,11 @@ export class PropertyEventParamGetter extends EventParamGetter<any> {
         
         const parsed = PropertyParamGetterParams.parse(params);
 
-        this.object = parameter(parsed.object);
+        if(typeof parsed.value == "string") {
+            this.object = parameterVariable(parsed.value);
+        } else {
+            this.object = parameter(parsed.value);
+        }
         if(typeof parsed.path == "string") {
             this.constantPath = parsed.path.split(".");
         } else {
