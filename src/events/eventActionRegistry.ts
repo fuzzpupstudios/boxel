@@ -27,6 +27,7 @@ import { SetBlockEntityDataAction } from "./block/setBlockEntityDataAction";
 import { DebugLogAction } from "./block/debugLogAction";
 import { VariableExistsPredicate } from "./predicate/variableExistsEventPredicate";
 import { BooleanSetPredicate } from "./predicate/booleanSetEventPredicate";
+import { AssignValueAction } from "./general/assignValueAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any, capture: Record<string, string>) => EventAction>;
 
