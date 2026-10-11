@@ -1,0 +1,10 @@
+.git
+.cache
+.claude
+dist
+node_modules
+public
+docker-compose.yml
+Dockerfile
+README.md
+LICENSE.md
