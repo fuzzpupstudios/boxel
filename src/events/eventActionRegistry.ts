@@ -28,6 +28,7 @@ import { DebugLogAction } from "./block/debugLogAction";
 import { VariableExistsPredicate } from "./predicate/variableExistsEventPredicate";
 import { BooleanSetPredicate } from "./predicate/booleanSetEventPredicate";
 import { AssignValueAction } from "./general/assignValueAction";
+import { ItemEventPredicate } from "./predicate/itemEventPredicate";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any, capture: Record<string, string>) => EventAction>;
 
@@ -51,6 +52,8 @@ eventActionRegistry.register("base:merge_slot_stack", MergeSlotStackAction);
 eventActionRegistry.register("base:set_block_entity_data", SetBlockEntityDataAction);
 eventActionRegistry.register("base:debug_log", DebugLogAction);
 
+eventActionRegistry.register("base:assign_value", AssignValueAction);
+
 eventActionRegistry.lock();
 
 
@@ -58,6 +61,7 @@ eventActionRegistry.lock();
 export const eventPredicateRegistry = new KeyedRegistry<new (args: any) => EventPredicate>;
 
 eventPredicateRegistry.register("block", BlockEventPredicate);
+eventPredicateRegistry.register("item", ItemEventPredicate);
 eventPredicateRegistry.register("face", FaceEventPredicate);
 eventPredicateRegistry.register("entity", EntityEventPredicate);
 eventPredicateRegistry.register("platform", PlatformEventPredicate);
