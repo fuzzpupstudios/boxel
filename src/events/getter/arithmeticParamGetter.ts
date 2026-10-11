@@ -1,7 +1,7 @@
 import z from "zod";
 import { EventParamGetter } from "../eventParamGetter";
 import type { EventCursor } from "../eventSheet";
-import { isNumber, isPrimitive, parameter } from "../eventVariable";
+import { isNumber, isPrimitive, parameter, parameterVariable } from "../eventVariable";
 import n from "../eventVariableTypes";
 
 export class AdditionEventParamGetter extends EventParamGetter<any> {
@@ -49,10 +49,10 @@ export class SubtractionEventParamGetter extends EventParamGetter<any> {
     public constructor(params: unknown) {
         super();
         
-        const parsed = z.tuple([ n.Number, n.Number ]).parse(params);
+        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
 
-        this.a = parameter(parsed[0], isNumber);
-        this.b = parameter(parsed[1], isNumber);
+        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
+        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
     }
     public get(cursor: EventCursor): any {
         return this.a(cursor) - this.b(cursor);
@@ -66,10 +66,10 @@ export class DivisionEventParamGetter extends EventParamGetter<any> {
     public constructor(params: unknown) {
         super();
         
-        const parsed = z.tuple([ n.Number, n.Number ]).parse(params);
+        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
 
-        this.a = parameter(parsed[0], isNumber);
-        this.b = parameter(parsed[1], isNumber);
+        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
+        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
     }
     public get(cursor: EventCursor): any {
         return this.a(cursor) / this.b(cursor);
@@ -83,10 +83,10 @@ export class ExponentEventParamGetter extends EventParamGetter<any> {
     public constructor(params: unknown) {
         super();
         
-        const parsed = z.tuple([ n.Number, n.Number ]).parse(params);
+        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
 
-        this.a = parameter(parsed[0], isNumber);
-        this.b = parameter(parsed[1], isNumber);
+        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
+        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
     }
     public get(cursor: EventCursor): any {
         return this.a(cursor) ** this.b(cursor);
@@ -100,10 +100,10 @@ export class ModuloEventParamGetter extends EventParamGetter<any> {
     public constructor(params: unknown) {
         super();
         
-        const parsed = z.tuple([ n.Number, n.Number ]).parse(params);
+        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
 
-        this.a = parameter(parsed[0], isNumber);
-        this.b = parameter(parsed[1], isNumber);
+        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
+        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
     }
     public get(cursor: EventCursor): any {
         const a = this.a(cursor);

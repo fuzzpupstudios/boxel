@@ -1,6 +1,8 @@
 import { Quaternion, Vector3 } from "three";
 import type { AudioManager } from "../data/audioManager";
 import type { Entity } from "../entity/entity";
+import type { GuiContainer } from "../gui/element/guiContainer";
+import type { GuiGraphicContainer } from "../gui/graphic/graphic";
 import type { GuiManager } from "../gui/guiManager";
 import type { RaycastResult } from "../physics/raycaster";
 import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
@@ -28,6 +30,8 @@ export class EventCursor {
     public defaultPrevented = false;
     public readonly clientPlatform?: ClientEventPlatform;
     public entity: Entity | null = null;
+    public graphic: GuiGraphicContainer | null = null;
+    public gui: GuiContainer | null = null;
     public variables = new Map<string, unknown>;
     public voxelHitX = 0;
     public voxelHitY = 0;
@@ -43,7 +47,28 @@ export class EventCursor {
         public y: number,
         public z: number
     ) {
-        this.clientPlatform = EventCursor.clientPlatform!;
+        this.clientPlatform = EventCursor.clientPlatform;
+    }
+
+    public clone(): EventCursor {
+        const cursor = new EventCursor(this.world, this.x, this.y, this.z);
+        cursor.faceNormalX = this.faceNormalX;
+        cursor.faceNormalY = this.faceNormalY;
+        cursor.faceNormalZ = this.faceNormalZ;
+        cursor.faceHitX = this.faceHitX;
+        cursor.faceHitY = this.faceHitY;
+        cursor.yaw = this.yaw;
+        cursor.pitch = this.pitch;
+        cursor.usages = this.usages;
+        cursor.defaultPrevented = this.defaultPrevented;
+        cursor.entity = this.entity;
+        cursor.graphic = this.graphic;
+        cursor.gui = this.gui;
+        cursor.variables = new Map(this.variables);
+        cursor.voxelHitX = this.voxelHitX;
+        cursor.voxelHitY = this.voxelHitY;
+        cursor.voxelHitZ = this.voxelHitZ;
+        return cursor;
     }
 
     public setPosition(x: number, y: number, z: number) {

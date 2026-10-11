@@ -1,14 +1,13 @@
 import { Container, Rectangle, Sprite, Texture } from "pixi.js";
 import { type SignalConnection } from "typed-signals";
 import { EventCursor } from "../../events/eventSheet";
-import type { InventorySlot } from "../../item/inventory";
-import type { GuiItemSpriteProvider } from "./itemSprite";
-import { GuiItemStack } from "./itemStack";
-import { TileHologramProvider } from "./tileHologram";
 import type { GuiGraphicContainer } from "../graphic/graphic";
 import { guiGraphicRegistry } from "../graphic/graphicRegistry";
 import type { Gui, GuiInventorySlot } from "../gui";
 import type { GuiCursor } from "../guiCursor";
+import type { GuiItemSpriteProvider } from "./itemSprite";
+import { GuiItemStack } from "./itemStack";
+import { TileHologramProvider } from "./tileHologram";
 
 export class GuiContainer extends Container {
     private readonly slotContainers = new Map<string, GuiSlotContainer>;
@@ -51,11 +50,15 @@ export class GuiContainer extends Container {
                 throw new ReferenceError("GUI graphic type " + graphic.type.type + " does not exist");
             }
 
-            const graphicContainer = new GuiGraphicContainerConstructor(id, graphic.type.args);
+            try {
+                const graphicContainer = new GuiGraphicContainerConstructor(id, graphic.type.args);
 
-            graphicContainer.position.set(graphic.type.x, graphic.type.y);
-            this.addChild(graphicContainer);
-            this.graphicContainers.set(id, graphicContainer);
+                graphicContainer.position.set(graphic.type.x, graphic.type.y);
+                this.addChild(graphicContainer);
+                this.graphicContainers.set(id, graphicContainer);
+            } catch(e) {
+                throw new Error(`Failed to create gui graphic "${id}" (type "${graphic.type.type}")`, { cause: e })
+            }
         }
 
         this.onSwapStackHandler = this.guiCursor.onSwapStack.connect((event) => {
@@ -249,12 +252,24 @@ export class GuiContainer extends Container {
         });
     }
 
+    public getGraphicContainer(id: string) {
+        return this.graphicContainers.get(id);
+    }
+
     public updateAllGraphics(cursor: EventCursor) {
-        for(const [ graphicId, graphic ] of this.graphicContainers.entries()) {
-            const graphicType = this.gui.graphics.get(graphicId);
-            if(graphicType == null) continue;
-            
-            graphic.visible = graphicType.type.renderIf.test(cursor);
+        cursor.gui = this;
+        
+        for(const [ key, value ] of this.gui.cursorData) {
+            cursor.variables.set(key, value);
+        }
+
+        for(const [ graphicId, graphicContainer ] of this.graphicContainers.entries()) {
+            const graphic = this.gui.graphics.get(graphicId);
+            if(graphic == null) continue;
+        
+            cursor.graphic = graphicContainer;
+            graphicContainer.visible = graphic.type.renderIf.test(cursor);
+            graphic.type.events.runTrigger("base:ui/render", cursor);
         }
     }
     

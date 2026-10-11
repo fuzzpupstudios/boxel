@@ -21,7 +21,8 @@ export class Gui {
 
     public constructor(
         public readonly type: GuiType,
-        public readonly inventories: Map<string, Inventory>
+        public readonly inventories: Map<string, Inventory>,
+        public readonly cursorData: Map<string, any>
     ) {
         for(const slotType of type.slots) {
             const [ inventoryId, slotIndexString ] = slotType.id.split(".");

@@ -6,6 +6,7 @@ import type { GuiItemSpriteProvider } from "./element/itemSprite";
 import type { TileHologramProvider } from "./element/tileHologram";
 import type { Gui } from "./gui";
 import { GuiCursor } from "./guiCursor";
+import { EventError } from "../utilTypes";
 
 export class GuiManager {
     public readonly openGuis = new Map<string, GuiContainer>;
@@ -41,28 +42,33 @@ export class GuiManager {
     public getOpenModalCount() {
         return this.openGuis.values().reduce((a, gui) => gui.gui.type.modal ? a + 1 : a, 0);
     }
-    public openGui(gui: Gui) {
+    public openGui(gui: Gui, cursor: EventCursor) {
         const id = gui.type.id;
-        const guiContainer = new GuiContainer(gui,
-            this.hologramProvider,
-            this.itemSpriteProvider,
-            this.guiCursor
-        );
+        try {
+            const guiContainer = new GuiContainer(gui,
+                this.hologramProvider,
+                this.itemSpriteProvider,
+                this.guiCursor
+            );
 
-        if(this.openGuis.has(id)) this.closeGui(id);
+            if(this.openGuis.has(id)) this.closeGui(id);
 
-        this.openGuis.set(id, guiContainer);
+            this.openGuis.set(id, guiContainer);
 
-        const size = guiContainer.getSize();
-        guiContainer.pivot.set(size.width / 2, size.height / 2);
+            const size = guiContainer.getSize();
+            guiContainer.pivot.set(size.width / 2, size.height / 2);
 
-        this.view.addChild(guiContainer);
+            this.view.addChild(guiContainer);
 
-        this.resize(this.lastWidth, this.lastHeight, this.lastPixelRatio);
-        
-        this.onUpdate.emit();
+            this.resize(this.lastWidth, this.lastHeight, this.lastPixelRatio);
+            
+            this.onUpdate.emit();
+            this.update(cursor);
 
-        return guiContainer;
+            return guiContainer;
+        } catch(e) {
+            throw new Error("Failed to open gui " + id, { cause: e });
+        }
     }
 
     public resize(width: number, height: number, pixelRatio: number) {
@@ -81,8 +87,15 @@ export class GuiManager {
     }
 
     public update(cursor: EventCursor) {
-        for(const gui of this.openGuis.values()) {
-            gui.updateAllGraphics(cursor);
+        for(const guiName of this.openGuis.keys()) {
+            const gui = this.openGuis.get(guiName)!;
+
+            const cursorClone = cursor.clone();
+            try {
+                gui.updateAllGraphics(cursorClone);
+            } catch(e) {
+                throw new EventError("Failed to update ui " + guiName, { cause: e, cursor: cursorClone });
+            }
         }
     }
     public getOpenGui(id: string) {

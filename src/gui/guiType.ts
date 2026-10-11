@@ -69,7 +69,7 @@ export abstract class GuiType {
         });
     }
 
-    public createGui(inventories: Map<string, Inventory>): Gui {
-        return new Gui(this, inventories);
+    public createGui(inventories: Map<string, Inventory>, cursorData = new Map<string, any>): Gui {
+        return new Gui(this, inventories, cursorData);
     }
 }

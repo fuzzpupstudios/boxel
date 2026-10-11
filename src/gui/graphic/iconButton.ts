@@ -17,6 +17,9 @@ export class GuiIconButtonGraphicContainer extends IconButton implements GuiGrap
     ) {
         const parsedArgs = GuiIconButtonGraphicArgs.parse(args);
 
-        super(Assets.get(parsedArgs.texture));
+        const texture = Assets.get(parsedArgs.texture);
+        if(texture == null) throw new ReferenceError("Cannot find texture " + parsedArgs.texture);
+
+        super(texture);
     }
 }

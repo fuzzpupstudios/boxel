@@ -5,7 +5,8 @@
     "slots": [
         // ingredient
         {
-            "onInsert": "wake"
+            "onInsert": "wake",
+            "onExtract": "check_recipe"
         },
         // fuel
         {

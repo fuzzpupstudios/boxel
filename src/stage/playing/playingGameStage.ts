@@ -335,7 +335,7 @@ export class PlayingGameStage extends GameStage {
         const hotbarGuiType = guiTypeRegistry.get("base:hotbar");
         if(hotbarGuiType != null) {
             const hotbarGui = hotbarGuiType.createGui(inventories);
-            const hotbar = this.guiManager.openGui(hotbarGui);
+            const hotbar = this.guiManager.openGui(hotbarGui, this.localPlayer.createEventCursor());
 
             this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
             hotbar.addChild(this.hotbarSelection);
@@ -459,6 +459,8 @@ export class PlayingGameStage extends GameStage {
                     sound?.setPlaybackRate(1 + Math.random() * 0.2 - twinge * 0.8);
                 }, Math.random() * (1000 / 20));
             }
+
+            this.guiManager.update(this.localPlayer.createEventCursor());
         }
     }
 
@@ -519,7 +521,7 @@ export class PlayingGameStage extends GameStage {
                         ["player", this.localPlayer.inventory]
                     ]);
                     const gui = inventoryType.createGui(inventories);
-                    this.guiManager.openGui(gui);
+                    this.guiManager.openGui(gui, this.localPlayer.createEventCursor());
                 }
             }
 
@@ -580,10 +582,6 @@ export class PlayingGameStage extends GameStage {
         // copy the sky color from the world renderer's sky to the lighting channel color value
         this.world.lightingManager.getChannelOrThrow("base:sky").color.value.copy(
             this.worldRenderer.sky.sunlightColor.value);
-
-        if(this.localPlayer != null) {
-            this.guiManager.update(this.localPlayer.createEventCursor());
-        }
         
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);

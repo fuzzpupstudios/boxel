@@ -29,6 +29,8 @@ import { VariableExistsPredicate } from "./predicate/variableExistsEventPredicat
 import { BooleanSetPredicate } from "./predicate/booleanSetEventPredicate";
 import { AssignValueAction } from "./general/assignValueAction";
 import { ItemEventPredicate } from "./predicate/itemEventPredicate";
+import { SetGuiTextAction } from "./ui/setGuiTextAction";
+import { SetProgressBarFillAction } from "./ui/setProgressBarFillAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any, capture: Record<string, string>) => EventAction>;
 
@@ -43,6 +45,8 @@ eventActionRegistry.register("base:close_gui", CloseGuiAction);
 eventActionRegistry.register("base:set_selected_slot", SetSelectedSlotAction);
 eventActionRegistry.register("base:play_sound", PlaySoundAction);
 eventActionRegistry.register("base:prevent_default", PreventDefaultAction);
+eventActionRegistry.register("base:set_gui_text", SetGuiTextAction);
+eventActionRegistry.register("base:set_progress_bar_fill", SetProgressBarFillAction);
 
 eventActionRegistry.register("base:drop_item", DropItemAction);
 eventActionRegistry.register("base:drop_block_item", DropBlockItemAction);

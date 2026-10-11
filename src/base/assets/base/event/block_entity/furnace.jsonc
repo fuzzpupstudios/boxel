@@ -126,6 +126,28 @@
                 } }
             }
         ],
+        "check_recipe": [
+            {
+                "id": "base:assign_value",
+                "args": {
+                    "name": "input_slot",
+                    "ref": { "slot": {
+                        "block_entity": [ 0, 0, 0 ],
+                        "slot": 0
+                    } }
+                }
+            },
+            "self#get_recipe",
+            {
+                "if": { "not": { "variable_exists": "recipe" } },
+                "then": {
+                    "id": "base:set_block_entity_data",
+                    "args": { "data": {
+                        "cook_time": -1
+                    } }
+                }
+            }
+        ],
         "try_start_cooking": [
             "self#get_recipe",
             {

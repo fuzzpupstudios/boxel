@@ -38,7 +38,7 @@ export function parameterVariable<T>(value: string, validator?: (value: any) => 
         } else {
             return (cursor: EventCursor) => {
                 let value: any = cursor.variables.get(root);
-                for(let i = 0; i < path.length; i++) {
+                for(let i = 0; i < path.length && value != null; i++) {
                     value = value[path[i]];
                 }
                 if(!validator(value)) throw new TypeError("Validator failed for value " + value);

@@ -1,7 +1,7 @@
 import z from "zod";
 import { EventPredicate } from "../eventPredicate";
 import type { EventCursor } from "../eventSheet";
-import { isNumber, parameter, parameterVariable } from "../eventVariable";
+import { isNumber, isParameter, parameter, parameterOuter, parameterVariable } from "../eventVariable";
 import n from "../eventVariableTypes";
 
 export type NumericalComparisonPredicateParameters = z.infer<typeof NumericalComparisonPredicateParameters>;
@@ -60,7 +60,7 @@ export class EqualEventPredicate extends EventPredicate {
 
         const parsed = EqualEventPredicateParameters.parse(args);
 
-        this.items = parsed.map(arg => parameter(arg));
+        this.items = parsed.map(arg => isParameter(arg) ? parameterOuter(arg) : parameter(arg));
     }
     public override test(cursor: EventCursor): boolean {
         let value = this.items[0](cursor);

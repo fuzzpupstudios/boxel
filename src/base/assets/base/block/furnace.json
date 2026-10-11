@@ -18,7 +18,8 @@
                                     "furnace": "block_entity",
                                     "player": "player_inventory"
                                 },
-                                "gui": "base:furnace_inventory"
+                                "gui": "base:furnace_inventory",
+                                "block_entity": [ 0, 0, 0 ]
                             }
                         },
                         {

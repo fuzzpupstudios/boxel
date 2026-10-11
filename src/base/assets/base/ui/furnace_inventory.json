@@ -18,9 +18,9 @@
         ]
     },
     "slots": [
-        { "id": "furnace.0", "pos": [ 62, 71 ], "size": 20 },
-        { "id": "furnace.1", "pos": [ 62, 101 ], "size": 20 },
-        { "id": "furnace.2", "pos": [ 185, 86 ], "size": 20 },
+        { "id": "furnace.0", "pos": [ 62, 76 ], "size": 20 },
+        { "id": "furnace.1", "pos": [ 62, 122 ], "size": 20 },
+        { "id": "furnace.2", "pos": [ 185, 76 ], "size": 20 },
 
         
         { "id": "player.10", "pos": [ 16, 169 ], "size": 20 },
@@ -107,6 +107,58 @@
                             "id": "base:close_gui",
                             "args": {
                                 "gui": "base:furnace_inventory"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "fuel": {
+            "type": "progress",
+            "pos": [ 54, 91 ],
+
+            "texture": "base:ui/flame_small.png",
+            "direction": "up",
+
+            "events": {
+                "triggers": {
+                    "base:ui/render": [
+                        {
+                            "id": "base:set_progress_bar_fill",
+                            "args": { "$get": { "quotient": [ 
+                                "$block_entity.customData.fuel_time",
+                                300
+                            ] } }
+                        }
+                    ]
+                }
+            }
+        },
+        "progress": {
+            "type": "progress",
+            "pos": [ 86, 65 ],
+
+            "texture": "base:ui/furnace_arrow.png",
+            "direction": "right",
+
+            "events": {
+                "triggers": {
+                    "base:ui/render": [
+                        {
+                            "if": { "equal": [ { "$get": "$block_entity.customData.cook_time" }, -1 ] },
+                            "then": {
+                                "id": "base:set_progress_bar_fill",
+                                "args": 0
+                            },
+                            "else": {
+                                "id": "base:set_progress_bar_fill",
+                                "args": { "$get": { "difference": [
+                                    1,
+                                    { "quotient": [ 
+                                        "$block_entity.customData.cook_time",
+                                        50
+                                    ] }
+                                ] } }
                             }
                         }
                     ]
