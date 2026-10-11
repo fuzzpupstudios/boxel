@@ -27,6 +27,7 @@ export class EntityRenderer {
 
     
     public addEntity(entity: Entity) {
+        entity.renderPosition.copy(entity.position);
         this.entities.add(entity);
     }
 
