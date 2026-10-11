@@ -29,6 +29,7 @@ export class Assets {
     public readonly guiTypeRegistry = new Map<string, DataDrivenJson.GuiType & DataDrivenJson.TemplateApplicable>;
     public readonly blockEntityTypeRegistry = new Map<string, DataDrivenJson.BlockEntityType & DataDrivenJson.TemplateApplicable>;
     public readonly lightChannelTypeRegistry = new Map<string, DataDrivenJson.LightChannelType & DataDrivenJson.TemplateApplicable>;
+    public readonly patternRegistry = new Map<string, DataDrivenJson.Pattern & DataDrivenJson.TemplateApplicable>;
 
     private readonly fileHandlers: Map<RegExp, (blob: Blob, ...groups: string[]) => Promise<void>> = new Map([
         [
@@ -109,6 +110,14 @@ export class Assets {
             }
         ],
         [
+            /^[^\/]+\/pattern\/.*\.json[ch]?$/,
+            async (blob: Blob) => {
+                const data = await blob.text();
+                const json = DataDrivenJson.Pattern.parse(JsonhReader.parseElementFromString(data).value);
+                this.patternRegistry.set(json.id, json);
+            }
+        ],
+        [
             /^[^\/]+\/json_template\/.*\.json[ch]?$/,
             async (blob: Blob) => {
                 const data = await blob.text();
@@ -139,6 +148,7 @@ export class Assets {
         this.guiTypeRegistry.clear();
         this.blockEntityTypeRegistry.clear();
         this.lightChannelTypeRegistry.clear();
+        this.patternRegistry.clear();
 
         for await(const pack of this.assetPacks) {
             await this.applyPack(pack);
@@ -256,6 +266,7 @@ export class Assets {
             [ this.eventSheetRegistry, TemplatableEventSheet ],
             [ this.guiTypeRegistry, TemplatableGuiType ],
             [ this.itemRegistry, TemplatableItem ],
+            [ this.patternRegistry, TemplatableItem ],
         ];
 
         for(const [ registry, schema ] of registries) {

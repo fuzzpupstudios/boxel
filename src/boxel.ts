@@ -32,6 +32,8 @@ import { TitleScreenStage } from "./stage/title/titleScreenStage";
 import { Time } from "./time";
 import { DataDrivenLightChannel } from "./world/lighting/dataDrivenLightChannel";
 import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
+import { patternRegistry } from "./events/pattern/patternRegistry";
+import { DataDrivenPattern } from "./events/pattern/dataDrivenPattern";
 
 
 export interface TextureAtlases {
@@ -259,6 +261,16 @@ export class BoxelGame {
     }
 
     private reloadGameData() {
+        patternRegistry.reset();
+        for(const [ id, json ] of this.assets.patternRegistry.entries()) {
+            try {
+                patternRegistry.register(id, DataDrivenPattern.parseJson(json));
+            } catch(e) {
+                throw new Error("Failed to register pattern " + id, { cause: e });
+            }
+        }
+        patternRegistry.lock();
+        
         lightChannelRegistry.reset();
         for(const [ id, json ] of this.assets.lightChannelTypeRegistry.entries()) {
             try {

@@ -237,4 +237,17 @@ export namespace DataDrivenJson {
         celestial: z.boolean().optional(),
         type: z.enum([ "point_source", "cascading" ]).optional(),
     });
+
+    export type PatternShape = RecursiveRecord<string>;
+    export const PatternShape: z.ZodType<PatternShape> = z.record(z.string(), z.union([
+        z.string(),
+        z.lazy(() => PatternShape)
+    ]));
+
+    export type Pattern = z.infer<typeof Pattern>;
+    export const Pattern = z.object({
+        id: z.string(),
+        shape: PatternShape,
+        entries: z.record(z.string(), z.any()).array()
+    })
 }
