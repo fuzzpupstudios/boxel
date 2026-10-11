@@ -22,11 +22,13 @@ import { PlatformEventPredicate } from "./predicate/platformEventPredicate";
 import { PlayerEventPredicate } from "./predicate/playerEventPredicate";
 import { UsagesPredicate } from "./predicate/usagesEventPredicate";
 import { MergeSlotStackAction } from "./item/mergeSlotStackAction";
-import { EqualsEventPredicate, GreaterThanEqualsEventPredicate, GreaterThanEventPredicate, LessThanEqualsEventPredicate, LessThanEventPredicate } from "./predicate/comparisonEventPredicate";
+import { EqualEventPredicate, GreaterThanEqualEventPredicate, GreaterThanEventPredicate, LessThanEqualEventPredicate, LessThanEventPredicate, NotEqualEventPredicate } from "./predicate/comparisonEventPredicate";
 import { SetBlockEntityDataAction } from "./block/setBlockEntityDataAction";
 import { DebugLogAction } from "./block/debugLogAction";
+import { VariableExistsPredicate } from "./predicate/variableExistsEventPredicate";
+import { BooleanSetPredicate } from "./predicate/booleanSetEventPredicate";
 
-export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any) => EventAction>;
+export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any, capture: Record<string, string>) => EventAction>;
 
 eventActionRegistry.register("base:set_block_state_id", SetBlockStateIdAction);
 eventActionRegistry.register("base:run_trigger", RunTriggerAction);
@@ -61,9 +63,12 @@ eventPredicateRegistry.register("platform", PlatformEventPredicate);
 eventPredicateRegistry.register("usages", UsagesPredicate);
 eventPredicateRegistry.register("player", PlayerEventPredicate);
 eventPredicateRegistry.register("greater_than", GreaterThanEventPredicate);
-eventPredicateRegistry.register("greater_than_equal", GreaterThanEqualsEventPredicate);
+eventPredicateRegistry.register("greater_than_equal", GreaterThanEqualEventPredicate);
 eventPredicateRegistry.register("less_than", LessThanEventPredicate);
-eventPredicateRegistry.register("less_than_equal", LessThanEqualsEventPredicate);
-eventPredicateRegistry.register("equal", EqualsEventPredicate);
+eventPredicateRegistry.register("less_than_equal", LessThanEqualEventPredicate);
+eventPredicateRegistry.register("equal", EqualEventPredicate);
+eventPredicateRegistry.register("not_equal", NotEqualEventPredicate);
+eventPredicateRegistry.register("variable_exists", VariableExistsPredicate);
+eventPredicateRegistry.register("boolean_set", BooleanSetPredicate);
 
 eventPredicateRegistry.lock();

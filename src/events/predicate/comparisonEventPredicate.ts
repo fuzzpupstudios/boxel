@@ -73,3 +73,25 @@ export class EqualEventPredicate extends EventPredicate {
         return equal;
     }
 }
+
+export class NotEqualEventPredicate extends EventPredicate {
+    protected readonly items: n.Argument<number>[];
+
+    public constructor(args: unknown) {
+        super();
+
+        const parsed = EqualEventPredicateParameters.parse(args);
+
+        this.items = parsed.map(arg => parameter(arg));
+    }
+    public override test(cursor: EventCursor): boolean {
+        let value = this.items[0](cursor);
+        let equal = true;
+
+        for(let i = 1; i < this.items.length && equal; i++) {
+            equal &&= this.items[i](cursor) === value;
+        }
+
+        return !equal;
+    }
+}
