@@ -42,34 +42,49 @@ export class SetBlockStateParameterAction extends EventAction {
             cursor.y + yOffset,
             cursor.z + zOffset
         );
+        let newBlockStateId = "";
 
-        const bracketPos = blockStateId.indexOf("[");
-        const baseBlock = blockStateId.slice(0, bracketPos);
-        const parameterString = blockStateId.slice(bracketPos + 1, -1);
-        const params = new Map<string, string>;
+        let readingParams = false;
+        let writtenNewValue = false;
 
-        for(const pair of parameterString.split(",")) {
-            const [ key, value ] = pair.split("=");
+        let lastSlice = 0;
+        let keyReadStart = 0;
 
-            if(key == null || value == null) continue;
-            params.set(key, value);
+        for(let i = 0; i < blockStateId.length; i++) {
+            const char = blockStateId[i];
+
+            if(!readingParams) {
+                if(char === "[") {
+                    readingParams = true;
+                    keyReadStart = i + 1;
+                }
+            } else if(char === "]") {
+                readingParams = false;
+                if(writtenNewValue) {
+                    lastSlice = i;
+                }
+            } else if(char === "=") {
+                const overwrittenKey = this.blockParameters.get(blockStateId.slice(keyReadStart, i));
+                if(overwrittenKey) {
+                    newBlockStateId += blockStateId.slice(lastSlice, i + 1) + overwrittenKey(cursor);
+                    writtenNewValue = true;
+                }
+            } else if(char === ",") {
+                if(writtenNewValue) {
+                    lastSlice = i;
+                }
+                keyReadStart = i + 1;
+                writtenNewValue = false;
+            }
         }
 
-        for(const [ key, value ] of this.blockParameters) {
-            params.set(key, value(cursor).toString());
-        }
-        
-        const newParameterString = params
-            .entries()
-            .map(entry => entry[0] + "=" + entry[1])
-            .toArray()
-            .join(",");
+        newBlockStateId += blockStateId.slice(lastSlice);
         
         cursor.world.setBlockState(
             cursor.x + xOffset,
             cursor.y + yOffset,
             cursor.z + zOffset,
-            baseBlock + "[" + newParameterString + "]"
+            newBlockStateId
         );
     }
 }

@@ -6,6 +6,8 @@ import type { TileCollider } from "./collider";
 import type { BlockModel } from "./model/blockModel";
 
 export class BlockState {
+    public readonly parameters: Map<string, string>;
+
     public constructor(
         public readonly block: Block,
         public readonly stateKey: string,
@@ -20,6 +22,14 @@ export class BlockState {
         public readonly renderAsTexture: TextureAtlasSlot | null,
         public readonly destroyTime: number
     ) {
+        this.parameters = new Map;
+
+        for(const pair of stateKey.split(",")) {
+            const [ key, value ] = pair.split("=");
+
+            if(key == null || value == null) continue;
+            this.parameters.set(key, value ?? null);
+        }
     }
 
     public getFullId() {
