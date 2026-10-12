@@ -25,7 +25,8 @@ namespace n {
     export type ItemStack = z.infer<typeof ItemStack>;
     export const ItemStack = z.strictObject({
         item: z.union([ z.string(), Parameter ]).default("base:air[default]"),
-        quantity: Integer.default(1)
+        quantity: Integer.default(1),
+        data: z.record(z.string(), z.any()).optional()
     })
 
     export type InventorySlot = z.infer<typeof InventorySlot>;

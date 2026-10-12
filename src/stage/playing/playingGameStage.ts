@@ -459,6 +459,10 @@ export class PlayingGameStage extends GameStage {
                     sound?.setPlaybackRate(1 + Math.random() * 0.2 - twinge * 0.8);
                 }, Math.random() * (1000 / 20));
             }
+                    
+            const hotbar = this.guiManager.getOpenGui("base:hotbar");
+            hotbar?.updateSlot("player." + this.localPlayer.selectedSlot);
+            this.holdingBlockPreview.updateDisplayItem();
 
             this.guiManager.update(this.localPlayer.createEventCursor());
         }
@@ -534,9 +538,6 @@ export class PlayingGameStage extends GameStage {
             this.localPlayer.tick(time);
             this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock);
             this.playerController.updateBreakingBlock(this.worldRenderer.breakingBlock);
-                    
-            const hotbar = this.guiManager.getOpenGui("base:hotbar");
-            hotbar?.updateSlot("player." + this.localPlayer.selectedSlot);
 
             this.hotbarSelection?.position.set(
                 this.localPlayer.selectedSlot * 23 + 13,

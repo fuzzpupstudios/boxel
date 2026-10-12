@@ -1,4 +1,4 @@
-import { Color, Container } from "pixi.js";
+import { Color, Container, Sprite, Texture } from "pixi.js";
 import type { ItemStack } from "../../item/itemStack";
 import { GuiItemSprite, type GuiItemSpriteProvider } from "./itemSprite";
 import { GuiText } from "./text";
@@ -8,6 +8,8 @@ export class GuiItemStack extends Container {
     public readonly tileHologram: TileHologram;
     public readonly itemSprite: GuiItemSprite;
     public readonly counter: GuiText;
+    public readonly durability: Sprite;
+
     public constructor(
         public stack: ItemStack,
         private readonly hologramProvider: TileHologramProvider,
@@ -20,6 +22,10 @@ export class GuiItemStack extends Container {
         const itemSprite = new GuiItemSprite(itemSpriteProvider);
         itemSprite.scale.set(14);
         itemSprite.position.set(1, 1);
+
+        const durability = new Sprite(Texture.WHITE);
+        durability.pivot.set(0, 0);
+        durability.position.set(1, 14);
 
         const counter = new GuiText({
             text: "",
@@ -38,6 +44,7 @@ export class GuiItemStack extends Container {
         this.tileHologram = tileHologram;
         this.itemSprite = itemSprite;
         this.counter = counter;
+        this.durability = durability;
 
         this.updateDisplayItem();
     }
@@ -49,6 +56,7 @@ export class GuiItemStack extends Container {
         } else {
             this.visible = true;
         }
+
         const renderAsItem = this.itemSpriteProvider.canRender(this.stack.item);
 
         if(renderAsItem) {
@@ -61,6 +69,13 @@ export class GuiItemStack extends Container {
             this.removeChildren();
             this.addChild(this.tileHologram);
             this.addChild(this.counter);
+        }
+
+        if(this.stack.data) {
+            if("durability" in this.stack.data) {
+                this.durability.width = 14 * this.stack.data.durability / 300
+                this.addChild(this.durability);
+            }
         }
 
         if(this.stack.quantity > 1) {

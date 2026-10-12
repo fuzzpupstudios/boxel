@@ -138,7 +138,7 @@ export class ItemEntity extends Entity {
                         const otherStack = entity.getStack();
                         const myStack = entity.getStack();
 
-                        if(otherStack.item != myStack.item) continue;
+                        if(!otherStack.similarTo(myStack)) continue;
                         if(entity == this) continue;
 
                         if(entity.position.distanceToSquared(this.position) < raidusSquared) {

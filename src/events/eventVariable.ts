@@ -115,7 +115,18 @@ export function parameterInventorySlot(value: n.InventorySlot | null): n.Argumen
             const item = typeof value.item == "string" ? parameter(value.item) : parameterOuter(value.item, isString);
             const quantity = parameter(value.quantity);
 
-            return cursor => new InventorySlot(ItemStack.of(item(cursor), quantity(cursor)));
+            if(value.data) {
+                const data = parameterRecursive(value.data);
+
+                return cursor => {
+                    const stack = ItemStack.of(item(cursor), quantity(cursor));
+                    stack.setData(data(cursor));
+
+                    return new InventorySlot(stack);
+                }
+            } else {
+                return cursor => new InventorySlot(ItemStack.of(item(cursor), quantity(cursor)));
+            }
         }
     }
 }

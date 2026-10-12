@@ -91,7 +91,7 @@ export class GuiContainer extends Container {
                         destinationSlot.onInsert();
                     }
                 }
-            } else if(sourceSlot.stack.item == destinationSlot.stack.item) {
+            } else if(sourceSlot.stack.similarTo(destinationSlot.stack)) {
                 // merge stack
                 if(destinationSlot.allowInsert && sourceSlot.allowExtract) {
                     // merge into destination stack

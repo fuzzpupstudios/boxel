@@ -60,7 +60,7 @@ export class Inventory {
         let changed = 0;
         for(let i = 0; i < this.slots.length; i++) {
             const slotStack = this.slots[i].stack;
-            if(slotStack.quantity > 0 && slotStack.item !== stack.item) continue;
+            if(slotStack.quantity > 0 && !slotStack.similarTo(stack)) continue;
 
             changed += stack.mergeInto(slotStack);
             this.onUpdate.emit(i);
