@@ -6,6 +6,14 @@
             "texture": "base:block/bricks.png",
             "id": "base:bricks_stair",
             "sound_events": "base:material/stone"
+        },
+        "modify": {
+            "states": {
+                "#default": {
+                    "tags": [ "base:mineable/pickaxe" ],
+                    "destroyTime": 4
+                }
+            }
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+    "id": "base:pickaxe",
+    "texture": "base:item/pickaxe.png",
+    "attributes": {
+        "base:mining_speed": {
+            "action": "multiply",
+            "value": 4,
+            "if": { "block": { "has_tag": "base:mineable/pickaxe" } }
+        }
+    }
+}

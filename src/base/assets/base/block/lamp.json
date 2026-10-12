@@ -3,6 +3,7 @@
     "states": {
         "#default": {
             "events": [ "base:material/stone", "base:block/drop_self" ],
+            "tags": [ "base:mineable/pickaxe" ],
             "collider": {
                 "hitboxes": [
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }

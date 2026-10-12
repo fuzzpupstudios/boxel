@@ -6,6 +6,14 @@
             "texture": "base:block/cobblestone.png",
             "id": "base:cobblestone_stair",
             "sound_events": "base:material/stone"
+        },
+        "modify": {
+            "states": {
+                "#default": {
+                    "tags": [ "base:mineable/pickaxe" ],
+                    "destroyTime": 2
+                }
+            }
         }
     }
 }

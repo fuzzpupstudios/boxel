@@ -25,6 +25,8 @@
                     "base:explode": "relay_drop"
                 }
             },
+            "tags": [ "base:mineable/pickaxe" ],
+            "destroyTime": 4,
             "collider": {
                 "hitboxes": [
                     { "from": [ 0, 0, 0 ], "to": [ 1, 1, 1 ] }
