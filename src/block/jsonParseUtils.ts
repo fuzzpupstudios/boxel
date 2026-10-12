@@ -1,6 +1,7 @@
 import { Box3, Vector3 } from "three";
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
+import { AttributeModifierAction, type AttributeModifier, type AttributeModifierMap } from "../entity/attribute";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
 import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
@@ -116,4 +117,24 @@ export function parseTags(jsonTags?: string[], previousTags?: Iterable<string>) 
     }
 
     return Array.from(tags);
+}
+
+const attributeActionMap = {
+    add: AttributeModifierAction.ADD,
+    multiply: AttributeModifierAction.MULTIPLY
+};
+export function parseAttributes(jsonAttributes?: Record<string, DataDrivenJson.Attribute>): AttributeModifierMap {
+    const attributes = new Map<string, AttributeModifier>();
+
+    if(jsonAttributes != null) {
+        for(const [ name, attribute ] of Object.entries(jsonAttributes)) {
+            attributes.set(name, {
+                action: attributeActionMap[attribute.action],
+                value: attribute.value,
+                condition: parsePredicate(attribute.if)
+            });
+        }
+    }
+
+    return attributes;
 }

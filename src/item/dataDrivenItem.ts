@@ -1,4 +1,4 @@
-import { parseEvents, parseTags } from "../block/jsonParseUtils";
+import { parseAttributes, parseEvents, parseTags } from "../block/jsonParseUtils";
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../data/textureAtlas";
@@ -14,11 +14,13 @@ export class DataDrivenItem extends Item {
         }
 
         const tags = new Set(parseTags(json.tags));
+        const attributes = parseAttributes(json.attributes);
 
         return new DataDrivenItem(
             new TextureAtlasSlot(json.texture),
             eventSheet,
-            tags
+            tags,
+            attributes
         );
     }
 }

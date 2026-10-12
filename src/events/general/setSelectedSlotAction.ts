@@ -22,7 +22,7 @@ export class SetSelectedSlotAction extends EventAction {
     }
     public override run(cursor: EventCursor): void {
         if(cursor.entity instanceof Player) {
-            cursor.entity.selectedSlot = this.slot(cursor);
+            cursor.entity.setSelectedSlot(this.slot(cursor));
         }
     }
 }

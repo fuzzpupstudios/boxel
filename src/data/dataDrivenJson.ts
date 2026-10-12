@@ -224,12 +224,20 @@ export namespace DataDrivenJson {
         json: z.any(),
     });
 
+    export type Attribute = z.infer<typeof Attribute>;
+    export const Attribute = z.object({
+        action: z.enum([ "add", "multiply" ]),
+        value: z.number(),
+        if: EventActionPredicateTree.optional()
+    })
+
     export type Item = z.infer<typeof Item>;
     export const Item = z.object({
         id: z.string(),
         texture: z.string(),
         events: EventSheetList.optional(),
         tags: z.array(z.string()).optional(),
+        attributes: z.record(z.string(), Attribute).optional()
     });
 
     export type LightChannelType = z.infer<typeof LightChannelType>;

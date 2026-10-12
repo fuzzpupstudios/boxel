@@ -12,7 +12,8 @@ import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/playing/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
-import { Entity, SerializedEntity } from "./entity";
+import { AttributeBase, AttributeMap, type AttributeModifierMap } from "./attribute";
+import { baseEntityAttributes, Entity, SerializedEntity } from "./entity";
 import { ItemEntity } from "./item";
 
 export type SerializedPlayerEntity = z.infer<typeof SerializedPlayerEntity>;
@@ -25,6 +26,16 @@ export const SerializedPlayerEntity = SerializedEntity.extend({
     yaw: z.number().default(0),
 });
 
+const basePlayerAttributes = baseEntityAttributes.extend([
+    new AttributeBase("base:walk_speed", 2.5),
+    new AttributeBase("base:fly_speed", 1.5),
+    new AttributeBase("base:crouch_speed_modifier", 0.3),
+    new AttributeBase("base:sprint_speed_modifier", 1.3),
+    new AttributeBase("base:jump_height", 1),
+    new AttributeBase("base:reach_distance", 5),
+    new AttributeBase("base:mining_speed", 1),
+])
+
 export class Player extends Entity<SerializedPlayerEntity> {
     public readonly type = "base:player";
     public readonly automaticPersistentSaving = false;
@@ -33,12 +44,9 @@ export class Player extends Entity<SerializedPlayerEntity> {
         new Vector3(-0.3, 0, -0.3),
         new Vector3(0.3, 1.9, 0.3),
     );
+
     public eyeHeight = 1.7;
-    public walkSpeed = 2.5;
-    public flySpeed = 1.5;
-    public crouchSpeedModifier = 0.3;
-    public sprintSpeedModifier = 1.3;
-    public jumpHeight = 1;
+    
     public yaw = 0;
     public pitch = 0;
     public id: string = crypto.randomUUID();
@@ -48,10 +56,10 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public canFly = false;
 
     public readonly targetedBlock = new RaycastResult;
-    public readonly reachDistance = 5;
     public crouching: boolean = false;
     public sprinting: boolean = false;
     public selectedSlot: number = 0;
+    private selectedSlotAttributes: AttributeModifierMap | null = null;
     public readonly inventory = new Inventory;
     public readonly pointerInventory = new Inventory;
 
@@ -62,6 +70,10 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.inventory.addSlot(new InventorySlot);
         }
         this.pointerInventory.addSlot(new InventorySlot);
+    }
+
+    protected override createAttributeMap(): AttributeMap {
+        return basePlayerAttributes.create();
     }
 
     protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
@@ -82,17 +94,21 @@ export class Player extends Entity<SerializedPlayerEntity> {
             dx /= length;
             dz /= length;
         }
+        const crouchSpeedModifier = this.attributes.getOrThrow("base:crouch_speed_modifier", null);
+        const sprintSpeedModifier = this.attributes.getOrThrow("base:sprint_speed_modifier", null);
+        const flySpeed = this.attributes.getOrThrow("base:fly_speed", null);
+
+        let walkSpeed = this.attributes.getOrThrow("base:walk_speed", null);
 
         const friction = this.onGround ? 0.546 : 0.91;
-        let walkSpeed = this.walkSpeed;
-        if(this.crouching) walkSpeed *= this.crouchSpeedModifier;
-        if(this.sprinting) walkSpeed *= this.sprintSpeedModifier;
+        if(this.crouching) walkSpeed *= crouchSpeedModifier;
+        if(this.sprinting) walkSpeed *= sprintSpeedModifier;
         if(this.flying) walkSpeed
         
         let moveSpeed = 0;
         
         if(this.flying) {
-            moveSpeed = this.flySpeed;
+            moveSpeed = flySpeed;
         } else {
             if(this.onGround) {
                 moveSpeed = walkSpeed * (0.16277136 / (friction * friction * friction));
@@ -116,7 +132,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
     }
     public jump(): void {
         if(this.onGround) {
-            this.velocity.y = 9 * Math.sqrt(this.jumpHeight);
+            this.velocity.y = 9 * Math.sqrt(this.attributes.getOrThrow("base:jump_height", null));
             this.onGround = false;
         }
     }
@@ -143,7 +159,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
     }
 
     public punch(): boolean {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
+        const reach = this.attributes.getOrThrow("base:reach_distance", null);
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > reach) return false;
 
         const cursor = new EventCursor(
             this.world,
@@ -186,7 +203,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
     }
 
     public breakBlock(): boolean {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
+        const reach = this.attributes.getOrThrow("base:reach_distance", null);
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > reach) return false;
 
         let targetX = this.targetedBlock.voxel.x;
         let targetY = this.targetedBlock.voxel.y;
@@ -224,7 +242,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return true;
     }
     public placeBlock(): boolean {
-        if(!this.targetedBlock.hit || this.targetedBlock.distance > this.reachDistance) return false;
+        const reach = this.attributes.getOrThrow("base:reach_distance", null);
+        if(!this.targetedBlock.hit || this.targetedBlock.distance > reach) return false;
 
         const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
         if(holdingStack == null) return false;
@@ -274,6 +293,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
     }
 
     public useHand(): boolean {
+        const reach = this.attributes.getOrThrow("base:reach_distance", null);
+
         const cursor = new EventCursor(
             this.world,
             this.targetedBlock.voxel.x,
@@ -304,7 +325,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         if(this.crouching) {
             success = true;
-        } else if(this.targetedBlock.hit && this.targetedBlock.distance <= this.reachDistance) {
+        } else if(this.targetedBlock.hit && this.targetedBlock.distance <= reach) {
             const blockStateId = this.world.getBlockState(
                 this.targetedBlock.voxel.x,
                 this.targetedBlock.voxel.y,
@@ -322,6 +343,33 @@ export class Player extends Entity<SerializedPlayerEntity> {
         return success;
     }
 
+    public getMiningSpeed() {
+        const cursor = this.createEventCursor();
+        cursor.x = this.targetedBlock.voxel.x;
+        cursor.y = this.targetedBlock.voxel.y;
+        cursor.z = this.targetedBlock.voxel.z;
+        
+        return this.attributes.getOrThrow("base:mining_speed", cursor);
+    }
+
+    public setSelectedSlot(slot: number) {
+        this.selectedSlot = slot;
+
+        if(this.selectedSlotAttributes) {
+            this.attributes.removeModifierMap(this.selectedSlotAttributes);
+            this.selectedSlotAttributes = null;
+        }
+
+        const inventorySlot = this.inventory.slots[slot];
+        if(inventorySlot == null) return;
+
+        const item = itemRegistry.get(inventorySlot.stack.item);
+        if(item == null) return;
+
+        this.attributes.addModifierMap(item.attributes);
+        this.selectedSlotAttributes = item.attributes;
+    }
+
     public pickBlock() {
         if(this.targetedBlock.hit) {
             const voxelPos = this.targetedBlock.voxel;
@@ -333,7 +381,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
             const selectedSlot = this.selectedSlot;
 
             if(existingSlot >= 0 && existingSlot <= 9) {
-                this.selectedSlot = existingSlot;
+                this.setSelectedSlot(existingSlot);
             } else {
                 let stack = this.inventory.slots[existingSlot]?.stack;
                 if(stack == null && this.infiniteItems) {
@@ -509,7 +557,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         this.id = parsedData.id;
         if(parsedData.inventory) this.inventory.deserialize(parsedData.inventory);
         if(parsedData.pointerInventory) this.pointerInventory.deserialize(parsedData.pointerInventory);
-        this.selectedSlot = parsedData.selectedSlot;
+        this.setSelectedSlot(parsedData.selectedSlot);
 
         this.pitch = parsedData.pitch;
         this.yaw = parsedData.yaw;

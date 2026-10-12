@@ -6,6 +6,7 @@ import { AABB } from "../physics/AABB";
 import type { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { Time } from "../time";
 import type { Chunk, World } from "../world/world";
+import { AttributeBase, AttributeMap, AttributeSet } from "./attribute";
 
 export interface Tickable {
     tick(time: Time): void;
@@ -20,6 +21,10 @@ export const SerializedEntity = z.object({
     flying: z.boolean().default(false),
     onGround: z.boolean().default(true),
 });
+
+export const baseEntityAttributes = new AttributeSet([
+    new AttributeBase("base:step_height", 0.5)
+]);
 
 export abstract class Entity<SerializedType extends SerializedEntity = SerializedEntity> implements Tickable {
     public abstract readonly type: string;
@@ -36,8 +41,8 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
     public lastCollisionZ = 0;
     public gliding = false;
     public flying = false;
-    public stepHeight = 0.5;
     public chunk: Chunk | null = null;
+    public attributes: AttributeMap;
     private stepEventCooldown = 0;
     private readonly physicsData: PhysicsDataCache;
 
@@ -46,6 +51,11 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         this.physicsData = world.physicsDataCache;
 
         this.aabb = this.createAABB(world, this.physicsData);
+        this.attributes = this.createAttributeMap();
+    }
+
+    protected createAttributeMap() {
+        return baseEntityAttributes.create();
     }
 
     public get position() {
@@ -95,6 +105,8 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         let previousY = this.position.y;
         let previousZ = this.position.z;
 
+        const stepHeight = this.attributes.getOrThrow("base:step_height", null);
+
         if(this.chunk != null) {
             let gravityInfluence = 1;
             if(this.gliding) gravityInfluence = 0.2;
@@ -112,11 +124,11 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             this.onGround = collisionY === -1;
             this.lastCollisionY = collisionY;
 
-            const collisionX = this.aabb.moveX(this.velocity.x * time.deltaTime, this.stepHeight);
+            const collisionX = this.aabb.moveX(this.velocity.x * time.deltaTime, stepHeight);
             if(collisionX !== 0) this.velocity.x = 0;
             this.lastCollisionX = collisionX;
 
-            const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime, this.stepHeight);
+            const collisionZ = this.aabb.moveZ(this.velocity.z * time.deltaTime, stepHeight);
             if(collisionZ !== 0) this.velocity.z = 0;
             this.lastCollisionZ = collisionZ;
 

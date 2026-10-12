@@ -123,34 +123,34 @@ export class PlayerController {
         }
 
         if(game.input.wasPressed(ControlBinding.SLOT_0)) {
-            this.player.selectedSlot = 0;
+            this.player.setSelectedSlot(0);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_1)) {
-            this.player.selectedSlot = 1;
+            this.player.setSelectedSlot(1);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_2)) {
-            this.player.selectedSlot = 2;
+            this.player.setSelectedSlot(2);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_3)) {
-            this.player.selectedSlot = 3;
+            this.player.setSelectedSlot(3);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_4)) {
-            this.player.selectedSlot = 4;
+            this.player.setSelectedSlot(4);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_5)) {
-            this.player.selectedSlot = 5;
+            this.player.setSelectedSlot(5);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_6)) {
-            this.player.selectedSlot = 6;
+            this.player.setSelectedSlot(6);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_7)) {
-            this.player.selectedSlot = 7;
+            this.player.setSelectedSlot(7);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_8)) {
-            this.player.selectedSlot = 8;
+            this.player.setSelectedSlot(8);
         }
         if(game.input.wasPressed(ControlBinding.SLOT_9)) {
-            this.player.selectedSlot = 9;
+            this.player.setSelectedSlot(9);
         }
 
         let lookDeltaX = (
@@ -182,12 +182,14 @@ export class PlayerController {
         this.player.rotate(lookDeltaX, lookDeltaY);
 
         if(game.input.wasPressed(ControlBinding.NEXT_ITEM)) {
-            this.player.selectedSlot++;
-            if(this.player.selectedSlot > 9) this.player.selectedSlot = 0;
+            let slot = this.player.selectedSlot + 1;
+            if(slot > 9) slot = 0;
+            this.player.setSelectedSlot(slot);
         }
         if(game.input.wasPressed(ControlBinding.PREVIOUS_ITEM)) {
-            this.player.selectedSlot--;
-            if(this.player.selectedSlot < 0) this.player.selectedSlot = 9;
+            let slot = this.player.selectedSlot - 1;
+            if(slot < 0) slot = 9;
+            this.player.setSelectedSlot(slot);
         }
     }
 
@@ -198,7 +200,7 @@ export class PlayerController {
 
         if(
             this.player.targetedBlock.hit &&
-            this.player.targetedBlock.distance < this.player.reachDistance
+            this.player.targetedBlock.distance < this.player.attributes.getOrThrow("base:reach_distance", null)
         ) {
             targetedBlock.mesh.visible = true;
             targetedBlock.mesh.position.copy(targetedVoxel)
@@ -217,7 +219,7 @@ export class PlayerController {
 
         if(
             this.player.targetedBlock.hit &&
-            this.player.targetedBlock.distance < this.player.reachDistance
+            this.player.targetedBlock.distance < this.player.attributes.getOrThrow("base:reach_distance", null)
         ) {
             const targetedBlockStateId = this.player.world.getBlockState(
                 targetedVoxel.x, targetedVoxel.y, targetedVoxel.z);
@@ -299,7 +301,7 @@ export class PlayerController {
                 this.destroyBlockCooldown = 0.2;
             }
             if(!this.player.instabreak) {
-                this.destroyTime += time.deltaTime;
+                this.destroyTime += this.player.getMiningSpeed() * time.deltaTime;
             }
         } else {
             this.destroyBlockCooldown = 0;
