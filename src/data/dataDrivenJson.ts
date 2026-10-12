@@ -214,6 +214,7 @@ export namespace DataDrivenJson {
         template: z.object({
             id: z.string(),
             arguments: z.record(z.string(), z.any()),
+            modify: z.any().optional(),
         }).optional(),
     });
 

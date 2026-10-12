@@ -8,7 +8,7 @@ import { DataDrivenJson } from "./dataDrivenJson";
 // the rest of the shape is filled in once the referenced template is applied.
 const TemplateStub = z.object({
     id: z.string(),
-    template: DataDrivenJson.TemplateApplicable.shape.template.unwrap(),
+    template: DataDrivenJson.TemplateApplicable.shape.template
 });
 
 const TemplatableBlock = z.union([ DataDrivenJson.Block, TemplateStub ]);
@@ -259,6 +259,37 @@ export class Assets {
         return object;
     }
 
+    private applyModifications(target: any, modifications: any, path = new Array<string | number>) {
+        if(target == null) {
+            return modifications;
+        }
+        if(modifications instanceof Array) {
+            if(target instanceof Array) {
+                target.push(...modifications);
+                return target;
+            } else {
+                throw new TypeError("Cannot merge an array into a non-array target (" + path.join(".") + ")");
+            }
+        } else if(target instanceof Array) {
+            throw new TypeError("Cannot merge a non-array into an array target (" + path.join(".") + ")");
+        }
+
+        for(const key of Object.keys(modifications)) {
+            const modification = modifications[key];
+            if(typeof target[key] != "object" || target[key] == null) {
+                target[key] = modification;
+            } else {
+                if(typeof modification == "object" && modification != null) {
+                    target[key] = this.applyModifications(target[key], modification, path.concat(key))
+                } else {
+                    target[key] = modification;
+                }
+            }
+        }
+
+        return target;
+    }
+
     private processTemplates() {
         const registries: [ Map<string, DataDrivenJson.TemplateApplicable>, z.ZodType<any> ][] = [
             [ this.blockRegistry, TemplatableBlock ],
@@ -286,8 +317,11 @@ export class Assets {
                         throw new Error("Parameter " + parameterName + " must be defined");
                     }
 
-                    const applied = schema.parse(this.applyTemplate(template.json, substitutions));
-                    registry.set(key, applied);
+                    let applied = this.applyTemplate(template.json, substitutions);
+                    if(value.template.modify) {
+                        applied = this.applyModifications(applied, value.template.modify);
+                    }
+                    registry.set(key, schema.parse(applied));
                 } catch(e) {
                     throw new Error("Error applying template " + value.template.id +
                         " to " + key, { cause: e });
