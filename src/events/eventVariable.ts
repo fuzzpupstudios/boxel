@@ -49,7 +49,7 @@ export function parameterVariable<T>(value: string, validator?: (value: any) => 
 }
 
 export function parameter<T>(value: n.InnerParameter | T, validator?: (value: any) => value is T): n.Argument<T> {
-    if(typeof value == "object" && value != null) {
+    if(typeof value == "object" && value != null && !(value instanceof Array)) {
         // structured like { "getter": ... }
         const [ getterId, getterParams ] = Object.entries(value).pop()!;
         const GetterConstructor = eventParamGetterRegistry.get(getterId);

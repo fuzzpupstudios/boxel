@@ -15,12 +15,14 @@ export class DataDrivenItem extends Item {
 
         const tags = new Set(parseTags(json.tags));
         const attributes = parseAttributes(json.attributes);
+        const defaultData = json.defaultData ?? {};
 
         return new DataDrivenItem(
             new TextureAtlasSlot(json.texture),
             eventSheet,
             tags,
-            attributes
+            attributes,
+            defaultData
         );
     }
 }

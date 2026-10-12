@@ -3,6 +3,7 @@ import type { ItemStack } from "../../item/itemStack";
 import { GuiItemSprite, type GuiItemSpriteProvider } from "./itemSprite";
 import { GuiText } from "./text";
 import { TileHologram, type TileHologramProvider } from "./tileHologram";
+import { MathUtils } from "three";
 
 export class GuiItemStack extends Container {
     public readonly tileHologram: TileHologram;
@@ -73,8 +74,15 @@ export class GuiItemStack extends Container {
 
         if(this.stack.data) {
             if("durability" in this.stack.data) {
-                this.durability.width = 14 * this.stack.data.durability / 300
-                this.addChild(this.durability);
+                const durability = this.stack.data.durability;
+                const max_durability = this.stack.data.max_durability ?? 64;
+
+                const filled = MathUtils.clamp(durability / max_durability, 0, 1);
+                this.durability.width = Math.ceil(14 * filled);
+
+                if(filled < 1) {
+                    this.addChild(this.durability);
+                }
             }
         }
 

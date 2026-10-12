@@ -171,6 +171,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.targetedBlock.voxel.z,
         );
         cursor.entity = this;
+        cursor.slot = this.inventory.slots[this.selectedSlot];
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
@@ -217,6 +218,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
         cursor.entity = this;
+        cursor.slot = this.inventory.slots[this.selectedSlot];
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
@@ -284,6 +286,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
         cursor.entity = this;
+        cursor.slot = this.inventory.slots[this.selectedSlot];
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
         
@@ -313,6 +316,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.targetedBlock.voxel.z,
         );
         cursor.entity = this;
+        cursor.slot = this.inventory.slots[this.selectedSlot];
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 

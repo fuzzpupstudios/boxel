@@ -4,6 +4,7 @@ import type { Entity } from "../entity/entity";
 import type { GuiContainer } from "../gui/element/guiContainer";
 import type { GuiGraphicContainer } from "../gui/graphic/graphic";
 import type { GuiManager } from "../gui/guiManager";
+import type { InventorySlot } from "../item/inventory";
 import type { RaycastResult } from "../physics/raycaster";
 import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 import type { World } from "../world/world";
@@ -32,6 +33,7 @@ export class EventCursor {
     public entity: Entity | null = null;
     public graphic: GuiGraphicContainer | null = null;
     public gui: GuiContainer | null = null;
+    public slot: InventorySlot | null = null;
     public variables = new Map<string, unknown>;
     public voxelHitX = 0;
     public voxelHitY = 0;

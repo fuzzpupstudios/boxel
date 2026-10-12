@@ -238,7 +238,8 @@ export namespace DataDrivenJson {
         texture: z.string(),
         events: EventSheetList.optional(),
         tags: z.array(z.string()).optional(),
-        attributes: z.record(z.string(), Attribute).optional()
+        attributes: z.record(z.string(), Attribute).optional(),
+        defaultData: z.record(z.string(), z.any()).optional(),
     });
 
     export type LightChannelType = z.infer<typeof LightChannelType>;

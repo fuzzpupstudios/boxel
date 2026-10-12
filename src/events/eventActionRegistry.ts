@@ -31,6 +31,7 @@ import { AssignValueAction } from "./general/assignValueAction";
 import { ItemEventPredicate } from "./predicate/itemEventPredicate";
 import { SetGuiTextAction } from "./ui/setGuiTextAction";
 import { SetProgressBarFillAction } from "./ui/setProgressBarFillAction";
+import { SetItemDataAction } from "./block/setItemDataAction";
 
 export const eventActionRegistry = new KeyedRegistry<new (eventSheet: EventSheet, args: any, capture: Record<string, string>) => EventAction>;
 
@@ -54,6 +55,7 @@ eventActionRegistry.register("base:particle", ParticleAction);
 
 eventActionRegistry.register("base:merge_slot_stack", MergeSlotStackAction);
 eventActionRegistry.register("base:set_block_entity_data", SetBlockEntityDataAction);
+eventActionRegistry.register("base:set_item_data", SetItemDataAction);
 eventActionRegistry.register("base:debug_log", DebugLogAction);
 
 eventActionRegistry.register("base:assign_value", AssignValueAction);

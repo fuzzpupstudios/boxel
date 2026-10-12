@@ -7,6 +7,7 @@ export abstract class Item {
         public readonly texture: TextureAtlasSlot,
         public readonly events: EventSheet,
         public readonly tags: Set<string>,
-        public readonly attributes: AttributeModifierMap
+        public readonly attributes: AttributeModifierMap,
+        public readonly defaultData: Record<string, any> | null,
     ) { }
 }
