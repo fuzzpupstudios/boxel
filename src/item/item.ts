@@ -5,6 +5,7 @@ import type { EventSheet } from "../events/eventSheet";
 export abstract class Item {
     public constructor(
         public readonly texture: TextureAtlasSlot,
+        public readonly stackSize: number,
         public readonly events: EventSheet,
         public readonly tags: Set<string>,
         public readonly attributes: AttributeModifierMap,

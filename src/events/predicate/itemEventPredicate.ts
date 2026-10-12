@@ -38,7 +38,7 @@ export class ItemEventPredicate extends EventPredicate {
             if(slot.stack.item != this.itemIs(cursor)) return false;
         }
 
-        const item = itemRegistry.get(slot.stack.item) ?? blockStateRegistry.get(slot.stack.item);
+        const item = slot.stack.getItemType() ?? blockStateRegistry.get(slot.stack.item);
         if(item == null) return false;
 
         if(this.itemHasTag) {

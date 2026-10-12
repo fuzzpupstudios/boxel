@@ -19,11 +19,14 @@ export const SerializedItemEntity = SerializedEntity.extend({
 
 const rand = Alea(5198023);
 
-const multistackOffsetX = [ 0 ];
-const multistackOffsetY = [ 0 ];
-const multistackOffsetZ = [ 0 ];
+const multistackOffsetX = new Float32Array(1000);
+multistackOffsetX[0] = 0;
+const multistackOffsetY = new Float32Array(1000);
+multistackOffsetY[0] = 0;
+const multistackOffsetZ = new Float32Array(1000);
+multistackOffsetZ[0] = 0;
 
-for(let i = 0; i < 1000; i++) {
+for(let i = 1; i < 1000; i++) {
     const offset = new Vector3(
         rand() - 0.5,
         rand() - 0.5,
@@ -31,9 +34,9 @@ for(let i = 0; i < 1000; i++) {
     );
     const scale = rand() * 0.1 + 0.15;
     offset.normalize();
-    multistackOffsetX.push(offset.x * scale);
-    multistackOffsetY.push(offset.y * scale);
-    multistackOffsetZ.push(offset.z * scale);
+    multistackOffsetX[i] = offset.x * scale;
+    multistackOffsetY[i] = offset.y * scale;
+    multistackOffsetZ[i] = offset.z * scale;
 }
 
 export class ItemEntity extends Entity {
@@ -204,7 +207,8 @@ export class ItemEntity extends Entity {
         if(this.renderer == null) return;
         const stack = this.getStack();
 
-        const count = Math.ceil(((stack.quantity / 1000) ** 0.34) * 10);
+        let count = Math.round((((stack.quantity) / 512) ** 0.34) * 10);
+        if(count > 12) count = 12;
 
         for(const i of this.geometryInstanceIds.splice(0)) {
             this.renderer.deleteInstance(i);

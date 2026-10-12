@@ -13,12 +13,14 @@ export class DataDrivenItem extends Item {
             throw new Error("Failed to parse events " + json.events, { cause: e });
         }
 
+        const stackSize = json.stackSize ?? 1000;
         const tags = new Set(parseTags(json.tags));
         const attributes = parseAttributes(json.attributes);
         const defaultData = json.defaultData ?? {};
 
         return new DataDrivenItem(
             new TextureAtlasSlot(json.texture),
+            stackSize,
             eventSheet,
             tags,
             attributes,

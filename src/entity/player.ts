@@ -262,7 +262,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         if(holdingStack == null) return false;
 
         // do not "place" items
-        if(itemRegistry.get(holdingStack.item) != null) return false;
+        if(holdingStack.getItemType()) return false;
 
         const blockState = blockStateRegistry.get(holdingStack.item) || getUnknownBlockState();
 
@@ -327,10 +327,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
         if(holdingStack != null) {
-            const item = itemRegistry.get(holdingStack.item);
-            const blockState = blockStateRegistry.get(holdingStack.item);
-
-            const events = item?.events ?? blockState?.events;
+            let events = holdingStack.getItemType()?.events;
+            if(events == null) events = blockStateRegistry.get(holdingStack.item)?.events;
 
             if(events != null) {
                 events.runTrigger("base:use", cursor);
@@ -383,7 +381,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         this.selectedSlotData = { stack: inventorySlot.stack };
 
-        const item = itemRegistry.get(inventorySlot.stack.item);
+        const item = inventorySlot.stack.getItemType();
         if(item != null) {
             this.attributes.addModifierMap(item.attributes);
             this.selectedSlotData.entry = item;

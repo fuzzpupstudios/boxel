@@ -58,14 +58,12 @@ export class Inventory {
 
     public addStack(stack: ItemStack) {
         let changed = 0;
-        for(let i = 0; i < this.slots.length; i++) {
+        for(let i = 0; i < this.slots.length && !stack.isEmpty(); i++) {
             const slotStack = this.slots[i].stack;
             if(slotStack.quantity > 0 && !slotStack.similarTo(stack)) continue;
 
             changed += stack.mergeInto(slotStack);
             this.onUpdate.emit(i);
-
-            if(stack.isEmpty()) break;
         }
 
         return changed;

@@ -15,6 +15,7 @@
             }
         }
     },
+    "stackSize": 1,
     "defaultData": {
         "durability": 300,
         "max_durability": 300

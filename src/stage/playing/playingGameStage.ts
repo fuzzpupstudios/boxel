@@ -218,7 +218,7 @@ export class PlayingGameStage extends GameStage {
             button.on("pointerdown", () => {
                 const clone = stack.clone();
                 if(this.game.input.isPressed(ControlBinding.CROUCH)) {
-                    clone.quantity = 1000;
+                    clone.quantity = stack.getStackSize();
                 }
                 const pointerSlot = this.localPlayer?.pointerInventory.slots[0];
                 if(pointerSlot != null) {
@@ -446,7 +446,7 @@ export class PlayingGameStage extends GameStage {
             for(const stack of pickedUpStacks) {
                 const j = Math.floor(Math.random() * 3);
                 
-                const twinge = (stack.quantity / 1000) ** 0.3;
+                const twinge = Math.min((stack.quantity / 512) ** 0.3, 1);
 
                 setTimeout(() => {
                     const sound = this.game.audioManager.playSound3d(

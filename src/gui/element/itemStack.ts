@@ -93,6 +93,10 @@ export class GuiItemStack extends Container {
                 amount = Math.floor(amount / 100) / 10;
                 suffix = "K";
             }
+            if(amount >= 1000) {
+                amount = Math.floor(amount / 100) / 10;
+                suffix = "M";
+            }
             this.counter.text = amount + suffix;
             this.counter.visible = true;
         } else {

@@ -236,6 +236,7 @@ export namespace DataDrivenJson {
     export const Item = z.object({
         id: z.string(),
         texture: z.string(),
+        stackSize: z.int().gt(0).optional(),
         events: EventSheetList.optional(),
         tags: z.array(z.string()).optional(),
         attributes: z.record(z.string(), Attribute).optional(),

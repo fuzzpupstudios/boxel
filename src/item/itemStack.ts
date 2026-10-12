@@ -1,12 +1,19 @@
 import z from "zod";
+import { itemRegistry } from "./itemRegistry";
+import type { Item } from "./item";
 
 export class ItemStack {
     public static DEFAULT_ITEM = "base:air[default]";
 
     public static of(item: string, quantity: number = 1) {
         const stack = new ItemStack;
-        stack.item = item;
+        stack.setItem(item);
         stack.quantity = quantity;
+
+        const itemType = stack.getItemType();
+        if(itemType?.defaultData) {
+            stack.setData(itemType.defaultData);
+        }
         
         return stack;
     }
@@ -15,8 +22,19 @@ export class ItemStack {
     }
 
     public item = ItemStack.DEFAULT_ITEM;
+    private _itemType: Item | null = null;
     public quantity = 0;
     public data: Record<string, any> | null = null;
+
+    public getStackSize() {
+        return this.getItemType()?.stackSize ?? 1000;
+    }
+    public getItemType() {
+        if(this._itemType != null) return this._itemType;
+
+        const itemEntry = itemRegistry.get(this.item);
+        this._itemType = itemEntry;
+    }
 
     public serialize(): SerializedItemStack {
         return {
@@ -27,11 +45,14 @@ export class ItemStack {
     }
     public copyFrom(other: ItemStack) {
         this.item = other.item;
+        this._itemType = other._itemType;
         this.quantity = other.quantity;
+        this.setData(other.data);
     }
     public clone() {
         const stack = new ItemStack();
         stack.item = this.item;
+        stack._itemType = this._itemType;
         stack.quantity = this.quantity;
         stack.setData(this.data);
 
@@ -41,12 +62,12 @@ export class ItemStack {
         return this.quantity === 0;
     }
     public clear() {
-        this.item = ItemStack.DEFAULT_ITEM;
+        this.setItem(ItemStack.DEFAULT_ITEM);
         this.data = null;
         this.quantity = 0;
     }
     public deserialize(stack: SerializedItemStack) {
-        this.item = stack.item;
+        this.setItem(stack.item);
         this.quantity = stack.quantity;
         this.data = stack.data ?? null;
     }
@@ -54,10 +75,10 @@ export class ItemStack {
         const otherItem = other.item;
         const otherQuantity = other.quantity;
 
-        other.item = this.item;
+        other.setItem(this.item);
         other.quantity = this.quantity;
 
-        this.item = otherItem;
+        this.setItem(otherItem);
         this.quantity = otherQuantity;
     }
     public similarTo(other: ItemStack) {
@@ -79,6 +100,12 @@ export class ItemStack {
 
         return true;
     }
+    public setItem(item: string) {
+        if(this.item === item) return;
+
+        this.item = item;
+        this._itemType = null;
+    }
     public setData(data: any) {
         if(data == null) this.data = null;
         this.data = JSON.parse(JSON.stringify(data));
@@ -86,9 +113,9 @@ export class ItemStack {
     public mergeInto(other: ItemStack, max = Infinity) {
         if(!other.isEmpty() && !this.similarTo(other)) return 0;
 
-        const toGive = Math.min(1000 - other.quantity, Math.min(max, this.quantity));
+        const toGive = Math.min(other.getStackSize() - other.quantity, Math.min(max, this.quantity));
 
-        other.item = this.item;
+        other.setItem(this.item);
         other.setData(this.data);
         other.quantity += toGive;
         this.quantity -= toGive;
