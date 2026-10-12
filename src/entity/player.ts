@@ -481,12 +481,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
             direction.z * 10 + this.velocity.z
         );
 
-        console.log("drop stack " + stack, max);
-
         const droppingStack = stack.split(max);
-        console.log("dropping " + droppingStack);
         entity.inventory.addStack(droppingStack);
-        console.log("merging " + droppingStack + " into " + stack);
         droppingStack.mergeInto(stack); // return leftover non-dropped items to the inventory
 
         entity.pickupCooldown = 2;

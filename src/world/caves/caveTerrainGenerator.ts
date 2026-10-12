@@ -75,9 +75,6 @@ export class CaveTerrainGenerator extends TerrainGenerator {
                         const distanceSquared = dx2 + dy2 + (z + chunkBlockZ - centerZ) * (z + chunkBlockZ - centerZ);
 
                         if(distanceSquared > radiusSquared) continue;
-
-                        console.log(distanceSquared);
-                        console.log(x + chunkBlockX, y + chunkBlockY, z + chunkBlockZ, fill);
                         chunk.tiles.setBlockStateId(x, y, z, fill);
                     }
                 }
