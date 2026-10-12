@@ -9,6 +9,7 @@ import type { Time } from "../time";
 import type { World } from "../world/world";
 import { Entity, SerializedEntity } from "./entity";
 import type { ItemEntityRenderer } from "./itemEntityRenderer";
+import type { SignalConnection } from "typed-signals";
 
 export type SerializedItemEntity = z.infer<typeof SerializedItemEntity>;
 export const SerializedItemEntity = SerializedEntity.extend({
@@ -47,6 +48,7 @@ export class ItemEntity extends Entity {
     private rotationPhase = Math.random() * 10;
     public pickupCooldown = 0;
     private mergeCheckCooldown = Math.random();
+    private onInventoryUpdate: SignalConnection;
 
     public static spewInventory(
         inventory: Inventory,
@@ -82,7 +84,13 @@ export class ItemEntity extends Entity {
 
         this.inventory = new Inventory();
         this.inventory.addSlot(new InventorySlot(ItemStack.empty()));
-        this.inventory.onUpdate.connect(() => this.updateDisplayItem());
+        this.onInventoryUpdate = this.inventory.onUpdate.connect(() => {
+            if(this.inventory.slots[0].stack.isEmpty()) {
+                this.removeFromWorld();
+            } else {
+                this.updateDisplayItem();
+            }
+        });
         
         this.updateDisplayItem();
     }
@@ -123,8 +131,7 @@ export class ItemEntity extends Entity {
         const maxY = (this.position.y + radius) >> 4;
         const maxZ = (this.position.z + radius) >> 4;
 
-        const raidusSquared = radius * radius;
-        let changed = false;
+        const radiusSquared = radius * radius;
 
         for(let x = minX; x <= maxX; x++) {
             for(let y = minY; y <= maxY; y++) {
@@ -134,30 +141,17 @@ export class ItemEntity extends Entity {
                     
                     for(const entity of chunk.entities) {
                         if(!(entity instanceof ItemEntity)) continue;
-
-                        const otherStack = entity.getStack();
-                        const myStack = entity.getStack();
-
-                        if(!otherStack.similarTo(myStack)) continue;
                         if(entity == this) continue;
+                        
+                        if(entity.position.distanceToSquared(this.position) < radiusSquared) {
+                            const transferred = this.inventory.dump(entity.inventory);
+                            if(transferred == 0) continue;
 
-                        if(entity.position.distanceToSquared(this.position) < raidusSquared) {
-                            otherStack.mergeInto(myStack);
-                            changed = true;
-
-                            if(otherStack.isEmpty()) {
-                                entity.removeFromWorld();
-                            } else {
-                                return;
-                            }
+                            this.removeFromWorld();
                         }
                     }
                 }
             }
-        }
-
-        if(changed) {
-            this.updateDisplayItem();
         }
     }
 
@@ -236,5 +230,10 @@ export class ItemEntity extends Entity {
         this.pickupCooldown = parsedData.pickupCooldown;
 
         this.inventory.onUpdate.emit(0);
+    }
+
+    public override removeFromWorld() {
+        super.removeFromWorld();
+        this.onInventoryUpdate.disconnect();
     }
 }
