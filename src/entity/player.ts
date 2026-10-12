@@ -1,9 +1,11 @@
 import { Box3, Euler, MathUtils, Vector3 } from "three";
 import z from "zod";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
+import type { BlockState } from "../block/blockState";
 import { BoxelGame } from "../boxel";
 import { EventCursor } from "../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../item/inventory";
+import { Item } from "../item/item";
 import { itemRegistry } from "../item/itemRegistry";
 import { ItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
@@ -12,7 +14,7 @@ import { RaycastResult, VoxelRaycaster } from "../physics/raycaster";
 import { PlayingGameStage } from "../stage/playing/playingGameStage";
 import type { Time } from "../time";
 import { World } from "../world/world";
-import { AttributeBase, AttributeMap, type AttributeModifierMap } from "./attribute";
+import { AttributeBase, AttributeMap } from "./attribute";
 import { baseEntityAttributes, Entity, SerializedEntity } from "./entity";
 import { ItemEntity } from "./item";
 
@@ -59,7 +61,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public crouching: boolean = false;
     public sprinting: boolean = false;
     public selectedSlot: number = 0;
-    private selectedSlotAttributes: AttributeModifierMap | null = null;
+    private selectedSlotData: { stack: ItemStack, entry?: Item | BlockState } | null = null;
     public readonly inventory = new Inventory;
     public readonly pointerInventory = new Inventory;
 
@@ -172,6 +174,9 @@ export class Player extends Entity<SerializedPlayerEntity> {
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
+        this.selectedSlotData?.entry?.events.runTrigger("base:item/punch_block", cursor);
+        if(cursor.defaultPrevented) return false;
+
         let targetX = this.targetedBlock.voxel.x;
         let targetY = this.targetedBlock.voxel.y;
         let targetZ = this.targetedBlock.voxel.z;
@@ -210,13 +215,19 @@ export class Player extends Entity<SerializedPlayerEntity> {
         let targetY = this.targetedBlock.voxel.y;
         let targetZ = this.targetedBlock.voxel.z;
 
+        const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
+        cursor.entity = this;
+        cursor.setFaceDataFromRaycastResult(this.targetedBlock);
+        cursor.setRotation(this.yaw, this.pitch);
+
+        this.selectedSlotData?.entry?.events.runTrigger("base:item/break_block", cursor);
+        if(cursor.defaultPrevented) return false;
+
         const previousBlockStateId = this.world.getBlockState(targetX, targetY, targetZ);
         const blockState = blockStateRegistry.get(previousBlockStateId);
         const blockEntity = this.world.getBlockEntity(targetX, targetY, targetZ);
 
         if(blockState != null) {
-            const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
-            cursor.entity = this;
             blockState.events.runTrigger("base:destroy", cursor);
             
             if(cursor.defaultPrevented) return false;
@@ -307,6 +318,9 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         let success = false;
 
+        this.selectedSlotData?.entry?.events.runTrigger("base:item/break_block", cursor);
+        if(cursor.defaultPrevented) return false;
+
         const holdingStack = this.inventory.slots[this.selectedSlot]?.stack;
         if(holdingStack != null) {
             const item = itemRegistry.get(holdingStack.item);
@@ -355,19 +369,28 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public setSelectedSlot(slot: number) {
         this.selectedSlot = slot;
 
-        if(this.selectedSlotAttributes) {
-            this.attributes.removeModifierMap(this.selectedSlotAttributes);
-            this.selectedSlotAttributes = null;
+        if(this.selectedSlotData?.entry instanceof Item) {
+            this.attributes.removeModifierMap(this.selectedSlotData.entry.attributes);
         }
+        this.selectedSlotData = null;
 
         const inventorySlot = this.inventory.slots[slot];
         if(inventorySlot == null) return;
 
-        const item = itemRegistry.get(inventorySlot.stack.item);
-        if(item == null) return;
+        this.selectedSlotData = { stack: inventorySlot.stack };
 
-        this.attributes.addModifierMap(item.attributes);
-        this.selectedSlotAttributes = item.attributes;
+        const item = itemRegistry.get(inventorySlot.stack.item);
+        if(item != null) {
+            this.attributes.addModifierMap(item.attributes);
+            this.selectedSlotData.entry = item;
+
+            return;
+        }
+
+        const blockState = blockStateRegistry.get(inventorySlot.stack.item);
+        if(blockState != null) {
+            this.selectedSlotData.entry = blockState;
+        }
     }
 
     public pickBlock() {
