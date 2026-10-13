@@ -142,6 +142,13 @@ export class ItemEntity extends Entity {
                 this.insideCheckCooldown += 1;
             }
         }
+
+        this.world.lightingManager.getColorAt(
+            Math.floor(this.position.x),
+            Math.floor(this.position.y),
+            Math.floor(this.position.z),
+            this.lightColor
+        );
     }
 
     public getStack() {
@@ -187,13 +194,6 @@ export class ItemEntity extends Entity {
         
         const angle = this.rotationPhase * Math.PI * 0.5;
         const offsetY = Math.sin(this.rotationPhase * Math.PI * 2 / 3) * 0.1 + 0.3;
-
-        this.world.lightingManager.getColorAt(
-            Math.floor(this.renderPosition.x),
-            Math.floor(this.renderPosition.y),
-            Math.floor(this.renderPosition.z),
-            this.lightColor
-        );
 
         this.matrix.makeRotationY(angle);
         this.matrix.setPosition(
