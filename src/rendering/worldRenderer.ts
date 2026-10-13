@@ -1,4 +1,4 @@
-import { MathUtils, Mesh, Scene } from "three";
+import { Mesh, Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
 import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
 import { BoxGeometry, BufferGeometry, EdgesGeometry, LineBasicNodeMaterial, LineSegments, Material, MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
@@ -13,8 +13,8 @@ import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { ChunkMesher } from "./chunkMesher";
 import { createLightColorNode } from "./lightUtils";
-import { EarthSky } from "./sky/earthSky";
 import type { Sky } from "./sky/sky";
+import { VoidSky } from "./sky/voidSky";
 
 export class WorldRenderer {
     public maxChunkUpdates = 16;
@@ -82,7 +82,7 @@ export class WorldRenderer {
         world.setRenderer(this);
 
         this.chunkMesher = new ChunkMesher(world);
-        this.sky = new EarthSky(assets);
+        this.sky = new VoidSky(assets);
         this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
         this.breakingBlock = new BlockBreakOutline(assets);
