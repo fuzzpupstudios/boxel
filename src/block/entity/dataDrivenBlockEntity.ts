@@ -61,7 +61,7 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
                 if(onChangeTrigger == null) return;
 
                 const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
-                cursor.variables.set("$slot", inventory.slots[slot]);
+                cursor.setSlot(inventory.slots[slot]);
 
                 blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
             }
@@ -72,7 +72,7 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
                 if(onChangeTrigger == null) return;
 
                 const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
-                cursor.variables.set("$slot", inventory.slots[slot]);
+                cursor.setSlot(inventory.slots[slot]);
 
                 blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
             }
@@ -83,7 +83,7 @@ export class DataDrivenBlockEntityType extends BlockEntityType {
                 if(onChangeTrigger == null) return;
 
                 const cursor = new EventCursor(blockEntity.world, blockEntity.x, blockEntity.y, blockEntity.z);
-                cursor.variables.set("$slot", inventory.slots[slot]);
+                cursor.setSlot(inventory.slots[slot]);
 
                 blockEntity.blockState?.events.runTrigger(onChangeTrigger, cursor);
             }

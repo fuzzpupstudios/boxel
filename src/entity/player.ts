@@ -72,6 +72,10 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.inventory.addSlot(new InventorySlot);
         }
         this.pointerInventory.addSlot(new InventorySlot);
+
+        this.inventory.onUpdate.connect(() => {
+            this.updateSelectedSlot();
+        })
     }
 
     protected override createAttributeMap(): AttributeMap {
@@ -170,8 +174,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
         );
-        cursor.entity = this;
-        cursor.slot = this.inventory.slots[this.selectedSlot];
+        cursor.setEntity(this);
+        cursor.setSlot(this.inventory.slots[this.selectedSlot]);
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
@@ -217,8 +221,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
         let targetZ = this.targetedBlock.voxel.z;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
-        cursor.entity = this;
-        cursor.slot = this.inventory.slots[this.selectedSlot];
+        cursor.setEntity(this);
+        cursor.setSlot(this.inventory.slots[this.selectedSlot]);
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
@@ -285,8 +289,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
         if(this.aabb.collidesWithTile(blockState.collider, targetX, targetY, targetZ)) return false;
 
         const cursor = new EventCursor(this.world, targetX, targetY, targetZ);
-        cursor.entity = this;
-        cursor.slot = this.inventory.slots[this.selectedSlot];
+        cursor.setEntity(this);
+        cursor.setSlot(this.inventory.slots[this.selectedSlot]);
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
         
@@ -315,8 +319,8 @@ export class Player extends Entity<SerializedPlayerEntity> {
             this.targetedBlock.voxel.y,
             this.targetedBlock.voxel.z,
         );
-        cursor.entity = this;
-        cursor.slot = this.inventory.slots[this.selectedSlot];
+        cursor.setEntity(this);
+        cursor.setSlot(this.inventory.slots[this.selectedSlot]);
         cursor.setFaceDataFromRaycastResult(this.targetedBlock);
         cursor.setRotation(this.yaw, this.pitch);
 
@@ -371,12 +375,15 @@ export class Player extends Entity<SerializedPlayerEntity> {
     public setSelectedSlot(slot: number) {
         this.selectedSlot = slot;
 
+        this.updateSelectedSlot();
+    }
+    public updateSelectedSlot() {
         if(this.selectedSlotData?.entry instanceof Item) {
             this.attributes.removeModifierMap(this.selectedSlotData.entry.attributes);
         }
         this.selectedSlotData = null;
 
-        const inventorySlot = this.inventory.slots[slot];
+        const inventorySlot = this.inventory.slots[this.selectedSlot];
         if(inventorySlot == null) return;
 
         this.selectedSlotData = { stack: inventorySlot.stack };

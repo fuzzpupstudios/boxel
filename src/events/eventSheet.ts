@@ -73,6 +73,16 @@ export class EventCursor {
         return cursor;
     }
 
+    public setEntity(entity: Entity) {
+        this.entity = entity;
+        this.variables.set("$entity", entity);
+    }
+
+    public setSlot(slot: InventorySlot) {
+        this.slot = slot;
+        this.variables.set("$slot", slot);
+    }
+
     public setPosition(x: number, y: number, z: number) {
         this.x = x;
         this.y = y;

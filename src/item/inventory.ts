@@ -2,12 +2,10 @@ import { Signal } from "typed-signals";
 import z from "zod";
 import { ItemStack, SerializedItemStack } from "./itemStack";
 
+export type SerializedInventory = z.infer<typeof SerializedInventory>;
 export const SerializedInventory = z.object({
     items: z.array(SerializedItemStack).default([])
 })
-export interface SerializedInventory {
-    items: SerializedItemStack[]
-}
 
 export class Inventory {
     public readonly onUpdate = new Signal<(slotId: number) => void>();

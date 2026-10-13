@@ -186,7 +186,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             Math.floor(this.position.y),
             Math.floor(this.position.z)
         );
-        cursor.entity = this;
+        cursor.setEntity(this);
         return cursor;
     }
 
@@ -198,7 +198,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         const y = Math.floor(this.position.y + this.aabb.hitbox.min.y - 0.01);
 
         const cursor = new EventCursor(this.world, 0, 0, 0);
-        cursor.entity = this;
+        cursor.setEntity(this);
 
         for(let x = minX; x <= maxX; x++) {
             for(let z = minZ; z <= maxZ; z++) {

@@ -34,6 +34,7 @@ export class ItemStack {
 
         const itemEntry = itemRegistry.get(this.item);
         this._itemType = itemEntry;
+        return itemEntry;
     }
 
     public serialize(): SerializedItemStack {
@@ -143,6 +144,9 @@ export class ItemStack {
 export type SerializedItemStack = z.infer<typeof SerializedItemStack>;
 export const SerializedItemStack = z.object({
     item: z.string().default(ItemStack.DEFAULT_ITEM),
-    quantity: z.int().default(0),
+    quantity: z.union([
+        z.int().default(0),
+        z.nan().overwrite(() => 1)
+    ]),
     data: z.record(z.string(), z.any()).optional()
 });
