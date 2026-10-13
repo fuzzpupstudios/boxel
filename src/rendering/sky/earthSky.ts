@@ -11,8 +11,6 @@ export class EarthSky extends Sky {
     public readonly dayFactor = uniform(float(0));
     public readonly starThreshold = uniform(float(0));
 
-    public readonly scene = new Scene;
-
     public sky?: Object3D;
     public sun?: Object3D;
     public moon?: Object3D;
