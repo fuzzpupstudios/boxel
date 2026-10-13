@@ -3,6 +3,10 @@ import { Matrix4, Vector3, type Box3, type Vector2 } from "three";
 export class TileCollider {
     public readonly hitboxes = new Array<Box3>;
 
+    public isPointInside(point: Vector3) {
+        return this.hitboxes.some(box => box.containsPoint(point));
+    }
+
     public clone(): TileCollider {
         const collider = new TileCollider;
 

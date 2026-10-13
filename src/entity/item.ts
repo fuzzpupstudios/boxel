@@ -10,6 +10,7 @@ import type { World } from "../world/world";
 import { Entity, SerializedEntity } from "./entity";
 import type { ItemEntityRenderer } from "./itemEntityRenderer";
 import type { SignalConnection } from "typed-signals";
+import { blockStateRegistry } from "../block/blockRegistry";
 
 export type SerializedItemEntity = z.infer<typeof SerializedItemEntity>;
 export const SerializedItemEntity = SerializedEntity.extend({
@@ -51,6 +52,7 @@ export class ItemEntity extends Entity {
     private rotationPhase = Math.random() * 10;
     public pickupCooldown = 0;
     private mergeCheckCooldown = Math.random();
+    private insideCheckCooldown = Math.random();
     private onInventoryUpdate: SignalConnection;
 
     public static spewInventory(
@@ -119,6 +121,26 @@ export class ItemEntity extends Entity {
             this.mergeCheckCooldown += 1;
 
             this.mergeNearbyItems(1);
+        }
+
+        this.insideCheckCooldown -= time.deltaTime;
+        if(this.insideCheckCooldown < 0) {
+            const blockX = Math.floor(this.position.x);
+            const blockY = Math.floor(this.position.y);
+            const blockZ = Math.floor(this.position.z);
+            const insideBlockStateId = this.world.getBlockState(blockX, blockY, blockZ);
+            const insideBlockState = blockStateRegistry.get(insideBlockStateId);
+            
+            if(insideBlockState?.collider.isPointInside(new Vector3(
+                this.position.x - blockX,
+                this.position.y - blockY,
+                this.position.z - blockZ
+            ))) {
+                this.position.y += 0.25;
+                this.velocity.y = 5;
+            } else {
+                this.insideCheckCooldown += 1;
+            }
         }
     }
 
