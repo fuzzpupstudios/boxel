@@ -3,6 +3,9 @@ import { Vector3 } from "three";
 import type { Time } from "../time";
 import { encodeChunkKey, type ChunkKey } from "./keying";
 import type { Chunk, World } from "./world";
+import { BucketQueue } from "./bucketQueue";
+
+type ChunkQueueEntry = [ ChunkKey, number, number, number ];
 
 export class ChunkLoader {
     public maxColumnGenerations = 1;
@@ -14,8 +17,8 @@ export class ChunkLoader {
     private needsUpdate: boolean = true;
     public readonly columnsToLoad = new Map<ChunkKey, [ number, number, number ]>;
     public readonly chunksToHide = new Map<ChunkKey, Chunk>;
-    public readonly columnGenerationQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
-    public readonly columnLoadQueue = new MinPriorityQueue<[ number, number, number, number, number ]>((obj) => obj[0]);
+    public readonly columnGenerationQueue = new BucketQueue<ChunkQueueEntry>;
+    public readonly columnLoadQueue = new BucketQueue<ChunkQueueEntry>;
     private readonly frameTasks = new Array<Function>;
     private readonly columnsGenerating = new Set<ChunkKey>;
 
@@ -84,11 +87,12 @@ export class ChunkLoader {
                 ((y << 4) - this.origin.y) * ((y << 4) - this.origin.y) +
                 ((z << 4) - this.origin.z) * ((z << 4) - this.origin.z);
             
-            const item = [ distanceSquare, key, x, y, z ];
+            const item: ChunkQueueEntry = [ key, x, y, z ];
+
             if(this.world.persistentWorld?.hasChunk(x, y, z)) {
-                this.columnLoadQueue.enqueue(<any>item);
+                this.columnLoadQueue.add(distanceSquare, item);
             } else {
-                this.columnGenerationQueue.enqueue(<any>item);
+                this.columnGenerationQueue.add(distanceSquare, item);
             }
         }
     }
@@ -134,14 +138,14 @@ export class ChunkLoader {
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
         {
-            const max = Math.min(this.columnGenerationQueue.size(), this.maxColumnGenerations - this.columnsGenerating.size);
+            const max = Math.min(this.columnGenerationQueue.size, this.maxColumnGenerations - this.columnsGenerating.size);
 
             for(let i = 0; i < max; i++) {
-                const next = this.columnGenerationQueue.dequeue();
+                const next = this.columnGenerationQueue.shift();
 
                 if(next == null) break;
 
-                const [ _, key, x, y, z ] = next;
+                const [ key, x, y, z ] = next;
                 this.columnsToLoad.delete(key);
 
                 if(this.columnsGenerating.has(key)) continue;
@@ -174,11 +178,11 @@ export class ChunkLoader {
         
 
         {
-            const max = Math.min(this.columnLoadQueue.size(), this.maxColumnLoads);
+            const max = Math.min(this.columnLoadQueue.size, this.maxColumnLoads);
             const positions: [number, number, number][] = [];
 
             for(let i = 0; i < max; i++) {
-                const [ _, key, x, y, z ] = this.columnLoadQueue.dequeue()!;
+                const [ key, x, y, z ] = this.columnLoadQueue.shift()!;
 
                 for(let dy = 0; dy < 8; dy++) {
                     if(!this.world.tiles.getChunk(x, y + dy, z)) {

@@ -730,8 +730,8 @@ export class PlayingGameStage extends GameStage {
         if(this.debugMenu.view.visible) {
             this.debugMenuLines.queues.setData(
                 this.world.loadingChunks.size,
-                this.chunkLoader.columnLoadQueue.size(),
-                this.chunkLoader.columnGenerationQueue.size(),
+                this.chunkLoader.columnLoadQueue.size,
+                this.chunkLoader.columnGenerationQueue.size,
                 this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
                 this.world.chunksToSave.size,
                 this.chunkLoader.chunksToHide.size
