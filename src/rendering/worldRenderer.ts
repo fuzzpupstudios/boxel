@@ -61,8 +61,6 @@ export class WorldRenderer {
 
                     const shadow = this.sky.createSunShadowNode(normalGeometry).toVar("shadow");
                     const fogFactor = this.fogFactor;
-
-                    If(fogFactor.greaterThanEqual(1), () => Discard());
                     
                     const lightColor = createLightColorNode(this.world.lightingManager, shadow, ao).toVar("lightColor");
 

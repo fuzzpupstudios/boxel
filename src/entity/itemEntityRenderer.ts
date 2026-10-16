@@ -41,7 +41,7 @@ export class ItemEntityRenderer {
 
         return new MeshBasicNodeMaterial({
             colorNode: Fn(() => {
-                const fogFactor = this.worldRenderer.fogFactor;
+                const fogFactor = this.worldRenderer.fogFactor.toVar();
 
                 If(fogFactor.greaterThanEqual(1), () => Discard());
 
