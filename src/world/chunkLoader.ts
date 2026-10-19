@@ -36,14 +36,16 @@ export class ChunkLoader {
         const minZ = (this.origin.z - this.radius - 15) >> 4;
         const maxZ = (this.origin.z + this.radius + 31) >> 4;
 
-        for(const chunk of this.world.renderer.renderedChunks.keys()) {
+        for(const region of this.world.renderer.chunkRenderer.renderedRegions.keys()) {
             if(
-                chunk.x > minX && chunk.x < maxX &&
-                chunk.y > minY && chunk.y < maxY &&
-                chunk.z > minZ && chunk.z < maxZ
+                region.x > minX && region.x < maxX &&
+                region.y > minY && region.y < maxY &&
+                region.z > minZ && region.z < maxZ
             ) continue;
             
-            this.chunksToHide.set(chunk.key, chunk);
+            for(const chunk of region.chunks) {
+                this.chunksToHide.set(chunk.key, chunk);
+            }
         }
     }
 
@@ -198,20 +200,10 @@ export class ChunkLoader {
             })
         }
 
-        {
-            const max = Math.min(this.chunksToHide.size, this.maxChunkUnloads);
-
-            const iterator = this.chunksToHide.entries();
-            for(let i = 0; i < max; i++) {
-                const next = iterator.next();
-                if(next.done) break;
-
-                const [ key, chunk ] = next.value;
-
-                this.world.hideChunk(chunk);
-                this.chunksToHide.delete(key);
-                this.columnsToLoad.delete(key);
-            }
+        for(const [ key, chunk ] of this.chunksToHide.entries().take(this.maxChunkUnloads)) {
+            this.world.hideChunk(chunk);
+            this.chunksToHide.delete(key);
+            this.columnsToLoad.delete(key);
         }
     }
 }

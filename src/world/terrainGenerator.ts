@@ -7,7 +7,6 @@ export abstract class TerrainGenerator {
         public generateColumn(world: World, columnX: number, columnY: number, columnZ: number, callback: () => void) {
             for(let chunkY = columnY; chunkY < columnY + COLUMN_CHUNK_HEIGHT; chunkY++) {
                 world.tiles.getChunkOrCreate(columnX, chunkY, columnZ);
-                world.markChunkDirty(columnX, chunkY, columnZ);
             }
             callback();
         }

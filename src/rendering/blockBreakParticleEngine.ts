@@ -2,24 +2,20 @@ import { Box2, Vector2 } from "three";
 import { Side } from "../block/direction";
 import type { TextureAtlases } from "../boxel";
 import type { World } from "../world/world";
-import type { TileFace, TileMesh } from "./chunkMesher";
 import { ParticleEngine } from "./particleEngine";
-import type { WorldRenderer } from "./worldRenderer";
+import type { TileFace, TileMesh, TileMeshCache } from "./tileRendering";
 
 export class BlockBreakParticleEngine extends ParticleEngine {
-    private readonly tileMeshes: Map<string, TileMesh>;
     private readonly tileMeshUvRects: Map<string, Box2[]> = new Map;
 
     public constructor(
         world: World,
-        worldRenderer: WorldRenderer,
+        public readonly tileMeshCache: TileMeshCache,
         textureAtlases: TextureAtlases
     ) {
         super(world, textureAtlases.block.threeTexture);
-
-        this.tileMeshes = worldRenderer.chunkMesher.getCompiledMeshes();
         
-        for(const [ blockStateId, tileMesh ] of this.tileMeshes) {
+        for(const [ blockStateId, tileMesh ] of tileMeshCache.tileMeshes) {
             const uvRects = new Set([
                 ...tileMesh.north,
                 ...tileMesh.east,
@@ -100,7 +96,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
     ) {
         if(tileMesh == null) {
             const tile = this.world.tiles.getBlockStateId(Math.floor(x), Math.floor(y), Math.floor(z));
-            tileMesh = this.tileMeshes.get(tile);
+            tileMesh = this.tileMeshCache.getMeshFromBlockStateId(tile);
 
             if(tileMesh == null) return;
         }

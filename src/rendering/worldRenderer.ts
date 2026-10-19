@@ -1,33 +1,30 @@
-import { Mesh, Scene } from "three";
+import { Scene } from "three";
 import { Fn } from "three/src/nodes/TSL.js";
-import { attribute, cameraPosition, Discard, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
-import { BoxGeometry, BufferGeometry, EdgesGeometry, LineBasicNodeMaterial, LineSegments, Material, MeshBasicNodeMaterial, Node, PerspectiveCamera } from "three/webgpu";
+import { attribute, cameraPosition, Discard, float, If, mix, normalGeometry, pass, positionWorld, texture, uniform, uv, vec3, vec4 } from "three/tsl";
+import { BoxGeometry, BufferGeometry, EdgesGeometry, LineBasicNodeMaterial, LineSegments, Material, MeshBasicNodeMaterial, Node, PerspectiveCamera, Vector3 } from "three/webgpu";
 import type { TextureAtlases } from "../boxel";
 import type { Assets } from "../data/assets";
 import { EntityRenderer } from "../entity/entityRenderer";
 import type { Time } from "../time";
-import type { ChunkKey } from "../world/keying";
 import { Chunk, World } from "../world/world";
+import { BatchedChunkRenderer } from "./batchedChunkRenderer";
 import { BlockBreakOutline } from "./blockBreakOutline";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
-import { ChunkMesher } from "./chunkMesher";
 import { createLightColorNode } from "./lightUtils";
 import type { Sky } from "./sky/sky";
 import { VoidSky } from "./sky/voidSky";
+import { TileMeshCache } from "./tileRendering";
 
 export class WorldRenderer {
     public maxChunkUpdates = 16;
     public readonly fogDistance = uniform(64);
     public readonly scene = new Scene;
     public readonly sky: Sky;
-    public readonly chunkMesher: ChunkMesher;
-    public readonly dirtyChunks = new Set<Chunk>;
-    public readonly priorityDirtyChunks = new Set<Chunk>;
-    public readonly renderedChunks = new Map<Chunk, Mesh | null>;
+    public readonly chunkRenderer: BatchedChunkRenderer;
+    public readonly tileMeshCache: TileMeshCache;
     public readonly entityRenderer: EntityRenderer;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
-    public readonly renderedChunkKeyList = new Set<ChunkKey>;
     public readonly targetedBlock = new BlockStateOutline;
     public readonly breakingBlock: BlockBreakOutline;
     public readonly blockBreakParticles: BlockBreakParticleEngine;
@@ -44,44 +41,43 @@ export class WorldRenderer {
         public readonly camera: PerspectiveCamera,
         assets: Assets
     ) {
-        {
-            this.fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
-            this.terrainMaterial = new MeshBasicNodeMaterial({
-                colorNode: Fn(() => {
-                    const terrainColor = texture(
-                        textureAtlases.block.threeTexture, uv()
-                    ).toVar("terrainColor");
+        this.fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
+        this.fogFactor = float(0);
+        this.terrainMaterial = new MeshBasicNodeMaterial({
+            colorNode: Fn(() => {
+                const terrainColor = texture(
+                    textureAtlases.block.threeTexture, uv()
+                ).toVar("terrainColor");
 
-                    const faceType = attribute<"uint">("faceType", "uint");
-                    const lit = faceType.bitAnd(1).greaterThan(0);
+                const faceType = attribute<"uint">("faceType", "uint");
+                const lit = faceType.bitAnd(1).greaterThan(0);
 
-                    If(terrainColor.a.lessThan(0.5), () => Discard());
-                    
-                    const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
+                If(terrainColor.a.lessThan(0.5), () => Discard());
+                
+                const ao = attribute("aoFactor", "float" as const).min(2).div(3).toVar("aoCalculated");
 
-                    const shadow = this.sky.createSunShadowNode(normalGeometry).toVar("shadow");
-                    const fogFactor = this.fogFactor;
-                    
-                    const lightColor = createLightColorNode(this.world.lightingManager, shadow, ao).toVar("lightColor");
+                const shadow = this.sky.createSunShadowNode(normalGeometry).toVar("shadow");
+                const fogFactor = this.fogFactor;
+                
+                const lightColor = createLightColorNode(this.world.lightingManager, shadow, ao).toVar("lightColor");
 
-                    If(lit, () => {
-                        lightColor.assign(vec3(1, 1, 1));
-                    });
+                If(lit, () => {
+                    lightColor.assign(vec3(1, 1, 1));
+                });
 
-                    return mix(
-                        terrainColor.rgb.mul(lightColor),
-                        this.sky.fogColor,
-                        fogFactor
-                    );
-                })(),
-                transparent: true
-            });
-        }
-        world.setRenderer(this);
+                return mix(
+                    terrainColor.rgb.mul(lightColor),
+                    this.sky.fogColor,
+                    fogFactor
+                );
+            })(),
+            transparent: true
+        });
 
-        this.chunkMesher = new ChunkMesher(world);
+        this.tileMeshCache = new TileMeshCache;
+        this.chunkRenderer = new BatchedChunkRenderer(world, this.tileMeshCache, this.terrainMaterial, this.scene);
         this.sky = new VoidSky(assets);
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this, textureAtlases);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this.tileMeshCache, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
         this.breakingBlock = new BlockBreakOutline(assets);
 
@@ -95,6 +91,8 @@ export class WorldRenderer {
             transparent: true,
             opacity: 1,
         });
+
+        world.setRenderer(this);
     }
 
     public setPaused(paused: boolean) {
@@ -114,23 +112,6 @@ export class WorldRenderer {
         return vec4(mix(sky.rgb, ground.rgb, ground.a), 1);
     }
 
-    public markDirty(chunk: Chunk, priority: boolean = false) {
-        if(priority) {
-            this.priorityDirtyChunks.add(chunk);
-        } else {
-            this.dirtyChunks.add(chunk);
-        }
-    }
-
-    private onChunkUpdate(chunk: Chunk) {
-        if(!this.debug) return;
-
-        const mesh = new LineSegments(this.newChunkMeshGeometry, this.newChunkMeshMaterial);
-        mesh.position.set(chunk.x * 16 + 8, chunk.y * 16 + 8, chunk.z * 16 + 8);
-        this.scene.add(mesh);
-        this.newChunks.set(mesh, 8);
-    }
-
     public render(time: Time) {
         for(const [ mesh, framesVisible ] of this.newChunks.entries()) {
             if(framesVisible == 0) {
@@ -146,28 +127,7 @@ export class WorldRenderer {
             }
         }
 
-        const todo = Math.min(this.dirtyChunks.size / 3, this.maxChunkUpdates);
-        if(this.dirtyChunks.size > 0) {
-            let i = 0;
-            for(const chunk of this.dirtyChunks) {
-                if(i++ > todo) break;
-
-                const modified = this.renderChunk(chunk);
-                this.dirtyChunks.delete(chunk);
-
-                if(modified) {
-                    this.onChunkUpdate(chunk);
-                } else {
-                    i--;
-                }
-            }
-        }
-
-        for(const chunk of this.priorityDirtyChunks) {
-            this.renderChunk(chunk);
-            this.onChunkUpdate(chunk);
-        }
-        this.priorityDirtyChunks.clear();
+        this.chunkRenderer.render(time, this.maxChunkUpdates);
 
         if(this.paused) return;
 
@@ -181,70 +141,11 @@ export class WorldRenderer {
     }
 
     public removeChunk(chunk: Chunk) {
-        this.dirtyChunks.delete(chunk);
-        this.priorityDirtyChunks.delete(chunk);
-        const mesh = this.renderedChunks.get(chunk);
-        if(mesh != null) {
-            mesh.geometry.dispose();
-            mesh.removeFromParent();
-        }
-        this.renderedChunks.delete(chunk);
-        this.renderedChunkKeyList.delete(chunk.key);
+        this.chunkRenderer.deleteChunk(chunk);
     }
 
-    private renderChunk(chunk: Chunk) {
-        if(!this.renderedChunks.get(chunk)) {
-            let surrounding = 0;
-            for(let dx = -1; dx <= 1; dx++) {
-                for(let dy = -1; dy <= 1; dy++) {
-                    for(let dz = -1; dz <= 1; dz++) {
-                        if(dx == 0 && dy == 0 && dz == 0) continue;
-
-                        if(this.world.tiles.getChunk(chunk.x + dx, chunk.y + dy, chunk.z + dz)) {
-                            surrounding++;
-                        }
-                    }
-                }
-            }
-            if(surrounding != 26) return false;
-        }
-        
-        let mesh = this.renderedChunks.get(chunk);
-        
-        const geometry = this.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
-
-        if(mesh == null) {
-            this.renderedChunkKeyList.add(chunk.key);
-            
-            if(geometry != null) {
-                mesh = new Mesh(geometry, this.terrainMaterial);
-                mesh.matrixAutoUpdate = false;
-                
-                this.renderedChunks.set(chunk, mesh);
-
-                mesh.position.set(chunk.x << 4, chunk.y << 4, chunk.z << 4);
-                mesh.updateMatrix();
-                this.scene.add(mesh);
-            } else {
-                this.renderedChunks.set(chunk, null);
-            }
-        } else {
-            mesh.geometry.dispose();
-
-            if(geometry != null) {
-                mesh.geometry = geometry;
-                if(mesh.parent == null) {
-                    this.scene.add(mesh);
-                }
-            } else {
-                mesh.removeFromParent();
-            }
-        }
-
-        if(geometry == null) {
-            return false;
-        } else {
-            return true;
-        }
+    public dispose() {
+        this.chunkRenderer.dispose();
+        this.entityRenderer.dispose();
     }
 }

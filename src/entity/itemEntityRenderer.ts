@@ -3,7 +3,6 @@ import { Fn } from "three/src/nodes/TSL.js";
 import { Discard, If, mix, normalWorld, vec4 } from "three/tsl";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 import type { WorldRenderer } from "../rendering/worldRenderer";
-import type { World } from "../world/world";
 import type { ItemHologramProvider } from "./itemHologram";
 
 export class ItemEntityRenderer {
@@ -12,7 +11,6 @@ export class ItemEntityRenderer {
     private readonly defaultGeometryIndex: number;
 
     public constructor(
-        public readonly world: World,
         public readonly worldRenderer: WorldRenderer,
         public readonly hologramProvider: ItemHologramProvider
     ) {
@@ -34,10 +32,9 @@ export class ItemEntityRenderer {
     }
 
     private createMaterial() {
-        const worldRenderer = this.world.renderer!;
         const textureColor = this.hologramProvider.colorNode;
 
-        const shadow = worldRenderer.sky.createSunShadowNode(normalWorld).toVar("shadow");
+        const shadow = this.worldRenderer.sky.createSunShadowNode(normalWorld).toVar("shadow");
 
         return new MeshBasicNodeMaterial({
             colorNode: Fn(() => {
@@ -66,5 +63,8 @@ export class ItemEntityRenderer {
     }
     public deleteInstance(instanceId: number) {
         return this.batchedMesh.deleteInstance(instanceId);
+    }
+    public dispose() {
+        this.batchedMesh.dispose();
     }
 }

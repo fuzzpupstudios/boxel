@@ -1,249 +1,70 @@
-import { Box3, BufferAttribute, BufferGeometry, InterleavedBuffer, InterleavedBufferAttribute, IntType, Uint16BufferAttribute, Vector3 } from "three";
-import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
-import { LightingChunk } from "../world/lighting/lightingGrid";
-import type { VoxelChunk } from "../world/voxelGrid";
+import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Uint16BufferAttribute, Vector3 } from "three/webgpu";
 import type { World } from "../world/world";
+import { TileCache, type TileMeshCache } from "./tileRendering";
 
-
-export interface TileFace {
-    x0: number, y0: number, z0: number;
-    x1: number, y1: number, z1: number;
-    x2: number, y2: number, z2: number;
-    x3: number, y3: number, z3: number;
-    u0: number, v0: number;
-    u1: number, v1: number;
-    u2: number, v2: number;
-    u3: number, v3: number;
-    cull: boolean;
-    typeMask: number;
-
-    aoReceiveWeight: number;
-}
-
-export interface TileMesh {
-    skipRender: boolean;
-    renderAnyWhenCulled: boolean;
-
-    occludeNorth: boolean;
-    occludeEast: boolean;
-    occludeSouth: boolean;
-    occludeWest: boolean;
-    occludeUp: boolean;
-    occludeDown: boolean;
-
-    aoCastWeight: number;
-
-    north: TileFace[];
-    east: TileFace[];
-    south: TileFace[];
-    west: TileFace[];
-    up: TileFace[];
-    down: TileFace[];
-}
-
-class TileCache {
-    public readonly meshes = new Uint32Array(18 ** 3);
-    public readonly haloAo = new Float32Array(18 ** 3);
-    public readonly lighting: Float16Array | Float32Array;
-    private readonly lightChannelCount: number;
-    private readonly chunkMeshPalette = new Uint32Array(256);
-    private readonly emptyLightingChunk = new LightingChunk;
-    
-    public constructor(
-        private readonly world: World,
-        private readonly aoWeights: Float32Array,
-        private readonly tileMeshes: Map<string, number>,
-        private readonly defaultMesh: number
-    ) {
-        this.lightChannelCount = world.lightingManager.lightChannels.length;
-        this.lighting = new (Float16Array || Float32Array)(18 ** 3 * this.lightChannelCount);
-    }
-
-    public update(
-        chunkX: number,
-        chunkY: number,
-        chunkZ: number,
-        chunkTiles: VoxelChunk | null
-    ) {
-        const chunkOriginX = chunkX << 4;
-        const chunkOriginY = chunkY << 4;
-        const chunkOriginZ = chunkZ << 4;
-
-        const world = this.world;
-
-        if(chunkTiles == null) return;
-
-        const lightChannelCount = this.lightChannelCount;
-        const lightChannels = world.lightingManager.lightChannels;
-
-        const lightingChunks = [];
-        for(const lightChannel of lightChannels) {
-            lightingChunks.push(lightChannel.lightingGrid.getChunk(chunkX, chunkY, chunkZ) || this.emptyLightingChunk);
-        }
-
-        for(let i = 0; i < this.chunkMeshPalette.length; i++) {
-            const blockStateId = chunkTiles.palette[i]!;
-            this.chunkMeshPalette[i] = this.tileMeshes.get(blockStateId) ?? this.defaultMesh;
-        }
-        const lightStrength = 1 / 15;
-
-        let tile: number;
-        for(let x = -1, i = 0, k = 0; x < 17; x++) {
-            for(let y = -1; y < 17; y++) {
-                for(let z = -1; z < 17; z++, i++) {
-                    if(x > -1 && x < 16 && y > -1 && y < 16 && z > -1 && z < 16) {
-                        tile = this.chunkMeshPalette[chunkTiles.getTile(x, y, z)!]!;
-
-                        for(let j = 0; j < lightChannelCount; j++, k++) {
-                            this.lighting[k] = lightingChunks[j]!.get(
-                                x, y, z
-                            ) * lightStrength;
-                        }
-                    } else {
-                        tile = this.tileMeshes.get(world.tiles.getBlockStateId(x + chunkOriginX, y + chunkOriginY, z + chunkOriginZ))!;
-
-                        for(let j = 0; j < lightChannelCount; j++, k++) {
-                            this.lighting[k] = lightChannels[j]!.get(
-                                x + chunkOriginX,
-                                y + chunkOriginY,
-                                z + chunkOriginZ
-                            ) * lightStrength;
-                        }
-                    }
-                    this.meshes[i] = tile;
-                    this.haloAo[i] = this.aoWeights[tile] || 0;
-                }
-            }
-        }
-    }
-
-    public at(x: number, y: number, z: number) {
-        return this.meshes[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
-    }
-    public aoAt(x: number, y: number, z: number) {
-        return this.haloAo[(x + 1) * 324 + (y + 1) * 18 + (z + 1)]!;
-    }
-    public retrieveLightingAt(x: number, y: number, z: number, out: Record<number, number>) {
-        const X = 324 * this.lightChannelCount;
-        const Y = 18 * this.lightChannelCount;
-        const Z = this.lightChannelCount;
-        let j = (x + 1) * X + (y + 1) * Y + (z + 1) * Z;
-
-        for(let i = 0; i < this.lightChannelCount; i++, j++) {
-            out[i] = Math.max(
-                this.lighting[j]!,
-                this.lighting[j - Z]!,
-                this.lighting[j - Y]!,
-                this.lighting[j - Y - Z]!,
-                this.lighting[j - X]!,
-                this.lighting[j - X - Z]!,
-                this.lighting[j - X - Y]!,
-                this.lighting[j - X - Y - Z]!,
-            );
-        }
-    }
-}
-
-export class ChunkMesher {
-    public readonly tileMeshes: Map<string, TileMesh>;
-    private readonly tileMeshList: TileMesh[];
-    private readonly skipRenderMeshes = new Set<string>;
-    private readonly aoWeights: Float32Array;
-    private readonly tileMeshIndices: Map<string, number>;
+export class ChunkMesher {    
     private readonly tileCache: TileCache;
-    private readonly defaultMesh: TileMesh;
     private readonly lightChannelCount: number;
-    private readonly geometryFloatAttributes: Float32Array;
-    private readonly geometryFaceType: Uint16Array;
-    private readonly geometryIndex: Uint32Array;
+    private readonly positions: Float32Array;
+    private readonly uvs: Float32Array;
+    private readonly normals: Float32Array;
+    private readonly aoFactors: Float32Array;
+    private readonly lightFactors = new Array<Float32Array>;
+    private readonly faceTypes: Uint16Array;
+    private readonly indices: Uint32Array;
 
     public constructor(
-        public readonly world: World
+        public readonly world: World,
+        public readonly meshCache: TileMeshCache
     ) {
-        // Optimize: memoize block models, indexed by their block state's tile id
-        const blockStateIds = Array.from(blockStateRegistry.keys());
-        this.tileMeshList = new Array;
-        this.tileMeshIndices = new Map;
-        this.tileMeshes = new Map;
-        this.aoWeights = new Float32Array(blockStateIds.length);
-
-        for(let i = 0; i < blockStateIds.length; i++) {
-            const blockStateId = blockStateIds[i]!;
-
-            const blockState = blockStateRegistry.get(blockStateId)!;
-            this.tileMeshIndices.set(blockStateId, i);
-            
-            try {
-                const compiledModel = blockState.model.compile();
-
-                this.tileMeshList[i] = compiledModel;
-                this.aoWeights[i] = compiledModel.aoCastWeight;
-                this.tileMeshes.set(blockStateId, compiledModel);
-
-                if(compiledModel.skipRender) {
-                    this.skipRenderMeshes.add(blockStateId);
-                }
-            } catch(e) {
-                throw new Error("Failed to compile block model " + blockState, { cause: e });
-            }
-        }
-
-        const defaultIndex = this.tileMeshIndices.get(getUnknownBlockState().getFullId()) || 0;
-        this.defaultMesh = this.tileMeshList[defaultIndex]!;
-
-        this.tileCache = new TileCache(world, this.aoWeights, this.tileMeshIndices, defaultIndex);
+        this.tileCache = new TileCache(world, meshCache.aoWeights, meshCache.tileMeshIndices, meshCache.defaultIndex);
         this.lightChannelCount = world.lightingManager.lightChannels.length;
 
         // ~150 MB maximum mesh size (should be more than enough..?)
         const MAX_VERTEX_COUNT = 2 ** 22;
 
         // [ pos.x, pos.y, pos.z, uv.x, uv.y, normal.x, normal.y, normal.z, aoFactor, color*... ]
-        this.geometryFloatAttributes = new Float32Array(MAX_VERTEX_COUNT * (3 + 2 + 3 + 1 + this.lightChannelCount));
+        this.positions = new Float32Array(MAX_VERTEX_COUNT * 3);
+        this.uvs = new Float32Array(MAX_VERTEX_COUNT * 2);
+        this.normals = new Float32Array(MAX_VERTEX_COUNT * 3);
+        this.aoFactors = new Float32Array(MAX_VERTEX_COUNT);
+
+        for(let i = 0; i < this.lightChannelCount; i++) {
+            this.lightFactors.push(new Float32Array(MAX_VERTEX_COUNT));
+        }
 
         // [ faceType ]
         // { <15x none> <lit> }
-        this.geometryFaceType = new Uint16Array(MAX_VERTEX_COUNT);
+        this.faceTypes = new Uint16Array(MAX_VERTEX_COUNT);
 
-        this.geometryIndex = new Uint32Array(MAX_VERTEX_COUNT * (6 / 4));
-    }
-
-    public getCompiledMeshes() {
-        const map = new Map<string, TileMesh>;
-
-        for(const [ blockStateId, tileMeshIndex ] of this.tileMeshIndices.entries()) {
-            map.set(blockStateId, this.tileMeshList[tileMeshIndex]!);
-        }
-
-        return map;
-    }
-
-    private getMesh(tile: number) {
-        return this.tileMeshList[tile] || this.defaultMesh;
+        this.indices = new Uint32Array(MAX_VERTEX_COUNT * (6 / 4));
     }
 
     public mesh(chunkX: number, chunkY: number, chunkZ: number) {
         const chunkTiles = this.world.tiles.getChunk(chunkX, chunkY, chunkZ) || null;
         if(chunkTiles == null) return null;
         
-        if(chunkTiles.entireSingleTile && this.skipRenderMeshes.has(chunkTiles.palette[0]!)) {
+        const meshCache = this.meshCache;
+
+        if(chunkTiles.entireSingleTile && this.meshCache.skipRenderMeshes.has(chunkTiles.palette[0])) {
             return null;
         }
-
+        
         // Optimize: use an 18x18x18 "halo" tile buffer
         // to cache tiles, so VoxelGrid#tileAt() isn't
         // called so frequently
         const tiles = this.tileCache;
         tiles.update(chunkX, chunkY, chunkZ, chunkTiles);
 
-        const floatAttributes = this.geometryFloatAttributes;
-        const faceType = this.geometryFaceType;
-        const index = this.geometryIndex;
+        const { positions, uvs, normals, aoFactors, lightFactors, faceTypes, indices } = this;
 
         const lightChannelCount = this.lightChannelCount;
 
-        let floatAttributeOffset = 0;
-        const floatAttributeStride = (9 + lightChannelCount);
-
+        let positionOffset = 0;
+        let uvOffset = 0;
+        let normalOffset = 0;
+        let aoFactorOffset = 0;
+        let lightFactorOffset = 0;
         let indexOffset = 0;
         let vertexCount = 0;
 
@@ -266,20 +87,60 @@ export class ChunkMesher {
         let light$ppn = Array.from(lightDefault);
         let light$ppp = Array.from(lightDefault);
 
+        const vertex = (
+            x: number, y: number, z: number,
+            u: number, v: number,
+            nx: number, ny: number, nz: number,
+            ao: number,
+            light: number[],
+            typeMask: number
+        ) => {
+            // pos
+            positions[positionOffset + 0] = x;
+            positions[positionOffset + 1] = y;
+            positions[positionOffset + 2] = z;
+
+            // uv
+            uvs[uvOffset + 0] = u;
+            uvs[uvOffset + 1] = v;
+
+            // normal
+            normals[normalOffset + 0] = nx;
+            normals[normalOffset + 1] = ny;
+            normals[normalOffset + 2] = nz;
+
+            // ao
+            aoFactors[aoFactorOffset] = ao;
+
+            // light
+            for(let i = 0; i < lightChannelCount; i++) {
+                lightFactors[i][lightFactorOffset] = light[i]!;
+            }
+
+            faceTypes[vertexCount] = typeMask;
+
+            positionOffset += 3;
+            uvOffset += 2;
+            normalOffset += 3;
+            aoFactorOffset++;
+            lightFactorOffset++;
+            vertexCount++;
+        }
+
         for(let x = 0; x < 16; x++) {
             for(let y = 0; y < 16; y++) {
                 for(let z = 0; z < 16; z++) {
                     const tile = tiles.at(x, y, z);
-                    const mesh = this.getMesh(tile);
+                    const mesh = meshCache.getMeshFromTile(tile);
 
                     if(mesh.skipRender) continue;
 
-                    const showNorth = !this.getMesh(tiles.at(x, y, z - 1)).occludeSouth;
-                    const showSouth = !this.getMesh(tiles.at(x, y, z + 1)).occludeNorth;
-                    const showEast = !this.getMesh(tiles.at(x + 1, y, z)).occludeWest;
-                    const showWest = !this.getMesh(tiles.at(x - 1, y, z)).occludeEast;
-                    const showUp = !this.getMesh(tiles.at(x, y + 1, z)).occludeDown;
-                    const showDown = !this.getMesh(tiles.at(x, y - 1, z)).occludeUp;
+                    const showNorth = !meshCache.getMeshFromTile(tiles.at(x, y, z - 1)).occludeSouth;
+                    const showSouth = !meshCache.getMeshFromTile(tiles.at(x, y, z + 1)).occludeNorth;
+                    const showEast = !meshCache.getMeshFromTile(tiles.at(x + 1, y, z)).occludeWest;
+                    const showWest = !meshCache.getMeshFromTile(tiles.at(x - 1, y, z)).occludeEast;
+                    const showUp = !meshCache.getMeshFromTile(tiles.at(x, y + 1, z)).occludeDown;
+                    const showDown = !meshCache.getMeshFromTile(tiles.at(x, y - 1, z)).occludeUp;
 
                     // Optimize: when blocks on all sides cull this block, and this
                     // block doesn't render anything when all faces are culled, skip
@@ -327,732 +188,294 @@ export class ChunkMesher {
                     for(const face of mesh.north) {
                         if(face.cull && !showNorth) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = -1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnn + ao$p_n + ao$_nn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = -1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppn + ao$p_n + ao$_pn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = -1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npn + ao$n_n + ao$_pn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = -1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnn + ao$n_n + ao$_nn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$pnn + ao$p_n + ao$_nn) * face.aoReceiveWeight,
+                            light$pnn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$ppn + ao$p_n + ao$_pn) * face.aoReceiveWeight,
+                            light$ppn,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$npn + ao$n_n + ao$_pn) * face.aoReceiveWeight,
+                            light$npn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$nnn + ao$n_n + ao$_nn) * face.aoReceiveWeight,
+                            light$nnn,
+                            face.typeMask
+                        );
                     }
 
                     // South
                     for(const face of mesh.south) {
                         if(face.cull && !showSouth) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnp + ao$n_p + ao$_np) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npp + ao$n_p + ao$_pp) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppp + ao$p_p + ao$_pp) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 1;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnp + ao$p_p + ao$_np) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$nnp + ao$n_p + ao$_np) * face.aoReceiveWeight,
+                            light$nnp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$npp + ao$n_p + ao$_pp) * face.aoReceiveWeight,
+                            light$npp,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$ppp + ao$p_p + ao$_pp) * face.aoReceiveWeight,
+                            light$ppp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$pnp + ao$p_p + ao$_np) * face.aoReceiveWeight,
+                            light$pnp,
+                            face.typeMask
+                        );
                     }
 
                     // East
                     for(const face of mesh.east) {
                         if(face.cull && !showEast) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnp + ao$p_p + ao$pn_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppp + ao$p_p + ao$pp_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppn + ao$p_n + ao$pp_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnn + ao$p_n + ao$pn_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$pnp + ao$p_p + ao$pn_) * face.aoReceiveWeight,
+                            light$pnp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$ppp + ao$p_p + ao$pp_) * face.aoReceiveWeight,
+                            light$ppp,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$ppn + ao$p_n + ao$pp_) * face.aoReceiveWeight,
+                            light$ppn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$pnn + ao$p_n + ao$pn_) * face.aoReceiveWeight,
+                            light$pnn,
+                            face.typeMask
+                        );
                     }
 
                     // West
                     for(const face of mesh.west) {
                         if(face.cull && !showWest) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = -1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnn + ao$n_n + ao$nn_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = -1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npn + ao$n_n + ao$np_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = -1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npp + ao$n_p + ao$np_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = -1;
-                        floatAttributes[floatAttributeOffset + 6] = 0;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnp + ao$n_p + ao$nn_) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$nnn + ao$n_n + ao$nn_) * face.aoReceiveWeight,
+                            light$nnn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$npn + ao$n_n + ao$np_) * face.aoReceiveWeight,
+                            light$npn,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$npp + ao$n_p + ao$np_) * face.aoReceiveWeight,
+                            light$npp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$nnp + ao$n_p + ao$nn_) * face.aoReceiveWeight,
+                            light$nnp,
+                            face.typeMask
+                        );
                     }
 
                     // Up
                     for(const face of mesh.up) {
                         if(face.cull && !showUp) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npp + ao$np_ + ao$_pp) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$npn + ao$np_ + ao$_pn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$npn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppn + ao$pp_ + ao$_pn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = 1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$ppp + ao$pp_ + ao$_pp) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$ppp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$npp + ao$np_ + ao$_pp) * face.aoReceiveWeight,
+                            light$npp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$npn + ao$np_ + ao$_pn) * face.aoReceiveWeight,
+                            light$npn,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$ppn + ao$pp_ + ao$_pn) * face.aoReceiveWeight,
+                            light$ppn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$ppp + ao$pp_ + ao$_pp) * face.aoReceiveWeight,
+                            light$ppp,
+                            face.typeMask
+                        );
                     }
 
                     // Down
                     for(const face of mesh.down) {
                         if(face.cull && !showDown) continue;
 
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x0;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y0;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z0;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u0;
-                        floatAttributes[floatAttributeOffset + 4] = face.v0;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = -1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnn + ao$nn_ + ao$_nn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x1;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y1;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z1;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u1;
-                        floatAttributes[floatAttributeOffset + 4] = face.v1;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = -1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$nnp + ao$nn_ + ao$_np) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$nnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x2;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y2;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z2;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u2;
-                        floatAttributes[floatAttributeOffset + 4] = face.v2;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = -1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnp + ao$pn_ + ao$_np) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnp[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-                        
-
-
-                        // pos
-                        floatAttributes[floatAttributeOffset + 0] = x + face.x3;
-                        floatAttributes[floatAttributeOffset + 1] = y + face.y3;
-                        floatAttributes[floatAttributeOffset + 2] = z + face.z3;
-
-                        // uv
-                        floatAttributes[floatAttributeOffset + 3] = face.u3;
-                        floatAttributes[floatAttributeOffset + 4] = face.v3;
-
-                        // normal
-                        floatAttributes[floatAttributeOffset + 5] = 0;
-                        floatAttributes[floatAttributeOffset + 6] = -1;
-                        floatAttributes[floatAttributeOffset + 7] = 0;
-
-                        // ao
-                        floatAttributes[floatAttributeOffset + 8] = (ao$pnn + ao$pn_ + ao$_nn) * face.aoReceiveWeight;
-
-                        // light
-                        for(let i = 0; i < lightChannelCount; i++) {
-                            floatAttributes[floatAttributeOffset + 9 + i] = light$pnn[i]!;
-                        }
-
-                        floatAttributeOffset += floatAttributeStride;
-
-                        faceType[vertexCount + 0] = face.typeMask;
-                        faceType[vertexCount + 1] = face.typeMask;
-                        faceType[vertexCount + 2] = face.typeMask;
-                        faceType[vertexCount + 3] = face.typeMask;
-
-                        index[indexOffset + 0] = vertexCount + 0;
-                        index[indexOffset + 1] = vertexCount + 3;
-                        index[indexOffset + 2] = vertexCount + 2;
-                        index[indexOffset + 3] = vertexCount + 2;
-                        index[indexOffset + 4] = vertexCount + 1;
-                        index[indexOffset + 5] = vertexCount + 0;
+                        indices[indexOffset + 0] = vertexCount + 0;
+                        indices[indexOffset + 1] = vertexCount + 3;
+                        indices[indexOffset + 2] = vertexCount + 2;
+                        indices[indexOffset + 3] = vertexCount + 2;
+                        indices[indexOffset + 4] = vertexCount + 1;
+                        indices[indexOffset + 5] = vertexCount + 0;
 
                         indexOffset += 6;
-                        vertexCount += 4;
+
+                        vertex(
+                            x + face.x0, y + face.y0, z + face.z0,
+                            face.u0, face.v0,
+                            0, 0, -1,
+                            (ao$nnn + ao$nn_ + ao$_nn) * face.aoReceiveWeight,
+                            light$nnn,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x1, y + face.y1, z + face.z1,
+                            face.u1, face.v1,
+                            0, 0, -1,
+                            (ao$nnp + ao$nn_ + ao$_np) * face.aoReceiveWeight,
+                            light$nnp,
+                            face.typeMask
+                        );
+                        vertex(
+                            x + face.x2, y + face.y2, z + face.z2,
+                            face.u2, face.v2,
+                            0, 0, -1,
+                            (ao$pnp + ao$pn_ + ao$_np) * face.aoReceiveWeight,
+                            light$pnp,
+                            face.typeMask
+                        );
+
+                        vertex(
+                            x + face.x3, y + face.y3, z + face.z3,
+                            face.u3, face.v3,
+                            0, 0, -1,
+                            (ao$pnn + ao$pn_ + ao$_nn) * face.aoReceiveWeight,
+                            light$pnn,
+                            face.typeMask
+                        );
                     }
                 }
             }
@@ -1062,27 +485,23 @@ export class ChunkMesher {
 
         const geometry = new BufferGeometry();
 
-        // Copy float data to Float32Array and make it an InterleavedBuffer
-        const interleavedFloatAttributes = new InterleavedBuffer(
-            floatAttributes.slice(0, floatAttributeOffset), 9 + lightChannelCount);
-
         // Copy face type data to Uint16Array and make it a Uint16BufferAttribute
-        const faceTypeAttribute = new Uint16BufferAttribute(faceType.slice(0, vertexCount), 1);
+        const faceTypeAttribute = new Uint16BufferAttribute(faceTypes.subarray(0, vertexCount), 1);
         faceTypeAttribute.gpuType = IntType;
         
         // Use interleaved buffer data to set vertex attributes
-        geometry.setAttribute("position", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 0));
-        geometry.setAttribute("uv", new InterleavedBufferAttribute(interleavedFloatAttributes, 2, 3));
-        geometry.setAttribute("normal", new InterleavedBufferAttribute(interleavedFloatAttributes, 3, 5));
-        geometry.setAttribute("aoFactor", new InterleavedBufferAttribute(interleavedFloatAttributes, 1, 8));
+        geometry.setAttribute("position", new Float32BufferAttribute(positions.subarray(0, vertexCount * 3), 3));
+        geometry.setAttribute("uv", new Float32BufferAttribute(uvs.subarray(0, vertexCount * 2), 2));
+        geometry.setAttribute("normal", new Float32BufferAttribute(normals.subarray(0, vertexCount * 3), 3));
+        geometry.setAttribute("aoFactor", new Float32BufferAttribute(aoFactors.subarray(0, vertexCount), 1));
         
         for(let i = 0; i < lightChannelCount; i++) {
-            geometry.setAttribute("light" + i, new InterleavedBufferAttribute(interleavedFloatAttributes, 1, 9 + i));
+            geometry.setAttribute("light" + i, new Float32BufferAttribute(lightFactors[i].subarray(0, vertexCount), 1));
         }
         geometry.setAttribute("faceType", faceTypeAttribute);
 
         // Set indices
-        geometry.setIndex(new BufferAttribute(index.slice(0, indexOffset), 1));
+        geometry.setIndex(new BufferAttribute(indices.subarray(0, indexOffset), 1));
 
         geometry.boundingBox = new Box3(
             new Vector3(0, 0, 0),

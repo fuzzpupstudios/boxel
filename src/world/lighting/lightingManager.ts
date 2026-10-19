@@ -70,7 +70,12 @@ export class LightingManager {
                 (affectedExtent.min.z - 1) >> 4,
                 (affectedExtent.max.x + 1) >> 4,
                 (affectedExtent.max.y + 1) >> 4,
-                (affectedExtent.max.z + 1) >> 4
+                (affectedExtent.max.z + 1) >> 4,
+            
+                false,  // not priority
+                true,   // render chunks
+                true,   // save chunks
+                false   // don't skip already rendered
             );
         }
     }
@@ -89,7 +94,11 @@ export class LightingManager {
             (affectedExtent.max.x + 1) >> 4,
             (affectedExtent.max.y + 1) >> 4,
             (affectedExtent.max.z + 1) >> 4,
-            priority
+            priority,
+            
+            true,   // render chunks
+            true,   // save chunks
+            false   // don't skip already rendered
         )
     }
 }

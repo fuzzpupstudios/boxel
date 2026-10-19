@@ -7,12 +7,13 @@ import { ItemHologramProvider } from "../../entity/itemHologram";
 import { Player } from "../../entity/player";
 import { EventCursor } from "../../events/eventSheet";
 import { GuiButton } from "../../gui/element/button";
+import { GuiContainer, GuiSlotContainer } from "../../gui/element/guiContainer";
 import { GuiItemSpriteProvider } from "../../gui/element/itemSprite";
 import { GuiItemStack } from "../../gui/element/itemStack";
 import { GuiText } from "../../gui/element/text";
 import { TileHologramProvider } from "../../gui/element/tileHologram";
 import { isGuiGraphicContainer } from "../../gui/graphic/graphic";
-import { GuiContainer, GuiSlotContainer } from "../../gui/element/guiContainer";
+import { InventoryEvent } from "../../gui/guiCursor";
 import { GuiManager } from "../../gui/guiManager";
 import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
 import { DebugMenu, DebugMenuLineAlignment } from "../../gui/prefab/debugMenu";
@@ -28,16 +29,13 @@ import type { PersistentWorld } from "../../persistence/persistentWorld";
 import { WorldRenderer } from "../../rendering/worldRenderer";
 import type { Settings } from "../../settings";
 import { Time } from "../../time";
+import { CaveTerrainGenerator } from "../../world/caves/caveTerrainGenerator";
 import { ChunkLoader } from "../../world/chunkLoader";
-import { SimpleTerrainGenerator } from "../../world/simpleTerrainGenerator";
 import { World } from "../../world/world";
 import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
-import { CaveTerrainGenerator } from "../../world/caves/caveTerrainGenerator";
-import { InventoryEvent } from "../../gui/guiCursor";
-import { Inventory, InventorySlot } from "../../item/inventory";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -732,7 +730,7 @@ export class PlayingGameStage extends GameStage {
                 this.world.loadingChunks.size,
                 this.chunkLoader.columnLoadQueue.size,
                 this.chunkLoader.columnGenerationQueue.size,
-                this.worldRenderer.dirtyChunks.size + this.worldRenderer.priorityDirtyChunks.size,
+                this.worldRenderer.chunkRenderer.dirtyRegions.size,
                 this.world.chunksToSave.size,
                 this.chunkLoader.chunksToHide.size
             );
@@ -830,5 +828,7 @@ export class PlayingGameStage extends GameStage {
             this.game.input.detachMobileController();
         }
         clearInterval(this.blockTickInterval);
+
+        this.worldRenderer.dispose();
     }
 }

@@ -19,7 +19,7 @@ export class EntityRenderer {
         textureAtlases: TextureAtlases,
     ) {
         this.itemEntityRenderer = new ItemEntityRenderer(
-            world, worldRenderer,
+            worldRenderer,
             new ItemHologramProvider(textureAtlases));
         
         this.root.add(this.itemEntityRenderer.batchedMesh);
@@ -46,5 +46,9 @@ export class EntityRenderer {
             }
             entity.render(time);
         }
+    }
+
+    public dispose() {
+        this.itemEntityRenderer.dispose();
     }
 }

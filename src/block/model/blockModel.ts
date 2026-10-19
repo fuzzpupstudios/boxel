@@ -2,7 +2,7 @@ import { Box3, Matrix3, Matrix4, Vector2, Vector3 } from "three";
 import { Assets } from "../../data/assets";
 import { DataDrivenJson } from "../../data/dataDrivenJson";
 import type { TextureAtlas } from "../../data/textureAtlas";
-import type { TileMesh } from "../../rendering/chunkMesher";
+import type { TileMesh } from "../../rendering/tileRendering";
 import { parseModel } from "../jsonParseUtils";
 import { blockTransformRegistry } from "../transform/blockTransformRegistry";
 import { BlockModelFace } from "./face";

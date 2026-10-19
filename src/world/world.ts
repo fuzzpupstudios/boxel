@@ -7,7 +7,7 @@ import type { PersistentWorld } from "../persistence/persistentWorld";
 import { PhysicsDataCache } from "../physics/physicsDataCache";
 import type { WorldRenderer } from "../rendering/worldRenderer";
 import type { Time } from "../time";
-import { encodeChunkKey, type ChunkKey } from "./keying";
+import { encodeChunkKey, translateChunkKey, type ChunkKey } from "./keying";
 import type { LightingChunk } from "./lighting/lightingGrid";
 import { LightingManager } from "./lighting/lightingManager";
 import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "./terrainGenerator";
@@ -19,7 +19,7 @@ export class Chunk {
     public readonly entities = new Set<Entity>;
     public readonly lightingChunks = new Map<string, LightingChunk>;
     private readonly blockEntityGrid = new Array<BlockEntity>(16 ** 3);
-    public world?: World;
+    public world: World | null = null;
 
     public constructor(
         public readonly x: number,
@@ -68,6 +68,18 @@ export class Chunk {
 
     public getBlockEntity(x: number, y: number, z: number): BlockEntity | null {
         return this.blockEntityGrid[x << 8 | y << 4 | z] ?? null;
+    }
+
+    public isSurrounded() {
+        const world = this.world;
+        if(world === null) return false;
+
+        for(let dx = -1n; dx <= 1n; dx++) for(let dy = -1n; dy <= 1n; dy++) for(let dz = -1n; dz <= 1n; dz++) {
+            if(!world.chunks.has(translateChunkKey(this.key, dx, dy, dz))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
@@ -192,13 +204,21 @@ export class World {
                 this.getChunk(columnX, y, columnZ)?.tiles.update();
                 this.lightingManager.updateChunk(columnX, y, columnZ, false);
             }
-            this.flagChunksForInitialRender(
+            this.markChunksDirty(
                 columnX - 1, columnY - 1, columnZ - 1,
                 columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1,
-                true // flag chunks for saving as well
+
+                false,  // not priority
+                true,   // render chunks
+                true,   // save chunks
+                true    // skip already rendered
             );
             callback();
         });
+    }
+
+    public hasChunk(chunkX: number, chunkY: number, chunkZ: number) {
+        return this.chunks.has(encodeChunkKey(chunkX, chunkY, chunkZ));
     }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {
@@ -266,7 +286,15 @@ export class World {
                 this.addEntity(entity);
             }
 
-            this.flagChunksForInitialRender(chunk.x - 1, chunk.y - 1, chunk.z - 1, chunk.x + 1, chunk.y + 1, chunk.z + 1);
+            this.markChunksDirty(
+                chunk.x - 1, chunk.y - 1, chunk.z - 1,
+                chunk.x + 1, chunk.y + 1, chunk.z + 1,
+
+                false,  // not priority
+                true,   // render chunks
+                false,  // don't save chunks
+                true    // skip already rendered
+            );
         }
 
         return chunks;
@@ -357,89 +385,51 @@ export class World {
 
         if(this.renderer === null) return;
 
-        this.flagChunksForRender(
+        this.markChunksDirty(
             (x - 1) >> 4, (y - 1) >> 4, (z - 1) >> 4,
             (x + 1) >> 4, (y + 1) >> 4, (z + 1) >> 4,
-            true
+            
+            true,   // priority
+            true,   // render chunks
+            true,   // save chunks
+            false   // don't skip already rendered
         );
-    }
-
-    public flagChunkForRender(
-        chunkX: number, chunkY: number, chunkZ: number,
-        priority: boolean = false
-    ) {
-        if(this.renderer === null) return;
-
-        const chunk = this.getChunk(chunkX, chunkY, chunkZ);
-        if(chunk === null) return;
-
-        this.renderer.markDirty(chunk, priority);
     }
     
     public markChunkDirty(
         chunkX: number, chunkY: number, chunkZ: number,
-        priority: boolean = false
+        priority: boolean = false,
+        render: boolean = true,
+        save: boolean = true
     ) {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
         if(chunk === null) return;
 
-        this.renderer?.markDirty(chunk, priority);
-        this.chunksToSave.add(chunk);
-    }
-
-    public flagChunksForInitialRender(
-        minX: number, minY: number, minZ: number,
-        maxX: number, maxY: number, maxZ: number,
-        save: boolean = false
-    ) {
-        if(this.renderer === null) return;
-
-        for(let x = minX; x <= maxX; x++) {
-            for(let y = minY; y <= maxY; y++) {
-                for(let z = minZ; z <= maxZ; z++) {
-                    const chunk = this.getChunk(x, y, z);
-                    if(chunk === null) continue;
-                    if(this.renderer.renderedChunks.has(chunk)) continue;
-
-                    this.renderer.markDirty(chunk);
-                    if(save) this.chunksToSave.add(chunk);
-                }
-            }
-        }
-    }
-
-    public flagChunksForRender(
-        minX: number, minY: number, minZ: number,
-        maxX: number, maxY: number, maxZ: number,
-        priority: boolean = false
-    ) {
-        if(this.renderer === null) return;
-
-        for(let x = minX; x <= maxX; x++) {
-            for(let y = minY; y <= maxY; y++) {
-                for(let z = minZ; z <= maxZ; z++) {
-                    const chunk = this.getChunk(x, y, z);
-                    if(chunk === null) continue;
-
-                    this.renderer.markDirty(chunk, priority);
-                }
-            }
-        }
+        if(render) this.renderer?.chunkRenderer.markChunkDirty(chunk, priority);
+        if(save) this.chunksToSave.add(chunk);
     }
 
     public markChunksDirty(
         minX: number, minY: number, minZ: number,
         maxX: number, maxY: number, maxZ: number,
-        priority: boolean = false
+        priority: boolean,
+        render: boolean, save: boolean,
+        skipRendered: boolean
     ) {
+        const chunkRenderer = this.renderer?.chunkRenderer;
+        if(render && chunkRenderer == null) return;
+        
         for(let x = minX; x <= maxX; x++) {
             for(let y = minY; y <= maxY; y++) {
                 for(let z = minZ; z <= maxZ; z++) {
                     const chunk = this.getChunk(x, y, z);
                     if(chunk === null) continue;
-
-                    this.renderer?.markDirty(chunk, priority);
-                    this.chunksToSave.add(chunk);
+                    
+                    if(render) {
+                        if(skipRendered && chunkRenderer!.renderedChunks.has(chunk)) continue;
+                        chunkRenderer!.markChunkDirty(chunk, priority);
+                    }
+                    if(save) this.chunksToSave.add(chunk);
                 }
             }
         }

@@ -161,7 +161,7 @@ export class ParticleAction extends EventAction {
             );
         }
 
-        const tileMesh = cursor.world.renderer?.chunkMesher.tileMeshes.get(blockStateId);
+        const tileMesh = cursor.world.renderer?.tileMeshCache.getMeshFromBlockStateId(blockStateId);
         if(tileMesh == null) return;
 
         cursor.clientPlatform.blockBreakParticles.blockParticle(
