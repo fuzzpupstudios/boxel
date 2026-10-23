@@ -134,6 +134,13 @@ class BatchedChunkRegion {
         this.chunkX = x * renderer.regionWidth;
         this.chunkY = y * renderer.regionHeight;
         this.chunkZ = z * renderer.regionWidth;
+
+        this.root.matrixAutoUpdate = false;
+    }
+
+    public updateMatrices() {
+        this.root.updateMatrix();
+        this.root.matrixWorld.copy(this.root.matrix);
     }
 
     private makeBatched() {
@@ -147,6 +154,8 @@ class BatchedChunkRegion {
         );
         const mesh = new Mesh(geometry, this.renderer.material);
         mesh.position.set(this.chunkX * 16, this.chunkY * 16, this.chunkZ * 16);
+        mesh.matrixAutoUpdate = false;
+
 
         for(const chunkMesh of this.chunkMeshes.values()) {
             chunkMesh.removeFromParent();
@@ -155,6 +164,9 @@ class BatchedChunkRegion {
         this.batchedMesh = mesh;
         this.root.clear();
         this.root.add(mesh);
+
+        mesh.updateMatrix();
+        mesh.matrixWorld.copy(mesh.matrix);
     }
 
     private hibernate() {
@@ -256,8 +268,13 @@ class BatchedChunkRegion {
             } else {
                 mesh = new Mesh(geometry, this.renderer.material);
                 mesh.position.set(chunk.x * 16, chunk.y * 16, chunk.z * 16);
+                mesh.matrixAutoUpdate = false;
+
                 this.chunkMeshes.set(chunk, mesh);
                 this.root.add(mesh);
+
+                mesh.updateMatrix();
+                mesh.matrixWorld.copy(mesh.matrix);
             }
 
         } else {
@@ -440,6 +457,7 @@ export class BatchedChunkRenderer {
 
             this.scene.add(region.root);
             this.renderedRegions.add(region);
+            region.updateMatrices();
 
             return;
         } else {
