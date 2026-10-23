@@ -4,6 +4,7 @@ import type { Time } from "../time";
 import { encodeChunkKey, type ChunkKey } from "./keying";
 import type { Chunk, World } from "./world";
 import { BucketQueue } from "./bucketQueue";
+import type { BatchedChunkRegion } from "../rendering/meshing/batchedChunkRenderer";
 
 type ChunkQueueEntry = [ ChunkKey, number, number, number ];
 
@@ -16,7 +17,7 @@ export class ChunkLoader {
     private radius = 128;
     private needsUpdate: boolean = true;
     public readonly columnsToLoad = new Map<ChunkKey, [ number, number, number ]>;
-    public readonly chunksToHide = new Map<ChunkKey, Chunk>;
+    public readonly regionsToUnload = new Set<BatchedChunkRegion>;
     public readonly columnGenerationQueue = new BucketQueue<ChunkQueueEntry>;
     public readonly columnLoadQueue = new BucketQueue<ChunkQueueEntry>;
     private readonly frameTasks = new Array<Function>;
@@ -26,25 +27,24 @@ export class ChunkLoader {
         private readonly world: World
     ) {}
 
-    public updateChunksToHide() {
+    public updateRegionsToUnload() {
         if(this.world.renderer == null) return;
         
         const minX = (this.origin.x - this.radius - 15) >> 4;
-        const maxX = (this.origin.x + this.radius + 31) >> 4;
+        const maxX = (this.origin.x + this.radius + 15) >> 4;
         const minY = (this.origin.y - this.radius - 15) >> 4;
-        const maxY = (this.origin.y + this.radius + 31) >> 4;
+        const maxY = (this.origin.y + this.radius + 15) >> 4;
         const minZ = (this.origin.z - this.radius - 15) >> 4;
-        const maxZ = (this.origin.z + this.radius + 31) >> 4;
+        const maxZ = (this.origin.z + this.radius + 15) >> 4;
 
-        for(const region of this.world.renderer.chunkRenderer.renderedRegions.keys()) {
+        const chunkRenderer = this.world.renderer.chunkRenderer;
+        for(const region of chunkRenderer.renderedRegions.keys()) {
             if(
-                region.x > minX && region.x < maxX &&
-                region.y > minY && region.y < maxY &&
-                region.z > minZ && region.z < maxZ
-            ) continue;
-            
-            for(const chunk of region.chunks) {
-                this.chunksToHide.set(chunk.key, chunk);
+                region.chunkX + chunkRenderer.regionWidth < minX || region.chunkX > maxX ||
+                region.chunkY + chunkRenderer.regionHeight < minY || region.chunkY > maxY ||
+                region.chunkZ + chunkRenderer.regionWidth < minZ || region.chunkZ > maxZ
+            ) {
+                this.regionsToUnload.add(region);
             }
         }
     }
@@ -55,8 +55,8 @@ export class ChunkLoader {
         const originZ = marker.z >> 4;
         const minX = (marker.x - this.radius) >> 4;
         const maxX = (marker.x + this.radius) >> 4;
-        const minY = (marker.y - 128) >> 7 << 3;
-        const maxY = (marker.y + 128) >> 7 << 3;
+        const minY = (marker.y - 192) >> 7 << 3;
+        const maxY = (marker.y + 64) >> 7 << 3;
         const minZ = (marker.z - this.radius) >> 4;
         const maxZ = (marker.z + this.radius) >> 4;
 
@@ -74,7 +74,7 @@ export class ChunkLoader {
                     const key = encodeChunkKey(x, y, z);
                     if(this.columnsToLoad.has(key)) continue;
                     if(this.columnsGenerating.has(key)) continue;
-                    if(this.world.tiles.chunks.has(key)) continue;
+                    if(this.world.chunks.has(key)) continue;
 
                     this.columnsToLoad.set(key, [ x, y, z ]);
                 }
@@ -114,7 +114,7 @@ export class ChunkLoader {
         this.radius = radius;
         this.needsUpdate = true;
         this.columnsToLoad.clear();
-        this.chunksToHide.clear();
+        this.regionsToUnload.clear();
         this.columnGenerationQueue.clear();
     }
 
@@ -125,7 +125,7 @@ export class ChunkLoader {
     public update(time: Time) {
         if(this.needsUpdate) {
             this.frameTasks.push(() => this.updateColumnsToLoad());
-            this.frameTasks.push(() => this.updateChunksToHide());
+            this.frameTasks.push(() => this.updateRegionsToUnload());
             this.needsUpdate = false;
         }
 
@@ -200,10 +200,12 @@ export class ChunkLoader {
             })
         }
 
-        for(const [ key, chunk ] of this.chunksToHide.entries().take(this.maxChunkUnloads)) {
-            this.world.hideChunk(chunk);
-            this.chunksToHide.delete(key);
-            this.columnsToLoad.delete(key);
+        for(const region of this.regionsToUnload.values().take(this.maxChunkUnloads)) {
+            for(const chunk of region.chunks) {
+                this.columnsToLoad.delete(chunk.key);
+            }
+            this.regionsToUnload.delete(region);
+            this.world.unloadChunks(region.chunks);
         }
     }
 }

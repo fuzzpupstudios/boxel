@@ -1,6 +1,6 @@
 import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Mesh, Object3D, Uint16BufferAttribute, Uint8BufferAttribute, UnsignedByteType, Vector3, type NodeMaterial, type Scene } from "three/webgpu";
 import type { Time } from "../../time";
-import { encodeChunkKey as encodeBatchKey, type ChunkKey as BatchKey } from "../../world/keying";
+import { encodeChunkKey as encodeBatchKey, type ChunkKey as BatchKey, type ChunkKey } from "../../world/keying";
 import { Chunk, type World } from "../../world/world";
 import { ChunkMeshDispatcher } from "./chunkMeshDispatcher";
 import type { MeshCache } from "./tileRendering";
@@ -105,7 +105,7 @@ function mergeChunkGeometries(
     return geometry;
 }
 
-class BatchedChunkRegion {
+export class BatchedChunkRegion {
     public readonly root = new Object3D;
     private batchedMesh: Mesh | null = null;
     private readonly chunkMeshes = new Map<Chunk, Mesh>;
@@ -365,8 +365,8 @@ export class BatchedChunkRenderer {
     public readonly dirtyRegions = new OrderedSet<BatchedChunkRegion>;
 
     public readonly renderedRegions = new Set<BatchedChunkRegion>;
-    public readonly trackedChunks = new WeakSet<Chunk>;
-    public readonly renderedChunks = new WeakSet<Chunk>;
+    public readonly trackedChunks = new Map<ChunkKey, Chunk>;
+    public readonly renderedChunks = new Map<ChunkKey, Chunk>;
 
     private settlePointer: MapIterator<BatchedChunkRegion> = this.batchedRegions.values();
     private updateLock: Promise<any> | null = null;
@@ -386,7 +386,9 @@ export class BatchedChunkRenderer {
     }
 
     public async init() {
-        this.chunkDispatcher.createWorker();
+        for(let i = 0; i < 4; i++) {
+            this.chunkDispatcher.createWorker();
+        }
     }
 
     private getChunkRegion(chunk: Chunk) {
@@ -423,12 +425,12 @@ export class BatchedChunkRenderer {
             }
         }
 
-        if(this.trackedChunks.has(chunk)) {
+        if(this.trackedChunks.has(chunk.key)) {
             region.updateChunk(chunk);
         } else {
             region.addChunk(chunk);
 
-            this.trackedChunks.add(chunk);
+            this.trackedChunks.set(chunk.key, chunk);
         }
     }
 
@@ -445,8 +447,8 @@ export class BatchedChunkRenderer {
             this.batchedRegions.delete(region.key);
         }
 
-        this.trackedChunks.delete(chunk);
-        this.renderedChunks.delete(chunk);
+        this.trackedChunks.delete(chunk.key);
+        this.renderedChunks.delete(chunk.key);
     }
 
     private async updateRegion(time: Time, region: BatchedChunkRegion) {
@@ -498,7 +500,7 @@ export class BatchedChunkRenderer {
             // await this.updateRegion(time, region);
             promises.push(this.updateRegion(time, region).then(() => {
                 for(const chunk of region.renderedChunks) {
-                    this.renderedChunks.add(chunk);
+                    this.renderedChunks.set(chunk.key, chunk);
                 }
             }));
         }

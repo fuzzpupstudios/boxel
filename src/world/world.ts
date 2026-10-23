@@ -181,20 +181,23 @@ export class World {
         }
     }
 
-    public async unloadChunk(chunk: Chunk) {
-        this.hideChunk(chunk);
+    public async unloadChunks(chunks: Iterable<Chunk>) {
+        for(const chunk of chunks) {
+            this.hideChunk(chunk);
 
-        for(const blockEntity of chunk.blockEntities) {
-            this.tickables.delete(blockEntity);
+            for(const blockEntity of chunk.blockEntities) {
+                this.tickables.delete(blockEntity);
+            }
+
+            this.chunks.delete(chunk.key);
+            this.tiles.chunks.delete(chunk.key);
+            this.chunksWithBlockEntities.delete(chunk);
         }
 
-        this.chunks.delete(chunk.key);
-        this.chunksWithBlockEntities.delete(chunk);
-
         if(this.persistentWorld == null) {
-            console.warn("No PersistentWorld container present; changes in chunk " + chunk + " were lost");
+            console.warn("No PersistentWorld container present; changed chunk data was lost");
         } else {
-            this.persistentWorld.saveChunk(chunk);
+            await this.persistentWorld.saveChunks(chunks);
         }
     }
 
@@ -221,6 +224,10 @@ export class World {
     }
 
     public getChunk(chunkX: number, chunkY: number, chunkZ: number) {
+        return this.chunks.get(encodeChunkKey(chunkX, chunkY, chunkZ)) ?? null;
+    }
+
+    public createChunk(chunkX: number, chunkY: number, chunkZ: number) {
         const chunkKey = encodeChunkKey(chunkX, chunkY, chunkZ);
 
         // Check if the chunk is cached in the world
@@ -425,7 +432,7 @@ export class World {
                     if(chunk === null) continue;
                     
                     if(render) {
-                        if(skipRendered && chunkRenderer!.renderedChunks.has(chunk)) continue;
+                        if(skipRendered && chunkRenderer!.renderedChunks.has(chunk.key)) continue;
                         chunkRenderer!.markChunkDirty(chunk, priority);
                     }
                     if(save) this.chunksToSave.add(chunk);

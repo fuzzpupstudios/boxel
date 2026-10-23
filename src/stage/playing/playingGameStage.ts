@@ -731,7 +731,7 @@ export class PlayingGameStage extends GameStage {
                 this.chunkLoader.columnGenerationQueue.size,
                 this.worldRenderer.chunkRenderer.dirtyRegions.size,
                 this.world.chunksToSave.size,
-                this.chunkLoader.chunksToHide.size
+                this.chunkLoader.regionsToUnload.size
             );
             this.debugMenuLines.counters.setData(
                 this.worldRenderer.blockBreakParticles.particleCount,
