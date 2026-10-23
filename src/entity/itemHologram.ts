@@ -5,8 +5,8 @@ import { blockStateRegistry } from "../block/blockRegistry";
 import type { TextureAtlases } from "../boxel";
 import type { TextureAtlasSlot } from "../data/textureAtlas";
 import { itemRegistry } from "../item/itemRegistry";
-import type { TileMesh } from "../rendering/tileRendering";
-import type { TileFace } from "../rendering/tileRendering";
+import type { TileMesh } from "../rendering/meshing/tileRendering";
+import type { TileFace } from "../rendering/meshing/tileRendering";
 
 export class ItemHologramProvider {
     public readonly blockStateGeometries = new Map<string, BufferGeometry>;

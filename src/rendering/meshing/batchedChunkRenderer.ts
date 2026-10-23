@@ -1,54 +1,10 @@
-import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Mesh, Object3D, Uint16BufferAttribute, Vector3, type NodeMaterial, type Scene } from "three/webgpu";
-import type { Time } from "../time";
-import { Chunk, type World } from "../world/world";
-import { ChunkMesher } from "./chunkMesher";
-import type { TileMeshCache } from "./tileRendering";
-import { type ChunkKey as BatchKey, encodeChunkKey as encodeBatchKey } from "../world/keying";
-
-class OrderedSet<T> {
-    private readonly front = new Set<T>;
-    private readonly back = new Set<T>;
-
-    public push(item: T) {
-        if(!this.front.has(item)) this.back.add(item);
-    }
-
-    public unshift(item: T) {
-        this.back.delete(item);
-        this.front.add(item);
-    }
-
-    public has(item: T) {
-        return this.front.has(item) || this.back.has(item);
-    }
-
-    public delete(item: T) {
-        this.front.delete(item) || this.back.delete(item);
-    }
-
-    public clear() {
-        this.front.clear();
-        this.back.clear();
-    }
-
-    public shift(): T | undefined {
-        const set = this.front.size > 0 ? this.front : this.back;
-        const result = set.values().next();
-        if(result.done) return;
-
-        set.delete(result.value);
-        return result.value;
-    }
-
-    public get size(): number {
-        return this.front.size + this.back.size;
-    }
-
-    public *[Symbol.iterator]() {
-        yield* this.front;
-        yield* this.back;
-    }
-}
+import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Mesh, Object3D, Uint16BufferAttribute, Uint8BufferAttribute, UnsignedByteType, Vector3, type NodeMaterial, type Scene } from "three/webgpu";
+import type { Time } from "../../time";
+import { encodeChunkKey as encodeBatchKey, type ChunkKey as BatchKey } from "../../world/keying";
+import { Chunk, type World } from "../../world/world";
+import { ChunkMeshDispatcher } from "./chunkMeshDispatcher";
+import type { MeshCache } from "./tileRendering";
+import { OrderedSet } from "../../utilTypes";
 
 
 function mergeChunkGeometries(
@@ -70,7 +26,7 @@ function mergeChunkGeometries(
     const faceTypes = new Uint16Array(vertexCount);
     const indices = new Uint32Array(indexCount);
 
-    for(let i = 0; i < lightChannelCount; i++) lightFactors.push(new Float32Array(vertexCount));
+    for(let i = 0; i < lightChannelCount; i++) lightFactors.push(new Uint8Array(vertexCount));
 
     let vertexOffset = 0;
     let indexOffset = 0;
@@ -129,7 +85,9 @@ function mergeChunkGeometries(
     geometry.setAttribute("aoFactor", new Float32BufferAttribute(aoFactors, 1));
     
     for(let i = 0; i < lightChannelCount; i++) {
-        geometry.setAttribute("light" + i, new Float32BufferAttribute(lightFactors[i], 1));
+        const attribute = new Uint8BufferAttribute(lightFactors[i], 1);
+        attribute.gpuType = IntType;
+        geometry.setAttribute("light" + i, attribute);
     }
     geometry.setAttribute("faceType", faceTypeAttribute);
 
@@ -163,6 +121,8 @@ class BatchedChunkRegion {
 
     public lastUpdate: number = Infinity;
     public hibernated = false;
+
+    private updateLock: Promise<any> | null = null;
     
     public constructor(
         public readonly x: number,
@@ -183,7 +143,7 @@ class BatchedChunkRegion {
         
         const geometry = mergeChunkGeometries(
             this.chunkX * 16, this.chunkY * 16, this.chunkZ * 16,
-            geometries, this.renderer.world.lightingManager.lightChannels.length
+            geometries, this.renderer.world.lightingManager.getChannelCount()
         );
         const mesh = new Mesh(geometry, this.renderer.material);
         mesh.position.set(this.chunkX * 16, this.chunkY * 16, this.chunkZ * 16);
@@ -207,8 +167,9 @@ class BatchedChunkRegion {
         this.hibernated = true;
     }
 
-    private unhibernate() {
+    private async unhibernate() {
         console.log("unhibernate region");
+        await this.updateLock;
 
         if(this.batchedMesh) {
             this.batchedMesh.removeFromParent();
@@ -218,9 +179,13 @@ class BatchedChunkRegion {
 
         this.root.clear();
 
+        const promises = new Array<Promise<void>>;
         for(const chunk of this.chunks) {
-            this.renderChunk(chunk);
+            promises.push(this.renderChunk(chunk));
         }
+        this.updateLock = Promise.all(promises);
+        await this.updateLock;
+        this.updateLock = null;
         
         this.hibernated = false;
     }
@@ -279,8 +244,8 @@ class BatchedChunkRegion {
         }
     }
 
-    private renderChunk(chunk: Chunk) {
-        const geometry = this.renderer.chunkMesher.mesh(chunk.x, chunk.y, chunk.z);
+    private async renderChunk(chunk: Chunk) {
+        const geometry = await this.renderer.chunkDispatcher.mesh(chunk.x, chunk.y, chunk.z);
 
         let mesh = this.chunkMeshes.get(chunk);
 
@@ -326,36 +291,48 @@ class BatchedChunkRegion {
         }
     }
 
-    public update(time: Time) {
+    public async update(time: Time) {
+        await this.updateLock;
+
+        if(this.dirtyChunks.size == 0) return;
+        
+        const promises = new Array<Promise<void>>;
         let changes = 0;
 
-        if(this.dirtyChunks.size > 0) {
-            for(const chunk of this.waitingChunks) this.dirtyChunks.add(chunk);
+        for(const chunk of this.waitingChunks) this.dirtyChunks.add(chunk);
 
-            for(const chunk of this.dirtyChunks) {
-                if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
-                    if(this.hibernated) {
-                        this.unhibernate();
-                        this.dirtyChunks.clear();
-                        changes++;
-                        break;
-                    }
-
-                    if(this.batchedMesh) this.makeIndividual();
-
-                    this.renderChunk(chunk);
-
+        for(const chunk of this.dirtyChunks) {
+            if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
+                if(this.hibernated) {
+                    this.unhibernate();
+                    this.dirtyChunks.clear();
                     changes++;
-                } else {
-                    this.waitingChunks.add(chunk);
+                    break;
                 }
+
+                if(this.batchedMesh) this.makeIndividual();
+                
+                promises.push(this.renderChunk(chunk));
+
+                changes++;
+            } else {
+                this.waitingChunks.add(chunk);
             }
-            this.dirtyChunks.clear();
         }
 
         if(changes > 0) {
+            this.updateLock = Promise.all(promises);
+            await this.updateLock;
+            this.updateLock = null;
+
             this.lastUpdate = time.seconds;
         }
+
+        this.dirtyChunks.clear();
+    }
+
+    public isUpdating() {
+        return this.updateLock != null;
     }
 
     public hasChunks() {
@@ -364,7 +341,7 @@ class BatchedChunkRegion {
 }
 
 export class BatchedChunkRenderer {
-    public readonly chunkMesher: ChunkMesher;
+    public readonly chunkDispatcher: ChunkMeshDispatcher;
 
     private readonly batchedRegions = new Map<BatchKey, BatchedChunkRegion>;
 
@@ -375,6 +352,7 @@ export class BatchedChunkRenderer {
     public readonly renderedChunks = new WeakSet<Chunk>;
 
     private settlePointer: MapIterator<BatchedChunkRegion> = this.batchedRegions.values();
+    private updateLock: Promise<any> | null = null;
 
     public regionWidth = 2;
     public regionHeight = 8;
@@ -383,11 +361,15 @@ export class BatchedChunkRenderer {
 
     public constructor(
         public readonly world: World,
-        public readonly tileMeshCache: TileMeshCache,
+        public readonly meshCache: MeshCache,
         public readonly material: NodeMaterial,
         public readonly scene: Scene
     ) {
-        this.chunkMesher = new ChunkMesher(world, tileMeshCache);
+        this.chunkDispatcher = new ChunkMeshDispatcher(world, meshCache);
+    }
+
+    public async init() {
+        this.chunkDispatcher.createWorker();
     }
 
     private getChunkRegion(chunk: Chunk) {
@@ -450,8 +432,8 @@ export class BatchedChunkRenderer {
         this.renderedChunks.delete(chunk);
     }
 
-    private updateRegion(time: Time, region: BatchedChunkRegion) {
-        region.update(time);
+    private async updateRegion(time: Time, region: BatchedChunkRegion) {
+        await region.update(time);
 
         if(region.renderedChunks.size > 0) {
             if(this.renderedRegions.has(region)) return;
@@ -486,18 +468,34 @@ export class BatchedChunkRenderer {
         }
     }
 
-    public render(time: Time, maxUpdates: number) {
+    public async render(time: Time, maxUpdates: number) {
+        await this.updateLock;
+
+        const promises = new Array<Promise<void>>;
+
         for(let i = 0; i < maxUpdates; i++) {
             const region = this.dirtyRegions.shift();
             if(region == null) break;
-            this.updateRegion(time, region);
-            
-            for(const chunk of region.renderedChunks) {
-                this.renderedChunks.add(chunk);
-            }
+
+            // await this.updateRegion(time, region);
+            promises.push(this.updateRegion(time, region).then(() => {
+                for(const chunk of region.renderedChunks) {
+                    this.renderedChunks.add(chunk);
+                }
+            }));
         }
         
+        if(promises.length > 0) {
+            this.updateLock = Promise.all(promises);
+            await this.updateLock;
+            this.updateLock = null;
+        }
+
         this.settle(time);
+    }
+
+    public isUpdating() {
+        return this.updateLock != null;
     }
 
     public dispose() {

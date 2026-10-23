@@ -1,6 +1,6 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
 import { attribute, billboarding, float, positionGeometry, texture, uv } from "three/tsl";
-import { MeshBasicNodeMaterial } from "three/webgpu";
+import { IntType, MeshBasicNodeMaterial } from "three/webgpu";
 import { blockStateRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../block/collider";
 import type { Time } from "../time";
@@ -11,7 +11,7 @@ export class ParticleEngine {
     public static readonly MAX_PARTICLES = 65535;
 
     private readonly positions = new Float32Array(ParticleEngine.MAX_PARTICLES * 3);
-    private readonly lighting: Float32Array[];
+    private readonly lighting: Uint8Array[];
     private readonly sizes = new Float32Array(ParticleEngine.MAX_PARTICLES);
     private readonly uvRects = new Float32Array(ParticleEngine.MAX_PARTICLES * 4);
 
@@ -79,12 +79,13 @@ export class ParticleEngine {
         ], 2));
         this.geometry.setIndex([ 0, 1, 2, 2, 3, 0 ]);
 
-        this.lightChannelCount = world.lightingManager.lightChannels.length;
+        this.lightChannelCount = world.lightingManager.getChannelCount();
         this.lighting = [];
         this.lightingAttr = [];
         for(let i = 0; i < this.lightChannelCount; i++) {
-            const array = new Float32Array(ParticleEngine.MAX_PARTICLES);
+            const array = new Uint8Array(ParticleEngine.MAX_PARTICLES);
             const attribute = new InstancedBufferAttribute(array, 1);
+            attribute.gpuType = IntType;
             attribute.setUsage(DynamicDrawUsage);
 
             this.lighting.push(array);
@@ -142,7 +143,7 @@ export class ParticleEngine {
         const z = Math.floor(this.positions[index * 3 + 2]!);
 
         for(let i = 0; i < lightChannelCount; i++) {
-            this.lighting[i]![index] = this.world.lightingManager.lightChannels[i]!.get(x, y, z) / 15;
+            this.lighting[i]![index] = this.world.lightingManager.lightChannels[i]!.get(x, y, z);
         }
     }
 

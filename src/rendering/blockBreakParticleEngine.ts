@@ -3,19 +3,19 @@ import { Side } from "../block/direction";
 import type { TextureAtlases } from "../boxel";
 import type { World } from "../world/world";
 import { ParticleEngine } from "./particleEngine";
-import type { TileFace, TileMesh, TileMeshCache } from "./tileRendering";
+import type { TileFace, TileMesh, MeshCache } from "./meshing/tileRendering";
 
 export class BlockBreakParticleEngine extends ParticleEngine {
     private readonly tileMeshUvRects: Map<string, Box2[]> = new Map;
 
     public constructor(
         world: World,
-        public readonly tileMeshCache: TileMeshCache,
+        public readonly meshCache: MeshCache,
         textureAtlases: TextureAtlases
     ) {
         super(world, textureAtlases.block.threeTexture);
         
-        for(const [ blockStateId, tileMesh ] of tileMeshCache.tileMeshes) {
+        for(const [ blockStateId, tileMesh ] of meshCache.tileMeshes) {
             const uvRects = new Set([
                 ...tileMesh.north,
                 ...tileMesh.east,
@@ -96,7 +96,7 @@ export class BlockBreakParticleEngine extends ParticleEngine {
     ) {
         if(tileMesh == null) {
             const tile = this.world.tiles.getBlockStateId(Math.floor(x), Math.floor(y), Math.floor(z));
-            tileMesh = this.tileMeshCache.getMeshFromBlockStateId(tile);
+            tileMesh = this.meshCache.getMeshFromBlockStateId(tile);
 
             if(tileMesh == null) return;
         }

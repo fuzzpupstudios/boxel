@@ -314,6 +314,7 @@ export class PlayingGameStage extends GameStage {
         this.world.setTerrainGenerator(generator);
 
         await this.world.loadWorld();
+        await this.worldRenderer.init();
         
         const playerSlot = await this.world.loadPlayerSlot("local");
         this.localPlayer = new Player(this.world);
@@ -341,8 +342,6 @@ export class PlayingGameStage extends GameStage {
 
         this.worldLoading = false;
         this.setPaused(false);
-
-        this.worldRenderer.create();
 
         let lastTickMs = performance.now();
         this.blockTickInterval = setInterval(() => {

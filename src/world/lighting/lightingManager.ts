@@ -20,6 +20,10 @@ export class LightingManager {
         }
     }
 
+    public getChannelCount() {
+        return this.lightChannels.length;
+    }
+
     public getChannel(id: string) {
         const index = this.lightChannelMap.get(id);
         return this.lightChannels[index!] ?? null;

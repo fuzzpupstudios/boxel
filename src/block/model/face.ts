@@ -1,7 +1,7 @@
 import { Box3, MathUtils, Matrix3, Matrix4, Quaternion, Vector2, Vector3 } from "three/webgpu";
 import type { DataDrivenJson } from "../../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../../data/textureAtlas";
-import type { TileFace } from "../../rendering/tileRendering";
+import type { TileFace } from "../../rendering/meshing/tileRendering";
 import { BlockModelVertex } from "./vertex";
 
 

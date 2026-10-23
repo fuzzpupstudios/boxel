@@ -1,16 +1,16 @@
-import { attribute, mix, vec3 } from "three/src/Three.TSL.js";
+import { attribute, float, mix, vec3 } from "three/src/Three.TSL.js";
 import { Node } from "three/webgpu";
 import type { LightingManager } from "../world/lighting/lightingManager";
 
-export function createLightColorNode(lightingManager: LightingManager, celestialStrength: Node<"float">, ao: Node<"float">, channels?: Node<"float">[]) {
+export function createLightColorNode(lightingManager: LightingManager, celestialStrength: Node<"float">, ao: Node<"float">) {
     let lightNode: Node<"vec3"> = vec3(0, 0, 0);
 
     for(const [ lightIndex, lightingChannel ] of lightingManager.lightChannels.entries()) {
-        let channelAttribute: Node<"float"> = channels?.[lightIndex] ?? attribute("light" + lightIndex, "float" as const);
-        channelAttribute = channelAttribute.pow3().toVar();
+        let channelAttribute = attribute("light" + lightIndex, "uint" as const);
+        const mappedChannelAttribute = float(channelAttribute).mul(1 / 15).toVertexStage().pow3();
 
         lightNode = lightNode.add(
-            lightingChannel.color.mul(channelAttribute)
+            lightingChannel.color.mul(mappedChannelAttribute)
             .mul(lightingChannel.type.celestial ? celestialStrength : 1)
         );
     }

@@ -1,8 +1,8 @@
 import { Container, Geometry, Mesh, Shader, State } from "pixi.js";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { TextureAtlases } from "../../boxel";
-import type { TileMesh } from "../../rendering/tileRendering";
-import type { TileFace } from "../../rendering/tileRendering";
+import type { TileMesh } from "../../rendering/meshing/tileRendering";
+import type { TileFace } from "../../rendering/meshing/tileRendering";
 
 const vertex = `
 in vec3 aPosition;

@@ -195,7 +195,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
                 this.targetedBlock.side.y * 2 + Math.random() * 4 - 2,
                 this.targetedBlock.side.z * 2 + Math.random() * 4 - 2,
                 this.targetedBlock.side,
-                this.world.renderer.tileMeshCache.getMeshFromBlockStateId(
+                this.world.renderer.meshCache.getMeshFromBlockStateId(
                     this.world.getBlockState(
                         this.targetedBlock.voxel.x,
                         this.targetedBlock.voxel.y,

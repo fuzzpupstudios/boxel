@@ -7,14 +7,15 @@ import type { Assets } from "../data/assets";
 import { EntityRenderer } from "../entity/entityRenderer";
 import type { Time } from "../time";
 import { Chunk, World } from "../world/world";
-import { BatchedChunkRenderer } from "./batchedChunkRenderer";
+import { BatchedChunkRenderer } from "./meshing/batchedChunkRenderer";
 import { BlockBreakOutline } from "./blockBreakOutline";
 import { BlockBreakParticleEngine } from "./blockBreakParticleEngine";
 import { BlockStateOutline } from "./blockStateOutline";
 import { createLightColorNode } from "./lightUtils";
 import type { Sky } from "./sky/sky";
 import { VoidSky } from "./sky/voidSky";
-import { TileMeshCache } from "./tileRendering";
+import { MeshCache } from "./meshing/tileRendering";
+import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 
 export class WorldRenderer {
     public maxChunkUpdates = 16;
@@ -22,7 +23,7 @@ export class WorldRenderer {
     public readonly scene = new Scene;
     public readonly sky: Sky;
     public readonly chunkRenderer: BatchedChunkRenderer;
-    public readonly tileMeshCache: TileMeshCache;
+    public readonly meshCache: MeshCache;
     public readonly entityRenderer: EntityRenderer;
     private readonly terrainMaterial: MeshBasicNodeMaterial;
     public readonly targetedBlock = new BlockStateOutline;
@@ -74,10 +75,10 @@ export class WorldRenderer {
             transparent: true
         });
 
-        this.tileMeshCache = new TileMeshCache;
-        this.chunkRenderer = new BatchedChunkRenderer(world, this.tileMeshCache, this.terrainMaterial, this.scene);
+        this.meshCache = MeshCache.create(blockStateRegistry, getUnknownBlockState().getFullId());
+        this.chunkRenderer = new BatchedChunkRenderer(world, this.meshCache, this.terrainMaterial, this.scene);
         this.sky = new VoidSky(assets);
-        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this.tileMeshCache, textureAtlases);
+        this.blockBreakParticles = new BlockBreakParticleEngine(this.world, this.meshCache, textureAtlases);
         this.entityRenderer = new EntityRenderer(this.scene, world, this, textureAtlases);
         this.breakingBlock = new BlockBreakOutline(assets);
 
@@ -102,8 +103,9 @@ export class WorldRenderer {
         this.debug = debug;
     }
 
-    public create() {
+    public async init() {
         this.sky.create(this.world.seed);
+        await this.chunkRenderer.init();
     }
 
     public getRenderPass(): Node<"vec4"> {
@@ -127,7 +129,9 @@ export class WorldRenderer {
             }
         }
 
-        this.chunkRenderer.render(time, this.maxChunkUpdates);
+        if(!this.chunkRenderer.isUpdating()) {
+            this.chunkRenderer.render(time, this.maxChunkUpdates);
+        }
 
         if(this.paused) return;
 
