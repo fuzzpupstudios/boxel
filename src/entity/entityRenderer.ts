@@ -49,6 +49,8 @@ export class EntityRenderer {
     }
 
     public dispose() {
+        this.root.removeFromParent();
+        
         this.itemEntityRenderer.dispose();
     }
 }

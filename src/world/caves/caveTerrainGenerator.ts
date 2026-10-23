@@ -1,5 +1,5 @@
 import { ThreadDispatcher } from "../../multithreading/dispatcher";
-import { encodeChunkKey, type ChunkKey } from "../keying";
+import { encodeChunkKey } from "../keying";
 import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "../terrainGenerator";
 import { VoxelChunk } from "../voxelGrid";
 import { Chunk, World } from "../world";
@@ -80,5 +80,9 @@ export class CaveTerrainGenerator extends TerrainGenerator {
         } finally {
             this.threadDispatcher.returnWorker(worker);
         }
+    }
+
+    public dispose() {
+        this.threadDispatcher.terminate();
     }
 }

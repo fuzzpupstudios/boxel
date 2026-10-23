@@ -54,4 +54,14 @@ export class BlockStateOutline {
 
         return outlineGeometry;
     }
+
+    public dispose() {
+        this.mesh.removeFromParent();
+
+        for(const geometry of this.outlines.values()) {
+            geometry.dispose();
+        }
+
+        this.material.dispose();
+    }
 }

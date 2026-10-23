@@ -132,4 +132,13 @@ export class BlockBreakOutline {
 
         return geometry;
     }
+
+    public dispose() {
+        this.mesh.removeFromParent();
+        for(const outline of this.outlines.values()) {
+            outline.dispose();
+        }
+
+        this.material.dispose();
+    }
 }

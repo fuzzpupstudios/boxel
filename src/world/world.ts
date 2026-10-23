@@ -471,4 +471,13 @@ export class World {
     public removeTickable(tickable: Tickable) {
         this.tickables.delete(tickable);
     }
+
+    public dispose() {
+        this.renderer?.dispose();
+        this.terrainGenerator.dispose();
+
+        this.renderer = null;
+        this.terrainGenerator = TerrainGenerator.DEFAULT;
+        this.persistentWorld = null;
+    }
 }

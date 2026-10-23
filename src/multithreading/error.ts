@@ -1,0 +1,1 @@
+export class WorkerTerminationError extends Error { }

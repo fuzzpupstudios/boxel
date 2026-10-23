@@ -147,7 +147,13 @@ export class WorldRenderer {
     }
 
     public dispose() {
+        this.targetedBlock.dispose();
+        this.breakingBlock.dispose();
+        this.blockBreakParticles.dispose();
+
         this.chunkRenderer.dispose();
         this.entityRenderer.dispose();
+        
+        this.terrainMaterial.dispose();
     }
 }

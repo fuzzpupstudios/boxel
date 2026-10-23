@@ -5,6 +5,7 @@ import { Chunk, type World } from "../../world/world";
 import { ChunkMeshDispatcher } from "./chunkMeshDispatcher";
 import type { MeshCache } from "./tileRendering";
 import { OrderedSet } from "../../utilTypes";
+import { WorkerTerminationError } from "../../multithreading/error";
 
 
 function mergeChunkGeometries(
@@ -244,11 +245,15 @@ export class BatchedChunkRegion {
 
     public dispose() {
         if(this.batchedMesh) {
+            this.batchedMesh.removeFromParent();
             this.batchedMesh.geometry.dispose();
         }
         for(const mesh of this.chunkMeshes.values()) {
+            mesh.removeFromParent();
             mesh.geometry.dispose();
         }
+        this.root.removeFromParent();
+
         this.chunkMeshes.clear();
         this.chunks.clear();
         this.renderedChunks.clear();
@@ -517,8 +522,13 @@ export class BatchedChunkRenderer {
             
             if(promises.length > 0) {
                 this.updateLock = Promise.all(promises);
-                await this.updateLock;
-                this.updateLock = null;
+                try {
+                    await this.updateLock;
+                } catch(e) {
+                    if(!(e instanceof WorkerTerminationError)) throw e;
+                } finally {
+                    this.updateLock = null;
+                }
             }
         }
 
@@ -531,12 +541,12 @@ export class BatchedChunkRenderer {
 
     public dispose() {
         for(const region of this.batchedRegions.values()) {
-            this.scene.remove(region.root);
             region.dispose();
         }
         
         this.batchedRegions.clear();
         this.dirtyRegions.clear();
         this.renderedRegions.clear();
+        this.chunkDispatcher.dispose();
     }
 }

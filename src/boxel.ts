@@ -128,6 +128,7 @@ export class BoxelGame {
 
     private closeStage(stage: GameStage) {
         this.gui.stage.removeChild(stage.gui);
+        stage.unload();
     }
 
     private openStage(stage: GameStage) {

@@ -1,5 +1,5 @@
 import { DynamicDrawUsage, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Texture } from "three";
-import { attribute, billboarding, float, positionGeometry, texture, uv } from "three/tsl";
+import { attribute, cameraProjectionMatrix, cameraViewMatrix, float, positionGeometry, texture, uv, vec4 } from "three/tsl";
 import { IntType, MeshBasicNodeMaterial } from "three/webgpu";
 import { blockStateRegistry } from "../block/blockRegistry";
 import type { TileCollider } from "../block/collider";
@@ -26,6 +26,7 @@ export class ParticleEngine {
     private readonly tileColliders: Map<string, TileCollider>;
     private readonly colliderCounts: Map<string, number>;
     private readonly geometry: InstancedBufferGeometry;
+    private readonly material: MeshBasicNodeMaterial;
     public readonly mesh: Mesh;
     
     private readonly positionAttr: InstancedBufferAttribute;
@@ -119,20 +120,20 @@ export class ParticleEngine {
             const particleColor = texture(this.particleTexture, particleUv)
                 .mul(createLightColorNode(this.world.lightingManager, float(1), float(0))).toVar("particleColor");
 
-            this.mesh = new Mesh(this.geometry, new MeshBasicNodeMaterial({
-                vertexNode: billboarding({
-                    position: particlePosition,
-                    horizontal: true,
-                    vertical: true,
-                }),
-                positionNode: positionGeometry.mul(particleSize),
+            const viewCenter = cameraViewMatrix.mul(vec4(particlePosition, 1));
+            const viewOffset = vec4(positionGeometry.mul(particleSize), 0);
+
+            this.material = new MeshBasicNodeMaterial({
+                vertexNode: cameraProjectionMatrix.mul(viewCenter.add(viewOffset)),
                 colorNode: particleColor,
                 transparent: true,
                 depthWrite: false,
-            }));
-            this.mesh.frustumCulled = false;
-            this.mesh.renderOrder = 1;
+            });
         }
+
+        this.mesh = new Mesh(this.geometry, this.material);
+        this.mesh.frustumCulled = false;
+        this.mesh.renderOrder = 1;
     }
 
     private updateLight(index: number) {
@@ -275,5 +276,11 @@ export class ParticleEngine {
         this.geometry.instanceCount = this.particleCount;
         this.sizeAttr.needsUpdate = true;
         this.uvRectAttr.needsUpdate = true;
+    }
+
+    public dispose() {
+        this.mesh.removeFromParent();
+        this.material.dispose();
+        this.geometry.dispose();
     }
 }

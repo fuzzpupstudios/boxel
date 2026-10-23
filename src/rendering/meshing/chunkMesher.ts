@@ -18,8 +18,6 @@ export function createChunkMesher(
         indices
     } = geometryData;
 
-    console.log(aoFactors);
-
 
     let positionOffset = 0;
     let uvOffset = 0;

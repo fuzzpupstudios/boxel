@@ -821,6 +821,8 @@ export class PlayingGameStage extends GameStage {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
         }
 
+        this.persistentWorld = null;
+
         this.setPaused(true);
 
         if(!this.game.isDesktop) {
@@ -828,6 +830,9 @@ export class PlayingGameStage extends GameStage {
         }
         clearInterval(this.blockTickInterval);
 
-        this.worldRenderer.dispose();
+        this.world.dispose();
+
+        // otherwise hangs on to references to the world and misc. renderers
+        EventCursor.setClientPlatform(null);
     }
 }

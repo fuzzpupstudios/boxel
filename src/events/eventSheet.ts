@@ -18,7 +18,7 @@ export interface ClientEventPlatform {
 }
 
 export class EventCursor {
-    private static clientPlatform?: ClientEventPlatform;
+    private static clientPlatform: ClientEventPlatform | null = null;
 
     public faceNormalX = 0;
     public faceNormalY = 0;
@@ -29,7 +29,7 @@ export class EventCursor {
     public pitch = 0;
     public usages = 0;
     public defaultPrevented = false;
-    public readonly clientPlatform?: ClientEventPlatform;
+    public readonly clientPlatform: ClientEventPlatform | null = null;
     public entity: Entity | null = null;
     public graphic: GuiGraphicContainer | null = null;
     public gui: GuiContainer | null = null;
@@ -39,7 +39,7 @@ export class EventCursor {
     public voxelHitY = 0;
     public voxelHitZ = 0;
 
-    public static setClientPlatform(clientPlatform: ClientEventPlatform) {
+    public static setClientPlatform(clientPlatform: ClientEventPlatform | null) {
         this.clientPlatform = clientPlatform;
     }
 

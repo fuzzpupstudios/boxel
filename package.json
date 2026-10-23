@@ -19,7 +19,7 @@
   "license": "POLYFORM",
   "devDependencies": {
     "@types/pixi.js": "^4.8.9",
-    "@types/three": "^0.184.1",
+    "@types/three": "^0.186.0",
     "typescript": "^6.0.3",
     "vite": "^7.1.0",
     "vitest": "^4.1.9"
@@ -36,7 +36,7 @@
     "objectregistry": "^1.0.5",
     "pixi.js": "^8.14.1",
     "simplex-noise": "^4.0.3",
-    "three": "^0.185.1",
+    "three": "^0.186.1",
     "typed-signals": "^3.0.0",
     "zod": "^4.4.3"
   }

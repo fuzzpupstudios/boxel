@@ -1,12 +1,24 @@
 import { EventEmitter, GET_CONFIG_EVENT, READY_EVENT, SEND_CONFIG_EVENT, type WorkerMessage } from "./events";
 
 export class ThreadWorker<T> extends EventEmitter<WorkerMessage> {
-    public worker?: Worker;
+    private worker: Worker | null = null;
 
     public constructor(
         public readonly url: string | URL
     ) {
         super();
+    }
+
+    public terminate() {
+        if(this.worker) {
+            this.worker.terminate();
+            this.worker = null;
+        }
+        super.dispose();
+    }
+
+    public get terminated() {
+        return this.worker === null;
     }
 
     public send(message: WorkerMessage, transfer?: Transferable[]) {

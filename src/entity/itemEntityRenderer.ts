@@ -7,14 +7,37 @@ import type { ItemHologramProvider } from "./itemHologram";
 
 export class ItemEntityRenderer {
     public readonly batchedMesh: BatchedMesh;
+    private readonly material: MeshBasicNodeMaterial;
     private readonly geometryIndices = new Map<string, number>;
     private readonly defaultGeometryIndex: number;
 
     public constructor(
-        public readonly worldRenderer: WorldRenderer,
-        public readonly hologramProvider: ItemHologramProvider
+        worldRenderer: WorldRenderer,
+        hologramProvider: ItemHologramProvider
     ) {
-        this.batchedMesh = new BatchedMesh(4096, 32768, 65536, this.createMaterial());
+        {
+            const textureColor = hologramProvider.colorNode;
+
+            const shadow = worldRenderer.sky.createSunShadowNode(normalWorld).toVar("shadow");
+
+            const fogFactor = worldRenderer.fogFactor.toVar();
+            const fogColor = worldRenderer.sky.fogColor;
+
+            this.material = new MeshBasicNodeMaterial({
+                colorNode: Fn(() => {
+                    If(fogFactor.greaterThanEqual(1), () => Discard());
+
+                    return mix(
+                        vec4(textureColor.rgb.mul(shadow), textureColor.a),
+                        vec4(fogColor, 1),
+                        fogFactor
+                    )
+                })(),
+                transparent: true,
+                alphaTest: 0.5
+            });
+        }
+        this.batchedMesh = new BatchedMesh(4096, 32768, 65536, this.material);
         this.batchedMesh.frustumCulled = false;
         
         for(const [ item, geometry ] of hologramProvider.entries()) {
@@ -31,27 +54,7 @@ export class ItemEntityRenderer {
         this.batchedMesh.deleteInstance(warmupInstance);
     }
 
-    private createMaterial() {
-        const textureColor = this.hologramProvider.colorNode;
-
-        const shadow = this.worldRenderer.sky.createSunShadowNode(normalWorld).toVar("shadow");
-
-        return new MeshBasicNodeMaterial({
-            colorNode: Fn(() => {
-                const fogFactor = this.worldRenderer.fogFactor.toVar();
-
-                If(fogFactor.greaterThanEqual(1), () => Discard());
-
-                return mix(
-                    vec4(textureColor.rgb.mul(shadow), textureColor.a),
-                    vec4(this.worldRenderer.sky.fogColor, 1),
-                    fogFactor
-                )
-            })(),
-            transparent: true,
-            alphaTest: 0.5
-        });
-    }
+    
     public addInstance(item: string) {
         // prevent a crash for ludicrous amounts of items
         if(this.batchedMesh.instanceCount == this.batchedMesh.maxInstanceCount) return 0;
@@ -65,6 +68,8 @@ export class ItemEntityRenderer {
         return this.batchedMesh.deleteInstance(instanceId);
     }
     public dispose() {
+        this.batchedMesh.removeFromParent();
+        this.material.dispose();
         this.batchedMesh.dispose();
     }
 }

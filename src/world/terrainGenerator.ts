@@ -15,5 +15,9 @@ export abstract class TerrainGenerator {
 
     }
 
+    public dispose() {
+
+    }
+
     public abstract generateColumn(world: World, columnX: number, columnY: number, columnZ: number): Promise<void>;
 }

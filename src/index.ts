@@ -2,7 +2,6 @@ import { isMobile } from "pixi.js";
 import { blockStateRegistry } from "./block/blockRegistry";
 import { blockEntityTypeRegistry } from "./block/entity/blockEntityRegistry";
 import { BoxelGame } from "./boxel";
-import { preloadFastNoise2Module } from "./fastnoise/fastnoise2";
 import { guiGraphicRegistry } from "./gui/graphic/graphicRegistry";
 import { guiTypeRegistry } from "./gui/guiTypeRegistry";
 import { itemRegistry } from "./item/itemRegistry";
@@ -11,8 +10,6 @@ let game: BoxelGame;
 main();
 
 async function main() {
-    await preloadFastNoise2Module();
-
     game = new BoxelGame(document.body, {
         isDesktop: !isMobile.any,
         version: (await import("../package.json")).version

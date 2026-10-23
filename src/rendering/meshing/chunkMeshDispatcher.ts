@@ -101,4 +101,8 @@ export class ChunkMeshDispatcher {
 
         return geometry;
     }
+
+    public dispose() {
+        this.threadDispatcher.terminate();
+    }
 }
