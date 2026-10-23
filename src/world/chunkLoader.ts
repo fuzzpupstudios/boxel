@@ -1,10 +1,9 @@
-import { MinPriorityQueue } from "@datastructures-js/priority-queue";
 import { Vector3 } from "three";
-import type { Time } from "../time";
-import { encodeChunkKey, type ChunkKey } from "./keying";
-import type { Chunk, World } from "./world";
-import { BucketQueue } from "./bucketQueue";
 import type { BatchedChunkRegion } from "../rendering/meshing/batchedChunkRenderer";
+import type { Time } from "../time";
+import { BucketQueue } from "./bucketQueue";
+import { encodeChunkKey, type ChunkKey } from "./keying";
+import type { World } from "./world";
 
 type ChunkQueueEntry = [ ChunkKey, number, number, number ];
 
@@ -29,11 +28,13 @@ export class ChunkLoader {
 
     public updateRegionsToUnload() {
         if(this.world.renderer == null) return;
+
+        this.regionsToUnload.clear();
         
         const minX = (this.origin.x - this.radius - 15) >> 4;
         const maxX = (this.origin.x + this.radius + 15) >> 4;
-        const minY = (this.origin.y - this.radius - 15) >> 4;
-        const maxY = (this.origin.y + this.radius + 15) >> 4;
+        const minY = (this.origin.y - this.radius - 15 - 64) >> 4;
+        const maxY = (this.origin.y + this.radius + 15 + 64) >> 4;
         const minZ = (this.origin.z - this.radius - 15) >> 4;
         const maxZ = (this.origin.z + this.radius + 15) >> 4;
 
@@ -55,8 +56,8 @@ export class ChunkLoader {
         const originZ = marker.z >> 4;
         const minX = (marker.x - this.radius) >> 4;
         const maxX = (marker.x + this.radius) >> 4;
-        const minY = (marker.y - 192) >> 7 << 3;
-        const maxY = (marker.y + 64) >> 7 << 3;
+        const minY = (marker.y - this.radius - 64) >> 7 << 3;
+        const maxY = (marker.y + this.radius - 64) >> 7 << 3;
         const minZ = (marker.z - this.radius) >> 4;
         const maxZ = (marker.z + this.radius) >> 4;
 
@@ -205,7 +206,7 @@ export class ChunkLoader {
                 this.columnsToLoad.delete(chunk.key);
             }
             this.regionsToUnload.delete(region);
-            this.world.unloadChunks(region.chunks);
+            this.world.unloadChunks([ ...region.chunks ]);
         }
     }
 }

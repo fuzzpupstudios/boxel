@@ -1,4 +1,5 @@
 import { Box3, Color, Vector3 } from "three";
+import { type ChunkKey } from "../keying";
 import type { World } from "../world";
 import { lightChannelRegistry } from "./lightChannelRegistry";
 import type { LightingEngine } from "./lightingEngine";
@@ -81,6 +82,12 @@ export class LightingManager {
                 true,   // save chunks
                 false   // don't skip already rendered
             );
+        }
+    }
+
+    public deleteChunk(key: ChunkKey) {
+        for(const channel of this.lightChannels) {
+            channel.tiles.chunks.delete(key);
         }
     }
 

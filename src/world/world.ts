@@ -191,6 +191,7 @@ export class World {
 
             this.chunks.delete(chunk.key);
             this.tiles.chunks.delete(chunk.key);
+            this.lightingManager.deleteChunk(chunk.key);
             this.chunksWithBlockEntities.delete(chunk);
         }
 

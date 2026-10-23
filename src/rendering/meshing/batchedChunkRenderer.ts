@@ -243,21 +243,24 @@ export class BatchedChunkRegion {
     }
 
     public dispose() {
-        this.chunkMeshes.clear();
-        this.chunks.clear();
-        this.renderedChunks.clear();
-        this.dirtyChunks.clear();
-
         if(this.batchedMesh) {
             this.batchedMesh.geometry.dispose();
         }
         for(const mesh of this.chunkMeshes.values()) {
             mesh.geometry.dispose();
         }
+        this.chunkMeshes.clear();
+        this.chunks.clear();
+        this.renderedChunks.clear();
+        this.dirtyChunks.clear();
     }
 
     private async renderChunk(chunk: Chunk) {
         const geometry = await this.renderer.chunkDispatcher.mesh(chunk.x, chunk.y, chunk.z);
+        if(!this.chunks.has(chunk)) {
+            geometry?.dispose();
+            return;
+        }
 
         let mesh = this.chunkMeshes.get(chunk);
 
@@ -301,7 +304,8 @@ export class BatchedChunkRegion {
         }
         if(
             !this.batchedMesh &&
-            time.seconds - this.lastUpdate > 8
+            time.seconds - this.lastUpdate > 8 &&
+            !this.isUpdating()
         ) {
             this.makeBatched();
             return;
@@ -316,13 +320,17 @@ export class BatchedChunkRegion {
         const promises = new Array<Promise<void>>;
         let changes = 0;
 
-        for(const chunk of this.waitingChunks) this.dirtyChunks.add(chunk);
+        const chunksToMesh = new Set<Chunk>(this.dirtyChunks);
 
-        for(const chunk of this.dirtyChunks) {
+        for(const chunk of this.waitingChunks) chunksToMesh.add(chunk);
+        
+        this.waitingChunks.clear();
+        this.dirtyChunks.clear();
+
+        for(const chunk of chunksToMesh) {
             if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
                 if(this.hibernated) {
-                    this.unhibernate();
-                    this.dirtyChunks.clear();
+                    await this.unhibernate();
                     changes++;
                     break;
                 }
@@ -337,15 +345,15 @@ export class BatchedChunkRegion {
             }
         }
 
-        if(changes > 0) {
+        if(promises.length > 0) {
             this.updateLock = Promise.all(promises);
             await this.updateLock;
             this.updateLock = null;
-
-            this.lastUpdate = time.seconds;
         }
 
-        this.dirtyChunks.clear();
+        if(changes > 0) {
+            this.lastUpdate = time.seconds;
+        }
     }
 
     public isUpdating() {
@@ -441,33 +449,35 @@ export class BatchedChunkRenderer {
         region.deleteChunk(chunk);
 
         if(!region.hasChunks()) {
-            region.root.removeFromParent();
-            region.dispose();
-            this.dirtyRegions.delete(region);
-            this.batchedRegions.delete(region.key);
+            this.deleteRegion(region);
         }
 
         this.trackedChunks.delete(chunk.key);
         this.renderedChunks.delete(chunk.key);
     }
 
+    private deleteRegion(region: BatchedChunkRegion) {
+        region.root.removeFromParent();
+        region.dispose();
+        this.dirtyRegions.delete(region);
+        this.batchedRegions.delete(region.key);
+        this.renderedRegions.delete(region);
+    }
+
     private async updateRegion(time: Time, region: BatchedChunkRegion) {
         await region.update(time);
+        if(!region.hasChunks()) return;
 
         if(region.renderedChunks.size > 0) {
-            if(this.renderedRegions.has(region)) return;
+            if(!this.renderedRegions.has(region)) {
+                this.scene.add(region.root);
+                region.updateMatrices();
 
-            this.scene.add(region.root);
-            this.renderedRegions.add(region);
-            region.updateMatrices();
-
-            return;
+                this.renderedRegions.add(region);
+            }
         } else {
-            if(!this.renderedRegions.delete(region)) return;
-
-            this.scene.remove(region.root);
-
-            return;
+            region.root.removeFromParent();
+            this.renderedRegions.delete(region);
         }
     }
 
@@ -489,26 +499,27 @@ export class BatchedChunkRenderer {
     }
 
     public async render(time: Time, maxUpdates: number) {
-        await this.updateLock;
+        if(!this.isUpdating()) {
+            const promises = new Array<Promise<void>>;
 
-        const promises = new Array<Promise<void>>;
+            for(let i = 0; i < maxUpdates; i++) {
+                const region = this.dirtyRegions.shift();
+                if(region == null) break;
 
-        for(let i = 0; i < maxUpdates; i++) {
-            const region = this.dirtyRegions.shift();
-            if(region == null) break;
-
-            // await this.updateRegion(time, region);
-            promises.push(this.updateRegion(time, region).then(() => {
-                for(const chunk of region.renderedChunks) {
-                    this.renderedChunks.set(chunk.key, chunk);
-                }
-            }));
-        }
-        
-        if(promises.length > 0) {
-            this.updateLock = Promise.all(promises);
-            await this.updateLock;
-            this.updateLock = null;
+                // await this.updateRegion(time, region);
+                promises.push(this.updateRegion(time, region).then(() => {
+                    for(const chunk of region.renderedChunks) {
+                        if(this.trackedChunks.get(chunk.key) !== chunk) continue;
+                        this.renderedChunks.set(chunk.key, chunk);
+                    }
+                }));
+            }
+            
+            if(promises.length > 0) {
+                this.updateLock = Promise.all(promises);
+                await this.updateLock;
+                this.updateLock = null;
+            }
         }
 
         this.settle(time);
@@ -519,13 +530,13 @@ export class BatchedChunkRenderer {
     }
 
     public dispose() {
-        this.batchedRegions.clear();
-        this.dirtyRegions.clear();
-        this.renderedRegions.clear();
-
         for(const region of this.batchedRegions.values()) {
             this.scene.remove(region.root);
             region.dispose();
         }
+        
+        this.batchedRegions.clear();
+        this.dirtyRegions.clear();
+        this.renderedRegions.clear();
     }
 }

@@ -4,25 +4,15 @@ import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "../terrainGenerator";
 import { VoxelChunk } from "../voxelGrid";
 import { Chunk, World } from "../world";
 
-interface GenerationMessage {
-    type: "generate_complete",
-    key: ChunkKey,
-    tiles: Uint8Array<ArrayBuffer>[],
-    palettes: string[][]
-}
-
 const workerURL = new URL("./caveWorker.ts", import.meta.url);
 
 export class CaveTerrainGenerator extends TerrainGenerator {    
     private readonly threadDispatcher = new ThreadDispatcher(workerURL);
 
     public override async init() {
-        const promises = new Array<Promise<any>>;
         for(let i = 0; i < 4; i++) {
-            promises.push(this.threadDispatcher.createWorker({}));
+            this.threadDispatcher.createWorker({});
         }
-
-        await Promise.all(promises);
     }
 
     private processAfter(chunk: Chunk) {
@@ -82,9 +72,10 @@ export class CaveTerrainGenerator extends TerrainGenerator {
             for(let i = 0; i < COLUMN_CHUNK_HEIGHT; i++) {
                 const key = encodeChunkKey(columnX, columnY + i, columnZ);
 
-                const chunk = VoxelChunk.fromData(new Uint8Array(message.tiles[i]!), message.palettes[i]!);
-                world.tiles.chunks.set(key, chunk);
-                this.processAfter(world.getChunk(columnX, columnY + i, columnZ)!);
+                const tileChunk = VoxelChunk.fromData(new Uint8Array(message.tiles[i]!), message.palettes[i]!);
+                world.tiles.chunks.set(key, tileChunk);
+                const chunk = world.createChunk(columnX, columnY + i, columnZ)!;
+                this.processAfter(chunk);
             }
         } finally {
             this.threadDispatcher.returnWorker(worker);

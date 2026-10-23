@@ -129,9 +129,7 @@ export class WorldRenderer {
             }
         }
 
-        if(!this.chunkRenderer.isUpdating()) {
-            this.chunkRenderer.render(time, this.maxChunkUpdates);
-        }
+        this.chunkRenderer.render(time, this.maxChunkUpdates);
 
         if(this.paused) return;
 
