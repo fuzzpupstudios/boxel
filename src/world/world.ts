@@ -188,6 +188,10 @@ export class World {
             for(const blockEntity of chunk.blockEntities) {
                 this.tickables.delete(blockEntity);
             }
+            for(const entity of chunk.entities) {
+                this.tickables.delete(entity);
+                this.renderer?.entityRenderer.removeEntity(entity);
+            }
 
             this.chunks.delete(chunk.key);
             this.tiles.chunks.delete(chunk.key);
@@ -199,6 +203,12 @@ export class World {
             console.warn("No PersistentWorld container present; changed chunk data was lost");
         } else {
             await this.persistentWorld.saveChunks(chunks);
+        }
+        
+        for(const chunk of chunks) {
+            for(const entity of chunk.entities) {
+                entity.destroy();
+            }
         }
     }
 
