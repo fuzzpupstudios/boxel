@@ -5,35 +5,38 @@ import type { World } from "../../world/world";
 import { createChunkGeometryData, createTileCacheData, type ChunkGeometryData, type MesherWorkerConfig } from "./meshWorkerConfig";
 import { TileCache, type MeshCache } from "./tileRendering";
 
+const workerURL = new URL("./meshWorker.ts", import.meta.url);
+
 type MesherThread = ThreadWorker<MesherWorkerConfig>;
 
-export class ChunkMeshDispatcher extends ThreadDispatcher<MesherWorkerConfig> {
+export class ChunkMeshDispatcher {
     private readonly tileCaches = new WeakMap<MesherThread, TileCache>;
     private readonly geometryData = new WeakMap<MesherThread, ChunkGeometryData>;
+
+    private readonly threadDispatcher = new ThreadDispatcher<MesherWorkerConfig>(workerURL);
 
     public constructor(
         public readonly world: World,
         public readonly meshCache: MeshCache,
-    ) {
-        super(new URL("./meshWorker.ts", import.meta.url))
-    }
+    ) { }
 
-    protected override createWorkerConfig(worker: MesherThread): MesherWorkerConfig {
+    public async createWorker() {
         // ~150 MB maximum mesh size (should be more than enough..?)
         const maxVertices = 2 ** 22;
         const lightChannelCount = this.world.lightingManager.getChannelCount();
         const geometryData = createChunkGeometryData(maxVertices, lightChannelCount);
-        this.geometryData.set(worker, geometryData);
 
         const tileCacheData = createTileCacheData(lightChannelCount);
         const tileCache = new TileCache(tileCacheData, this.meshCache);
-        this.tileCaches.set(worker, tileCache);
 
-        return {
+        const worker = await this.threadDispatcher.createWorker({
             meshCache: this.meshCache.serialize(),
             tileCache: tileCacheData,
             geometryData,
-        };
+        });
+
+        this.geometryData.set(worker, geometryData);
+        this.tileCaches.set(worker, tileCache);
     }
 
     public async mesh(chunkX: number, chunkY: number, chunkZ: number): Promise<BufferGeometry | null> {
@@ -44,7 +47,7 @@ export class ChunkMeshDispatcher extends ThreadDispatcher<MesherWorkerConfig> {
             return null;
         }
 
-        const worker = await this.getWorker();
+        const worker = await this.threadDispatcher.getWorker();
         
         try {
             const tileCache = this.tileCaches.get(worker)!;
@@ -64,7 +67,7 @@ export class ChunkMeshDispatcher extends ThreadDispatcher<MesherWorkerConfig> {
                 return this.createMesh(geometryData, event.vertexCount);
             }
         } finally {
-            this.returnWorker(worker);
+            this.threadDispatcher.returnWorker(worker);
         }
     }
 

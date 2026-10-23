@@ -171,7 +171,7 @@ export class ChunkLoader {
 
                 if(!columnGenerated) {
                     this.columnsGenerating.add(key);
-                    this.world.generateColumn(x, y, z, () => {
+                    this.world.generateColumn(x, y, z).then(() => {
                         this.columnsGenerating.delete(key);
                     })
                 }

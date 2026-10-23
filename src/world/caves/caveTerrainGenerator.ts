@@ -1,3 +1,4 @@
+import { ThreadDispatcher } from "../../multithreading/dispatcher";
 import { encodeChunkKey, type ChunkKey } from "../keying";
 import { COLUMN_CHUNK_HEIGHT, TerrainGenerator } from "../terrainGenerator";
 import { VoxelChunk } from "../voxelGrid";
@@ -10,39 +11,18 @@ interface GenerationMessage {
     palettes: string[][]
 }
 
-export class CaveTerrainGenerator extends TerrainGenerator {
-    private workers = new Array<Worker>;
-    private generationQueue = new Map<ChunkKey, (message: GenerationMessage) => void>;
+const workerURL = new URL("./caveWorker.ts", import.meta.url);
+
+export class CaveTerrainGenerator extends TerrainGenerator {    
+    private readonly threadDispatcher = new ThreadDispatcher(workerURL);
 
     public override async init() {
+        const promises = new Array<Promise<any>>;
         for(let i = 0; i < 4; i++) {
-            await new Promise<void>((res, rej) => {
-                const worker = new Worker(new URL("./caveWorker.ts", import.meta.url), { type: "module" });
-
-                worker.addEventListener("message", event => {
-                    const type = event.data.type;
-
-                    if(type == "generate_complete") {
-                        this.generationQueue.get(event.data.key)?.(event.data);
-                    }
-                    if(type == "ready") {
-                        res();
-                    }
-                });
-
-                this.workers.push(worker);
-            });
+            promises.push(this.threadDispatcher.createWorker({}));
         }
-    }
 
-    private dispatchGenerate(seed: number, x: number, y: number, z: number, callback: (message: GenerationMessage) => void) {
-        const key = encodeChunkKey(x, y, z);
-
-        const workerId = (x >> 6 & 1) | ((z >> 6 & 1) << 1);
-        const worker = this.workers[workerId]!;
-        worker.postMessage({ type: "generate", seed, x, y, z, key });
-
-        this.generationQueue.set(key, callback);
+        await Promise.all(promises);
     }
 
     private processAfter(chunk: Chunk) {
@@ -86,8 +66,19 @@ export class CaveTerrainGenerator extends TerrainGenerator {
         }
     }
 
-    public override generateColumn(world: World, columnX: number, columnY: number, columnZ: number, callback: () => void) {
-        this.dispatchGenerate(world.seed, columnX, columnY, columnZ, message => {
+    public override async generateColumn(world: World, columnX: number, columnY: number, columnZ: number) {
+        const worker = await this.threadDispatcher.getWorker();
+
+        try {
+            worker.send({
+                type: "generate",
+                seed: world.seed,
+                x: columnX,
+                y: columnY,
+                z: columnZ
+            });
+            const message = await worker.once("generate");
+
             for(let i = 0; i < COLUMN_CHUNK_HEIGHT; i++) {
                 const key = encodeChunkKey(columnX, columnY + i, columnZ);
 
@@ -95,8 +86,8 @@ export class CaveTerrainGenerator extends TerrainGenerator {
                 world.tiles.chunks.set(key, chunk);
                 this.processAfter(world.getChunk(columnX, columnY + i, columnZ)!);
             }
-            
-            callback();
-        });
+        } finally {
+            this.threadDispatcher.returnWorker(worker);
+        }
     }
 }

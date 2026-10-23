@@ -1,26 +1,24 @@
 import { OrderedSet } from "../utilTypes";
 import { ThreadWorker } from "./worker";
 
-export abstract class ThreadDispatcher<Config> {
+export class ThreadDispatcher<Config = {}> {
     private readonly availableWorkers = new Array<ThreadWorker<Config>>;
     private readonly availableWorkerQueue = new OrderedSet<(worker: ThreadWorker<Config>) => void>;
 
     public constructor(
         public readonly url: URL | string
-    ) {
-        
-    }
+    ) { }
     
-    public async createWorker() {
+    public async createWorker(config: Config) {
         const worker = new ThreadWorker<Config>(this.url);
         
-        await worker.init(this.createWorkerConfig(worker));
+        await worker.init(config);
         this.returnWorker(worker);
+
+        return worker;
     }
 
-    protected abstract createWorkerConfig(worker: ThreadWorker<Config>): Config;
-
-    protected async getWorker() {
+    public async getWorker() {
         let worker = this.availableWorkers.pop();
         if(worker != null) return worker;
 
@@ -29,7 +27,7 @@ export abstract class ThreadDispatcher<Config> {
         return await promise;
     }
 
-    protected async returnWorker(worker: ThreadWorker<Config>) {
+    public async returnWorker(worker: ThreadWorker<Config>) {
         const handler = this.availableWorkerQueue.shift();
 
         if(handler) {

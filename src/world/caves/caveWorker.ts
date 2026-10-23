@@ -1,8 +1,10 @@
 import { FastNoiseNode, preloadFastNoise2Module } from "../../fastnoise/fastnoise2";
+import { ThreadReceiver } from "../../multithreading/receiver";
 import { COLUMN_CHUNK_HEIGHT } from "../terrainGenerator";
 import { VoxelGrid } from "../voxelGrid";
 import { WormLayer } from "./perlinWorm";
 
+const receiver = new ThreadReceiver;
 
 await preloadFastNoise2Module();
 const worms = new WormLayer({
@@ -65,29 +67,24 @@ function generateColumn(seed: number, columnX: number, columnY: number, columnZ:
     worms.carve(tiles, seed, columnX, columnY, columnZ);
 }
 
-addEventListener("message", event => {
-    const { data, data: { type } } = event;
+receiver.setHandler("generate", ({ seed, x, y, z }) => {
+    generateColumn(seed, x, y, z);
+    const chunkTiles = [];
+    const chunkPalettes = [];
 
-    if(type == "generate") {
-        generateColumn(data.seed, data.x, data.y, data.z);
-        const chunkTiles = [];
-        const chunkPalettes = [];
-
-        for(let y = data.y; y < data.y + COLUMN_CHUNK_HEIGHT; y++) {
-            const chunk = tiles.getChunk(data.x, y, data.z)!;
-            chunkTiles.push(chunk.tiles.buffer);
-            chunkPalettes.push(chunk.palette);
-        }
-
-        postMessage({
-            type: "generate_complete",
-            key: data.key,
-            tiles: chunkTiles,
-            palettes: chunkPalettes,
-        /* @ts-expect-error */
-        }, chunkTiles);
-        
-        tiles.chunks.clear();
+    for(let dy = 0; dy < COLUMN_CHUNK_HEIGHT; dy++) {
+        const chunk = tiles.getChunk(x, y + dy, z)!;
+        chunkTiles.push(chunk.tiles.buffer);
+        chunkPalettes.push(chunk.palette);
     }
+
+    receiver.send({
+        type: "generate",
+        tiles: chunkTiles,
+        palettes: chunkPalettes
+    }, chunkTiles);
+    
+    tiles.chunks.clear();
 });
-postMessage({ type: "ready" });
+
+receiver.ready();

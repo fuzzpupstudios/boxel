@@ -198,23 +198,22 @@ export class World {
         }
     }
 
-    public generateColumn(columnX: number, columnY: number, columnZ: number, callback: () => void) {
-        this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ, () => {
-            for(let y = columnY + COLUMN_CHUNK_HEIGHT - 1; y >= columnY; y--) {
-                this.getChunk(columnX, y, columnZ)?.tiles.update();
-                this.lightingManager.updateChunk(columnX, y, columnZ, false);
-            }
-            this.markChunksDirty(
-                columnX - 1, columnY - 1, columnZ - 1,
-                columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1,
+    public async generateColumn(columnX: number, columnY: number, columnZ: number) {
+        await this.terrainGenerator.generateColumn(this, columnX, columnY, columnZ);
 
-                false,  // not priority
-                true,   // render chunks
-                true,   // save chunks
-                true    // skip already rendered
-            );
-            callback();
-        });
+        for(let y = columnY + COLUMN_CHUNK_HEIGHT - 1; y >= columnY; y--) {
+            this.getChunk(columnX, y, columnZ)?.tiles.update();
+            this.lightingManager.updateChunk(columnX, y, columnZ, false);
+        }
+        this.markChunksDirty(
+            columnX - 1, columnY - 1, columnZ - 1,
+            columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1,
+
+            false,  // not priority
+            true,   // render chunks
+            true,   // save chunks
+            true    // skip already rendered
+        );
     }
 
     public hasChunk(chunkX: number, chunkY: number, chunkZ: number) {

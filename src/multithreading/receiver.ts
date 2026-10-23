@@ -1,6 +1,6 @@
 import { EventEmitter, GET_CONFIG_EVENT, READY_EVENT, SEND_CONFIG_EVENT, type EventHandler, type WorkerMessage } from "./events";
 
-export class ThreadReceiver<T> extends EventEmitter<WorkerMessage> {
+export class ThreadReceiver<Config = {}> extends EventEmitter<WorkerMessage> {
     public constructor() {
         super();
         
@@ -15,7 +15,7 @@ export class ThreadReceiver<T> extends EventEmitter<WorkerMessage> {
     }
 
     public getConfig() {
-        return new Promise<T>(res => {
+        return new Promise<Config>(res => {
             const handler: EventHandler<WorkerMessage> = message => {
                 this.deleteHandler(SEND_CONFIG_EVENT);
                 res(message.config);
