@@ -1,15 +1,14 @@
 export class BucketQueue<T extends WeakKey> {
-    private readonly buckets = new Array<Set<T>>;
-    private itemOrders = new WeakMap<T, number>;
-    private smallestBucket = 0;
-    private biggestBucket = 0;
+    protected readonly buckets = new Array<Set<T>>;
+    protected itemOrders = new WeakMap<T, number>;
+    protected smallestBucket = 0;
+    protected biggestBucket = 0;
     public size = 0;
 
     constructor(
-        public readonly bucketArea: number = 0.5,
-        public readonly bucketCount: number = 30
+        public readonly bucketArea: number = 2,
+        public readonly bucketCount: number = 100
     ) {
-        if(bucketArea >= 1) throw new RangeError("Bucket area must be less than 1");
         if(bucketArea <= 0) throw new RangeError("Bucket area must be greater than 0");
 
         for(let i = 0; i < this.bucketCount; i++) {
@@ -23,10 +22,9 @@ export class BucketQueue<T extends WeakKey> {
     }
 
     public add(value: number, object: T) {
-        let order = 0;
-        while(value > 1 && order < this.bucketCount - 1) {
+        let order = 1;
+        while(value / (order * order) > this.bucketArea && order < this.bucketCount - 1) {
             order++;
-            value *= this.bucketArea;
         }
 
         const oldOrder = this.itemOrders.get(object);

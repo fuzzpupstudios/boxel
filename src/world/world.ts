@@ -223,7 +223,6 @@ export class World {
             columnX - 1, columnY - 1, columnZ - 1,
             columnX + 1, columnY + COLUMN_CHUNK_HEIGHT + 1, columnZ + 1,
 
-            false,  // not priority
             true,   // render chunks
             true,   // save chunks
             true    // skip already rendered
@@ -307,7 +306,6 @@ export class World {
                 chunk.x - 1, chunk.y - 1, chunk.z - 1,
                 chunk.x + 1, chunk.y + 1, chunk.z + 1,
 
-                false,  // not priority
                 true,   // render chunks
                 false,  // don't save chunks
                 true    // skip already rendered
@@ -398,7 +396,7 @@ export class World {
 
         if(!markDirty) return;
         this.markChunkDirty(x >> 4, y >> 4, z >> 4);
-        this.lightingManager.updateLight(x, y, z, true);
+        this.lightingManager.updateLight(x, y, z);
 
         if(this.renderer === null) return;
 
@@ -406,7 +404,6 @@ export class World {
             (x - 1) >> 4, (y - 1) >> 4, (z - 1) >> 4,
             (x + 1) >> 4, (y + 1) >> 4, (z + 1) >> 4,
             
-            true,   // priority
             true,   // render chunks
             true,   // save chunks
             false   // don't skip already rendered
@@ -415,21 +412,19 @@ export class World {
     
     public markChunkDirty(
         chunkX: number, chunkY: number, chunkZ: number,
-        priority: boolean = false,
         render: boolean = true,
         save: boolean = true
     ) {
         const chunk = this.getChunk(chunkX, chunkY, chunkZ);
         if(chunk === null) return;
 
-        if(render) this.renderer?.chunkRenderer.markChunkDirty(chunk, priority);
+        if(render) this.renderer?.chunkRenderer.markChunkDirty(chunk);
         if(save) this.chunksToSave.add(chunk);
     }
 
     public markChunksDirty(
         minX: number, minY: number, minZ: number,
         maxX: number, maxY: number, maxZ: number,
-        priority: boolean,
         render: boolean, save: boolean,
         skipRendered: boolean
     ) {
@@ -444,7 +439,7 @@ export class World {
                     
                     if(render) {
                         if(skipRendered && chunkRenderer!.renderedChunks.has(chunk.key)) continue;
-                        chunkRenderer!.markChunkDirty(chunk, priority);
+                        chunkRenderer!.markChunkDirty(chunk);
                     }
                     if(save) this.chunksToSave.add(chunk);
                 }

@@ -8,7 +8,7 @@ export class Time {
             dt
         )
     }
-    public constructor(
+    private constructor(
         public readonly seconds: number,
         public readonly miliseconds: number,
         public readonly deltaTime: number,

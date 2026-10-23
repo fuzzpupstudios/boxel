@@ -17,8 +17,8 @@ export class ChunkLoader {
     private needsUpdate: boolean = true;
     public readonly columnsToLoad = new Map<ChunkKey, [ number, number, number ]>;
     public readonly regionsToUnload = new Set<BatchedChunkRegion>;
-    public readonly columnGenerationQueue = new BucketQueue<ChunkQueueEntry>;
-    public readonly columnLoadQueue = new BucketQueue<ChunkQueueEntry>;
+    public readonly columnGenerationQueue = new BucketQueue<ChunkQueueEntry>(16);
+    public readonly columnLoadQueue = new BucketQueue<ChunkQueueEntry>(16);
     private readonly frameTasks = new Array<Function>;
     private readonly columnsGenerating = new Set<ChunkKey>;
 
@@ -53,22 +53,26 @@ export class ChunkLoader {
     public updateColumnsToLoad() {
         const marker = this.origin;
         const originX = marker.x >> 4;
+        const originY = marker.y >> 4;
         const originZ = marker.z >> 4;
         const minX = (marker.x - this.radius) >> 4;
         const maxX = (marker.x + this.radius) >> 4;
-        const minY = (marker.y - this.radius - 64) >> 7 << 3;
-        const maxY = (marker.y + this.radius - 64) >> 7 << 3;
+        const minY = (marker.y - this.radius - 128) >> 7 << 3;
+        const maxY = (marker.y + this.radius) >> 7 << 3;
         const minZ = (marker.z - this.radius) >> 4;
         const maxZ = (marker.z + this.radius) >> 4;
 
         const radiusSquare = (this.radius * this.radius) >> 8;
 
-        for(let x = minX; x <= maxX; x++) {
-            for(let z = minZ; z <= maxZ; z++) {
-                for(let y = minY; y <= maxY; y += 8) {
-                    const distanceSquare =
-                        (x - originX) * (x - originX) +
-                        (z - originZ) * (z - originZ);
+        for(let y = minY; y <= maxY; y += 8) {
+            const yClamped = Math.max(Math.min(originY, y + 7), y);
+            const dy = (yClamped - originY) * (yClamped - originY);
+
+            for(let x = minX; x <= maxX; x++) {
+                const dx = (x - originX) * (x - originX);
+
+                for(let z = minZ; z <= maxZ; z++) {
+                    const distanceSquare = dy + dx + (z - originZ) * (z - originZ);
                     
                     if(distanceSquare > radiusSquare) continue;
 

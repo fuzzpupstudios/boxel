@@ -77,7 +77,6 @@ export class LightingManager {
                 (affectedExtent.max.y + 1) >> 4,
                 (affectedExtent.max.z + 1) >> 4,
             
-                false,  // not priority
                 true,   // render chunks
                 true,   // save chunks
                 false   // don't skip already rendered
@@ -91,7 +90,7 @@ export class LightingManager {
         }
     }
 
-    public updateLight(x: number, y: number, z: number, priority: boolean = false) {
+    public updateLight(x: number, y: number, z: number) {
         const affectedExtent = new Box3(new Vector3(x, y, z), new Vector3(x, y, z));
         
         for(const channel of this.lightChannels) {
@@ -105,7 +104,6 @@ export class LightingManager {
             (affectedExtent.max.x + 1) >> 4,
             (affectedExtent.max.y + 1) >> 4,
             (affectedExtent.max.z + 1) >> 4,
-            priority,
             
             true,   // render chunks
             true,   // save chunks

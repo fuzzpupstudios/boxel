@@ -1,5 +1,5 @@
 import { Assets, Container, Sprite, Texture } from "pixi.js";
-import { MathUtils, PerspectiveCamera } from "three";
+import { Frustum, MathUtils, Matrix4, PerspectiveCamera } from "three";
 import type { Node } from "three/webgpu";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
@@ -64,9 +64,12 @@ export class PlayingGameStage extends GameStage {
             DebugMenuLineAlignment.TOP_LEFT, 0.05,
             (
                 blockBreakParticles: number,
-                entities: number
+                entities: number,
+                drawCalls: number,
+                individualChunks: number,
+                batchedChunks: number,
             ) =>
-                `P ${blockBreakParticles}  E ${entities}`
+                `P ${blockBreakParticles}  E ${entities}  D ${drawCalls}  I ${individualChunks}  B ${batchedChunks}`
         ),
         player: {
             position: this.debugMenu.createLine(
@@ -422,7 +425,7 @@ export class PlayingGameStage extends GameStage {
         this.chunkLoader.maxColumnGenerations = settings.maxColumnGenerations;
         
         this.worldRenderer.fogDistance.value = Math.max(8, settings.renderDistance - 32);
-        this.worldRenderer.maxChunkUpdates = settings.maxChunkUpdates;
+        this.worldRenderer.maxRegionUpdates = settings.maxRegionUpdates;
 
         if(this.dPadLeft != null) {
             this.dPadLeft.scale.set(settings.dPadScale);
@@ -548,6 +551,11 @@ export class PlayingGameStage extends GameStage {
             }
 
             this.chunkLoader.moveOrigin(this.localPlayer.position);
+            this.worldRenderer.setLoadingOrigin(
+                this.localPlayer.position.x,
+                this.localPlayer.position.y,
+                this.localPlayer.position.z
+            );
             this.chunkLoader.update(time);
 
             this.updateCamera(time);
@@ -733,9 +741,31 @@ export class PlayingGameStage extends GameStage {
                 this.world.chunksToSave.size,
                 this.chunkLoader.regionsToUnload.size
             );
+
+            let drawCalls = 0;
+            let individualChunks = 0;
+            let batchedChunks = 0;
+            
+            this.camera.updateMatrixWorld();
+            const frustum = new Frustum().setFromProjectionMatrix(
+                new Matrix4().multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse),
+                this.camera.coordinateSystem
+            );
+            this.worldRenderer.scene.traverseVisible(object => {
+                if(!("material" in object)) return;
+                if(object.frustumCulled && !frustum.intersectsObject(object)) return;
+                drawCalls++;
+            });
+            for(const region of this.worldRenderer.chunkRenderer.renderedRegions) {
+                if(region.batchedMesh) batchedChunks++;
+                else individualChunks++;
+            }
             this.debugMenuLines.counters.setData(
                 this.worldRenderer.blockBreakParticles.particleCount,
                 this.worldRenderer.entityRenderer.entities.size,
+                drawCalls,
+                individualChunks,
+                batchedChunks,
             );
             if(this.localPlayer != null) {
                 this.debugMenuLines.player.position.setData(

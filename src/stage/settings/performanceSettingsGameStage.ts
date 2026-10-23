@@ -42,12 +42,12 @@ export class PerformanceSettingsScreenStage extends GameStage {
 
         this.maxChunkUpdates = new class extends CycleButtonSetting<number> {
             protected override getValue() {
-                return game.settings.maxChunkUpdates;
+                return game.settings.maxRegionUpdates;
             }
             protected override setValue(value: number) {
-                game.settings.maxChunkUpdates = value;
+                game.settings.maxRegionUpdates = value;
             }
-        }("Region Updates", 200, 24, [ 1, 2, 4, 8 ]);
+        }("Region Updates", 200, 24, [ 1, 2, 4, 8, 16 ]);
 
         this.maxChunkLoads = new class extends CycleButtonSetting<number> {
             protected override getValue() {
@@ -56,7 +56,7 @@ export class PerformanceSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.maxColumnLoads = value;
             }
-        }("Column Loads", 200, 24, [ 1, 2, 4 ]);
+        }("Column Loads", 200, 24, [ 1, 2, 4, 8, 16, 32, 64 ]);
 
         this.maxColumnGenerations = new class extends CycleButtonSetting<number> {
             protected override getValue() {

@@ -18,7 +18,7 @@ import { MeshCache } from "./meshing/tileRendering";
 import { blockStateRegistry, getUnknownBlockState } from "../block/blockRegistry";
 
 export class WorldRenderer {
-    public maxChunkUpdates = 16;
+    public maxRegionUpdates = 4;
     public readonly fogDistance = uniform(64);
     public readonly scene = new Scene;
     public readonly sky: Sky;
@@ -129,7 +129,7 @@ export class WorldRenderer {
             }
         }
 
-        this.chunkRenderer.render(time, this.maxChunkUpdates);
+        this.chunkRenderer.render(time, this.maxRegionUpdates);
 
         if(this.paused) return;
 
@@ -140,6 +140,10 @@ export class WorldRenderer {
         this.sky.update();
         
         this.entityRenderer.render(time);
+    }
+    
+    public setLoadingOrigin(x: number, y: number, z: number) {
+        this.chunkRenderer.setLoadingOrigin(x, y, z);
     }
 
     public removeChunk(chunk: Chunk) {

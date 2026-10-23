@@ -1,11 +1,11 @@
-import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Mesh, Object3D, Uint16BufferAttribute, Uint8BufferAttribute, UnsignedByteType, Vector3, type NodeMaterial, type Scene } from "three/webgpu";
-import type { Time } from "../../time";
+import { Box3, BufferAttribute, BufferGeometry, Float32BufferAttribute, IntType, Mesh, Object3D, Uint16BufferAttribute, Uint8BufferAttribute, Vector3, type NodeMaterial, type Scene } from "three/webgpu";
+import { WorkerTerminationError } from "../../multithreading/error";
+import { Time } from "../../time";
+import { DistanceBucketQueue } from "../../world/distanceBucketQueue";
 import { encodeChunkKey as encodeBatchKey, type ChunkKey as BatchKey, type ChunkKey } from "../../world/keying";
 import { Chunk, type World } from "../../world/world";
 import { ChunkMeshDispatcher } from "./chunkMeshDispatcher";
 import type { MeshCache } from "./tileRendering";
-import { OrderedSet } from "../../utilTypes";
-import { WorkerTerminationError } from "../../multithreading/error";
 
 
 function mergeChunkGeometries(
@@ -108,7 +108,7 @@ function mergeChunkGeometries(
 
 export class BatchedChunkRegion {
     public readonly root = new Object3D;
-    private batchedMesh: Mesh | null = null;
+    public batchedMesh: Mesh | null = null;
     private readonly chunkMeshes = new Map<Chunk, Mesh>;
 
     public readonly chunks = new Set<Chunk>;
@@ -199,6 +199,7 @@ export class BatchedChunkRegion {
         this.updateLock = Promise.all(promises);
         await this.updateLock;
         this.updateLock = null;
+        this.lastUpdate = performance.now() / 1000;
         
         this.hibernated = false;
     }
@@ -317,7 +318,7 @@ export class BatchedChunkRegion {
         }
     }
 
-    public async update(time: Time) {
+    public async update() {
         await this.updateLock;
 
         if(this.dirtyChunks.size == 0) return;
@@ -331,6 +332,8 @@ export class BatchedChunkRegion {
         
         this.waitingChunks.clear();
         this.dirtyChunks.clear();
+
+        const hadAllRenderedChunks = this.renderedChunks.size === this.renderer.regionVolume;
 
         for(const chunk of chunksToMesh) {
             if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
@@ -354,10 +357,12 @@ export class BatchedChunkRegion {
             this.updateLock = Promise.all(promises);
             await this.updateLock;
             this.updateLock = null;
-        }
+            this.lastUpdate = performance.now() / 1000;
 
-        if(changes > 0) {
-            this.lastUpdate = time.seconds;
+            // batch immediately the first time all chunks are loaded
+            if(!this.batchedMesh && !hadAllRenderedChunks && this.renderedChunks.size === this.renderer.regionVolume) {
+                this.makeBatched();
+            }
         }
     }
 
@@ -375,7 +380,7 @@ export class BatchedChunkRenderer {
 
     private readonly batchedRegions = new Map<BatchKey, BatchedChunkRegion>;
 
-    public readonly dirtyRegions = new OrderedSet<BatchedChunkRegion>;
+    public readonly dirtyRegions = new DistanceBucketQueue<BatchedChunkRegion>(16, 16);
 
     public readonly renderedRegions = new Set<BatchedChunkRegion>;
     public readonly trackedChunks = new Map<ChunkKey, Chunk>;
@@ -427,15 +432,11 @@ export class BatchedChunkRenderer {
         return region;
     }
 
-    public markChunkDirty(chunk: Chunk, priority: boolean) {
+    public markChunkDirty(chunk: Chunk) {
         const region = this.getOrCreateChunkRegion(chunk);
 
         if(!this.dirtyRegions.has(region)) {
-            if(priority) {
-                this.dirtyRegions.unshift(region);
-            } else {
-                this.dirtyRegions.push(region);
-            }
+            this.dirtyRegions.addPos(region, region.chunkX * 16, region.chunkY * 16, region.chunkZ * 16);
         }
 
         if(this.trackedChunks.has(chunk.key)) {
@@ -469,8 +470,8 @@ export class BatchedChunkRenderer {
         this.renderedRegions.delete(region);
     }
 
-    private async updateRegion(time: Time, region: BatchedChunkRegion) {
-        await region.update(time);
+    private async updateRegion(region: BatchedChunkRegion) {
+        await region.update();
         if(!region.hasChunks()) return;
 
         if(region.renderedChunks.size > 0) {
@@ -503,33 +504,25 @@ export class BatchedChunkRenderer {
         }
     }
 
+    public setLoadingOrigin(x: number, y: number, z: number) {
+        this.dirtyRegions.setOrigin(x, y, z);
+    }
+
+    private regionUpdates = 0;
+
     public async render(time: Time, maxUpdates: number) {
-        if(!this.isUpdating()) {
-            const promises = new Array<Promise<void>>;
+        while(this.regionUpdates < maxUpdates) {
+            const region = this.dirtyRegions.shift();
+            if(region === null) break;
 
-            for(let i = 0; i < maxUpdates; i++) {
-                const region = this.dirtyRegions.shift();
-                if(region == null) break;
-
-                // await this.updateRegion(time, region);
-                promises.push(this.updateRegion(time, region).then(() => {
-                    for(const chunk of region.renderedChunks) {
-                        if(this.trackedChunks.get(chunk.key) !== chunk) continue;
-                        this.renderedChunks.set(chunk.key, chunk);
-                    }
-                }));
-            }
-            
-            if(promises.length > 0) {
-                this.updateLock = Promise.all(promises);
-                try {
-                    await this.updateLock;
-                } catch(e) {
-                    if(!(e instanceof WorkerTerminationError)) throw e;
-                } finally {
-                    this.updateLock = null;
+            this.regionUpdates++;
+            this.updateRegion(region).then(() => {
+                this.regionUpdates--;
+                for(const chunk of region.renderedChunks) {
+                    if(this.trackedChunks.get(chunk.key) !== chunk) continue;
+                    this.renderedChunks.set(chunk.key, chunk);
                 }
-            }
+            });
         }
 
         this.settle(time);
