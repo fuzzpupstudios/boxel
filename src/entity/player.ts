@@ -6,7 +6,6 @@ import { BoxelGame } from "../boxel";
 import { EventCursor } from "../events/eventSheet";
 import { Inventory, InventorySlot, SerializedInventory } from "../item/inventory";
 import { Item } from "../item/item";
-import { itemRegistry } from "../item/itemRegistry";
 import { ItemStack } from "../item/itemStack";
 import { AABB } from "../physics/AABB";
 import type { PhysicsDataCache } from "../physics/physicsDataCache";
@@ -26,6 +25,9 @@ export const SerializedPlayerEntity = SerializedEntity.extend({
     selectedSlot: z.int().default(0),
     pitch: z.number().default(0),
     yaw: z.number().default(0),
+    infiniteItems: z.boolean().default(false),
+    instabreak: z.boolean().default(false),
+    canFly: z.boolean().default(false)
 });
 
 const basePlayerAttributes = baseEntityAttributes.extend([
@@ -575,6 +577,9 @@ export class Player extends Entity<SerializedPlayerEntity> {
             selectedSlot: this.selectedSlot,
             pitch: this.pitch,
             yaw: this.yaw,
+            infiniteItems: this.infiniteItems,
+            instabreak: this.instabreak,
+            canFly: this.canFly,
         });
     }
     public override deserialize(data: Partial<SerializedPlayerEntity>) {
@@ -589,5 +594,9 @@ export class Player extends Entity<SerializedPlayerEntity> {
 
         this.pitch = parsedData.pitch;
         this.yaw = parsedData.yaw;
+
+        this.infiniteItems = parsedData.infiniteItems;
+        this.instabreak = parsedData.instabreak;
+        this.canFly = parsedData.canFly;
     }
 }
