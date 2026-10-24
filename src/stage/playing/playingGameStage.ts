@@ -36,6 +36,9 @@ import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
+import { ChatGUI } from "../../gui/prefab/chat";
+import { Chat, ChatMessage } from "../../chat/chat";
+import { CommandExecutor } from "../../chat/command/commandExecutor";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -46,6 +49,8 @@ export class PlayingGameStage extends GameStage {
     public readonly camera = new PerspectiveCamera(90);
     
     public readonly debugMenu = new DebugMenu;
+    public readonly chat = new Chat;
+    public readonly chatGui = new ChatGUI(this.chat);
     public readonly debugMenuLines = {
         version: this.debugMenu.createLine(
             DebugMenuLineAlignment.TOP_LEFT, Infinity,
@@ -157,10 +162,10 @@ export class PlayingGameStage extends GameStage {
         this.itemHologramProvider = new ItemHologramProvider(game.textureAtlases!);
 
         this.guiManager = new GuiManager(this.tileHologramProvider, this.itemSpriteProvider);
+        this.gui.addChild(this.guiManager.view);
         this.guiManager.onUpdate.connect(() => {
             this.updateInputLocks();
         });
-        this.gui.addChild(this.guiManager.view);
 
         this.holdingBlockPreview = new GuiItemStack(
             ItemStack.empty(),
@@ -183,7 +188,7 @@ export class PlayingGameStage extends GameStage {
         this.pointerGuiStack = new GuiItemStack(ItemStack.empty(), this.tileHologramProvider, this.itemSpriteProvider);
         this.gui.addChild(this.pointerGuiStack);
         this.pointerGuiStack.interactive = false;
-        this.pointerGuiStack.zIndex = 10;
+        this.pointerGuiStack.zIndex = 11;
 
         this.itemGivePanel = new Container;
         this.itemGivePanel.visible = false;
@@ -192,6 +197,28 @@ export class PlayingGameStage extends GameStage {
         this.debugMenu.view.visible = false;
         this.gui.addChild(this.debugMenu.view);
         this.debugMenuLines.version.setData(this.game.version);
+
+        this.chatGui.zIndex = 5;
+        this.chatGui.onClose.connect(() => {
+            if(this.controlAllowed) {
+                this.game.input.mouse?.lock();
+            }
+        });
+        this.chatGui.onMessage.connect(message => {
+            this.chat.log(`<${this.localPlayer?.id}> ${message}`);
+        });
+        this.chatGui.onCommand.connect(command => {
+            const executor = new CommandExecutor(this.chat, this);
+            if(this.localPlayer) executor.setEntity(this.localPlayer);
+
+            try {
+                command.execute(executor);
+            } catch(e) {
+                console.error(e);
+                this.chat.log("An error occurred whilst running /" + command.calledName);
+            }
+        });
+        this.gui.addChild(this.chatGui);
 
         const giveMenuItems = new Set<string>;
 
@@ -248,6 +275,7 @@ export class PlayingGameStage extends GameStage {
 
         this.pausedContainer = new Container();
         this.pausedContainer.origin.set(0, 0);
+        this.pausedContainer.zIndex = 20;
         
         this.pausedBackground = new Sprite(Texture.WHITE);
         this.pausedBackground.origin.set(0, 0);
@@ -337,7 +365,7 @@ export class PlayingGameStage extends GameStage {
         const hotbarGuiType = guiTypeRegistry.get("base:hotbar");
         if(hotbarGuiType != null) {
             const hotbarGui = hotbarGuiType.createGui(inventories);
-            const hotbar = this.guiManager.openGui(hotbarGui, this.localPlayer.createEventCursor());
+            const hotbar = this.guiManager.openGui(hotbarGui, this.localPlayer.createEventCursor(), 3);
 
             this.hotbarSelection = new Sprite(Assets.get("base:ui/hotbar_selection.png"));
             hotbar.addChild(this.hotbarSelection);
@@ -384,6 +412,11 @@ export class PlayingGameStage extends GameStage {
 
         this.guiManager.resize(width, height, pixelRatio);
         this.debugMenu.resize(width, height);
+        this.chatGui.resize(width, height);
+    }
+
+    private get controlAllowed() {
+        return !this.paused && this.isTopmostStage() && !this.chatGui.messageBarOpen && this.guiManager.getOpenModalCount() === 0;
     }
 
     public setPaused(paused: boolean) {
@@ -481,7 +514,7 @@ export class PlayingGameStage extends GameStage {
             this.autosaveCooldown = 10;
         }
 
-        if(this.isTopmostStage()) {
+        if(this.controlAllowed || (this.paused && this.isTopmostStage())) {
             if(game.input.wasPressed(ControlBinding.PAUSE)) {
                 if(this.paused) {
                     this.setPaused(false);
@@ -496,15 +529,18 @@ export class PlayingGameStage extends GameStage {
         }
 
         if(game.input.mouse != null && game.input.controllers.size == 0 && game.isDesktop) {
-            const pointerUnlockers = (this.paused ? 1 : 0) + this.guiManager.getOpenModalCount();
-            if(game.input.mouse.isCurrentlyLocked() || pointerUnlockers > 0) {
+            if(game.input.mouse.isCurrentlyLocked() || !this.controlAllowed) {
                 this.unlockTime = 0;
             } else {
                 this.unlockTime += time.deltaTime;
+
+                if(game.focused) {
+                    game.input.mouse.lock();
+                }
             }
             if(
                 (this.unlockTime > 1 && this.game.settings.pauseIfUnlocked)
-                || (game.input.mouse.wasPressed(MouseButton.UNLOCK) && pointerUnlockers == 0)
+                || (game.input.mouse.wasPressed(MouseButton.UNLOCK) && this.controlAllowed)
             ) {
                 this.setPaused(true);
             }
@@ -517,7 +553,7 @@ export class PlayingGameStage extends GameStage {
                     this.guiManager.closeGui(topModal.gui.type.id);
                     this.localPlayer.inventory.addStack(this.localPlayer.pointerInventory.slots[0].stack);
                 }
-            } else {
+            } else if(this.controlAllowed) {
                 if(game.input.wasPressed(ControlBinding.OPEN_INVENTORY)) {
                     const inventoryType = guiTypeRegistry.get("base:player_inventory")!;
 
@@ -525,13 +561,13 @@ export class PlayingGameStage extends GameStage {
                         ["player", this.localPlayer.inventory]
                     ]);
                     const gui = inventoryType.createGui(inventories);
-                    this.guiManager.openGui(gui, this.localPlayer.createEventCursor());
+                    this.guiManager.openGui(gui, this.localPlayer.createEventCursor(), 7);
                 }
             }
 
-            this.updateOpenGUIs();
+            this.updateOpenGUIs(time);
 
-            if(this.guiManager.getOpenModalCount() == 0) {
+            if(this.controlAllowed) {
                 this.playerController.update(time);
             }
 
@@ -585,6 +621,25 @@ export class PlayingGameStage extends GameStage {
             this.pointerGuiStack.updateDisplayItem();
         }
 
+        if(this.controlAllowed) {
+            if(this.game.input.wasPressed(ControlBinding.OPEN_CHAT)) {
+                this.chatGui.openMessageBar();
+                this.game.input.mouse?.unlock();
+            }
+            if(this.game.input.wasPressed(ControlBinding.OPEN_COMMAND)) {
+                this.chatGui.openMessageBar("/");
+                this.game.input.mouse?.unlock();
+            }
+        }
+        if(this.chatGui.messageBarOpen) {
+            if(this.game.input.wasPressed(ControlBinding.CHAT_HISTORY_OLDER)) {
+                this.chatGui.messageBar.olderHistory();
+            }
+            if(this.game.input.wasPressed(ControlBinding.CHAT_HISTORY_NEWER)) {
+                this.chatGui.messageBar.newerHistory();
+            }
+        }
+
         // copy the sky color from the world renderer's sky to the lighting channel color value
         this.world.lightingManager.getChannelOrThrow("base:sky").color.value.copy(
             this.worldRenderer.sky.sunlightColor.value);
@@ -599,7 +654,7 @@ export class PlayingGameStage extends GameStage {
         }
     }
 
-    private updateOpenGUIs() {
+    private updateOpenGUIs(time: Time) {
         const game = this.game;
 
         const [ cursorX, cursorY ] = this.game.getPointerPosition();
@@ -708,6 +763,8 @@ export class PlayingGameStage extends GameStage {
                 graphic?.type.events.runTrigger("base:ui/press_down", cursor);
             }
         }
+
+        this.chatGui.render(time);
     }
 
     private updateCamera(time: Time) {
@@ -861,6 +918,7 @@ export class PlayingGameStage extends GameStage {
         clearInterval(this.blockTickInterval);
 
         this.world.dispose();
+        this.chatGui.dispose();
 
         // otherwise hangs on to references to the world and misc. renderers
         EventCursor.setClientPlatform(null);

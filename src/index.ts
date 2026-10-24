@@ -31,6 +31,12 @@ async function main() {
     document.body.addEventListener("focusout", () => {
         game.onUnfocus();
     });
+    window.addEventListener("focus", () => {
+        game.onFocus();
+    });
+    document.body.addEventListener("focusin", () => {
+        game.onFocus();
+    });
 
     await game.start();
     game.resize(Math.min(innerWidth, outerWidth), Math.min(innerHeight, outerHeight), devicePixelRatio);

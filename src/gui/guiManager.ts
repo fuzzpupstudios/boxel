@@ -42,7 +42,7 @@ export class GuiManager {
     public getOpenModalCount() {
         return this.openGuis.values().reduce((a, gui) => gui.gui.type.modal ? a + 1 : a, 0);
     }
-    public openGui(gui: Gui, cursor: EventCursor) {
+    public openGui(gui: Gui, cursor: EventCursor, zIndex?: number) {
         const id = gui.type.id;
         try {
             const guiContainer = new GuiContainer(gui,
@@ -58,6 +58,7 @@ export class GuiManager {
             const size = guiContainer.getSize();
             guiContainer.pivot.set(size.width / 2, size.height / 2);
 
+            if(zIndex != null) guiContainer.zIndex = zIndex;
             this.view.addChild(guiContainer);
 
             this.resize(this.lastWidth, this.lastHeight, this.lastPixelRatio);

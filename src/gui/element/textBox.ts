@@ -2,7 +2,12 @@ import { Input } from "@pixi/ui";
 import { Assets, BitmapText, TextStyle } from "pixi.js";
 
 export class GuiTextBox extends Input {
-    public constructor(placeholder: string, width: number, height: number) {
+    public constructor(
+        placeholder: string,
+        width: number,
+        height: number,
+        fontScale: number = 1
+    ) {
         super({
             bg: Assets.get("base:ui/input.png"),
             nineSliceSprite: [3, 3, 3, 3],
@@ -12,12 +17,16 @@ export class GuiTextBox extends Input {
             textStyle: new TextStyle({
                 fill: 0xffffff,
                 fontFamily: "BoxelFont",
-                fontSize: 12,
+                fontSize: 12 * fontScale,
             }),
             TextClass: BitmapText
         });
 
         this.width = width;
         this.height = height;
+    }
+
+    public focus() {
+        this._startEditing();
     }
 }

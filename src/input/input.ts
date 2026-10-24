@@ -29,6 +29,8 @@ export enum ControlBinding {
     PRESS_UI,
 
     TOGGLE_DEBUG,
+    OPEN_CHAT, OPEN_COMMAND,
+    CHAT_HISTORY_OLDER, CHAT_HISTORY_NEWER,
 
     SLOT_0, SLOT_1, SLOT_2, SLOT_3, SLOT_4, SLOT_5, SLOT_6, SLOT_7, SLOT_8, SLOT_9,
 }
@@ -95,6 +97,11 @@ export class Input {
 
         [ControlBinding.FULLSCREEN]: "F11",
         [ControlBinding.TOGGLE_DEBUG]: "F3",
+
+        [ControlBinding.OPEN_CHAT]: "KeyT",
+        [ControlBinding.OPEN_COMMAND]: "Slash",
+        [ControlBinding.CHAT_HISTORY_OLDER]: "ArrowUp",
+        [ControlBinding.CHAT_HISTORY_NEWER]: "ArrowDown",
 
         [ControlBinding.SLOT_0]: "Digit1",
         [ControlBinding.SLOT_1]: "Digit2",

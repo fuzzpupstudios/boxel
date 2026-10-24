@@ -76,6 +76,7 @@ export class BoxelGame {
     public guiWidth: number = 0;
     public guiHeight: number = 0;
     public initialized: boolean = false;
+    public focused = true;
 
 
     constructor(
@@ -337,6 +338,11 @@ export class BoxelGame {
 
     public onUnfocus() {
         this.input.clearAll();
+        this.focused = false;
+    }
+
+    public onFocus() {
+        this.focused = true;
     }
 
     public async start() {

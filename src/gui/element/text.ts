@@ -4,8 +4,9 @@ export interface GuiTextOptions {
     text?: string;
     fontScale?: number;
     align?: TextStyleAlign;
-    fill?: Color,
-    fontStyle?: FontStyle
+    fill?: Color;
+    fontStyle?: FontStyle;
+    wordWrap?: boolean;
 }
 
 type FontStyle = "normal" | "italic" | "oblique";
@@ -24,13 +25,15 @@ export class GuiText extends Container {
             text: "",
             style: new TextStyle({
                 fill: new Color(0x444444),
-                fontFamily: "BoxelFont"
+                fontFamily: "BoxelFont",
+                wordWrap: options?.wordWrap
             })
         });
         const mainText = new BitmapText({
             text: "",
             style: new TextStyle({
-                fontFamily: "BoxelFont"
+                fontFamily: "BoxelFont",
+                wordWrap: options?.wordWrap
             }),
             children: [ shadow ]
         });
@@ -113,5 +116,14 @@ export class GuiText extends Container {
 
     public get fontStyle() {
         return this._fontStyle;
+    }
+
+    public set wordWrapWidth(width: number) {
+        this.mainText.style.wordWrapWidth = width;
+        this.shadow.style.wordWrapWidth = width;
+    }
+
+    public get wordWrapWidth() {
+        return this.mainText.style.wordWrapWidth;
     }
 }
