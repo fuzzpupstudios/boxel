@@ -98,6 +98,7 @@ export class ItemEntity extends Entity {
         });
         
         this.updateDisplayItem();
+        this.updateLightColor();
     }
 
     protected override createAABB(world: World, physicsData: PhysicsDataCache): AABB {
@@ -143,12 +144,7 @@ export class ItemEntity extends Entity {
             }
         }
 
-        this.world.lightingManager.getColorAt(
-            Math.floor(this.position.x),
-            Math.floor(this.position.y),
-            Math.floor(this.position.z),
-            this.lightColor
-        );
+        this.updateLightColor();
     }
 
     public getStack() {
@@ -213,6 +209,15 @@ export class ItemEntity extends Entity {
             this.renderer.batchedMesh.setMatrixAt(id, this.tempMatrix.multiplyMatrices(this.matrix, this.tempMatrix));
             this.renderer.batchedMesh.setColorAt(id, this.lightColor);
         }
+    }
+
+    private updateLightColor() {
+        this.world.lightingManager.getColorAt(
+            Math.floor(this.position.x),
+            Math.floor(this.position.y),
+            Math.floor(this.position.z),
+            this.lightColor
+        );
     }
 
     public override destroy() {
