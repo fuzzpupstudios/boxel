@@ -56,6 +56,10 @@ export class PlayingGameStage extends GameStage {
             DebugMenuLineAlignment.TOP_LEFT, Infinity,
             (version: string) => `Boxel ${version}`
         ),
+        framerate: this.debugMenu.createLine(
+            DebugMenuLineAlignment.TOP_LEFT, 1,
+            (framerate: number, maxFramerate: number) => maxFramerate == 0 ? `${framerate} FPS` : `${framerate} / ${maxFramerate} FPS`
+        ),
         queues: this.debugMenu.createLine(
             DebugMenuLineAlignment.TOP_LEFT, 0.05,
             (
@@ -123,6 +127,7 @@ export class PlayingGameStage extends GameStage {
     private worldLoading: boolean = true;
     private autosaveCooldown: number = 0;
     private blockTickInterval: number = 0;
+    private frameCounter = new Array<Time>;
 
     private longTouched = false;
     private unlockTime = 0;
@@ -544,6 +549,11 @@ export class PlayingGameStage extends GameStage {
             this.autosaveCooldown = 10;
         }
 
+        this.frameCounter.push(time);
+        while(this.frameCounter.length > 0 && time.seconds - this.frameCounter[0].seconds > 1) this.frameCounter.shift();
+        this.debugMenuLines.framerate.setData(this.frameCounter.length, this.game.settings.maxFramerate);
+
+
         if(this.controlAllowed || (this.paused && this.isTopmostStage())) {
             if(game.input.wasPressed(ControlBinding.PAUSE)) {
                 if(this.paused) {
@@ -593,6 +603,11 @@ export class PlayingGameStage extends GameStage {
                     const gui = inventoryType.createGui(inventories);
                     this.guiManager.openGui(gui, this.localPlayer.createEventCursor(), 7);
                 }
+            }
+
+            if(this.game.input.wasPressed(ControlBinding.TOGGLE_DEBUG)) {
+                this.debugMenu.view.visible = !this.debugMenu.view.visible;
+                this.worldRenderer.setDebug(this.debugMenu.view.visible);
             }
 
             this.updateOpenGUIs(time);
@@ -798,11 +813,6 @@ export class PlayingGameStage extends GameStage {
     }
 
     private updateDebugMenu(time: Time) {
-        if(this.game.input.wasPressed(ControlBinding.TOGGLE_DEBUG)) {
-            this.debugMenu.view.visible = !this.debugMenu.view.visible;
-            this.worldRenderer.setDebug(this.debugMenu.view.visible);
-        }
-
         if(this.debugMenu.view.visible) {
             this.debugMenuLines.queues.setData(
                 this.world.loadingChunks.size,

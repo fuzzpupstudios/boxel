@@ -26,6 +26,7 @@ export class Mouse {
     private readonly onContextMenuEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
     private readonly onWheelEvents = new Map<HTMLElement, (event: WheelEvent) => void>;
     private readonly onPointerLockChangeEvents = new Set<() => void>;
+    public unadjustedMovement: boolean = true;
 
     public addListeners(element: HTMLElement) {
         this.element = element;
@@ -99,7 +100,7 @@ export class Mouse {
     public updatePointerLock(): boolean {
         if(this.locked) {
             if(!this.isCurrentlyLocked()) {
-                this.element!.requestPointerLock().catch(() => {
+                this.element!.requestPointerLock({ unadjustedMovement: this.unadjustedMovement }).catch(() => {
                     this.locked = false;
                 });
                 return true;

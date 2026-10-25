@@ -15,6 +15,7 @@ export class ControlSettingsScreenStage extends GameStage {
     private readonly controllerGuiSensitivity: SliderSetting;
     private readonly invertX: ToggleButtonSetting;
     private readonly invertY: ToggleButtonSetting;
+    private readonly unadjustedMovement: ToggleButtonSetting;
     private readonly controllerDeadzone: SliderSetting;
     private readonly pauseIfUnlocked: ToggleButtonSetting;
     private readonly background: Sprite;
@@ -96,6 +97,18 @@ export class ControlSettingsScreenStage extends GameStage {
             this.game.audioManager.playMenuClick();
         });
 
+        this.unadjustedMovement = new class extends ToggleButtonSetting {
+            protected override getValue() {
+                return game.settings.unadjustedMovement;
+            }
+            protected override setValue(value: boolean) {
+                game.settings.unadjustedMovement = value;
+            }
+        }("Unadjusted Mouse", 200, 24);
+        this.unadjustedMovement.element.addListener("pointerdown", () => {
+            this.game.audioManager.playMenuClick();
+        });
+
         this.controllerDeadzone = new class extends SliderSetting {
             protected override getValue() {
                 return game.settings.controllerDeadzone;
@@ -124,6 +137,7 @@ export class ControlSettingsScreenStage extends GameStage {
             this.controllerGuiSensitivity.element,
             this.invertX.element,
             this.invertY.element,
+            this.unadjustedMovement.element,
             this.controllerDeadzone.element,
             this.pauseIfUnlocked.element,
             this.backButton
@@ -143,8 +157,9 @@ export class ControlSettingsScreenStage extends GameStage {
         this.controllerGuiSensitivity.element.position.set(width / 2, 140);
         this.invertX.element.position.set(width / 2 - 51, 170);
         this.invertY.element.position.set(width / 2 + 51, 170);
-        this.controllerDeadzone.element.position.set(width / 2, 200);
-        this.pauseIfUnlocked.element.position.set(width / 2, 230);
+        this.unadjustedMovement.element.position.set(width / 2, 200);
+        this.controllerDeadzone.element.position.set(width / 2, 230);
+        this.pauseIfUnlocked.element.position.set(width / 2, 260);
 
         this.background.setSize(width, height);
     }

@@ -12,6 +12,7 @@ export class VideoSettingsScreenStage extends GameStage {
     private readonly backButton: GuiButton;
     private readonly fov: SliderSetting;
     private readonly renderDistance: SliderSetting;
+    private readonly maxFramerate: SliderSetting;
     private readonly background: Sprite;
 
     public constructor(game: BoxelGame) {
@@ -57,10 +58,24 @@ export class VideoSettingsScreenStage extends GameStage {
             }
         }("Render distance", 48, 512, 16, 200, 24);
 
+        this.maxFramerate = new class extends SliderSetting {
+            protected override getValue() {
+                return game.settings.maxFramerate;
+            }
+            protected override setValue(value: number) {
+                game.settings.maxFramerate = value;
+            }
+            protected getText(title: string, decimals: number): string {
+                if(this.getValue() == 0) return title + ": Unlimited";
+                return super.getText(title, decimals) + " FPS";
+            }
+        }("Max Framerate", 0, 300, 1, 200, 24);
+
         this.gui.addChild(
             this.background, this.titleText,
             this.fov.element,
             this.renderDistance.element,
+            this.maxFramerate.element,
             this.backButton);
     }
 
@@ -74,6 +89,7 @@ export class VideoSettingsScreenStage extends GameStage {
 
         this.fov.element.position.set(width / 2, 80);
         this.renderDistance.element.position.set(width / 2, 110);
+        this.maxFramerate.element.position.set(width / 2, 140);
 
         this.background.setSize(width, height);
     }

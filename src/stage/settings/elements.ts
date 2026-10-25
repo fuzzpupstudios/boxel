@@ -14,13 +14,16 @@ export abstract class ToggleButtonSetting extends Setting<boolean> {
     public constructor(title: string, width: number, height: number) {
         super();
 
-        const makeText = () => title + ": " + (this.getValue() ? "on" : "off");
+        const makeText = () => this.getText(title);
         this.element = new GuiButton(makeText(), width, height);
 
         this.element.on("pointerdown", () => {
             this.setValue(!this.getValue());
             this.element.text = makeText();
         })
+    }
+    protected getText(title: string) {
+        return title + ": " + (this.getValue() ? "on" : "off")
     }
 }
 
@@ -30,7 +33,7 @@ export abstract class CycleButtonSetting<DataType> extends Setting<DataType> {
     public constructor(title: string, width: number, height: number, values: DataType[]) {
         super();
 
-        const makeText = () => title + ": " + this.getValue();
+        const makeText = () => this.getText(title);
         this.element = new GuiButton(makeText(), width, height);
 
         this.element.on("pointerdown", (event) => {
@@ -47,6 +50,9 @@ export abstract class CycleButtonSetting<DataType> extends Setting<DataType> {
             this.element.text = makeText();
         })
     }
+    protected getText(title: string) {
+        return title + ": " + this.getValue();
+    }
 }
 
 export abstract class SliderSetting extends Setting<number> {
@@ -57,12 +63,15 @@ export abstract class SliderSetting extends Setting<number> {
 
         const decimals = Math.max(0, -Math.floor(Math.log10(step)));
 
-        const makeText = () => title + ": " + this.getValue().toLocaleString(navigator.language, { minimumFractionDigits: decimals, useGrouping: false });
+        const makeText = () => this.getText(title, decimals);
         this.element = new GuiSlider(min, max, this.getValue(), step, width, height, makeText());
 
         this.element.addListener("input", () => {
             this.setValue(this.element.value);
             this.element.text = makeText();
         })
+    }
+    protected getText(title: string, decimals: number) {
+        return title + ": " + this.getValue().toLocaleString(navigator.language, { minimumFractionDigits: decimals, useGrouping: false });
     }
 }

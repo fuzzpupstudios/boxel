@@ -4,8 +4,10 @@ export type Settings = z.infer<typeof Settings>;
 export const Settings = z.object({
     invertX: z.boolean().default(false),
     invertY: z.boolean().default(false),
+    unadjustedMovement: z.boolean().default(false),
     pauseIfUnlocked: z.boolean().default(true),
     renderDistance: z.number().default(64),
+    maxFramerate: z.number().default(0),
     dPadScale: z.number().default(1),
     guiScale: z.number().default(2),
     fov: z.number().default(90),

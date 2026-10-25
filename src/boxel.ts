@@ -72,6 +72,7 @@ export class BoxelGame {
     public readonly version: string;
 
     private lastRenderTime = 0;
+    private nextFrameAllowed = 0;
     private rootElement: HTMLElement;
     private viewportWidth = 1;
     private viewportHeight = 1;
@@ -254,6 +255,10 @@ export class BoxelGame {
     public updateSettings() {
         this.settings.guiScale = this.settings.guiScale;
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
+
+        if(this.input.mouse) {
+            this.input.mouse.unadjustedMovement = this.settings.unadjustedMovement;
+        }
         
         for(const controller of this.input.controllers.values()) {
             controller.setDeadzone(this.settings.controllerDeadzone);
@@ -509,6 +514,10 @@ export class BoxelGame {
     }
 
     public render(miliseconds: number) {
+        if(miliseconds >= this.nextFrameAllowed) {
+            this.nextFrameAllowed = Math.max(miliseconds, this.nextFrameAllowed + 1000 / this.settings.maxFramerate);
+        } else return;
+
         try {
             const time: Time = Time.fromMsDifference(this.lastRenderTime, miliseconds, 100);
             this.lastRenderTime = miliseconds;
