@@ -54,7 +54,7 @@ class ModCard extends Container {
             fontStyle: "oblique"
         });
         packVersion.setAnchor(1, 0);
-        packVersion.position.set(ModCard.WIDTH - 22, 22);
+        packVersion.position.set(ModCard.WIDTH - 8, 22);
 
         if(mod.pack == null) {
             packName.fill = packFilename.fill = packVersion.fill = new Color(0xff8888);
@@ -83,11 +83,13 @@ class ModCard extends Container {
         refreshButton.position.set(ModCard.WIDTH - 12, 27);
 
         super({
-            children: [ background, packIcon, packName, packFilename, packVersion, refreshButton ]
+            children: [ background, packIcon, packName, packFilename, packVersion ]
         });
 
         if(!mod.preinstalled) {
+            this.addChild(refreshButton);
             this.addChild(deleteButton);
+            packVersion.position.set(ModCard.WIDTH - 22, 22);
         }
 
         background.position.set(background.width * 0.5, background.height * 0.5);
