@@ -3,20 +3,36 @@ export class Keyboard {
     private readonly wasPressedKeys: Set<string> = new Set;
     private readonly wasUnpressedKeys: Set<string> = new Set;
     private locked = false;
+    private readonly keyDownEvents = new Map<HTMLElement, (event: KeyboardEvent) => void>;
+    private readonly keyUpEvents = new Map<HTMLElement, (event: KeyboardEvent) => void>;
 
     public addListeners(element: HTMLElement) {
-        element.addEventListener("keydown", event => {
+        const onKeyDown = (event: KeyboardEvent) => {
             if(event.repeat) return;
             
             this.pressingKeys.add(this.translateKey(event.code));
             this.wasPressedKeys.add(this.translateKey(event.code));
 
             if(this.locked) event.preventDefault();
-        });
-        element.addEventListener("keyup", event => {
+        }
+        const onKeyUp = (event: KeyboardEvent) => {
             this.pressingKeys.delete(this.translateKey(event.code));
             this.wasUnpressedKeys.add(this.translateKey(event.code));
-        });
+        }
+        element.addEventListener("keydown", onKeyDown);
+        element.addEventListener("keyup", onKeyUp);
+
+        this.keyDownEvents.set(element, onKeyDown);
+        this.keyUpEvents.set(element, onKeyUp);
+    }
+
+    public removeAllListeners() {
+        for(const [ element, onKeyDown ] of this.keyDownEvents) {
+            element.removeEventListener("keydown", onKeyDown);
+        }
+        for(const [ element, onKeyUp ] of this.keyUpEvents) {
+            element.removeEventListener("keydown", onKeyUp);
+        }
     }
 
     public lock() {

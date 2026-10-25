@@ -34,6 +34,7 @@ import { DataDrivenLightChannel } from "./world/lighting/dataDrivenLightChannel"
 import { lightChannelRegistry } from "./world/lighting/lightChannelRegistry";
 import { patternRegistry } from "./events/pattern/patternRegistry";
 import { DataDrivenPattern } from "./events/pattern/dataDrivenPattern";
+import { Signal } from "typed-signals";
 
 
 export interface TextureAtlases {
@@ -43,6 +44,8 @@ export interface TextureAtlases {
 
 export class BoxelGame {
     public static INSTANCE: BoxelGame = null!;
+
+    public readonly onCrash = new Signal<(error: any) => void>;
 
     public readonly threeRenderer: THREE.WebGPURenderer;
     public readonly gui: PIXI.Application;
@@ -151,10 +154,9 @@ export class BoxelGame {
     public changeStage(stage: GameStage, savePrevious = true, immediate = false) {
         if(immediate) {
             if(!savePrevious) {
-                for(const activeStage of this.activeStages) {
+                for(const activeStage of this.activeStages.splice(0).reverse()) {
                     this.closeStage(activeStage);
                 }
-                this.activeStages.splice(0);
             }
 
             this.activeStages.push(stage);
@@ -346,61 +348,75 @@ export class BoxelGame {
     }
 
     public async start() {
-        this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
+        try {
+            this.settings = Settings.parse((await this.mainStorage.get("settings")) ?? {});
 
-        const basePack = await fetch("assets/base.zip?" + btoa(this.version))
-            .then(v => v.blob())
-            .then(blob => AssetPack.fromBlob(blob));
-        
-        await this.modManager.load();
-        await this.modManager.addModFile("base.zip", basePack, true);
-        await this.modManager.save();
-
-        await this.reloadAssets();
-
-        await this.threeRenderer.init();
-        await this.gui.init({
-            backgroundAlpha: 0,
-            antialias: false,
-            autoDensity: true,
-            skipExtensionImports: false,
-            resizeTo: this.rootElement
-        });
-        
-        this.rootElement.appendChild(this.threeRenderer.domElement);
-        this.rootElement.appendChild(this.gui.canvas);
-
-        this.guiBackground = new PIXI.Sprite(PIXI.Texture.EMPTY);
-        this.guiBackground.interactive = true;
-        this.guiBackground.anchor.set(0);
-        this.gui.stage.addChild(this.guiBackground);
-
-        this.controllerCrosshair = new GuiControllerCrosshair(this);
-        this.controllerCrosshair.zIndex = 100;
-        this.gui.stage.addChild(this.controllerCrosshair);
-        this.controllerCrosshair.visible = false;
-
-        this.input.attachKeyboard(this.rootElement);
-        this.input.attachMouse(this.rootElement);
-
-        this.input.attachTouch(this.rootElement, (x, y) => {
-            const bounds = this.gui.canvas.getBoundingClientRect();
-            const localX = x - bounds.left;
-            const localY = y - bounds.top;
-
-            if(localX < 0 || localY < 0 || localX > bounds.width || localY > bounds.height) {
-                return false;
-            }
-
-            const target = this.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+            const basePack = await fetch("assets/base.zip?" + btoa(this.version))
+                .then(v => v.blob())
+                .then(blob => AssetPack.fromBlob(blob));
             
-            return target != null && target != this.guiBackground;
-        });
+            await this.modManager.load();
+            await this.modManager.addModFile("base.zip", basePack, true);
+            await this.modManager.save();
 
-        this.queueNextFrame();
+            await this.reloadAssets();
 
-        this.changeStage(new TitleScreenStage(this));
-        this.initialized = true;
+            await this.threeRenderer.init();
+            await this.gui.init({
+                backgroundAlpha: 0,
+                antialias: false,
+                autoDensity: true,
+                skipExtensionImports: false,
+                resizeTo: this.rootElement
+            });
+            
+            this.rootElement.appendChild(this.threeRenderer.domElement);
+            this.rootElement.appendChild(this.gui.canvas);
+
+            this.guiBackground = new PIXI.Sprite(PIXI.Texture.EMPTY);
+            this.guiBackground.interactive = true;
+            this.guiBackground.anchor.set(0);
+            this.gui.stage.addChild(this.guiBackground);
+
+            this.controllerCrosshair = new GuiControllerCrosshair(this);
+            this.controllerCrosshair.zIndex = 100;
+            this.gui.stage.addChild(this.controllerCrosshair);
+            this.controllerCrosshair.visible = false;
+
+            this.input.attachKeyboard(this.rootElement);
+            this.input.attachMouse(this.rootElement);
+
+            this.input.attachTouch(this.rootElement, (x, y) => {
+                const bounds = this.gui.canvas.getBoundingClientRect();
+                const localX = x - bounds.left;
+                const localY = y - bounds.top;
+
+                if(localX < 0 || localY < 0 || localX > bounds.width || localY > bounds.height) {
+                    return false;
+                }
+
+                const target = this.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+                
+                return target != null && target != this.guiBackground;
+            });
+
+            this.changeStage(new TitleScreenStage(this), false, true);
+            this.initialized = true;
+
+            this.threeRenderer.setAnimationLoop(time => this.render(time));
+        } catch(error) {
+            this.crash(error);
+        }
+    }
+
+    public async stop() {
+        for(const stage of this.activeStages.splice(0).reverse()) {
+            this.closeStage(stage);
+        }
+
+        this.input.dispose();
+
+        this.threeRenderer.setAnimationLoop(null);
     }
 
     public async reloadAssets() {
@@ -467,10 +483,6 @@ export class BoxelGame {
         }
     }
 
-    private queueNextFrame() {
-        requestAnimationFrame(time => this.render(time));
-    }
-
     public toggleFullscreen() {
         if(document.fullscreenElement !== document.body) {
             document.body.requestFullscreen();
@@ -497,19 +509,26 @@ export class BoxelGame {
     }
 
     public render(miliseconds: number) {
-        const time: Time = Time.fromMsDifference(this.lastRenderTime, miliseconds, 100);
-        this.lastRenderTime = miliseconds;
+        try {
+            const time: Time = Time.fromMsDifference(this.lastRenderTime, miliseconds, 100);
+            this.lastRenderTime = miliseconds;
 
-        if(this.input.wasPressed(ControlBinding.FULLSCREEN)) this.toggleFullscreen();
+            if(this.input.wasPressed(ControlBinding.FULLSCREEN)) this.toggleFullscreen();
 
-        for(const activeStage of this.activeStages) {
-            activeStage.tick(time);
+            for(const activeStage of this.activeStages) {
+                activeStage.tick(time);
+            }
+            this.renderPipeline.render();
+            this.gui.render();
+            this.controllerCrosshair?.update(time);
+            this.input.update();
+        } catch(error) {
+            this.crash(error);
         }
-        this.renderPipeline.render();
-        this.gui.render();
-        this.controllerCrosshair?.update(time);
-        this.input.update();
+    }
 
-        this.queueNextFrame();
+    public async crash(error?: any) {
+        this.onCrash.emit(error);
+        this.stop();
     }
 }

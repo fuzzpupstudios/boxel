@@ -20,11 +20,17 @@ export class Mouse {
     private readonly deltaPosition = new Vector2;
     private locked: boolean = false;
     private element?: HTMLElement;
+    private readonly onMouseDownEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
+    private readonly onMouseUpEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
+    private readonly onMouseMoveEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
+    private readonly onContextMenuEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
+    private readonly onWheelEvents = new Map<HTMLElement, (event: WheelEvent) => void>;
+    private readonly onPointerLockChangeEvents = new Set<() => void>;
 
     public addListeners(element: HTMLElement) {
         this.element = element;
-        
-        element.addEventListener("mousedown", event => {
+
+        const onMouseDown = (event: MouseEvent) => {
             const changed = this.updatePointerLock();
             event.preventDefault();
 
@@ -32,26 +38,62 @@ export class Mouse {
                 this.pressingButtons.add(event.button);
                 this.wasPressedButtons.add(event.button);
             }
-        });
-        element.addEventListener("contextmenu", event => event.preventDefault());
-        element.addEventListener("mouseup", event => {
+        };
+        const onMouseUp = (event: MouseEvent) => {
             this.pressingButtons.delete(event.button);
             this.wasUnpressedButtons.add(event.button);
-        });
-        element.addEventListener("mousemove", event => {
+        };
+        const onMouseMove = (event: MouseEvent) => {
             this.position.set(event.clientX, event.clientY);
             this.deltaPosition.set(event.movementX, event.movementY);
-        });
-        element.addEventListener("wheel", event => {
+        };
+        const onContextMenu = (event: MouseEvent) => event.preventDefault();
+
+        const onWheel = (event: WheelEvent) => {
             if(event.deltaY > 0) this.wasPressedButtons.add(MouseButton.SCROLL_UP);
             if(event.deltaY < 0) this.wasPressedButtons.add(MouseButton.SCROLL_DOWN);
-        });
-        document.addEventListener("pointerlockchange", () => {
+        }
+        const onPointerLockChange = () => {
             if(!this.isCurrentlyLocked()) {
                 this.wasPressedButtons.add(MouseButton.UNLOCK);
                 this.locked = false;
             }
-        })
+        }
+        
+        element.addEventListener("mousedown", onMouseDown);
+        element.addEventListener("mouseup", onMouseUp);
+        element.addEventListener("mousemove", onMouseMove);
+        element.addEventListener("contextmenu", onContextMenu);
+        element.addEventListener("wheel", onWheel);
+        document.addEventListener("pointerlockchange", onPointerLockChange);
+
+        this.onMouseDownEvents.set(element, onMouseDown);
+        this.onMouseUpEvents.set(element, onMouseUp);
+        this.onMouseMoveEvents.set(element, onMouseMove);
+        this.onContextMenuEvents.set(element, onContextMenu);
+        this.onWheelEvents.set(element, onWheel);
+        this.onPointerLockChangeEvents.add(onPointerLockChange);
+    }
+
+    public removeAllListeners() {
+        for(const [ element, onMouseDown ] of this.onMouseDownEvents) {
+            element.removeEventListener("mousedown", onMouseDown);
+        }
+        for(const [ element, onMouseUp ] of this.onMouseUpEvents) {
+            element.removeEventListener("mouseup", onMouseUp);
+        }
+        for(const [ element, onMouseMove ] of this.onMouseMoveEvents) {
+            element.removeEventListener("mousemove", onMouseMove);
+        }
+        for(const [ element, onContextMenu ] of this.onContextMenuEvents) {
+            element.removeEventListener("contextmenu", onContextMenu);
+        }
+        for(const [ element, onWheel ] of this.onWheelEvents) {
+            element.removeEventListener("wheel", onWheel);
+        }
+        for(const onPointerLockChange of this.onPointerLockChangeEvents) {
+            document.removeEventListener("pointerlockchange", onPointerLockChange);
+        }
     }
 
     public updatePointerLock(): boolean {

@@ -508,4 +508,13 @@ export class Input {
         this.keyboard?.clearAll();
         this.mouse?.clearAll();
     }
+    public dispose() {
+        this.clearAll();
+
+        this.keyboard?.removeAllListeners();
+        this.keyboard = null;
+        this.mouse?.removeAllListeners();
+        this.mouse = null;
+        this.controllers.clear();
+    }
 }
