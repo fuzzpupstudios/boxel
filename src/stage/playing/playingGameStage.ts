@@ -356,7 +356,7 @@ export class PlayingGameStage extends GameStage {
             if(slotId == 0) this.pointerGuiStack.updateDisplayItem();
         })
 
-        if(playerSlot.position == null) playerSlot.position = [ 0.5, 0, 0.5 ];
+        if(playerSlot.position == null) playerSlot.position = [ 0.5, 64, 0.5 ];
         this.localPlayer.deserialize(playerSlot);
 
         const inventories = new Map([

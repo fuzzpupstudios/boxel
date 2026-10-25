@@ -16,7 +16,7 @@ export class CaveTerrainGenerator extends TerrainGenerator {
     }
 
     private processAfter(chunk: Chunk) {
-        if(chunk.x > -2 && chunk.x < 1 && chunk.y > -2 && chunk.y < 1 && chunk.z > -2 && chunk.z < 1) {
+        if(chunk.x >= -1 && chunk.x <= 0 && chunk.y >= 3 && chunk.y <= 4 && chunk.z >= -1 && chunk.z <= 0) {
             this.placeStartingPlatform(chunk);
         }
     }
@@ -30,11 +30,11 @@ export class CaveTerrainGenerator extends TerrainGenerator {
         const chunkBlockZ = chunk.z << 4;
         
         const centerX = 0;
-        const centerY = radius - 0.5;
+        const centerY = radius - 0.5 + 64;
         const centerZ = 0;
         const radiusSquared = radius * radius;
 
-        if(chunk.y == 0) {
+        if(chunk.y == 4) {
             for(let x = 0; x < 16; x++) {
                 const dx2 = (x + chunkBlockX - centerX) * (x + chunkBlockX - centerX);
 
@@ -51,7 +51,7 @@ export class CaveTerrainGenerator extends TerrainGenerator {
             }
         }
 
-        if(chunk.x == 0 && chunk.y == -1 && chunk.z == 0) {
+        if(chunk.x == 0 && chunk.y == 3 && chunk.z == 0) {
             chunk.tiles.setBlockStateId(0, 15, 0, "base:lamp[color=white]");
         }
     }
