@@ -43,7 +43,7 @@ export class WorldRenderer {
         assets: Assets
     ) {
         this.fogFactor = positionWorld.distance(cameraPosition).remapClamp(this.fogDistance.mul(0.8), this.fogDistance, 0, 1);
-        this.fogFactor = float(0);
+        
         this.terrainMaterial = new MeshBasicNodeMaterial({
             colorNode: Fn(() => {
                 const terrainColor = texture(
