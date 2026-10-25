@@ -55,7 +55,7 @@ export class VideoSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.renderDistance = value;
             }
-        }("Render distance", 24, 512, 8, 200, 24);
+        }("Render distance", 48, 512, 16, 200, 24);
 
         this.gui.addChild(
             this.background, this.titleText,

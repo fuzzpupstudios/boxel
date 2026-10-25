@@ -56,7 +56,7 @@ export class PerformanceSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.maxColumnLoads = value;
             }
-        }("Column Loads", 200, 24, [ 1, 2, 4, 8, 16, 32, 64 ]);
+        }("Column Loads", 200, 24, [ 1, 2, 4, 8, 16, 32, 64, 128 ]);
 
         this.maxColumnGenerations = new class extends CycleButtonSetting<number> {
             protected override getValue() {
@@ -65,7 +65,7 @@ export class PerformanceSettingsScreenStage extends GameStage {
             protected override setValue(value: number) {
                 game.settings.maxColumnGenerations = value;
             }
-        }("Column Generations", 200, 24, [ 1, 2 ]);
+        }("Column Generations", 200, 24, [ 1, 2, 4, 8 ]);
 
         this.gui.addChild(
             this.background, this.titleText,
