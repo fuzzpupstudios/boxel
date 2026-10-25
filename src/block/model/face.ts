@@ -84,6 +84,19 @@ export class BlockModelFace {
         }
     }
 
+    public rotateIndices180() {
+        [ this.v0, this.v1, this.v2, this.v3 ] =
+        [ this.v2, this.v3, this.v0, this.v1 ];
+    }
+    public rotateIndicesClockwise() {
+        [ this.v0, this.v1, this.v2, this.v3 ] =
+        [ this.v3, this.v0, this.v1, this.v2 ];
+    }
+    public rotateIndicesCounterClockwise() {
+        [ this.v0, this.v1, this.v2, this.v3 ] =
+        [ this.v1, this.v2, this.v3, this.v0 ];
+    }
+
     public applyMatrix4(matrix: Matrix4) {
         this.normal.applyMatrix4(new Matrix4().extractRotation(matrix));
         this.normal.x = Math.round(this.normal.x * 1024) / 1024;

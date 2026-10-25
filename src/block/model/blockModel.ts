@@ -256,16 +256,19 @@ export class BlockModel {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI * -0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesClockwise();
                 }
                 for(const face of this.west) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesCounterClockwise();
                 }
                 for(const face of [...this.north, ...this.down]) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndices180();
                 }
             }
 
@@ -292,13 +295,15 @@ export class BlockModel {
             if(transformUVs) {
                 for(const face of this.up) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
-                    face.applyMatrix3(new Matrix3().makeRotation(Math.PI * 0.5));
+                    face.applyMatrix3(new Matrix3().makeRotation(Math.PI * -0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesCounterClockwise();
                 }
                 for(const face of this.down) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
-                    face.applyMatrix3(new Matrix3().makeRotation(Math.PI * -0.5));
+                    face.applyMatrix3(new Matrix3().makeRotation(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesClockwise();
                 }
             }
 
@@ -327,16 +332,19 @@ export class BlockModel {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI * -0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesClockwise();
                 }
                 for(const face of this.south) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI * 0.5));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndicesCounterClockwise();
                 }
                 for(const face of [...this.west, ...this.east]) {
                     face.applyMatrix3(new Matrix3().makeTranslation(-pivot.x, -pivot.y));
                     face.applyMatrix3(new Matrix3().makeRotation(Math.PI));
                     face.applyMatrix3(new Matrix3().makeTranslation(pivot.x, pivot.y));
+                    face.rotateIndices180();
                 }
             }
 
