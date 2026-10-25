@@ -78,11 +78,15 @@ export class GuiItemStack extends Container {
                 const max_durability = this.stack.data.max_durability ?? 64;
 
                 const filled = MathUtils.clamp(durability / max_durability, 0, 1);
-                this.durability.width = Math.ceil(14 * filled);
+                this.durability.width = 14 * filled;
 
                 if(filled < 1) {
                     this.addChild(this.durability);
+                } else {
+                    this.removeChild(this.durability);
                 }
+
+                this.durability.tint = "hsl(" + MathUtils.mapLinear(filled, 0, 1, 0, 120) + ", 100%, 50%)";
             }
         }
 
