@@ -14,16 +14,13 @@
 
                 "triggers": {
                     "base:interact": [
-                        {
-                            "id": "base:open_gui",
-                            "args": {
-                                "inventories": {
-                                    "crate": "block_entity",
-                                    "player": "player_inventory"
-                                },
-                                "gui": "base:crate_inventory"
-                            }
-                        },
+                        { "base:open_gui": {
+                            "inventories": {
+                                "crate": "block_entity",
+                                "player": "player_inventory"
+                            },
+                            "gui": "base:crate_inventory"
+                        } },
                         {
                             "id": "base:prevent_default"
                         }

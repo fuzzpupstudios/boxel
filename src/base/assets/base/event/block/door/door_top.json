@@ -12,23 +12,14 @@
                         "has_tag": "base:door"
                     }
                 },
-                "then": {
-                    "id": "base:set_block_state_id",
-                    "args": {
-                        "yOffset": -1,
-                        "blockStateId": "base:air[default]",
-                        "showParticles": true
-                    }
-                }
+                "then": { "base:set_block_state_id": {
+                    "yOffset": -1,
+                    "blockStateId": "base:air[default]",
+                    "showParticles": true
+                } }
             }
         ],
-        "base:explode": {
-            "id": "base:run_trigger",
-            "args": {
-                "triggerName": "base:destroy",
-                "self": true
-            }
-        },
+        "base:explode": "self#base:destroy",
         "base:interact": [
             {
                 "if": {
@@ -37,36 +28,18 @@
                     }
                 },
                 "then": [
-                    {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "door_close_relay",
-                            "self": true
-                        }
-                    },
-                    {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "door_close_relay",
-                            "yOffset": -1
-                        }
-                    }
+                    "self#door_close_relay",
+                    { "base:run_trigger": {
+                        "triggerName": "door_close_relay",
+                        "yOffset": -1
+                    } }
                 ],
                 "else": [
-                    {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "door_open_relay",
-                            "self": true
-                        }
-                    },
-                    {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "triggerName": "door_open_relay",
-                            "yOffset": -1
-                        }
-                    }
+                    "self#door_open_relay",
+                    { "base:run_trigger": {
+                        "triggerName": "door_open_relay",
+                        "yOffset": -1
+                    } }
                 ]
             },
             {

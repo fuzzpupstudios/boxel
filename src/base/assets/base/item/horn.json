@@ -5,8 +5,7 @@
         "triggers": {
             "base:use": [
                 {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "sound": {
                             "name": "base:item/party_horn",

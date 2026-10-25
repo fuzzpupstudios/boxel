@@ -23,12 +23,9 @@
                     "triggers": {
                         "relay_drop": {
                             "if": { "player": { "infiniteItems": false } },
-                            "then": {
-                                "id": "base:drop_item",
-                                "args": {
-                                    "stack": "${id}[direction=west,half=bottom]"
-                                }
-                            }
+                            "then": { "base:drop_item": {
+                                "stack": "${id}[direction=west,half=bottom]"
+                            } }
                         },
                         "base:destroy": "self#relay_drop",
                         "base:explode": "self#relay_drop"

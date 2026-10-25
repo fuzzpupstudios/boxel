@@ -7,8 +7,7 @@
                 "if": { "player": { "infiniteItems": false } },
                 "then": [
                     {
-                        "id": "base:set_item_data",
-                        "args": {
+                        "base:set_item_data": {
                             "path": "durability",
                             "value": { "$get": { "sum": [
                                 { "item_data": "durability" },
@@ -22,8 +21,7 @@
                             0
                         ] },
                         "then": {
-                            "id": "base:merge_slot_stack",
-                            "args": {
+                            "base:merge_slot_stack": {
                                 "from": { "$get": "$slot" },
                                 "to": null,
                                 "limit": 1

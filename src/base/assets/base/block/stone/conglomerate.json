@@ -13,12 +13,9 @@
                 "triggers": {
                     "relay_drop": {
                         "if": { "player": { "infiniteItems": false } },
-                        "then": {
-                            "id": "base:drop_item",
-                            "args": {
-                                "stack": "base:cobblestone[default]"
-                            }
-                        }
+                        "then": { "base:drop_item": {
+                            "stack": "base:cobblestone[default]"
+                        } }
                     },
                     "base:destroy": "relay_drop",
                     "base:explode": "relay_drop"

@@ -18,48 +18,25 @@
                         "then": { "id": "base:drop_block_item" }
                     },
                     "relay_explode": [
-                        {
-                            "id": "base:set_block_state_id",
-                            "args": {
-                                "blockStateId": "base:air[default]"
+                        { "base:set_block_state_id": {
+                            "blockStateId": "base:air[default]"
+                        } },
+                        { "base:explode": {
+                            "radius": 2.7
+                        } },
+                        { "base:play_sound": {
+                            "spatial": true,
+                            "sound": {
+                                "name": "base:block/explosion",
+                                "pitch": [ 0.95, 1 ]
                             }
-                        },
-                        {
-                            "id": "base:explode",
-                            "args": {
-                                "radius": 2.7
-                            }
-                        },
-                        {
-                            "id": "base:play_sound",
-                            "args": {
-                                "spatial": true,
-                                "sound": {
-                                    "name": "base:block/explosion",
-                                    "pitch": [ 0.95, 1 ]
-                                }
-                            }
-                        }
+                        } }
                     ],
                     "base:interact": [
-                        {
-                            "id": "base:run_trigger",
-                            "args": {
-                                "self": true,
-                                "triggerName": "relay_explode"
-                            }
-                        },
-                        {
-                            "id": "base:prevent_default"
-                        }
+                        "self#relay_explode",
+                        { "id": "base:prevent_default" }
                     ],
-                    "base:explode": {
-                        "id": "base:run_trigger",
-                        "args": {
-                            "self": true,
-                            "triggerName": "relay_explode"
-                        }
-                    }
+                    "base:explode": "self#relay_explode"
                 }
             },
             "collider": {

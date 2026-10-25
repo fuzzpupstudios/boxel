@@ -1,6 +1,6 @@
 import { EventAction } from "./eventAction";
 import type { EventPredicate } from "./eventPredicate";
-import type { EventCursor } from "./eventSheet";
+import type { EventCursor, EventSheet } from "./eventSheet";
 
 export class EventBranch extends EventAction {
     public run(cursor: EventCursor): void {
@@ -11,10 +11,11 @@ export class EventBranch extends EventAction {
         }
     }
     public constructor(
+        eventSheet: EventSheet,
         public readonly predicate: EventPredicate,
         public readonly ifTrueActions: EventAction[],
         public readonly ifFalseActions: EventAction[]
     ) {
-        super(null!);
+        super(eventSheet);
     }
 }

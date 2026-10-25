@@ -21,12 +21,9 @@
                 "triggers": {
                     "relay_drop": {
                         "if": { "player": { "infiniteItems": false } },
-                        "then": {
-                            "id": "base:drop_item",
-                            "args": {
-                                "stack": "base:door[direction=north,open=false,half=bottom]"
-                            }
-                        }
+                        "then": { "base:drop_item": {
+                            "stack": "base:door[direction=north,open=false,half=bottom]"
+                        } }
                     },
                     "base:destroy": "self#relay_drop",
                     "base:explode": "self#relay_drop"

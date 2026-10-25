@@ -4,8 +4,7 @@
     "triggers": {
         "base:place": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": [
                         { "name": "base:block/place/wood/wood_0", "pitch": [ 0.9, 1.1 ] },
@@ -18,8 +17,7 @@
         ],
         "base:destroy": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": [
                         { "name": "base:block/destroy/wood/wood_0", "pitch": [ 0.8, 1 ] },
@@ -34,8 +32,7 @@
             {
                 "if": { "usages": { "used": false } },
                 "then": {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "useEntityPosition": true,
                         "sound": [
@@ -56,8 +53,7 @@
         ],
         "base:hit": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "useHitPosition": true,
                     "sound": [

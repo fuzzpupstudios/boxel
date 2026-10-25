@@ -30,7 +30,12 @@ export namespace DataDrivenJson {
     });
 
     export type EventActionOrPredicate = z.infer<typeof EventActionOrPredicate>;
-    export const EventActionOrPredicate = z.union([ z.string(), EventAction, EventActionWithPredicate ]);
+    export const EventActionOrPredicate = z.union([
+        z.string(),
+        EventAction,
+        EventActionWithPredicate,
+        z.record(z.string(), z.any())
+    ]);
 
     export type EventSheet = {
         id?: string | undefined,

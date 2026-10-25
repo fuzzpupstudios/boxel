@@ -4,8 +4,7 @@
     "triggers": {
         "base:place": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": {
                         "name": "base:block/place/solid",
@@ -16,8 +15,7 @@
         ],
         "base:destroy": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": {
                         "name": "base:block/destroy/solid",
@@ -30,8 +28,7 @@
             {
                 "if": { "usages": { "used": false } },
                 "then": {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "useEntityPosition": true,
                         "sound": {
@@ -45,8 +42,7 @@
         ],
         "base:hit": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "useHitPosition": true,
                     "sound": {
@@ -61,8 +57,7 @@
             {
                 "if": { "usages": { "used": false } },
                 "then": {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "useEntityPosition": true,
                         "sound": {

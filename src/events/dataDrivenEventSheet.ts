@@ -1,6 +1,7 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { RunTriggerAction } from "./block/runTriggerAction";
+import { ConglomerateAction } from "./conglomerateAction";
 import type { EventAction } from "./eventAction";
 import { eventActionRegistry, eventPredicateRegistry } from "./eventActionRegistry";
 import { EventBranch } from "./eventBranch";
@@ -80,6 +81,7 @@ export class DataDrivenEventSheet extends EventSheet {
         if(isEventActionWithPredicate(action)) {
             try {
                 const branch = new EventBranch(
+                    eventSheet,
                     DataDrivenEventSheet.parsePredicate(action.if),
                     action.then instanceof Array
                     ? action.then.map(action => this.parseAction(eventSheet, action))
@@ -98,6 +100,18 @@ export class DataDrivenEventSheet extends EventSheet {
         }
         if(typeof action == "string") {
             return new RunTriggerAction(eventSheet, action);
+        }
+        if(typeof action == "object") {
+            const actions = new Array<EventAction>;
+            for(const [ id, args ] of Object.entries(action)) {
+                actions.push(this.parseAction(eventSheet, { id, args }));
+            }
+
+            if(actions.length == 1) {
+                return actions[0];
+            } else {
+                return new ConglomerateAction(eventSheet, actions);
+            }
         }
 
         throw new ReferenceError("Cannot derive event action type");

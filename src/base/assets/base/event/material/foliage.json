@@ -4,8 +4,7 @@
     "triggers": {
         "base:place": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": [
                         { "name": "base:block/place/foliage/foliage_0", "pitch": [ 1.1, 1.25 ] },
@@ -24,8 +23,7 @@
         ],
         "base:destroy": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "sound": [
                         { "name": "base:block/destroy/foliage/foliage_0", "pitch": [ 0.9, 1.1 ] },
@@ -44,8 +42,7 @@
         ],
         "base:hit": [
             {
-                "id": "base:play_sound",
-                "args": {
+                "base:play_sound": {
                     "spatial": true,
                     "useHitPosition": true,
                     "sound": [
@@ -67,8 +64,7 @@
             {
                 "if": { "usages": { "used": false } },
                 "then": {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "useEntityPosition": true,
                         "sound": [
@@ -91,8 +87,7 @@
             {
                 "if": { "usages": { "used": false } },
                 "then": {
-                    "id": "base:play_sound",
-                    "args": {
+                    "base:play_sound": {
                         "spatial": true,
                         "useEntityPosition": true,
                         "sound": [

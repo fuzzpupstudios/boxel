@@ -11,8 +11,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "direction": "north"
                         }
@@ -27,8 +26,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "direction": "east"
                         }
@@ -43,8 +41,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "direction": "south"
                         }
@@ -59,8 +56,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "direction": "west"
                         }
@@ -76,8 +72,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "half": "top"
                         }
@@ -92,8 +87,7 @@
                     }
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "half": "bottom"
                         }
@@ -106,8 +100,7 @@
                     "face": "down"
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "half": "top"
                         }
@@ -119,8 +112,7 @@
                     "face": "up"
                 },
                 "then": {
-                    "id": "base:set_block_state_parameter",
-                    "args": {
+                    "base:set_block_state_parameter": {
                         "parameters": {
                             "half": "bottom"
                         }

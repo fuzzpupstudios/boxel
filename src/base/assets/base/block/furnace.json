@@ -11,20 +11,15 @@
 
                 "triggers": {
                     "base:interact": [
-                        {
-                            "id": "base:open_gui",
-                            "args": {
-                                "inventories": {
-                                    "furnace": "block_entity",
-                                    "player": "player_inventory"
-                                },
-                                "gui": "base:furnace_inventory",
-                                "block_entity": [ 0, 0, 0 ]
-                            }
-                        },
-                        {
-                            "id": "base:prevent_default"
-                        }
+                        { "base:open_gui": {
+                            "inventories": {
+                                "furnace": "block_entity",
+                                "player": "player_inventory"
+                            },
+                            "gui": "base:furnace_inventory",
+                            "block_entity": [ 0, 0, 0 ]
+                        } },
+                        { "id": "base:prevent_default" }
                     ]
                 }
             },
