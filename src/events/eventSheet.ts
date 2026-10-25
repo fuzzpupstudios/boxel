@@ -8,6 +8,7 @@ import type { InventorySlot } from "../item/inventory";
 import type { RaycastResult } from "../physics/raycaster";
 import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 import type { World } from "../world/world";
+import { ConglomerateAction } from "./conglomerateAction";
 import type { EventAction } from "./eventAction";
 
 export interface ClientEventPlatform {
@@ -131,29 +132,34 @@ export class EventCursor {
 }
 
 export class EventSheet {
-    public readonly triggers = new Map<string, EventAction[]>;
+    public readonly triggers = new Map<string, EventAction>;
 
     public runTrigger(name: string, cursor: EventCursor) {
-        const actions = this.triggers.get(name);
-        if(actions == null) return;
-
-        for(const action of actions) {
-            action.run(cursor);
-        }
+        this.triggers.get(name)?.run(cursor);
     }
 
-    public addTriggerAction(name: string, ...action: EventAction[]) {
-        const triggers = this.triggers.getOrInsert(name, []);
-        triggers.push(...action);
+    public addTriggerAction(name: string, ...actions: EventAction[]) {
+        let trigger = this.triggers.get(name);
+
+        for(const action of actions) {
+            if(trigger == null) {
+                trigger = action;
+            } else if(!(trigger instanceof ConglomerateAction)) {
+                trigger = new ConglomerateAction(trigger.eventSheet, [ trigger, action ]);
+            } else {
+                trigger.addAction(action);
+            }
+        }
+        if(trigger != null) {
+            this.triggers.set(name, trigger);
+        }
     }
 
     public copyFrom(other: EventSheet) {
         this.triggers.clear();
         
-        for(const [ triggerId, actions ] of other.triggers) {
-            for(const action of actions) {
-                this.addTriggerAction(triggerId, action);
-            }
+        for(const [ triggerId, action ] of other.triggers) {
+            this.addTriggerAction(triggerId, action);
         }
     }
 }

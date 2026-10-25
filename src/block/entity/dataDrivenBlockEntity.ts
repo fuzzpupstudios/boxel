@@ -119,7 +119,7 @@ interface SerializedDataDrivenBlockEntity extends SerializedBlockEntity {
 
 export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType> {
     public readonly inventory: Inventory | null = null;
-    private tickEvents: EventAction[] = [];
+    private tickEvent: EventAction | null = null;
     private eventCursor: EventCursor | null = null;
 
     public constructor(type: DataDrivenBlockEntityType, world: World, x: number, y: number, z: number) {
@@ -160,10 +160,10 @@ export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType
 
     private updateEventMemo() {
         if(this.blockState == null) {
-            this.tickEvents = [];
+            this.tickEvent = null;
             this.eventCursor = null;
         } else {
-            this.tickEvents = this.blockState.events.triggers.get("base:block_entity/tick") ?? [];
+            this.tickEvent = this.blockState.events.triggers.get("base:block_entity/tick") ?? null;
             this.eventCursor = new EventCursor(this.world, this.x, this.y, this.z);
         }
     }
@@ -180,9 +180,7 @@ export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType
     public override tick(time: Time) {
         if(this.eventCursor == null) return;
         
-        for(let i = 0; i < this.tickEvents.length; i++) {
-            this.tickEvents[i].run(this.eventCursor);
-        }
+        this.tickEvent?.run(this.eventCursor);
     }
 
     public override deinit(): void {

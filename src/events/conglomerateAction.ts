@@ -11,4 +11,11 @@ export class ConglomerateAction extends EventAction {
     ) {
         super(eventSheet);
     }
+    public addAction(action: EventAction) {
+        if(action instanceof ConglomerateAction) {
+            this.actions.push(...action.actions);
+        } else {
+            this.actions.push(action);
+        }
+    }
 }

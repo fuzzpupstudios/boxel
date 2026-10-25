@@ -190,7 +190,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
         return cursor;
     }
 
-    private emitFloorEvent(triggerMap: Map<string, EventAction[]>) {
+    private emitFloorEvent(triggerMap: Map<string, EventAction>) {
         const minX = Math.floor(this.position.x + this.aabb.hitbox.min.x);
         const minZ = Math.floor(this.position.z + this.aabb.hitbox.min.z);
         const maxX = Math.floor(this.position.x + this.aabb.hitbox.max.x);
@@ -204,24 +204,22 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
             for(let z = minZ; z <= maxZ; z++) {
                 const blockStateId = this.world.getBlockState(x, y, z);
 
-                const triggers = triggerMap.get(blockStateId);
-                if(triggers == null) continue;
+                const trigger = triggerMap.get(blockStateId);
+                if(trigger == null) continue;
                 
                 cursor.setPosition(x, y, z);
-                for(const trigger of triggers) {
-                    trigger.run(cursor);
-                }
+                trigger.run(cursor);
                 cursor.usages++;
             }
         }
     }
 
     public emitFallEvent() {
-        this.emitFloorEvent(this.physicsData.fallTriggers);
+        this.emitFloorEvent(this.physicsData.fallTrigger);
     }
 
     public emitStepEvent() {
-        this.emitFloorEvent(this.physicsData.stepTriggers);
+        this.emitFloorEvent(this.physicsData.stepTrigger);
     }
 
     public deserialize(data: SerializedType) {

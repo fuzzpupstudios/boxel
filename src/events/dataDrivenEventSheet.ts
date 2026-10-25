@@ -37,10 +37,8 @@ export class DataDrivenEventSheet extends EventSheet {
         const eventSheet = new DataDrivenEventSheet;
 
         if(mergePrevious != null) {
-            for(const [ triggerId, actions ] of mergePrevious.triggers.entries()) {
-                for(const action of actions) {
-                    eventSheet.addTriggerAction(triggerId, action);
-                }
+            for(const [ triggerId, action ] of mergePrevious.triggers.entries()) {
+                eventSheet.addTriggerAction(triggerId, action);
             }
         }
 
