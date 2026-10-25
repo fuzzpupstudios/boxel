@@ -3,32 +3,35 @@
     "texture": "base:item/pickaxe.png",
     "events": {
         "triggers": {
-            "base:item/break_block": [
-                {
-                    "id": "base:set_item_data",
-                    "args": {
-                        "path": "durability",
-                        "value": { "$get": { "sum": [
-                            { "item_data": "durability" },
-                            -1
-                        ] } }
-                    }
-                },
-                {
-                    "if": { "less_than": [
-                        { "item_data": "durability" },
-                        0
-                    ] },
-                    "then": {
-                        "id": "base:merge_slot_stack",
+            "base:item/break_block": {
+                "if": { "player": { "infiniteItems": false } },
+                "then": [
+                    {
+                        "id": "base:set_item_data",
                         "args": {
-                            "from": { "$get": "$slot" },
-                            "to": null,
-                            "limit": 1
+                            "path": "durability",
+                            "value": { "$get": { "sum": [
+                                { "item_data": "durability" },
+                                -1
+                            ] } }
+                        }
+                    },
+                    {
+                        "if": { "less_than": [
+                            { "item_data": "durability" },
+                            0
+                        ] },
+                        "then": {
+                            "id": "base:merge_slot_stack",
+                            "args": {
+                                "from": { "$get": "$slot" },
+                                "to": null,
+                                "limit": 1
+                            }
                         }
                     }
-                }
-            ]
+                ]
+            }
         }
     },
     "stackSize": 1,
