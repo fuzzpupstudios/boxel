@@ -460,6 +460,8 @@ export class PlayingGameStage extends GameStage {
         this.worldRenderer.fogDistance.value = Math.max(8, settings.renderDistance - 32);
         this.worldRenderer.maxRegionUpdates = settings.maxRegionUpdates;
 
+        this.worldRenderer.setRenderDistance(settings.renderDistance);
+
         if(this.dPadLeft != null) {
             this.dPadLeft.scale.set(settings.dPadScale);
         }

@@ -121,7 +121,6 @@ export class BatchedChunkRegion {
     public readonly chunkZ: number;
 
     public lastUpdate: number = Infinity;
-    public hibernated = false;
 
     private updateLock: Promise<any> | null = null;
     
@@ -168,40 +167,6 @@ export class BatchedChunkRegion {
 
         mesh.updateMatrix();
         mesh.matrixWorld.copy(mesh.matrix);
-    }
-
-    private hibernate() {
-        console.log("hibernate region");
-
-        for(const mesh of this.chunkMeshes.values()) {
-            mesh.geometry.dispose();
-        }
-        this.chunkMeshes.clear();
-        this.hibernated = true;
-    }
-
-    private async unhibernate() {
-        console.log("unhibernate region");
-        await this.updateLock;
-
-        if(this.batchedMesh) {
-            this.batchedMesh.removeFromParent();
-            this.batchedMesh.geometry.dispose();
-            this.batchedMesh = null;
-        }
-
-        this.root.clear();
-
-        const promises = new Array<Promise<void>>;
-        for(const chunk of this.chunks) {
-            promises.push(this.renderChunk(chunk));
-        }
-        this.updateLock = Promise.all(promises);
-        await this.updateLock;
-        this.updateLock = null;
-        this.lastUpdate = performance.now() / 1000;
-        
-        this.hibernated = false;
     }
 
     private makeIndividual() {
@@ -298,16 +263,7 @@ export class BatchedChunkRegion {
         this.renderedChunks.add(chunk);
     }
 
-    public randomUpdate(time: Time) {
-        if(
-            !this.hibernated &&
-            this.renderer.hibernation &&
-            this.batchedMesh && time.seconds - this.lastUpdate > 60 &&
-            this.renderedChunks.size === this.renderer.regionVolume
-        ) {
-            this.hibernate();
-            return;
-        }
+    public settle(time: Time) {
         if(
             !this.batchedMesh &&
             time.seconds - this.lastUpdate > 8 &&
@@ -337,12 +293,6 @@ export class BatchedChunkRegion {
 
         for(const chunk of chunksToMesh) {
             if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
-                if(this.hibernated) {
-                    await this.unhibernate();
-                    changes++;
-                    break;
-                }
-
                 if(this.batchedMesh) this.makeIndividual();
                 
                 promises.push(this.renderChunk(chunk));
@@ -378,7 +328,8 @@ export class BatchedChunkRegion {
 export class BatchedChunkRenderer {
     public readonly chunkDispatcher: ChunkMeshDispatcher;
 
-    private readonly batchedRegions = new Map<BatchKey, BatchedChunkRegion>;
+    private readonly regions = new Map<BatchKey, BatchedChunkRegion>;
+    private readonly unbatchedRegions = new Set<BatchedChunkRegion>;
 
     public readonly dirtyRegions = new DistanceBucketQueue<BatchedChunkRegion>(16, 16);
 
@@ -386,13 +337,15 @@ export class BatchedChunkRenderer {
     public readonly trackedChunks = new Map<ChunkKey, Chunk>;
     public readonly renderedChunks = new Map<ChunkKey, Chunk>;
 
-    private settlePointer: MapIterator<BatchedChunkRegion> = this.batchedRegions.values();
+    private settlePointer: MapIterator<BatchedChunkRegion> = this.regions.values();
     private updateLock: Promise<any> | null = null;
 
     public regionWidth = 2;
     public regionHeight = 8;
     public regionVolume = this.regionWidth * this.regionWidth * this.regionHeight;
-    public hibernation = false;
+
+    // wait for all chunks in a region to exist before rendering it initially
+    public optimizeLoadTime = true;
 
     public constructor(
         public readonly world: World,
@@ -415,7 +368,7 @@ export class BatchedChunkRenderer {
         const z = Math.floor(chunk.z / this.regionWidth);
         const key = encodeBatchKey(x, y, z);
 
-        return this.batchedRegions.get(key);
+        return this.regions.get(key);
     }
 
     private getOrCreateChunkRegion(chunk: Chunk) {
@@ -424,11 +377,11 @@ export class BatchedChunkRenderer {
         const z = Math.floor(chunk.z / this.regionWidth);
         const key = encodeBatchKey(x, y, z);
 
-        let region = this.batchedRegions.get(key);
+        let region = this.regions.get(key);
         if(region) return region;
 
         region = new BatchedChunkRegion(x, y, z, key, this);
-        this.batchedRegions.set(key, region);
+        this.regions.set(key, region);
         return region;
     }
 
@@ -466,20 +419,33 @@ export class BatchedChunkRenderer {
         region.root.removeFromParent();
         region.dispose();
         this.dirtyRegions.delete(region);
-        this.batchedRegions.delete(region.key);
+        this.regions.delete(region.key);
         this.renderedRegions.delete(region);
+        this.unbatchedRegions.delete(region);
+    }
+
+    private addRegion(region: BatchedChunkRegion) {
+        if(this.optimizeLoadTime && region.renderedChunks.size !== this.regionVolume) return;
+
+        this.scene.add(region.root);
+        region.updateMatrices();
+
+        this.renderedRegions.add(region);
     }
 
     private async updateRegion(region: BatchedChunkRegion) {
         await region.update();
         if(!region.hasChunks()) return;
 
+        if(region.batchedMesh) {
+            this.unbatchedRegions.delete(region);
+        } else {
+            this.unbatchedRegions.add(region);
+        }
+
         if(region.renderedChunks.size > 0) {
             if(!this.renderedRegions.has(region)) {
-                this.scene.add(region.root);
-                region.updateMatrices();
-
-                this.renderedRegions.add(region);
+                this.addRegion(region);
             }
         } else {
             region.root.removeFromParent();
@@ -496,9 +462,10 @@ export class BatchedChunkRenderer {
             quota--;
 
             if(region) {
-                region.randomUpdate(time);
+                region.settle(time);
+                if(region.batchedMesh) this.unbatchedRegions.delete(region);
             } else {
-                this.settlePointer = this.batchedRegions.values();
+                this.settlePointer = this.unbatchedRegions.values();
                 break;
             }
         }
@@ -533,11 +500,11 @@ export class BatchedChunkRenderer {
     }
 
     public dispose() {
-        for(const region of this.batchedRegions.values()) {
+        for(const region of this.regions.values()) {
             region.dispose();
         }
         
-        this.batchedRegions.clear();
+        this.regions.clear();
         this.dirtyRegions.clear();
         this.renderedRegions.clear();
         this.chunkDispatcher.dispose();

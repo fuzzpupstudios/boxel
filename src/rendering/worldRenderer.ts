@@ -103,6 +103,10 @@ export class WorldRenderer {
         this.debug = debug;
     }
 
+    public setRenderDistance(renderDistance: number) {
+        this.chunkRenderer.optimizeLoadTime = renderDistance >= 96;
+    }
+
     public async init() {
         this.sky.create(this.world.seed);
         await this.chunkRenderer.init();
