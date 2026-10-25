@@ -1,10 +1,9 @@
 import z from "zod";
-import { GuiProgressBarGraphicContainer } from "../../gui/graphic/progress";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import { isNumber, isString, parameter, parameterOuter } from "../eventVariable";
-import n from "../eventVariableTypes";
 import { GuiTextGraphicContainer } from "../../gui/graphic/text";
+import type { EventAction } from "../eventAction";
+import type { EventSheet } from "../eventSheet";
+import { isString, parameter, parameterOuter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type SetGuiTextActionParameters = z.infer<typeof SetGuiTextActionParameters>;
 export const SetGuiTextActionParameters = z.union([
@@ -17,58 +16,53 @@ export const SetGuiTextActionParameters = z.union([
         text: n.String
     }),
     z.string(),
-    n.Parameter
+    n.OuterParameter
 ]);
 
-export class SetGuiTextAction extends EventAction {
-    private readonly getGuiFromCursor: boolean;
-    private readonly gui?: n.Argument<string>;
-    private readonly graphic?: n.Argument<string>;
-    private readonly text: n.Argument<string>;
+export function setGuiTextAction(args: unknown, eventSheet: EventSheet): EventAction {
+    const parsed = SetGuiTextActionParameters.parse(args);
 
-    public constructor(
-        eventSheet: EventSheet,
-        args: unknown
-    ) {
-        super(eventSheet);
-        const parsed = SetGuiTextActionParameters.parse(args);
+    let getGuiFromCursor: boolean;
+    let guiParam: n.Parameter<string> | undefined;
+    let graphicParam: n.Parameter<string> | undefined;
+    let text: n.Parameter<string>;
 
-        if(typeof parsed == "object" && "gui" in parsed) {
-            this.getGuiFromCursor = false;
-            this.gui = parameter(parsed.gui);
-            this.graphic = parameter(parsed.graphic);
-            this.text = parameter(parsed.text);
+    if(typeof parsed == "object" && "gui" in parsed) {
+        getGuiFromCursor = false;
+        guiParam = parameter(parsed.gui);
+        graphicParam = parameter(parsed.graphic);
+        text = parameter(parsed.text);
+    } else {
+        getGuiFromCursor = true;
+
+        if(typeof parsed == "string") {
+            text = parameter(parsed);
+        } else if("text" in parsed) {
+            text = parameter(parsed.text);
         } else {
-            this.getGuiFromCursor = true;
-
-            if(typeof parsed == "string") {
-                this.text = parameter(parsed);
-            } else if("text" in parsed) {
-                this.text = parameter(parsed.text);
-            } else {
-                this.text = parameterOuter(parsed, isString);
-            }
+            text = parameterOuter(parsed, isString);
         }
     }
-    public override run(cursor: EventCursor): void {
+
+    return (cursor) => {
         if(cursor.clientPlatform == null) return;
 
         let graphic;
 
-        if(this.getGuiFromCursor) {
+        if(getGuiFromCursor) {
             graphic = cursor.graphic;
         } else {
-            const guiName = this.gui!(cursor);
+            const guiName = guiParam!(cursor);
             const gui = cursor.clientPlatform.guiManager.getOpenGui(guiName);
             if(gui == null) return;
 
-            const graphicName = this.graphic!(cursor);
+            const graphicName = graphicParam!(cursor);
             graphic = gui.getGraphicContainer(graphicName);
             if(graphic == null) return;
         }
 
         if(graphic instanceof GuiTextGraphicContainer) {
-            const value = this.text(cursor);
+            const value = text(cursor);
             graphic.text = value;
         }
     }

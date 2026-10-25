@@ -1,24 +1,24 @@
 import { KeyedRegistry } from "objectregistry";
 import type { EventParamGetter } from "./eventParamGetter";
-import { InventorySlotEventParamGetter } from "./getter/inventorySlotEventParamGetter";
-import { PropertyEventParamGetter } from "./getter/propertyEventParamGetter";
-import { AdditionEventParamGetter, DivisionEventParamGetter, ExponentEventParamGetter, ModuloEventParamGetter, MultiplicationEventParamGetter, SubtractionEventParamGetter } from "./getter/arithmeticParamGetter";
-import { BlockEntityDataParamGetter } from "./getter/blockEntityDataParamGetter";
-import { MatchPatternEventParamGetter } from "./getter/matchPatternEventParamGetter";
-import { ItemDataParamGetter } from "./getter/itemDataParamGetter";
+import { inventorySlotEventParamGetter } from "./getter/inventorySlotEventParamGetter";
+import { propertyEventParamGetter } from "./getter/propertyEventParamGetter";
+import { additionEventParamGetter, divisionEventParamGetter, exponentEventParamGetter, moduloEventParamGetter, multiplicationEventParamGetter, subtractionEventParamGetter } from "./getter/arithmeticParamGetter";
+import { blockEntityDataParamGetter } from "./getter/blockEntityDataParamGetter";
+import { matchPatternEventParamGetter } from "./getter/matchPatternEventParamGetter";
+import { itemDataParamGetter } from "./getter/itemDataParamGetter";
 
-export const eventParamGetterRegistry = new KeyedRegistry<new (params: unknown) => EventParamGetter<any>>;
+export const eventParamGetterRegistry = new KeyedRegistry<(params: unknown) => EventParamGetter<any>>;
 
-eventParamGetterRegistry.register("slot", InventorySlotEventParamGetter);
-eventParamGetterRegistry.register("prop", PropertyEventParamGetter);
-eventParamGetterRegistry.register("block_entity_data", BlockEntityDataParamGetter);
-eventParamGetterRegistry.register("item_data", ItemDataParamGetter);
-eventParamGetterRegistry.register("match_pattern", MatchPatternEventParamGetter);
+eventParamGetterRegistry.register("slot", inventorySlotEventParamGetter);
+eventParamGetterRegistry.register("prop", propertyEventParamGetter);
+eventParamGetterRegistry.register("block_entity_data", blockEntityDataParamGetter);
+eventParamGetterRegistry.register("item_data", itemDataParamGetter);
+eventParamGetterRegistry.register("match_pattern", matchPatternEventParamGetter);
 
 
-eventParamGetterRegistry.register("sum", AdditionEventParamGetter);
-eventParamGetterRegistry.register("product", MultiplicationEventParamGetter);
-eventParamGetterRegistry.register("difference", SubtractionEventParamGetter);
-eventParamGetterRegistry.register("quotient", DivisionEventParamGetter);
-eventParamGetterRegistry.register("remainder", ModuloEventParamGetter);
-eventParamGetterRegistry.register("power", ExponentEventParamGetter);
+eventParamGetterRegistry.register("sum", additionEventParamGetter);
+eventParamGetterRegistry.register("product", multiplicationEventParamGetter);
+eventParamGetterRegistry.register("difference", subtractionEventParamGetter);
+eventParamGetterRegistry.register("quotient", divisionEventParamGetter);
+eventParamGetterRegistry.register("remainder", moduloEventParamGetter);
+eventParamGetterRegistry.register("power", exponentEventParamGetter);

@@ -1,7 +1,5 @@
 import z from "zod";
-import { InventorySlot } from "../../item/inventory";
-import { EventParamGetter } from "../eventParamGetter";
-import type { EventCursor } from "../eventSheet";
+import type { EventParamGetter } from "../eventParamGetter";
 import { isString, parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -13,37 +11,34 @@ export const BlockEntityDataParamGetterParams = z.union([
     })
 ])
 
-export class BlockEntityDataParamGetter extends EventParamGetter<any> {
-    private readonly prop: n.Argument<string>;
-    private readonly blockX: n.Argument<number>;
-    private readonly blockY: n.Argument<number>;
-    private readonly blockZ: n.Argument<number>;
+export function blockEntityDataParamGetter(params: unknown): EventParamGetter<any> {
+    let prop: n.Parameter<string>;
+    let blockX: n.Parameter<number>;
+    let blockY: n.Parameter<number>;
+    let blockZ: n.Parameter<number>;
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = BlockEntityDataParamGetterParams.parse(params);
+    const parsed = BlockEntityDataParamGetterParams.parse(params);
 
-        if(typeof parsed == "string") {
-            this.prop = parameter(parsed);
-            this.blockX = parameter(0);
-            this.blockY = parameter(0);
-            this.blockZ = parameter(0);
-        } else {
-            this.prop = parameter(parsed.prop, isString);
-            this.blockX = parameter(parsed.at[0]);
-            this.blockY = parameter(parsed.at[1]);
-            this.blockZ = parameter(parsed.at[2]);
-        }
+    if(typeof parsed == "string") {
+        prop = parameter(parsed);
+        blockX = parameter(0);
+        blockY = parameter(0);
+        blockZ = parameter(0);
+    } else {
+        prop = parameter(parsed.prop, isString);
+        blockX = parameter(parsed.at[0]);
+        blockY = parameter(parsed.at[1]);
+        blockZ = parameter(parsed.at[2]);
     }
-    public get(cursor: EventCursor): any {
+
+    return cursor => {
         const blockEntity = cursor.world.getBlockEntity(
-            cursor.x + this.blockX(cursor),
-            cursor.y + this.blockY(cursor),
-            cursor.z + this.blockZ(cursor)
+            cursor.x + blockX(cursor),
+            cursor.y + blockY(cursor),
+            cursor.z + blockZ(cursor)
         );
         if(blockEntity == null) return null;
 
-        return blockEntity.customData[this.prop(cursor)];
+        return blockEntity.customData[prop(cursor)];
     }
 }

@@ -297,7 +297,7 @@ export class Player extends Entity<SerializedPlayerEntity> {
         cursor.setRotation(this.yaw, this.pitch);
         
         if(!previousState.tags.has("replaceable")) return false;
-        if(!blockState.canPlacePredicate.test(cursor)) return false;
+        if(!blockState.canPlacePredicate(cursor)) return false;
         
         this.world.setBlockState(targetX, targetY, targetZ, holdingStack.item);
         blockState.events.runTrigger("base:place", cursor);

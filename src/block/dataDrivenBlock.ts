@@ -1,7 +1,7 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { TextureAtlasSlot } from "../data/textureAtlas";
-import { ConstantPredicate, type EventPredicate } from "../events/eventPredicate";
+import type { EventPredicate } from "../events/eventPredicate";
 import { EventSheet } from "../events/eventSheet";
 import { lightChannelRegistry } from "../world/lighting/lightChannelRegistry";
 import { Block } from "./block";
@@ -217,7 +217,7 @@ export class DataDrivenBlockState {
             this.stateKey,
             this.model ?? new BlockModel,
             this.events ?? new EventSheet,
-            this.canPlacePredicate ?? new ConstantPredicate(true),
+            this.canPlacePredicate ?? (() => true),
             this.collider ?? new TileCollider,
             this.tags ?? new Set,
             this.emission ?? new Map,

@@ -1,7 +1,7 @@
 import z from "zod";
 import { GuiProgressBarGraphicContainer } from "../../gui/graphic/progress";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
+import type { EventSheet } from "../eventSheet";
 import { isNumber, parameter, parameterOuter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -16,58 +16,53 @@ export const SetProgressBarFillActionParameters = z.union([
         value: n.Number
     }),
     z.number(),
-    n.Parameter
+    n.OuterParameter
 ]);
 
-export class SetProgressBarFillAction extends EventAction {
-    private readonly getGuiFromCursor: boolean;
-    private readonly gui?: n.Argument<string>;
-    private readonly graphic?: n.Argument<string>;
-    private readonly value: n.Argument<number>;
+export function setProgressBarFillAction(args: unknown, eventSheet: EventSheet): EventAction {
+    const parsed = SetProgressBarFillActionParameters.parse(args);
 
-    public constructor(
-        eventSheet: EventSheet,
-        args: unknown
-    ) {
-        super(eventSheet);
-        const parsed = SetProgressBarFillActionParameters.parse(args);
+    let getGuiFromCursor: boolean;
+    let guiParam: n.Parameter<string> | undefined;
+    let graphicParam: n.Parameter<string> | undefined;
+    let valueParam: n.Parameter<number>;
 
-        if(typeof parsed == "object" && "gui" in parsed) {
-            this.getGuiFromCursor = false;
-            this.gui = parameter(parsed.gui);
-            this.graphic = parameter(parsed.graphic);
-            this.value = parameter(parsed.value);
+    if(typeof parsed == "object" && "gui" in parsed) {
+        getGuiFromCursor = false;
+        guiParam = parameter(parsed.gui);
+        graphicParam = parameter(parsed.graphic);
+        valueParam = parameter(parsed.value);
+    } else {
+        getGuiFromCursor = true;
+
+        if(typeof parsed == "number") {
+            valueParam = parameter(parsed);
+        } else if("value" in parsed) {
+            valueParam = parameter(parsed.value);
         } else {
-            this.getGuiFromCursor = true;
-
-            if(typeof parsed == "number") {
-                this.value = parameter(parsed);
-            } else if("value" in parsed) {
-                this.value = parameter(parsed.value);
-            } else {
-                this.value = parameterOuter(parsed, isNumber);
-            }
+            valueParam = parameterOuter(parsed, isNumber);
         }
     }
-    public override run(cursor: EventCursor): void {
+
+    return (cursor) => {
         if(cursor.clientPlatform == null) return;
 
         let graphic;
 
-        if(this.getGuiFromCursor) {
+        if(getGuiFromCursor) {
             graphic = cursor.graphic;
         } else {
-            const guiName = this.gui!(cursor);
+            const guiName = guiParam!(cursor);
             const gui = cursor.clientPlatform.guiManager.getOpenGui(guiName);
             if(gui == null) return;
 
-            const graphicName = this.graphic!(cursor);
+            const graphicName = graphicParam!(cursor);
             graphic = gui.getGraphicContainer(graphicName);
         }
         if(graphic == null) return;
 
         if(graphic instanceof GuiProgressBarGraphicContainer) {
-            const value = this.value(cursor);
+            const value = valueParam(cursor);
             graphic.value = value;
         }
     }

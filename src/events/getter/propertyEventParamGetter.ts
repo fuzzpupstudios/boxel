@@ -1,6 +1,5 @@
 import z from "zod";
-import { EventParamGetter } from "../eventParamGetter";
-import type { EventCursor } from "../eventSheet";
+import type { EventParamGetter } from "../eventParamGetter";
 import { isString, parameter, parameterVariable } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -9,32 +8,26 @@ export const PropertyParamGetterParams = z.object({
     path: n.String
 });
 
-export class PropertyEventParamGetter extends EventParamGetter<any> {
-    private readonly object: n.Argument<any>;
-    private readonly path?: n.Argument<string>;
-    private readonly constantPath?: string[];
+export function propertyEventParamGetter(params: unknown): EventParamGetter<any> {
+    let objectParam: n.Parameter<any>;
+    let pathParam: n.Parameter<string> | undefined;
+    let constantPath: string[] | undefined;
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = PropertyParamGetterParams.parse(params);
+    const parsed = PropertyParamGetterParams.parse(params);
 
-        if(typeof parsed.value == "string") {
-            this.object = parameterVariable(parsed.value);
-        } else {
-            this.object = parameter(parsed.value);
-        }
-        if(typeof parsed.path == "string") {
-            this.constantPath = parsed.path.split(".");
-        } else {
-            this.path = parameter(parsed.path, isString);
-        }
+    if(typeof parsed.value == "string") {
+        objectParam = parameterVariable(parsed.value);
+    } else {
+        objectParam = parameter(parsed.value);
     }
-    public get(cursor: EventCursor): any {
-        let object = this.object(cursor);
-        if(object == null) return null;
+    if(typeof parsed.path == "string") {
+        constantPath = parsed.path.split(".");
+    } else {
+        pathParam = parameter(parsed.path, isString);
+    }
 
-        const path = this.constantPath ?? this.path!(cursor).split(".");
+    const getter = (object: any, path: string[]) => {
+        if(object == null) return null;
         
         for(const prop of path) {
             object = object[prop];
@@ -42,5 +35,11 @@ export class PropertyEventParamGetter extends EventParamGetter<any> {
         }
 
         return object;
+    }
+
+    if(constantPath) {
+        return cursor => getter(objectParam(cursor), constantPath);
+    } else {
+        return cursor => getter(objectParam(cursor), pathParam!(cursor).split("."));
     }
 }

@@ -1,24 +1,19 @@
 import z from "zod";
-import { EventPredicate } from "../eventPredicate";
-import type { EventCursor } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventPredicate } from "../eventPredicate";
 import { parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type UsagesPredicateParameters = z.infer<typeof UsagesPredicateParameters>;
 export const UsagesPredicateParameters = z.object({
     used: n.Boolean
 })
 
-export class UsagesPredicate extends EventPredicate {
-    private readonly used: n.Argument<boolean>;
+export function usagesPredicate(args: unknown): EventPredicate {
+    const parsed = UsagesPredicateParameters.parse(args);
 
-    public constructor(args: unknown) {
-        super();
+    const used = parameter(parsed.used);
 
-        const parsed = UsagesPredicateParameters.parse(args);
-        this.used = parameter(parsed.used);
-    }
-    public override test(cursor: EventCursor): boolean {
-        return this.used(cursor) == (cursor.usages > 0);
+    return (cursor) => {
+        return used(cursor) == (cursor.usages > 0);
     }
 }

@@ -4,12 +4,12 @@ import { eventParamGetterRegistry } from "./eventParamGetterRegistry";
 import type { EventCursor } from "./eventSheet";
 import n from "./eventVariableTypes";
 
-export function isParameter(obj: any): obj is n.Parameter {
+export function isParameter(obj: any): obj is n.OuterParameter {
     if(obj == null || typeof obj !== "object") return false;
     return "$get" in obj;
 }
 
-export function parameterVariable<T>(value: string, validator?: (value: any) => value is T): n.Argument<T> {
+export function parameterVariable<T>(value: string, validator?: (value: any) => value is T): n.Parameter<T> {
     // raw variable
     const path = value.split(".");
     const root = path.shift()!;
@@ -48,23 +48,22 @@ export function parameterVariable<T>(value: string, validator?: (value: any) => 
     }
 }
 
-export function parameter<T>(value: n.InnerParameter | T, validator?: (value: any) => value is T): n.Argument<T> {
+export function parameter<T>(value: n.InnerParameter | T, validator?: (value: any) => value is T): n.Parameter<T> {
     if(typeof value == "object" && value != null && !(value instanceof Array)) {
         // structured like { "getter": ... }
         const [ getterId, getterParams ] = Object.entries(value).pop()!;
-        const GetterConstructor = eventParamGetterRegistry.get(getterId);
+        const createGetter = eventParamGetterRegistry.get(getterId);
 
-        if(GetterConstructor == null) throw new ReferenceError("Event parameter getter " + getterId + " not found");
+        if(createGetter == null) throw new ReferenceError("Event parameter getter " + getterId + " not found");
 
-        const getter = new GetterConstructor(getterParams);
-        return cursor => getter.get(cursor);
+        return createGetter(getterParams);
     } else {
         // structured as a constant
         return () => <T>value;
     }
 }
 
-export function parameterOuter<T>(value: n.Parameter, validator?: (value: any) => value is T): n.Argument<T> {
+export function parameterOuter<T>(value: n.OuterParameter, validator?: (value: any) => value is T): n.Parameter<T> {
     if(typeof value.$get == "string") {
         return parameterVariable(value.$get, validator);
     } else {
@@ -72,7 +71,7 @@ export function parameterOuter<T>(value: n.Parameter, validator?: (value: any) =
     }
 }
 
-export function parameterRecursive<T>(value: any): n.Argument<T> {
+export function parameterRecursive<T>(value: any): n.Parameter<T> {
     if(isParameter(value)) {
         return parameterOuter(value);
     }
@@ -103,7 +102,7 @@ export function parameterRecursive<T>(value: any): n.Argument<T> {
     }
 }
 
-export function parameterInventorySlot(value: n.InventorySlot | null): n.Argument<InventorySlot> {
+export function parameterInventorySlot(value: n.InventorySlot | null): n.Parameter<InventorySlot> {
     if(isParameter(value)) {
         return parameterOuter(value, isInventorySlot);
     } else {

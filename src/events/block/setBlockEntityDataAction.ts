@@ -1,8 +1,7 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventAction } from "../eventAction";
 import { isInteger, isPrimitive, parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type SetBlockEntityDataActionParameters = z.infer<typeof SetBlockEntityDataActionParameters>;
 export const SetBlockEntityDataActionParameters = z.object({
@@ -12,36 +11,28 @@ export const SetBlockEntityDataActionParameters = z.object({
     data: z.record(z.string(), n.Primitive)
 });
 
-export class SetBlockEntityDataAction extends EventAction {
-    private readonly xOffset: n.Argument<number>;
-    private readonly yOffset: n.Argument<number>;
-    private readonly zOffset: n.Argument<number>;
-    private readonly data: Map<string, n.Argument<string | number | boolean>>;
+export function setBlockEntityDataAction(args: unknown): EventAction {
+    const parsed = SetBlockEntityDataActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const xOffset = parameter(parsed.xOffset, isInteger);
+    const yOffset = parameter(parsed.yOffset, isInteger);
+    const zOffset = parameter(parsed.zOffset, isInteger);
 
-        const parsed = SetBlockEntityDataActionParameters.parse(args);
-
-        this.xOffset = parameter(parsed.xOffset, isInteger);
-        this.yOffset = parameter(parsed.yOffset, isInteger);
-        this.zOffset = parameter(parsed.zOffset, isInteger);
-
-        this.data = new Map;
-        for(const [ param, value ] of Object.entries(parsed.data)) {
-            this.data.set(param, parameter(value, isPrimitive));
-        }
+    const data = new Map<string, n.Parameter<string | number | boolean>>;
+    for(const [ param, value ] of Object.entries(parsed.data)) {
+        data.set(param, parameter(value, isPrimitive));
     }
-    public override run(cursor: EventCursor): void {
+
+    return (cursor) => {
         const blockEntity = cursor.world.getBlockEntity(
-            cursor.x + this.xOffset(cursor),
-            cursor.y + this.yOffset(cursor),
-            cursor.z + this.zOffset(cursor)
+            cursor.x + xOffset(cursor),
+            cursor.y + yOffset(cursor),
+            cursor.z + zOffset(cursor)
         );
 
         if(blockEntity == null) return;
 
-        for(const [ param, value ] of this.data) {
+        for(const [ param, value ] of data) {
             const calculatedValue = value(cursor);
             blockEntity.customData[param] = calculatedValue;
         }

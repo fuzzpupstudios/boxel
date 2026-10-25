@@ -1,7 +1,6 @@
 import z from "zod";
 import type { InventorySlot } from "../../item/inventory";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
 import { isParameter, isString, parameter, parameterInventorySlot, parameterOuter, parameterRecursive } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -18,60 +17,57 @@ export const SetItemDataActionParameters = z.object({
     })
 ]));
 
-export class SetItemDataAction extends EventAction {
-    private readonly slot: n.Argument<InventorySlot | null>;
-    private readonly data?: n.Argument<any>;
-    private readonly path?: n.Argument<string[]>;
-    private readonly value?: n.Argument<any>;
+export function setItemDataAction(args: unknown): EventAction {
+    const parsed = SetItemDataActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    let data: n.Parameter<any> | undefined;
+    let path: n.Parameter<string[]> | undefined;
+    let value: n.Parameter<any> | undefined;
 
-        const parsed = SetItemDataActionParameters.parse(args);
-
-        if("data" in parsed) {
-            this.data = parameterRecursive(parsed.data);
+    if("data" in parsed) {
+        data = parameterRecursive(parsed.data);
+    } else {
+        if(typeof parsed.path == "string") {
+            path = parameter(parsed.path.split("."));
         } else {
-            if(typeof parsed.path == "string") {
-                this.path = parameter(parsed.path.split("."));
-            } else {
-                const p = parameter(parsed.path, isString);
-                this.path = cursor => p(cursor).split(".");
-            }
-
-            if(isParameter(parsed.value)) {
-                this.value = parameterOuter(parsed.value);
-            } else if(typeof parsed.value == "object" && parsed.value != null) {
-                this.value = parameterRecursive(parsed.value);
-            } else {
-                this.value = parameter(parsed.value);
-            }
+            const p = parameter(parsed.path, isString);
+            path = cursor => p(cursor).split(".");
         }
-        
-        if(parsed.slot) {
-            this.slot = parameterInventorySlot(parsed.slot);
+
+        if(isParameter(parsed.value)) {
+            value = parameterOuter(parsed.value);
+        } else if(typeof parsed.value == "object" && parsed.value != null) {
+            value = parameterRecursive(parsed.value);
         } else {
-            this.slot = cursor => cursor.slot;
+            value = parameter(parsed.value);
         }
     }
-    public override run(cursor: EventCursor): void {
-        const slot = this.slot(cursor);
+
+    let slotParam: n.Parameter<InventorySlot | null>;
+    if(parsed.slot) {
+        slotParam = parameterInventorySlot(parsed.slot);
+    } else {
+        slotParam = cursor => cursor.slot;
+    }
+
+    return (cursor) => {
+        const slot = slotParam(cursor);
         if(slot == null) return;
 
-        if(this.data) {
-            slot.stack.setData(this.data(cursor));
+        if(data) {
+            slot.stack.setData(data(cursor));
         } else {
-            const path = this.path!(cursor);
-            const final = path[path.length - 1];
+            const pathValue = path!(cursor);
+            const final = pathValue[pathValue.length - 1];
 
-            let data = slot.stack.data ?? {};
+            let slotData = slot.stack.data ?? {};
 
-            for(let i = 0; i < path.length - 1; i++) {
-                data = data[path[i]] ?? {};
+            for(let i = 0; i < pathValue.length - 1; i++) {
+                slotData = slotData[pathValue[i]] ?? {};
             }
-            
-            data[final] = this.value!(cursor);
-            if(slot.stack.data == null) slot.stack.data = data;
+
+            slotData[final] = value!(cursor);
+            if(slot.stack.data == null) slot.stack.data = slotData;
         }
         slot.update();
     }

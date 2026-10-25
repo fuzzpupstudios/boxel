@@ -2,8 +2,7 @@ import z from "zod";
 import { Player } from "../../entity/player";
 import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
 import type { Inventory } from "../../item/inventory";
-import { EventAction } from "../eventAction";
-import { EventCursor, type EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
 import { isInteger, isString, parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -20,48 +19,39 @@ export const OpenGuiActionParameters = z.object({
     block_entity: z.tuple([ n.Integer, n.Integer, n.Integer ]).optional()
 });
 
-export class OpenGuiAction extends EventAction {
-    private readonly gui: n.Argument<string>;
-    private readonly offsetX: n.Argument<number>;
-    private readonly offsetY: n.Argument<number>;
-    private readonly offsetZ: n.Argument<number>;
-    private readonly inventories: Map<string, "none" | "player_inventory" | "block_entity">;
-    private readonly blockEntity?: {
-        offsetX: n.Argument<number>,
-        offsetY: n.Argument<number>,
-        offsetZ: n.Argument<number>
-    };
-    
+export function openGuiAction(args: unknown): EventAction {
+    const parsed = OpenGuiActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
-        const parsed = OpenGuiActionParameters.parse(args);
+    const guiParam = parameter(parsed.gui, isString);
+    const offsetXParam = parameter(parsed.xOffset, isInteger);
+    const offsetYParam = parameter(parsed.yOffset, isInteger);
+    const offsetZParam = parameter(parsed.zOffset, isInteger);
+    const inventorySources = new Map(Object.entries(parsed.inventories));
 
-        this.gui = parameter(parsed.gui, isString);
-        this.offsetX = parameter(parsed.xOffset, isInteger);
-        this.offsetY = parameter(parsed.yOffset, isInteger);
-        this.offsetZ = parameter(parsed.zOffset, isInteger);
-        this.inventories = new Map(Object.entries(parsed.inventories));
-
-        if(parsed.block_entity) {
-            this.blockEntity = {
-                offsetX: parameter(parsed.block_entity[0], isInteger),
-                offsetY: parameter(parsed.block_entity[1], isInteger),
-                offsetZ: parameter(parsed.block_entity[2], isInteger)
-            }
+    let blockEntityOffset: {
+        offsetX: n.Parameter<number>,
+        offsetY: n.Parameter<number>,
+        offsetZ: n.Parameter<number>
+    } | undefined;
+    if(parsed.block_entity) {
+        blockEntityOffset = {
+            offsetX: parameter(parsed.block_entity[0], isInteger),
+            offsetY: parameter(parsed.block_entity[1], isInteger),
+            offsetZ: parameter(parsed.block_entity[2], isInteger)
         }
     }
-    public override run(cursor: EventCursor): void {
+
+    return (cursor) => {
         const inventories = new Map<string, Inventory>;
 
-        const gui = this.gui(cursor);
-        const offsetX = this.offsetX(cursor);
-        const offsetY = this.offsetY(cursor);
-        const offsetZ = this.offsetZ(cursor);
+        const gui = guiParam(cursor);
+        const offsetX = offsetXParam(cursor);
+        const offsetY = offsetYParam(cursor);
+        const offsetZ = offsetZParam(cursor);
 
         const { x, y, z, entity } = cursor;
 
-        for(const [ inventoryId, inventorySource ] of this.inventories) {
+        for(const [ inventoryId, inventorySource ] of inventorySources) {
             let inventory: Inventory | null = null;
 
             if(inventorySource == "player_inventory" && entity instanceof Player) {
@@ -87,11 +77,11 @@ export class OpenGuiAction extends EventAction {
         if(guiType == null) throw new ReferenceError("Unknown gui type " + gui);
 
         const cursorData = new Map<string, any>;
-        if(this.blockEntity) {
+        if(blockEntityOffset) {
             cursorData.set("$block_entity", cursor.world.getBlockEntity(
-                cursor.x + this.blockEntity.offsetX(cursor),
-                cursor.y + this.blockEntity.offsetZ(cursor),
-                cursor.z + this.blockEntity.offsetY(cursor)
+                cursor.x + blockEntityOffset.offsetX(cursor),
+                cursor.y + blockEntityOffset.offsetZ(cursor),
+                cursor.z + blockEntityOffset.offsetY(cursor)
             ));
         }
 

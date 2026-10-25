@@ -208,7 +208,7 @@ export abstract class Entity<SerializedType extends SerializedEntity = Serialize
                 if(trigger == null) continue;
                 
                 cursor.setPosition(x, y, z);
-                trigger.run(cursor);
+                trigger(cursor);
                 cursor.usages++;
             }
         }

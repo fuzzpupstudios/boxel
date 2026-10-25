@@ -1,9 +1,8 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import { SerializedItemStack } from "../../item/itemStack";
+import type { EventAction } from "../eventAction";
 import { isString, parameter, parameterInventorySlot } from "../eventVariable";
 import n from "../eventVariableTypes";
-import { SerializedItemStack } from "../../item/itemStack";
 
 export type AssignValueActionParameters = z.infer<typeof AssignValueActionParameters>;
 export const AssignValueActionParameters = z.object({
@@ -17,27 +16,22 @@ export const AssignValueActionParameters = z.object({
     })
 ]));
 
-export class AssignValueAction extends EventAction {
-    private readonly name: n.Argument<string>;
-    private readonly value: n.Argument<any>;
+export function assignValueAction(args: unknown): EventAction {
+    const parsed = AssignValueActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
-
-        const parsed = AssignValueActionParameters.parse(args);
-
-        this.name = parameter(parsed.name, isString);
-        if("value" in parsed) {
-            if(typeof parsed.value == "object") {
-                this.value = parameterInventorySlot(parsed.value);
-            } else {
-                this.value = parameter(parsed.value);
-            }
+    const name = parameter(parsed.name, isString);
+    let value: n.Parameter<any>;
+    if("value" in parsed) {
+        if(typeof parsed.value == "object") {
+            value = parameterInventorySlot(parsed.value);
         } else {
-            this.value = parameter(parsed.ref);
+            value = parameter(parsed.value);
         }
+    } else {
+        value = parameter(parsed.ref);
     }
-    public override run(cursor: EventCursor): void {
-        cursor.variables.set(this.name(cursor), this.value(cursor));
+
+    return (cursor) => {
+        cursor.variables.set(name(cursor), value(cursor));
     }
 }

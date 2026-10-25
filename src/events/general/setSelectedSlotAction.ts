@@ -1,7 +1,6 @@
 import z from "zod";
 import { Player } from "../../entity/player";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
 import { isInteger, parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -10,19 +9,14 @@ export const SetSelectedSlotActionParameters = z.object({
     slot: n.Integer
 });
 
-export class SetSelectedSlotAction extends EventAction {
-    private readonly slot: n.Argument<number>;
+export function setSelectedSlotAction(args: unknown): EventAction {
+    const parsed = SetSelectedSlotActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const slot = parameter(parsed.slot, isInteger);
 
-        const parsed = SetSelectedSlotActionParameters.parse(args);
-
-        this.slot = parameter(parsed.slot, isInteger);
-    }
-    public override run(cursor: EventCursor): void {
+    return (cursor) => {
         if(cursor.entity instanceof Player) {
-            cursor.entity.setSelectedSlot(this.slot(cursor));
+            cursor.entity.setSelectedSlot(slot(cursor));
         }
     }
 }

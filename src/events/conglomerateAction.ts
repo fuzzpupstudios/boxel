@@ -1,21 +1,7 @@
-import { EventAction } from "./eventAction";
-import type { EventCursor, EventSheet } from "./eventSheet";
+import type { EventAction } from "./eventAction";
 
-export class ConglomerateAction extends EventAction {
-    public run(cursor: EventCursor): void {
-        for(const action of this.actions) action.run(cursor);
-    }
-    public constructor(
-        eventSheet: EventSheet,
-        public readonly actions: EventAction[],
-    ) {
-        super(eventSheet);
-    }
-    public addAction(action: EventAction) {
-        if(action instanceof ConglomerateAction) {
-            this.actions.push(...action.actions);
-        } else {
-            this.actions.push(action);
-        }
+export function conglomerateAction(actions: EventAction[]): EventAction {
+    return (cursor) => {
+        for(const action of actions) action(cursor);
     }
 }

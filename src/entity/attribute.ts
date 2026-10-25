@@ -29,7 +29,7 @@ export class Attribute {
 
     private applyModifiers(value: number, modifiers: Iterable<AttributeModifier>, cursor: EventCursor | null) {
         for(const modifier of modifiers) {
-            if(modifier.condition && (!cursor || !modifier.condition.test(cursor))) continue;
+            if(modifier.condition && (!cursor || !modifier.condition(cursor))) continue;
 
             if(modifier.action === AttributeModifierAction.ADD) value += modifier.value;
             if(modifier.action === AttributeModifierAction.MULTIPLY) value *= modifier.value;

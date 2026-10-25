@@ -3,7 +3,7 @@ import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
 import { AttributeModifierAction, type AttributeModifier, type AttributeModifierMap } from "../entity/attribute";
 import { DataDrivenEventSheet } from "../events/dataDrivenEventSheet";
-import { ConstantPredicate, EventPredicate } from "../events/eventPredicate";
+import type { EventPredicate } from "../events/eventPredicate";
 import type { EventSheet } from "../events/eventSheet";
 import { TileCollider } from "./collider";
 import { BlockModel } from "./model/blockModel";
@@ -98,7 +98,7 @@ export function parsePredicate(predicate?: DataDrivenJson.EventActionPredicateTr
     predicate ??= true;
 
     if(typeof predicate == "boolean") {
-        return new ConstantPredicate(predicate);
+        return () => predicate;
     } else {
         return DataDrivenEventSheet.parsePredicate(predicate ?? {});
     }

@@ -8,6 +8,79 @@ import type { BlockModel } from "./model/blockModel";
 export class BlockState {
     public readonly parameters: Map<string, string>;
 
+    public static stateIdMatchesArgs(blockStateId: string, getParam: (key: string) => string | number | null | undefined) {
+        let readingParams = false;
+
+        let keyReadStart = 0;
+        let keyReadEnd = 0;
+
+        for(let i = 0; i < blockStateId.length; i++) {
+            const char = blockStateId[i];
+
+            if(!readingParams) {
+                if(char === "[") {
+                    readingParams = true;
+                    keyReadStart = i + 1;
+                }
+            } else if(char === "]") {
+                readingParams = false;
+            } else if(char === "=") {
+                keyReadEnd = i;
+            } else if(char === ",") {
+                const key = blockStateId.slice(keyReadStart, keyReadEnd);
+                const value = blockStateId.slice(keyReadEnd + 1, i);
+
+                const param = getParam(key);
+                if(param != null && param !== value) return false;
+
+                keyReadStart = i + 1;
+                keyReadEnd = i + 1;
+            }
+        }
+
+        return true;
+    }
+
+    public static setStateIdParams(blockStateId: string, getOverwrittenKey: (key: string) => string | number | null | undefined) {
+        let newBlockStateId = "";
+
+        let readingParams = false;
+        let writtenNewValue = false;
+
+        let lastSlice = 0;
+        let keyReadStart = 0;
+
+        for(let i = 0; i < blockStateId.length; i++) {
+            const char = blockStateId[i];
+
+            if(!readingParams) {
+                if(char === "[") {
+                    readingParams = true;
+                    keyReadStart = i + 1;
+                }
+            } else if(char === "]") {
+                readingParams = false;
+                if(writtenNewValue) {
+                    lastSlice = i;
+                }
+            } else if(char === "=") {
+                const overwrittenKey = getOverwrittenKey(blockStateId.slice(keyReadStart, i));
+                if(overwrittenKey != null) {
+                    newBlockStateId += blockStateId.slice(lastSlice, i + 1) + overwrittenKey;
+                    writtenNewValue = true;
+                }
+            } else if(char === ",") {
+                if(writtenNewValue) {
+                    lastSlice = i;
+                }
+                keyReadStart = i + 1;
+                writtenNewValue = false;
+            }
+        }
+
+        return newBlockStateId + blockStateId.slice(lastSlice);
+    }
+
     public constructor(
         public readonly block: Block,
         public readonly stateKey: string,

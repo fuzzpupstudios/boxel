@@ -1,6 +1,5 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
 import { isString, parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -9,16 +8,12 @@ export const CloseGuiActionParameters = z.object({
     gui: n.String
 });
 
-export class CloseGuiAction extends EventAction {
-    private readonly gui: n.Argument<string>;
+export function closeGuiAction(args: unknown): EventAction {
+    const parsed = CloseGuiActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const gui = parameter(parsed.gui, isString);
 
-        const parsed = CloseGuiActionParameters.parse(args);
-        this.gui = parameter(parsed.gui, isString);
-    }
-    public override run(cursor: EventCursor): void {
-        cursor.clientPlatform?.guiManager.closeGui(this.gui(cursor));
+    return (cursor) => {
+        cursor.clientPlatform?.guiManager.closeGui(gui(cursor));
     }
 }

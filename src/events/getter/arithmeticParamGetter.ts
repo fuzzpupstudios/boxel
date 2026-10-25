@@ -1,113 +1,71 @@
 import z from "zod";
-import { EventParamGetter } from "../eventParamGetter";
-import type { EventCursor } from "../eventSheet";
+import type { EventParamGetter } from "../eventParamGetter";
 import { isNumber, isPrimitive, parameter, parameterVariable } from "../eventVariable";
 import n from "../eventVariableTypes";
 
-export class AdditionEventParamGetter extends EventParamGetter<any> {
-    private readonly values: n.Argument<number | string | boolean>[];
+export const DualArithmeticParamGetterParams = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.array(n.Primitive).nonempty().parse(params);
+function parseDualGetter(params: unknown): [ n.Parameter<number>, n.Parameter<number> ] {
+    const parsed = DualArithmeticParamGetterParams.parse(params);
 
-        this.values = parsed.map(value => parameter(value, isPrimitive));
-    }
-    public get(cursor: EventCursor): any {
-        let value: any = this.values[0](cursor);
-        for(let i = 1; i < this.values.length; i++) {
-            value += this.values[i](cursor);
+    return [
+        typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber),
+        typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber)
+    ];
+}
+
+export function additionEventParamGetter(params: unknown): EventParamGetter<any> {
+    const parsed = z.array(n.Primitive).nonempty().parse(params);
+
+    const values = parsed.map(value => parameter(value, isPrimitive));
+
+    return cursor => {
+        let value: any = values[0](cursor);
+        for(let i = 1; i < values.length; i++) {
+            value += values[i](cursor);
         }
         return value;
     }
 }
 
-export class MultiplicationEventParamGetter extends EventParamGetter<any> {
-    private readonly values: n.Argument<number>[];
+export function multiplicationEventParamGetter(params: unknown): EventParamGetter<any> {
+    const parsed = z.array(n.Number).parse(params);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.array(n.Number).parse(params);
+    const values = parsed.map(value => parameter(value, isNumber));
 
-        this.values = parsed.map(value => parameter(value, isNumber));
-    }
-    public get(cursor: EventCursor): any {
+    return cursor => {
         let value = 1;
-        for(let i = 0; i < this.values.length; i++) {
-            value *= this.values[i](cursor);
+        for(let i = 0; i < values.length; i++) {
+            value *= values[i](cursor);
         }
         return value;
     }
 }
 
-export class SubtractionEventParamGetter extends EventParamGetter<any> {
-    private readonly a: n.Argument<number>;
-    private readonly b: n.Argument<number>;
+export function subtractionEventParamGetter(params: unknown): EventParamGetter<any> {
+    const [ a, b ] = parseDualGetter(params);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
-
-        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
-        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
-    }
-    public get(cursor: EventCursor): any {
-        return this.a(cursor) - this.b(cursor);
-    }
+    return cursor => a(cursor) - b(cursor);
 }
 
-export class DivisionEventParamGetter extends EventParamGetter<any> {
-    private readonly a: n.Argument<number>;
-    private readonly b: n.Argument<number>;
+export function divisionEventParamGetter(params: unknown): EventParamGetter<any> {
+    const [ a, b ] = parseDualGetter(params);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
-
-        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
-        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
-    }
-    public get(cursor: EventCursor): any {
-        return this.a(cursor) / this.b(cursor);
-    }
+    return cursor => a(cursor) / b(cursor);
 }
 
-export class ExponentEventParamGetter extends EventParamGetter<any> {
-    private readonly a: n.Argument<number>;
-    private readonly b: n.Argument<number>;
+export function exponentEventParamGetter(params: unknown): EventParamGetter<any> {
+    const [ a, b ] = parseDualGetter(params);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
-
-        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
-        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
-    }
-    public get(cursor: EventCursor): any {
-        return this.a(cursor) ** this.b(cursor);
-    }
+    return cursor => a(cursor) ** b(cursor);
 }
 
-export class ModuloEventParamGetter extends EventParamGetter<any> {
-    private readonly a: n.Argument<number>;
-    private readonly b: n.Argument<number>;
+export function moduloEventParamGetter(params: unknown): EventParamGetter<any> {
+    const [ aParam, bParam ] = parseDualGetter(params);
 
-    public constructor(params: unknown) {
-        super();
-        
-        const parsed = z.tuple([ n.Number.or(z.string()), n.Number.or(z.string()) ]).parse(params);
-
-        this.a = typeof parsed[0] == "string" ? parameterVariable(parsed[0], isNumber) : parameter(parsed[0], isNumber);
-        this.b = typeof parsed[1] == "string" ? parameterVariable(parsed[1], isNumber) : parameter(parsed[1], isNumber);
-    }
-    public get(cursor: EventCursor): any {
-        const a = this.a(cursor);
-        const b = this.b(cursor);
+    return cursor => {
+        const a = aParam(cursor);
+        const b = bParam(cursor);
         return ((a % b) + b) % b;
     }
 }

@@ -1,90 +1,45 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventAction } from "../eventAction";
 import { isInteger, isPrimitive, parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
+import { BlockState } from "../../block/blockState";
 
 export type SetBlockStateParameterActionParameters = z.infer<typeof SetBlockStateParameterActionParameters>;
 export const SetBlockStateParameterActionParameters = z.object({
     xOffset: n.Integer.default(0),
     yOffset: n.Integer.default(0),
     zOffset: n.Integer.default(0),
-    parameters: z.record(z.string(), n.Primitive)
+    parameters: z.record(z.string(), n.String.or(n.Number))
 });
 
-export class SetBlockStateParameterAction extends EventAction {
-    private readonly xOffset: n.Argument<number>;
-    private readonly yOffset: n.Argument<number>;
-    private readonly zOffset: n.Argument<number>;
-    private readonly blockParameters: Map<string, n.Argument<string | number | boolean>>;
+export function setBlockStateParameterAction(args: unknown): EventAction {
+    const parsed = SetBlockStateParameterActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const xOffsetParam = parameter(parsed.xOffset, isInteger);
+    const yOffsetParam = parameter(parsed.yOffset, isInteger);
+    const zOffsetParam = parameter(parsed.zOffset, isInteger);
 
-        const parsed = SetBlockStateParameterActionParameters.parse(args);
-
-        this.xOffset = parameter(parsed.xOffset, isInteger);
-        this.yOffset = parameter(parsed.yOffset, isInteger);
-        this.zOffset = parameter(parsed.zOffset, isInteger);
-
-        this.blockParameters = new Map;
-        for(const [ param, value ] of Object.entries(parsed.parameters)) {
-            this.blockParameters.set(param, parameter(value, isPrimitive));
-        }
+    const blockParameters = new Map<string, n.Parameter<string | number>>;
+    for(const [ param, value ] of Object.entries(parsed.parameters)) {
+        blockParameters.set(param, parameter(value, v => typeof v === "string" || typeof v === "number"));
     }
-    public override run(cursor: EventCursor): void {
-        const xOffset = this.xOffset(cursor);
-        const yOffset = this.yOffset(cursor);
-        const zOffset = this.zOffset(cursor);
+
+    return (cursor) => {
+        const xOffset = xOffsetParam(cursor);
+        const yOffset = yOffsetParam(cursor);
+        const zOffset = zOffsetParam(cursor);
 
         const blockStateId = cursor.world.getBlockState(
             cursor.x + xOffset,
             cursor.y + yOffset,
             cursor.z + zOffset
         );
-        let newBlockStateId = "";
 
-        let readingParams = false;
-        let writtenNewValue = false;
-
-        let lastSlice = 0;
-        let keyReadStart = 0;
-
-        for(let i = 0; i < blockStateId.length; i++) {
-            const char = blockStateId[i];
-
-            if(!readingParams) {
-                if(char === "[") {
-                    readingParams = true;
-                    keyReadStart = i + 1;
-                }
-            } else if(char === "]") {
-                readingParams = false;
-                if(writtenNewValue) {
-                    lastSlice = i;
-                }
-            } else if(char === "=") {
-                const overwrittenKey = this.blockParameters.get(blockStateId.slice(keyReadStart, i));
-                if(overwrittenKey) {
-                    newBlockStateId += blockStateId.slice(lastSlice, i + 1) + overwrittenKey(cursor);
-                    writtenNewValue = true;
-                }
-            } else if(char === ",") {
-                if(writtenNewValue) {
-                    lastSlice = i;
-                }
-                keyReadStart = i + 1;
-                writtenNewValue = false;
-            }
-        }
-
-        newBlockStateId += blockStateId.slice(lastSlice);
-        
         cursor.world.setBlockState(
             cursor.x + xOffset,
             cursor.y + yOffset,
             cursor.z + zOffset,
-            newBlockStateId
+            BlockState.setStateIdParams(blockStateId, key => blockParameters.get(key)?.(cursor))
         );
     }
 }

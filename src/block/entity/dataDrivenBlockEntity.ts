@@ -180,7 +180,7 @@ export class DataDrivenBlockEntity extends BlockEntity<DataDrivenBlockEntityType
     public override tick(time: Time) {
         if(this.eventCursor == null) return;
         
-        this.tickEvent?.run(this.eventCursor);
+        this.tickEvent?.(this.eventCursor);
     }
 
     public override deinit(): void {

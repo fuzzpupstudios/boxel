@@ -1,8 +1,7 @@
 import z from "zod";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventAction } from "../eventAction";
 import { isInteger, isString, parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type SetBlockStateIdActionParameters = z.infer<typeof SetBlockStateIdActionParameters>;
 export const SetBlockStateIdActionParameters = z.object({
@@ -13,31 +12,23 @@ export const SetBlockStateIdActionParameters = z.object({
     showParticles: n.Boolean.default(false)
 });
 
-export class SetBlockStateIdAction extends EventAction {
-    private readonly xOffset: n.Argument<number>;
-    private readonly yOffset: n.Argument<number>;
-    private readonly zOffset: n.Argument<number>;
-    private readonly blockStateId: n.Argument<string>;
-    private readonly showParticles: n.Argument<boolean>;
+export function setBlockStateIdAction(args: unknown): EventAction {
+    const parsed = SetBlockStateIdActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const xOffset = parameter(parsed.xOffset, isInteger);
+    const yOffset = parameter(parsed.yOffset, isInteger);
+    const zOffset = parameter(parsed.zOffset, isInteger);
+    const blockStateId = parameter(parsed.blockStateId, isString);
+    const showParticles = parameter(parsed.showParticles);
 
-        const parsed = SetBlockStateIdActionParameters.parse(args);
-        this.xOffset = parameter(parsed.xOffset, isInteger);
-        this.yOffset = parameter(parsed.yOffset, isInteger);
-        this.zOffset = parameter(parsed.zOffset, isInteger);
-        this.blockStateId = parameter(parsed.blockStateId, isString);
-        this.showParticles = parameter(parsed.showParticles);
-    }
-    public override run(cursor: EventCursor): void {
-        const x = cursor.x + this.xOffset(cursor);
-        const y = cursor.y + this.yOffset(cursor);
-        const z = cursor.z + this.zOffset(cursor);
+    return (cursor) => {
+        const x = cursor.x + xOffset(cursor);
+        const y = cursor.y + yOffset(cursor);
+        const z = cursor.z + zOffset(cursor);
 
-        if(this.showParticles(cursor)) {
+        if(showParticles(cursor)) {
             cursor.clientPlatform?.blockBreakParticles.blockDestructionParticles(x, y, z);
         }
-        cursor.world.setBlockState(x, y, z, this.blockStateId(cursor));
+        cursor.world.setBlockState(x, y, z, blockStateId(cursor));
     }
 }

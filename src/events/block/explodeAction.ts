@@ -1,10 +1,9 @@
 import z from "zod";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import { ItemEntity } from "../../entity/item";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventAction } from "../eventAction";
 import { isNumber, parameter } from "../eventVariable";
+import n from "../eventVariableTypes";
 
 export type ExplodeActionParameters = z.infer<typeof ExplodeActionParameters>;
 export const ExplodeActionParameters = z.object({
@@ -14,25 +13,19 @@ export const ExplodeActionParameters = z.object({
     radius: n.Number.default(4)
 });
 
-export class ExplodeAction extends EventAction {
-    private readonly xOffset: n.Argument<number>;
-    private readonly yOffset: n.Argument<number>;
-    private readonly zOffset: n.Argument<number>;
-    private readonly radius: n.Argument<number>;
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+export function explodeAction(args: unknown): EventAction {
+    const parsed = ExplodeActionParameters.parse(args);
 
-        const parsed = ExplodeActionParameters.parse(args);
-        this.xOffset = parameter(parsed.xOffset, isNumber);
-        this.yOffset = parameter(parsed.yOffset, isNumber);
-        this.zOffset = parameter(parsed.zOffset, isNumber);
-        this.radius = parameter(parsed.radius, isNumber);
-    }
-    public override run(cursor: EventCursor): void {
-        const xOffset = this.xOffset(cursor);
-        const yOffset = this.yOffset(cursor);
-        const zOffset = this.zOffset(cursor);
-        const radius = this.radius(cursor);
+    const xOffsetParam = parameter(parsed.xOffset, isNumber);
+    const yOffsetParam = parameter(parsed.yOffset, isNumber);
+    const zOffsetParam = parameter(parsed.zOffset, isNumber);
+    const radiusParam = parameter(parsed.radius, isNumber);
+
+    return (cursor) => {
+        const xOffset = xOffsetParam(cursor);
+        const yOffset = yOffsetParam(cursor);
+        const zOffset = zOffsetParam(cursor);
+        const radius = radiusParam(cursor);
 
         const originalX = cursor.x;
         const originalY = cursor.y;
@@ -86,7 +79,7 @@ export class ExplodeAction extends EventAction {
                                 x + 0.5, y + 0.5, z + 0.5
                             );
                         }
-                        
+
                         cursor.world.setBlockState(x, y, z, "base:air[default]");
                         cursor.clientPlatform?.blockBreakParticles.blockDestructionParticles(x, y, z, previousBlockStateId, 0.1);
                     }

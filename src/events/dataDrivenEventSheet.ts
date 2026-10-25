@@ -1,11 +1,11 @@
 import type { Assets } from "../data/assets";
 import type { DataDrivenJson } from "../data/dataDrivenJson";
-import { RunTriggerAction } from "./block/runTriggerAction";
-import { ConglomerateAction } from "./conglomerateAction";
+import { runTriggerAction } from "./block/runTriggerAction";
+import { conglomerateAction } from "./conglomerateAction";
 import type { EventAction } from "./eventAction";
 import { eventActionRegistry, eventPredicateRegistry } from "./eventActionRegistry";
-import { EventBranch } from "./eventBranch";
-import { AndPredicate, NotPredicate, OrPredicate, type EventPredicate } from "./eventPredicate";
+import { eventBranch } from "./eventBranch";
+import { andPredicate, notPredicate, orPredicate, type EventPredicate } from "./eventPredicate";
 import { EventSheet } from "./eventSheet";
 
 function isEventAction(obj: any): obj is DataDrivenJson.EventAction {
@@ -37,8 +37,8 @@ export class DataDrivenEventSheet extends EventSheet {
         const eventSheet = new DataDrivenEventSheet;
 
         if(mergePrevious != null) {
-            for(const [ triggerId, action ] of mergePrevious.triggers.entries()) {
-                eventSheet.addTriggerAction(triggerId, action);
+            for(const [ triggerId, actions ] of mergePrevious.triggerActions.entries()) {
+                eventSheet.addTriggerAction(triggerId, ...actions);
             }
         }
 
@@ -64,22 +64,21 @@ export class DataDrivenEventSheet extends EventSheet {
         action: DataDrivenJson.EventActionOrPredicate
     ): EventAction {
         if(isEventAction(action)) {
-            const EventActionConstructor = eventActionRegistry.get(action.id);
-            
-            if(EventActionConstructor == null) {
+            const createEventAction = eventActionRegistry.get(action.id);
+
+            if(createEventAction == null) {
                 throw new ReferenceError("Action " + action.id + " cannot be found");
             }
 
             try {
-                return new EventActionConstructor(eventSheet, action.args ?? {}, action.capture ?? {});
+                return createEventAction(action.args ?? {}, eventSheet, action.capture ?? {});
             } catch(e) {
                 throw new Error("Failed to create action " + action.id, { cause: e });
             }
         }
         if(isEventActionWithPredicate(action)) {
             try {
-                const branch = new EventBranch(
-                    eventSheet,
+                const branch = eventBranch(
                     DataDrivenEventSheet.parsePredicate(action.if),
                     action.then instanceof Array
                     ? action.then.map(action => this.parseAction(eventSheet, action))
@@ -97,7 +96,7 @@ export class DataDrivenEventSheet extends EventSheet {
             }
         }
         if(typeof action == "string") {
-            return new RunTriggerAction(eventSheet, action);
+            return runTriggerAction(action, eventSheet);
         }
         if(typeof action == "object") {
             const actions = new Array<EventAction>;
@@ -108,7 +107,7 @@ export class DataDrivenEventSheet extends EventSheet {
             if(actions.length == 1) {
                 return actions[0];
             } else {
-                return new ConglomerateAction(eventSheet, actions);
+                return conglomerateAction(actions);
             }
         }
 
@@ -121,13 +120,13 @@ export class DataDrivenEventSheet extends EventSheet {
         if(!(predicate instanceof Array)) predicate = [ predicate ];
 
         if(predicateId == "and") {
-            return new AndPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
+            return andPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
         if(predicateId == "or") {
-            return new OrPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
+            return orPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
         if(predicateId == "not") {
-            return new NotPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
+            return notPredicate(predicate.map(predicate => this.parsePredicate(predicate)));
         }
 
         return null;
@@ -139,9 +138,9 @@ export class DataDrivenEventSheet extends EventSheet {
 
         for(const tree of (trees instanceof Array ? trees : [trees])) {
             for(const [ predicateId, json ] of Object.entries(tree)) {
-                const EventPredicateConstructor = eventPredicateRegistry.get(predicateId);
+                const createEventPredicate = eventPredicateRegistry.get(predicateId);
 
-                if(EventPredicateConstructor == null) {
+                if(createEventPredicate == null) {
                     const special = this.tryParseSpecialPredicate(predicateId, json);
                     if(special === null) {
                         throw new ReferenceError("Predicate " + predicateId + " cannot be found");
@@ -150,7 +149,7 @@ export class DataDrivenEventSheet extends EventSheet {
                     }
                 } else {
                     try {
-                        predicateList.push(new EventPredicateConstructor(json));
+                        predicateList.push(createEventPredicate(json));
                     } catch(e) {
                         throw new Error("Failed to construct predicate " + predicateId, { cause: e })
                     }
@@ -160,6 +159,6 @@ export class DataDrivenEventSheet extends EventSheet {
 
         if(predicateList.length == 1) return predicateList[0]!;
 
-        return new AndPredicate(predicateList);
+        return andPredicate(predicateList);
     }
 }

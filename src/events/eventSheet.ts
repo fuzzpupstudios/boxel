@@ -8,7 +8,7 @@ import type { InventorySlot } from "../item/inventory";
 import type { RaycastResult } from "../physics/raycaster";
 import type { BlockBreakParticleEngine } from "../rendering/blockBreakParticleEngine";
 import type { World } from "../world/world";
-import { ConglomerateAction } from "./conglomerateAction";
+import { conglomerateAction } from "./conglomerateAction";
 import type { EventAction } from "./eventAction";
 
 export interface ClientEventPlatform {
@@ -133,33 +133,36 @@ export class EventCursor {
 
 export class EventSheet {
     public readonly triggers = new Map<string, EventAction>;
+    public readonly triggerActions = new Map<string, EventAction[]>;
 
     public runTrigger(name: string, cursor: EventCursor) {
-        this.triggers.get(name)?.run(cursor);
+        this.triggers.get(name)?.(cursor);
     }
 
     public addTriggerAction(name: string, ...actions: EventAction[]) {
-        let trigger = this.triggers.get(name);
+        if(actions.length == 0) return;
 
-        for(const action of actions) {
-            if(trigger == null) {
-                trigger = action;
-            } else if(!(trigger instanceof ConglomerateAction)) {
-                trigger = new ConglomerateAction(trigger.eventSheet, [ trigger, action ]);
-            } else {
-                trigger.addAction(action);
-            }
+        let actionList = this.triggerActions.get(name);
+        if(actionList == null) {
+            actionList = [];
+            this.triggerActions.set(name, actionList);
         }
-        if(trigger != null) {
-            this.triggers.set(name, trigger);
+        actionList.push(...actions);
+
+        // Single-action triggers skip the conglomerate wrapper
+        if(actionList.length == 1) {
+            this.triggers.set(name, actionList[0]);
+        } else {
+            this.triggers.set(name, conglomerateAction(actionList));
         }
     }
 
     public copyFrom(other: EventSheet) {
         this.triggers.clear();
-        
-        for(const [ triggerId, action ] of other.triggers) {
-            this.addTriggerAction(triggerId, action);
+        this.triggerActions.clear();
+
+        for(const [ triggerId, actions ] of other.triggerActions) {
+            this.addTriggerAction(triggerId, ...actions);
         }
     }
 }

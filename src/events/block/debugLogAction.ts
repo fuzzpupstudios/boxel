@@ -1,19 +1,13 @@
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
+import type { EventAction } from "../eventAction";
 import { parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
-export class DebugLogAction extends EventAction {
-    private readonly text: n.Argument<string>;
+export function debugLogAction(args: unknown): EventAction {
+    const parsed = n.String.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
+    const text = parameter(parsed);
 
-        const parsed = n.String.parse(args);
-
-        this.text = parameter(parsed);
-    }
-    public override run(cursor: EventCursor): void {
-        console.log(this.text(cursor));
+    return (cursor) => {
+        console.log(text(cursor));
     }
 }

@@ -1,21 +1,16 @@
-import { EventAction } from "./eventAction";
+import type { EventAction } from "./eventAction";
 import type { EventPredicate } from "./eventPredicate";
-import type { EventCursor, EventSheet } from "./eventSheet";
 
-export class EventBranch extends EventAction {
-    public run(cursor: EventCursor): void {
-        if(this.predicate.test(cursor)) {
-            for(const action of this.ifTrueActions) action.run(cursor);
+export function eventBranch(
+    predicate: EventPredicate,
+    ifTrueActions: EventAction[],
+    ifFalseActions: EventAction[]
+): EventAction {
+    return (cursor) => {
+        if(predicate(cursor)) {
+            for(const action of ifTrueActions) action(cursor);
         } else {
-            for(const action of this.ifFalseActions) action.run(cursor);
+            for(const action of ifFalseActions) action(cursor);
         }
-    }
-    public constructor(
-        eventSheet: EventSheet,
-        public readonly predicate: EventPredicate,
-        public readonly ifTrueActions: EventAction[],
-        public readonly ifFalseActions: EventAction[]
-    ) {
-        super(eventSheet);
     }
 }

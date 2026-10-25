@@ -1,10 +1,8 @@
 import z from "zod";
 import { ItemEntity } from "../../entity/item";
-import { EventAction } from "../eventAction";
-import type { EventCursor, EventSheet } from "../eventSheet";
-import n from "../eventVariableTypes";
+import type { EventAction } from "../eventAction";
 import { isNumber, parameter, parameterInventorySlot } from "../eventVariable";
-import type { InventorySlot } from "../../item/inventory";
+import n from "../eventVariableTypes";
 
 export type DropItemActionParameters = z.infer<typeof DropItemActionParameters>;
 export const DropItemActionParameters = z.object({
@@ -16,46 +14,33 @@ export const DropItemActionParameters = z.object({
     stack: n.InventorySlot
 });
 
-export class DropItemAction extends EventAction {
-    private readonly offsetX: n.Argument<number>;
-    private readonly offsetY: n.Argument<number>;
-    private readonly offsetZ: n.Argument<number>;
-    private readonly velocityX: n.Argument<number>;
-    private readonly velocityY: n.Argument<number>;
-    private readonly velocityZ: n.Argument<number>;
-    private readonly randomVelocityX: n.Argument<number>;
-    private readonly randomVelocityY: n.Argument<number>;
-    private readonly randomVelocityZ: n.Argument<number>;
-    private readonly slot: n.Argument<InventorySlot>;
+export function dropItemAction(args: unknown): EventAction {
+    const parsed = DropItemActionParameters.parse(args);
 
-    public constructor(eventSheet: EventSheet, args: unknown) {
-        super(eventSheet);
-        const parsed = DropItemActionParameters.parse(args);
+    const offsetX = parameter(parsed.xOffset, isNumber);
+    const offsetY = parameter(parsed.yOffset, isNumber);
+    const offsetZ = parameter(parsed.zOffset, isNumber);
+    const velocityX = parameter(parsed.velocity[0], isNumber);
+    const velocityY = parameter(parsed.velocity[1], isNumber);
+    const velocityZ = parameter(parsed.velocity[2], isNumber);
+    const randomVelocityX = parameter(parsed.randomVelocity[0], isNumber);
+    const randomVelocityY = parameter(parsed.randomVelocity[1], isNumber);
+    const randomVelocityZ = parameter(parsed.randomVelocity[2], isNumber);
+    const slotParam = parameterInventorySlot(parsed.stack);
 
-        this.offsetX = parameter(parsed.xOffset, isNumber);
-        this.offsetY = parameter(parsed.yOffset, isNumber);
-        this.offsetZ = parameter(parsed.zOffset, isNumber);
-        this.velocityX = parameter(parsed.velocity[0], isNumber);
-        this.velocityY = parameter(parsed.velocity[1], isNumber);
-        this.velocityZ = parameter(parsed.velocity[2], isNumber);
-        this.randomVelocityX = parameter(parsed.randomVelocity[0], isNumber);
-        this.randomVelocityY = parameter(parsed.randomVelocity[1], isNumber);
-        this.randomVelocityZ = parameter(parsed.randomVelocity[2], isNumber);
-        this.slot = parameterInventorySlot(parsed.stack);
-    }
-    public override run(cursor: EventCursor): void {
+    return (cursor) => {
         const entity = new ItemEntity(cursor.world);
         entity.position.set(
-            cursor.x + this.offsetX(cursor) + 0.5,
-            cursor.y + this.offsetY(cursor),
-            cursor.z + this.offsetZ(cursor) + 0.5
+            cursor.x + offsetX(cursor) + 0.5,
+            cursor.y + offsetY(cursor),
+            cursor.z + offsetZ(cursor) + 0.5
         );
         entity.velocity.set(
-            this.velocityX(cursor) + this.randomVelocityX(cursor) * (Math.random() * 2 - 1),
-            this.velocityY(cursor) + this.randomVelocityY(cursor) * (Math.random() * 2 - 1),
-            this.velocityZ(cursor) + this.randomVelocityZ(cursor) * (Math.random() * 2 - 1),
+            velocityX(cursor) + randomVelocityX(cursor) * (Math.random() * 2 - 1),
+            velocityY(cursor) + randomVelocityY(cursor) * (Math.random() * 2 - 1),
+            velocityZ(cursor) + randomVelocityZ(cursor) * (Math.random() * 2 - 1),
         );
-        const slot = this.slot(cursor);
+        const slot = slotParam(cursor);
 
         entity.inventory.addStack(slot.stack);
         slot.update();

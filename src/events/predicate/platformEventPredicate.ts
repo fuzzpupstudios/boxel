@@ -1,6 +1,5 @@
 import z from "zod";
-import { EventPredicate } from "../eventPredicate";
-import type { EventCursor } from "../eventSheet";
+import type { EventPredicate } from "../eventPredicate";
 import { parameter } from "../eventVariable";
 import n from "../eventVariableTypes";
 
@@ -9,21 +8,16 @@ export const PlatformEventPredicateParameters = z.object({
     usingTouchscreen: n.Boolean.optional()
 })
 
-export class PlatformEventPredicate extends EventPredicate {
-    private readonly usingTouchscreen?: n.Argument<boolean>;
+export function platformEventPredicate(args: unknown): EventPredicate {
+    const parsed = PlatformEventPredicateParameters.parse(args);
 
-    public constructor(args: unknown) {
-        super();
+    const usingTouchscreen = parsed.usingTouchscreen != null ? parameter(parsed.usingTouchscreen) : undefined;
 
-        const parsed = PlatformEventPredicateParameters.parse(args);
-
-        if(parsed.usingTouchscreen != null) this.usingTouchscreen = parameter(parsed.usingTouchscreen);
-    }
-    public override test(cursor: EventCursor): boolean {
+    return (cursor) => {
         if(cursor.clientPlatform == null) return false;
 
-        if(this.usingTouchscreen != null) {
-            if(this.usingTouchscreen(cursor) != cursor.clientPlatform.usingTouchscreen) return false;
+        if(usingTouchscreen != null) {
+            if(usingTouchscreen(cursor) != cursor.clientPlatform.usingTouchscreen) return false;
         }
 
         return true;
