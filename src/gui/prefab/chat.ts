@@ -21,7 +21,8 @@ class ChatMessageElement extends Container {
 
         const textElement = new GuiText({
             fontScale: 0.75,
-            wordWrap: true,
+            wordWrap: true
+        }, {
             x: 4,
             y: 1
         });

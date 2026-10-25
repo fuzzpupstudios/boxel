@@ -498,6 +498,34 @@ export class PlayingGameStage extends GameStage {
             this.holdingBlockPreview.updateDisplayItem();
 
             this.guiManager.update(this.localPlayer.createEventCursor());
+        
+
+            this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock);
+            this.playerController.updateBreakingBlock(this.worldRenderer.breakingBlock);
+
+
+            const selectedStack = this.localPlayer.inventory.slots[this.localPlayer.selectedSlot].stack;
+            if(this.holdingBlockPreview.stack != selectedStack) {
+                this.holdingBlockPreview.stack = selectedStack;
+                this.holdingBlockPreview.updateDisplayItem();
+            }
+
+            this.chunkLoader.moveOrigin(this.localPlayer.position);
+            this.worldRenderer.setLoadingOrigin(
+                this.localPlayer.position.x,
+                this.localPlayer.position.y,
+                this.localPlayer.position.z
+            );
+        }
+
+        this.pointerGuiStack.alpha = this.game.isDesktop ? 1 : 0.67;
+        this.pointerGuiStack.scale = this.game.isDesktop ? (20/16) : (40/16);
+        this.itemGivePanel.visible = this.guiManager.isGuiOpen("base:player_inventory");
+        
+        try {
+            this.updateDebugMenu(time);
+        } catch(e) {
+            console.error(new Error("Failed to update debug menu", { cause: e }));
         }
     }
 
@@ -572,26 +600,12 @@ export class PlayingGameStage extends GameStage {
             }
 
             this.localPlayer.tick(time);
-            this.playerController.updateTargetedBlock(this.worldRenderer.targetedBlock);
-            this.playerController.updateBreakingBlock(this.worldRenderer.breakingBlock);
 
             this.hotbarSelection?.position.set(
                 this.localPlayer.selectedSlot * 23 + 13,
                 8
             );
-
-            const selectedStack = this.localPlayer.inventory.slots[this.localPlayer.selectedSlot].stack;
-            if(this.holdingBlockPreview.stack != selectedStack) {
-                this.holdingBlockPreview.stack = selectedStack;
-                this.holdingBlockPreview.updateDisplayItem();
-            }
-
-            this.chunkLoader.moveOrigin(this.localPlayer.position);
-            this.worldRenderer.setLoadingOrigin(
-                this.localPlayer.position.x,
-                this.localPlayer.position.y,
-                this.localPlayer.position.z
-            );
+            
             this.chunkLoader.update(time);
 
             this.updateCamera(time);
@@ -611,14 +625,6 @@ export class PlayingGameStage extends GameStage {
             this.pointerGuiStack.visible = true;
         } else {
             this.pointerGuiStack.visible = false;
-        }
-
-        this.pointerGuiStack.alpha = this.game.isDesktop ? 1 : 0.67;
-        this.pointerGuiStack.scale = this.game.isDesktop ? (20/16) : (40/16);
-        this.itemGivePanel.visible = this.guiManager.isGuiOpen("base:player_inventory");
-        
-        if(this.pointerGuiStack.visible) {
-            this.pointerGuiStack.updateDisplayItem();
         }
 
         if(this.controlAllowed) {
@@ -646,24 +652,30 @@ export class PlayingGameStage extends GameStage {
         
         this.camera.updateProjectionMatrix();
         this.worldRenderer.render(time);
-        
-        try {
-            this.updateDebugMenu(time);
-        } catch(e) {
-            console.error(new Error("Failed to update debug menu", { cause: e }));
-        }
     }
+
+    private lastLocalX: number = 0;
+    private lastLocalY: number = 0;
+    private lastTarget: Container | null = null;
 
     private updateOpenGUIs(time: Time) {
         const game = this.game;
 
-        const [ cursorX, cursorY ] = this.game.getPointerPosition();
+        const [ pointerX, pointerY ] = this.game.getPointerPosition();
 
         const bounds = game.gui.canvas.getBoundingClientRect();
-        const localX = cursorX - bounds.left;
-        const localY = cursorY - bounds.top;
+        const localX = pointerX - bounds.left;
+        const localY = pointerY - bounds.top;
         
-        const target = game.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+        // hitTest() is expensive (~0.22ms), so only run it when the pointer moves
+        let target = this.lastTarget;
+        if(this.lastLocalX != localX || this.lastLocalY != localY) {
+            this.lastLocalX = localX;
+            this.lastLocalY = localY;
+
+            target = game.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+            this.lastTarget = target;
+        }
         
         let guiContainer: Container | null = target;
         while(guiContainer != null && !(guiContainer instanceof GuiContainer)) guiContainer = guiContainer.parent;

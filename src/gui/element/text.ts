@@ -20,7 +20,7 @@ export class GuiText extends Container {
     public readonly shadow: BitmapText;
     public readonly mainText: BitmapText;
 
-    public constructor(options?: GuiTextOptions & ContainerOptions) {
+    public constructor(options?: GuiTextOptions, containerOptions?: ContainerOptions) {
         const shadow = new BitmapText({
             text: "",
             style: new TextStyle({
@@ -38,15 +38,9 @@ export class GuiText extends Container {
             children: [ shadow ]
         });
 
-        const optionsClone = Object.assign({
-            children: [ shadow, mainText ]
-        }, options);
-        delete optionsClone.text;
-        delete optionsClone.fontScale;
-        delete optionsClone.align;
-        delete optionsClone.fill;
-        delete optionsClone.fontStyle;
-        super(optionsClone);
+        containerOptions ??= {};
+        containerOptions.children = [ shadow, mainText ];
+        super(containerOptions);
 
         this.shadow = shadow;
         this.mainText = mainText;

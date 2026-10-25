@@ -41,7 +41,8 @@ export class TitleScreenStage extends GameStage {
         this.versionText.setAnchor(1, 1);
 
         this.watermark = new GuiText({
-            text: "Fuzzpup Studios 2026",
+            text: "Fuzzpup Studios 2026"
+        }, {
             interactive: true
         });
         this.watermark.cursor = "pointer";

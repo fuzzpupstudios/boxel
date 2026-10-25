@@ -55,7 +55,8 @@ class WorldCard extends Container {
 
         const timeFormat = new TimeAgo(navigator.language);
         const lastPlayed = new GuiText({
-            text: world.played == 0 ? "Never played" : timeFormat.format(world.played),
+            text: world.played == 0 ? "Never played" : timeFormat.format(world.played)
+        }, {
             alpha: 0.5
         });
         lastPlayed.position.set(40, 18);

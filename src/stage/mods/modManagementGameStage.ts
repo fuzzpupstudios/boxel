@@ -41,8 +41,9 @@ class ModCard extends Container {
 
         const packFilename = new GuiText({
             text: mod.filename,
-            alpha: 0.5,
             fontScale: 0.75
+        }, {
+            alpha: 0.5
         });
         packFilename.position.set(40, 22);
 
@@ -50,8 +51,9 @@ class ModCard extends Container {
             text: mod.pack?.descriptor.version ?? "unknown",
             fontScale: 0.75,
             align: "right",
-            alpha: 0.5,
             fontStyle: "oblique"
+        }, {
+            alpha: 0.5
         });
         packVersion.setAnchor(1, 0);
         packVersion.position.set(ModCard.WIDTH - 8, 22);

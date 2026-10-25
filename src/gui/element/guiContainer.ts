@@ -268,7 +268,7 @@ export class GuiContainer extends Container {
             if(graphic == null) continue;
         
             cursor.graphic = graphicContainer;
-            graphicContainer.visible = graphic.type.renderIf.test(cursor);
+            graphicContainer.visible = graphic.type.renderIf(cursor);
             graphic.type.events.runTrigger("base:ui/render", cursor);
         }
     }

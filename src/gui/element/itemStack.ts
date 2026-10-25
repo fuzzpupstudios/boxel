@@ -53,6 +53,7 @@ export class GuiItemStack extends Container {
     public updateDisplayItem() {
         if(this.stack.isEmpty()) {
             this.visible = false;
+            this.removeChildren();
             return;
         } else {
             this.visible = true;
