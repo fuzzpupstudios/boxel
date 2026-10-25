@@ -680,7 +680,7 @@ export class PlayingGameStage extends GameStage {
 
         const [ pointerX, pointerY ] = this.game.getPointerPosition();
 
-        const bounds = game.gui.canvas.getBoundingClientRect();
+        const bounds = game.gui!.canvas.getBoundingClientRect();
         const localX = pointerX - bounds.left;
         const localY = pointerY - bounds.top;
         
@@ -690,7 +690,7 @@ export class PlayingGameStage extends GameStage {
             this.lastLocalX = localX;
             this.lastLocalY = localY;
 
-            target = game.gui.renderer.events.rootBoundary.hitTest(localX, localY);
+            target = game.gui!.renderer.events.rootBoundary.hitTest(localX, localY);
             this.lastTarget = target;
         }
         

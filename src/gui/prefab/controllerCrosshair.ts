@@ -10,8 +10,8 @@ export class GuiControllerCrosshair extends Container {
     public readonly usableArea = new Rectangle;
     public controllable: boolean = true;
     public active: boolean = true;
-    private dispatchedPointerX = NaN;
-    private dispatchedPointerY = NaN;
+    private dispatchedPointerX = 0;
+    private dispatchedPointerY = 0;
     private controllerPointerDown = false;
 
     constructor(
@@ -42,7 +42,7 @@ export class GuiControllerCrosshair extends Container {
 
     private dispatchPointerEvent(type: "pointerdown" | "pointermove" | "pointerup", buttons: number) {
         const guiScale = this.game.settings.guiScale;
-        const canvas = this.game.gui.canvas;
+        const canvas = this.game.gui!.canvas;
         const bounds = canvas.getBoundingClientRect();
 
         const clientX = bounds.left + this.crosshairPosition.x * guiScale;

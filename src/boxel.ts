@@ -47,9 +47,9 @@ export class BoxelGame {
 
     public readonly onCrash = new Signal<(error: any) => void>;
 
-    public readonly threeRenderer: THREE.WebGPURenderer;
-    public readonly gui: PIXI.Application;
-    public readonly renderPipeline: THREE.RenderPipeline;
+    public gui: PIXI.Application | null = null;
+    public threeRenderer: THREE.WebGPURenderer | null = null;
+    public renderPipeline: THREE.RenderPipeline | null = null;
     public guiBackground?: PIXI.Sprite;
     public controllerCrosshair: GuiControllerCrosshair | null = null;
 
@@ -71,8 +71,12 @@ export class BoxelGame {
     public readonly isDesktop: boolean;
     public readonly version: string;
 
+    private renderTime = 0;
     private lastRenderTime = 0;
     private nextFrameAllowed = 0;
+    private tickerCallback: PIXI.TickerCallback<any> | null = null;
+    private textureUnitCount: number | null = null;
+    
     private rootElement: HTMLElement;
     private viewportWidth = 1;
     private viewportHeight = 1;
@@ -97,16 +101,6 @@ export class BoxelGame {
 
         this.rootElement = rootElement;
         
-        this.threeRenderer = new THREE.WebGPURenderer({
-            forceWebGL: true,
-            antialias: false
-        });
-        this.renderPipeline = new THREE.RenderPipeline(this.threeRenderer);
-        this.updateRenderPipeline();
-
-        this.gui = new PIXI.Application();
-        (<any>globalThis).__PIXI_APP__ = this.gui;
-        
         this.input = new Input;
         this.settings = Settings.parse({});
 
@@ -122,22 +116,26 @@ export class BoxelGame {
 
         if(!this.initialized) return;
 
-        this.threeRenderer.setPixelRatio(pixelRatio);
-        this.threeRenderer.setSize(width, height, true);
+        if(this.threeRenderer) {
+            this.threeRenderer.setPixelRatio(pixelRatio);
+            this.threeRenderer.setSize(width, height, true);
+        }
 
-        this.gui.renderer.resolution = pixelRatio;
-        this.gui.renderer.resize(width, height);
+        if(this.gui) {
+            this.gui.renderer.resolution = pixelRatio;
+            this.gui.renderer.resize(width, height);
+        }
         
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
     private closeStage(stage: GameStage) {
-        this.gui.stage.removeChild(stage.gui);
+        this.gui?.stage.removeChild(stage.gui);
         stage.unload();
     }
 
     private openStage(stage: GameStage) {
-        this.gui.stage.addChild(stage.gui);
+        this.gui?.stage.addChild(stage.gui);
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
         this.updateSettings();
     }
@@ -196,8 +194,8 @@ export class BoxelGame {
             node = mix(node, pass, pass.a);
         }
 
-        this.renderPipeline.outputNode = node;
-        this.renderPipeline.needsUpdate = true;
+        this.renderPipeline!.outputNode = node;
+        this.renderPipeline!.needsUpdate = true;
     }
 
     private updateUiSizes(width: number, height: number, pixelRatio: number) {
@@ -366,16 +364,46 @@ export class BoxelGame {
 
             await this.reloadAssets();
 
-            await this.threeRenderer.init();
+
+            this.gui = new PIXI.Application();
             await this.gui.init({
+                preference: "webgl",
                 backgroundAlpha: 0,
                 antialias: false,
                 autoDensity: true,
                 skipExtensionImports: false,
-                resizeTo: this.rootElement
+                resizeTo: this.rootElement,
+                clearBeforeRender: false // three is rendered before the gui
             });
+
+            // force gui to render in this.render()
+            this.gui.ticker.remove(this.gui.render, this.gui);
+
+            (<any>globalThis).__PIXI_APP__ = this.gui;
+        
+            this.threeRenderer = new THREE.WebGPURenderer({
+                forceWebGL: true,
+                antialias: false,
+                canvas: this.gui.canvas
+            });
+            await this.threeRenderer.init();
+
+            /* stinky claude box */
+            {
+                // THREE calls gl.drawBuffers() before binding the target framebuffer. Its cache normally hides this,
+                // but resetState() clears the cache every frame, so bind the framebuffer first
+                const threeBackend = this.threeRenderer.backend as any;
+                const threeState = threeBackend.state;
+                const drawBuffers = threeState.drawBuffers.bind(threeState);
+                threeState.drawBuffers = (renderContext: unknown, framebuffer: WebGLFramebuffer) => {
+                    threeState.bindFramebuffer(threeBackend.gl.FRAMEBUFFER, framebuffer);
+                    drawBuffers(renderContext, framebuffer);
+                };
+            }
+
+            this.renderPipeline = new THREE.RenderPipeline(this.threeRenderer);
+            this.updateRenderPipeline();
             
-            this.rootElement.appendChild(this.threeRenderer.domElement);
             this.rootElement.appendChild(this.gui.canvas);
 
             this.guiBackground = new PIXI.Sprite(PIXI.Texture.EMPTY);
@@ -392,6 +420,8 @@ export class BoxelGame {
             this.input.attachMouse(this.rootElement);
 
             this.input.attachTouch(this.rootElement, (x, y) => {
+                if(!this.gui) return false;
+
                 const bounds = this.gui.canvas.getBoundingClientRect();
                 const localX = x - bounds.left;
                 const localY = y - bounds.top;
@@ -408,7 +438,10 @@ export class BoxelGame {
             this.changeStage(new TitleScreenStage(this), false, true);
             this.initialized = true;
 
-            this.threeRenderer.setAnimationLoop(time => this.render(time));
+            this.gui.ticker.add(this.tickerCallback = ticker => {
+                this.renderTime += ticker.deltaMS;
+                this.render();
+            });
         } catch(error) {
             this.crash(error);
         }
@@ -421,7 +454,10 @@ export class BoxelGame {
 
         this.input.dispose();
 
-        this.threeRenderer.setAnimationLoop(null);
+        if(this.tickerCallback) {
+            this.gui?.ticker.remove(this.tickerCallback);
+            this.tickerCallback = null;
+        }
     }
 
     public async reloadAssets() {
@@ -513,22 +549,55 @@ export class BoxelGame {
         return [ pointerX, pointerY ];
     }
 
-    public render(miliseconds: number) {
-        if(miliseconds >= this.nextFrameAllowed) {
-            this.nextFrameAllowed = Math.max(miliseconds, this.nextFrameAllowed + 1000 / this.settings.maxFramerate);
+
+    // begin stinky claude box //
+    /**
+     * PIXI's resetState() assumes every texture unit holds Texture.EMPTY without actually binding it,
+     * and its batch shader declares a sampler on every unit. Any integer texture THREE leaves bound
+     * fails WebGL's sampler type validation and drops PIXI's draw calls, and an unbound unit makes
+     * Texture.EMPTY sample as opaque black, so bind the real empty texture to every unit.
+     */
+    private bindEmptyTextureUnits() {
+        const renderer = this.gui!.renderer as PIXI.WebGLRenderer;
+        const gl = renderer.gl;
+        const emptyTexture = renderer.texture.getGlSource(PIXI.Texture.EMPTY.source).texture;
+        this.textureUnitCount ??= gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS) as number;
+
+        for(let unit = 0; unit < this.textureUnitCount; unit++) {
+            gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(gl.TEXTURE_2D, emptyTexture);
+            gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+            gl.bindTexture(gl.TEXTURE_3D, null);
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+            gl.bindSampler(unit, null);
+        }
+        gl.activeTexture(gl.TEXTURE0);
+    }
+    // end stinky claude box //
+
+    public render() {
+        if(this.renderTime >= this.nextFrameAllowed) {
+            if(this.settings.maxFramerate > 0) this.nextFrameAllowed = Math.max(
+                this.renderTime,
+                this.nextFrameAllowed + 1000 / this.settings.maxFramerate
+            );
         } else return;
 
         try {
-            const time: Time = Time.fromMsDifference(this.lastRenderTime, miliseconds, 100);
-            this.lastRenderTime = miliseconds;
+            const time: Time = Time.fromMsDifference(this.lastRenderTime, this.renderTime, 100);
+            this.lastRenderTime = this.renderTime;
 
             if(this.input.wasPressed(ControlBinding.FULLSCREEN)) this.toggleFullscreen();
 
             for(const activeStage of this.activeStages) {
                 activeStage.tick(time);
             }
-            this.renderPipeline.render();
-            this.gui.render();
+            
+            this.threeRenderer!.resetState();
+            this.renderPipeline!.render();
+            this.bindEmptyTextureUnits();
+            this.gui!.renderer.resetState();
+            this.gui!.render();
             this.controllerCrosshair?.update(time);
             this.input.update();
         } catch(error) {
