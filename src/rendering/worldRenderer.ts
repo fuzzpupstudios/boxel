@@ -104,7 +104,7 @@ export class WorldRenderer {
     }
 
     public setRenderDistance(renderDistance: number) {
-        this.chunkRenderer.optimizeLoadTime = renderDistance >= 96;
+        this.chunkRenderer.optimizeLoadTime = renderDistance >= 160;
     }
 
     public async init() {

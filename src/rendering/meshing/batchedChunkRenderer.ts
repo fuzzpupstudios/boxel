@@ -382,6 +382,7 @@ export class BatchedChunkRenderer {
 
         region = new BatchedChunkRegion(x, y, z, key, this);
         this.regions.set(key, region);
+        this.unbatchedRegions.add(region);
         return region;
     }
 
