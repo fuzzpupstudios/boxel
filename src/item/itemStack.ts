@@ -75,11 +75,14 @@ export class ItemStack {
     public swap(other: ItemStack) {
         const otherItem = other.item;
         const otherQuantity = other.quantity;
+        const otherData = other.data;
 
         other.setItem(this.item);
+        other.data = this.data;
         other.quantity = this.quantity;
 
         this.setItem(otherItem);
+        this.data = otherData;
         this.quantity = otherQuantity;
     }
     public similarTo(other: ItemStack) {
