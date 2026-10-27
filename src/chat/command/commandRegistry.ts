@@ -4,6 +4,7 @@ import { SayCommand } from "./impl/sayCommand";
 import { ListCommand } from "./impl/listCommand";
 import { TeleportCommand } from "./impl/teleportCommand";
 import { GamemodeCommand } from "./impl/gamemodeCommand";
+import { HelpCommand } from "./impl/helpCommand";
 
 export class CommandNotFoundError {
     constructor(
@@ -31,3 +32,4 @@ commandRegistry.set("tp", TeleportCommand);
 commandRegistry.set("teleport", TeleportCommand);
 commandRegistry.set("gm", GamemodeCommand);
 commandRegistry.set("gamemode", GamemodeCommand);
+commandRegistry.set("help", HelpCommand);
