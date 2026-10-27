@@ -412,22 +412,46 @@ export class Player extends Entity<SerializedPlayerEntity> {
             const pickBlockStateId = blockState?.pickBlockStateId ?? blockStateId;
 
             const existingSlot = this.inventory.findItem(pickBlockStateId);
-            const selectedSlot = this.selectedSlot;
+            let destinationSlotIndex = this.selectedSlot;
 
             if(existingSlot >= 0 && existingSlot <= 9) {
-                this.setSelectedSlot(existingSlot);
+                destinationSlotIndex = existingSlot;
             } else {
-                let stack = this.inventory.slots[existingSlot]?.stack;
-                if(stack == null && this.infiniteItems) {
-                    stack = ItemStack.of(pickBlockStateId, 1);
-                    stack.item = pickBlockStateId;
-                    stack.quantity = 1;
+                if(!this.inventory.slots[destinationSlotIndex].stack.isEmpty()) {
+                    for(let i = 0; i < 10; i++) {
+                        if(this.inventory.slots[i].stack.isEmpty()) {
+                            destinationSlotIndex = i;
+                            break;
+                        }
+                    }
                 }
 
-                if(stack != null) {
-                    this.inventory.slots[selectedSlot]?.stack.swap(stack);
+                let sourceSlot: InventorySlot | undefined;
+
+                if(existingSlot === -1) {
+                    if(this.infiniteItems) {
+                        const stack = ItemStack.of(pickBlockStateId, 1);
+                        stack.item = pickBlockStateId;
+                        stack.quantity = 1;
+                        sourceSlot = new InventorySlot(stack);
+                    }
+                } else {
+                    sourceSlot = this.inventory.slots[existingSlot];
+                }
+
+                if(sourceSlot != null) {
+                    const destinationSlot = this.inventory.slots[destinationSlotIndex];
+                    destinationSlot.stack.swap(sourceSlot.stack);
+                    sourceSlot.update();
+                    destinationSlot.update();
+
+                    if(existingSlot === -1) {
+                        this.inventory.addStack(sourceSlot.stack);
+                    }
                 }
             }
+
+            this.setSelectedSlot(destinationSlotIndex);
         }
     }
 
