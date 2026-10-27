@@ -38,6 +38,7 @@ import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
+import type { SignalConnection } from "typed-signals";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -129,7 +130,6 @@ export class PlayingGameStage extends GameStage {
     private frameCounter = new Array<Time>;
 
     private longTouched = false;
-    private unlockTime = 0;
 
     private readonly crosshairSprite: Sprite;
 
@@ -145,13 +145,13 @@ export class PlayingGameStage extends GameStage {
     private readonly itemGivePanel: Container;
 
     private readonly tileHologramProvider: TileHologramProvider;
-    private readonly itemHologramProvider: ItemHologramProvider;
     private readonly itemSpriteProvider: GuiItemSpriteProvider;
     private readonly mobileController: MobileController | null = null;
     private readonly dPadLeft: GuiDPadLeft | null = null;
     private readonly dPadRight: GuiDPadRight | null = null;
     private readonly topbar: Topbar | null = null;
     private clearInputNextFrame: boolean = false;
+    private onUnlockHandler: SignalConnection | null = null;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -164,7 +164,6 @@ export class PlayingGameStage extends GameStage {
 
         this.tileHologramProvider = new TileHologramProvider(game.textureAtlases!);
         this.itemSpriteProvider = new GuiItemSpriteProvider(game.textureAtlases!);
-        this.itemHologramProvider = new ItemHologramProvider(game.textureAtlases!);
 
         this.guiManager = new GuiManager(this.tileHologramProvider, this.itemSpriteProvider, game.input.pointerLock!);
         this.gui.addChild(this.guiManager.view);
@@ -173,7 +172,7 @@ export class PlayingGameStage extends GameStage {
         });
 
         if(game.input.pointerLock) {
-            game.input.pointerLock.onUnlock.connect(() => {
+            this.onUnlockHandler = game.input.pointerLock.onUnlock.connect(() => {
                 if(!this.chatGui.messageBarOpen && this.guiManager.getOpenModalCount() === 0) {
                     this.setPaused(true);
                 }
@@ -327,7 +326,7 @@ export class PlayingGameStage extends GameStage {
             this.game.audioManager.playMenuClick();
             this.save().then(() => {
                 this.game.changeStage(new TitleScreenStage(game), false);
-            });
+            }).catch(e => this.game.crash(e));
         });
 
         this.pausedContainer.addChild(
@@ -357,7 +356,6 @@ export class PlayingGameStage extends GameStage {
     }
     public async openWorld(worldId: string) {
         this.persistentWorld = this.game.persistenceManager.openWorld(worldId);
-
         this.world.setPersistentWorld(this.persistentWorld);
         
         const generator = new CaveTerrainGenerator();
@@ -454,13 +452,17 @@ export class PlayingGameStage extends GameStage {
         if(paused) {
             this.pausedContainer.visible = true;
             
-            this.game.controllerCrosshair?.crosshairPosition
-            .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
+            this.game.controllerCrosshair?.crosshairPosition.set(this.game.guiWidth / 2, this.game.guiHeight / 2);
         } else {
             this.pausedContainer.visible = false;
         }
         
-        await this.save();
+        try {
+            await this.save();
+        } catch(e) {
+            await this.game.crash(e);
+            throw e;
+        }
     }
 
     public updateInputLocks() {
@@ -569,7 +571,7 @@ export class PlayingGameStage extends GameStage {
         this.autosaveCooldown -= time.deltaTime;
 
         if(this.autosaveCooldown <= 0) {
-            this.save();
+            this.save().catch(e => this.game.crash(e));
 
             this.autosaveCooldown = 10;
         }
@@ -947,19 +949,19 @@ export class PlayingGameStage extends GameStage {
         }
     }
 
-    public unload(): void {
+    public async unload() {
         if(this.persistentWorld != null) {
             this.game.persistenceManager.closeWorld(this.persistentWorld);
+            this.world.setPersistentWorld(null);
+            this.persistentWorld = null;
         }
-
-        this.persistentWorld = null;
-
-        this.setPaused(true);
 
         if(!this.game.isDesktop) {
             this.game.input.detachMobileController();
         }
         clearInterval(this.blockTickInterval);
+        
+        this.onUnlockHandler?.disconnect();
 
         this.world.dispose();
         this.chatGui.dispose();

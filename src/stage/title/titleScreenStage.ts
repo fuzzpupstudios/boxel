@@ -118,7 +118,7 @@ export class TitleScreenStage extends GameStage {
 
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

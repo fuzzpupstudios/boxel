@@ -170,7 +170,7 @@ export class ControlSettingsScreenStage extends GameStage {
         }
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

@@ -187,10 +187,10 @@ export class BatchedChunkRegion {
 
     public addChunk(chunk: Chunk) {
         this.chunks.add(chunk);
-        this.updateChunk(chunk);
+        this.markChunkDirty(chunk);
     }
 
-    public updateChunk(chunk: Chunk) {
+    public markChunkDirty(chunk: Chunk) {
         this.dirtyChunks.add(chunk);
     }
 
@@ -394,7 +394,7 @@ export class BatchedChunkRenderer {
         }
 
         if(this.trackedChunks.has(chunk.key)) {
-            region.updateChunk(chunk);
+            region.markChunkDirty(chunk);
         } else {
             region.addChunk(chunk);
 

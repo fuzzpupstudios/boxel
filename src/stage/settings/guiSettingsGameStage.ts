@@ -125,7 +125,7 @@ export class GuiSettingsScreenStage extends GameStage {
         }
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

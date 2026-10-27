@@ -99,8 +99,8 @@ export class World {
     public readonly lightingManager = new LightingManager(this);
     public readonly physicsDataCache = new PhysicsDataCache;
 
-    public setPersistentWorld(persistentWorld: PersistentWorld) {
-        persistentWorld.setWorld(this);
+    public setPersistentWorld(persistentWorld: PersistentWorld | null) {
+        persistentWorld?.setWorld(this);
         
         this.persistentWorld = persistentWorld;
     }

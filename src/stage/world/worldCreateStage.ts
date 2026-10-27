@@ -82,7 +82,7 @@ export class WorldCreateStage extends GameStage {
         this.updateRequirements();
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

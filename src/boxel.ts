@@ -46,6 +46,7 @@ export class BoxelGame {
     public static INSTANCE: BoxelGame = null!;
 
     public readonly onCrash = new Signal<(error: any) => void>;
+    public crashed = false;
 
     public gui: PIXI.Application | null = null;
     public threeRenderer: THREE.WebGPURenderer | null = null;
@@ -129,9 +130,9 @@ export class BoxelGame {
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
     }
 
-    private closeStage(stage: GameStage) {
+    private async closeStage(stage: GameStage) {
         this.gui?.stage.removeChild(stage.gui);
-        stage.unload();
+        await stage.unload();
     }
 
     private openStage(stage: GameStage) {
@@ -606,6 +607,13 @@ export class BoxelGame {
     }
 
     public async crash(error?: any) {
+        if(this.crashed) {
+            console.error("Game already crashed, additional report was generated:");
+            console.error(error);
+            return;
+        }
+
+        this.crashed = true;
         this.onCrash.emit(error);
         this.stop();
     }

@@ -96,7 +96,7 @@ export class PerformanceSettingsScreenStage extends GameStage {
         }
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

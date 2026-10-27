@@ -100,7 +100,7 @@ export class VideoSettingsScreenStage extends GameStage {
         }
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }

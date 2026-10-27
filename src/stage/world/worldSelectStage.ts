@@ -276,7 +276,7 @@ export class WorldSelectStage extends GameStage {
         
     }
 
-    public unload(): void {
+    public async unload() {
         
     }
 }
