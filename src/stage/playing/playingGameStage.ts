@@ -603,7 +603,10 @@ export class PlayingGameStage extends GameStage {
             if(topModal != null) {
                 if(game.input.wasPressed(ControlBinding.CLOSE_MODAL) || game.input.wasUnpressed(ControlBinding.BACK)) {
                     this.guiManager.closeGui(topModal.gui.type.id);
-                    this.localPlayer.inventory.addStack(this.localPlayer.pointerInventory.slots[0].stack);
+
+                    const pointerSlot = this.localPlayer.pointerInventory.slots[0];
+                    this.localPlayer.inventory.addStack(pointerSlot.stack);
+                    pointerSlot.update();
                 }
             } else if(this.controlAllowed) {
                 if(game.input.wasPressed(ControlBinding.OPEN_INVENTORY)) {
