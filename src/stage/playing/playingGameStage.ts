@@ -466,16 +466,16 @@ export class PlayingGameStage extends GameStage {
     }
 
     public updateInputLocks() {
-        if(this.guiManager.getOpenModalCount() > 0 || this.paused) {
-            if(this.game.isDesktop) {
-                this.game.input.keyboard?.unlock();
-            }
-            this.game.controllerCrosshair?.enable();
-        } else {
+        if(this.controlAllowed) {
             if(this.game.isDesktop) {
                 this.game.input.keyboard?.lock();
             }
             this.game.controllerCrosshair?.disable();
+        } else {
+            if(this.game.isDesktop) {
+                this.game.input.keyboard?.unlock();
+            }
+            this.game.controllerCrosshair?.enable();
         }
     }
 
