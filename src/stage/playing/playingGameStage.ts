@@ -640,7 +640,7 @@ export class PlayingGameStage extends GameStage {
                 8
             );
             
-            this.chunkLoader.update(time);
+            this.chunkLoader.update(time).catch(error => this.game.crash(error));
 
             this.updateCamera(time);
         }
@@ -960,7 +960,7 @@ export class PlayingGameStage extends GameStage {
             this.game.input.detachMobileController();
         }
         clearInterval(this.blockTickInterval);
-        
+
         this.onUnlockHandler?.disconnect();
 
         this.world.dispose();

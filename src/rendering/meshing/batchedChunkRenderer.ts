@@ -109,10 +109,10 @@ function mergeChunkGeometries(
 export class BatchedChunkRegion {
     public readonly root = new Object3D;
     public batchedMesh: Mesh | null = null;
-    private readonly chunkMeshes = new Map<Chunk, Mesh>;
+    private readonly chunkMeshes = new Map<ChunkKey, Mesh>;
 
     public readonly chunks = new Set<Chunk>;
-    public readonly renderedChunks = new Set<Chunk>;
+    public readonly renderedChunks = new Set<ChunkKey>;
 
     public readonly dirtyChunks = new Set<Chunk>;
     public readonly waitingChunks = new Set<Chunk>;
@@ -197,15 +197,15 @@ export class BatchedChunkRegion {
     public deleteChunk(chunk: Chunk) {
         this.chunks.delete(chunk);
         this.dirtyChunks.delete(chunk);
-        this.renderedChunks.delete(chunk);
+        this.renderedChunks.delete(chunk.key);
         
-        const mesh = this.chunkMeshes.get(chunk);
+        const mesh = this.chunkMeshes.get(chunk.key);
 
         if(mesh) {            
             mesh.removeFromParent();
             mesh.geometry.dispose();
 
-            this.chunkMeshes.delete(chunk);
+            this.chunkMeshes.delete(chunk.key);
         }
     }
 
@@ -233,7 +233,7 @@ export class BatchedChunkRegion {
             return;
         }
 
-        let mesh = this.chunkMeshes.get(chunk);
+        let mesh = this.chunkMeshes.get(chunk.key);
 
         if(geometry) {
             if(mesh) {
@@ -244,7 +244,7 @@ export class BatchedChunkRegion {
                 mesh.position.set(chunk.x * 16, chunk.y * 16, chunk.z * 16);
                 mesh.matrixAutoUpdate = false;
 
-                this.chunkMeshes.set(chunk, mesh);
+                this.chunkMeshes.set(chunk.key, mesh);
                 this.root.add(mesh);
 
                 mesh.updateMatrix();
@@ -257,10 +257,10 @@ export class BatchedChunkRegion {
                 mesh.removeFromParent();
             }
 
-            this.chunkMeshes.delete(chunk);
+            this.chunkMeshes.delete(chunk.key);
         }
 
-        this.renderedChunks.add(chunk);
+        this.renderedChunks.add(chunk.key);
     }
 
     public settle(time: Time) {
@@ -292,7 +292,7 @@ export class BatchedChunkRegion {
         const hadAllRenderedChunks = this.renderedChunks.size === this.renderer.regionVolume;
 
         for(const chunk of chunksToMesh) {
-            if(this.renderedChunks.has(chunk) || chunk.isSurrounded()) {
+            if(this.renderedChunks.has(chunk.key) || chunk.isSurrounded()) {
                 if(this.batchedMesh) this.makeIndividual();
                 
                 promises.push(this.renderChunk(chunk));
@@ -335,7 +335,7 @@ export class BatchedChunkRenderer {
 
     public readonly renderedRegions = new Set<BatchedChunkRegion>;
     public readonly trackedChunks = new Map<ChunkKey, Chunk>;
-    public readonly renderedChunks = new Map<ChunkKey, Chunk>;
+    public readonly renderedChunks = new Set<ChunkKey>;
 
     private settlePointer: MapIterator<BatchedChunkRegion> = this.regions.values();
     private updateLock: Promise<any> | null = null;
@@ -393,7 +393,7 @@ export class BatchedChunkRenderer {
             this.dirtyRegions.addPos(region, region.chunkX * 16, region.chunkY * 16, region.chunkZ * 16);
         }
 
-        if(this.trackedChunks.has(chunk.key)) {
+        if(this.trackedChunks.has(chunk.key) && region.chunks.has(chunk)) {
             region.markChunkDirty(chunk);
         } else {
             region.addChunk(chunk);
@@ -486,9 +486,8 @@ export class BatchedChunkRenderer {
             this.regionUpdates++;
             this.updateRegion(region).then(() => {
                 this.regionUpdates--;
-                for(const chunk of region.renderedChunks) {
-                    if(this.trackedChunks.get(chunk.key) !== chunk) continue;
-                    this.renderedChunks.set(chunk.key, chunk);
+                for(const chunkKey of region.renderedChunks) {
+                    this.renderedChunks.add(chunkKey);
                 }
             });
         }

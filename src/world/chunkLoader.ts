@@ -127,7 +127,7 @@ export class ChunkLoader {
         return this.radius;
     }
 
-    public update(time: Time) {
+    public async update(time: Time) {
         if(this.needsUpdate) {
             this.frameTasks.push(() => this.updateColumnsToLoad());
             this.frameTasks.push(() => this.updateRegionsToUnload());
@@ -136,6 +136,7 @@ export class ChunkLoader {
 
         this.frameTasks.shift()?.();
 
+        const promises = new Array<Promise<void>>;
         
         const minX = (this.origin.x - this.radius - 15) >> 4;
         const maxX = (this.origin.x + this.radius + 31) >> 4;
@@ -176,9 +177,9 @@ export class ChunkLoader {
 
                 if(!columnGenerated) {
                     this.columnsGenerating.add(key);
-                    this.world.generateColumn(x, y, z).then(() => {
+                    promises.push(this.world.generateColumn(x, y, z).then(() => {
                         this.columnsGenerating.delete(key);
-                    })
+                    }));
                 }
             }
         }
@@ -198,11 +199,11 @@ export class ChunkLoader {
                 }
             }
                 
-            this.world.loadChunks(positions).then((chunks) => {
+            promises.push(this.world.loadChunks(positions).then((chunks) => {
                 for(const chunk of chunks) {
                     this.columnsToLoad.delete(chunk.key);
                 }
-            })
+            }));
         }
 
         for(const region of this.regionsToUnload.values().take(this.maxChunkUnloads)) {
@@ -210,7 +211,9 @@ export class ChunkLoader {
                 this.columnsToLoad.delete(chunk.key);
             }
             this.regionsToUnload.delete(region);
-            this.world.unloadChunks([ ...region.chunks ]);
+            promises.push(this.world.unloadChunks([ ...region.chunks ]));
         }
+
+        await Promise.all(promises);
     }
 }
