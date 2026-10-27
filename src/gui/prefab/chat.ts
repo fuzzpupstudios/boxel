@@ -37,7 +37,7 @@ class ChatMessageElement extends Container {
     }
 
     private updateBackground() {
-        this.background.clear().rect(0, 0, this.textElement.wordWrapWidth, this.textElement.height + 2).fill(0x000000);
+        this.background.clear().rect(0, 0, this.textElement.wordWrapWidth, this.getPredictedHeight()).fill(0x000000);
     }
 
     public setWidth(width: number) {
@@ -48,6 +48,9 @@ class ChatMessageElement extends Container {
     public update() {
         this.textElement.text = this.message.contents;
         this.updateBackground();
+    }
+    public getPredictedHeight() {
+        return (this.textElement.text.trim().split("\n").length) * 9 + 3;
     }
 }
 
@@ -135,8 +138,6 @@ export class ChatGUI extends Container {
     
     private readonly onUpdateConnection: SignalConnection;
     
-    private fullWidth: number = 1;
-    private fullHeight: number = 1;
     private chatWidth: number = 1;
     private chatHeight: number = 1;
 
@@ -243,7 +244,7 @@ export class ChatGUI extends Container {
                 this.chatMessageElements.set(message.iid, chatMessageElement);
             }
 
-            yOffset -= chatMessageElement.height;
+            yOffset -= chatMessageElement.getPredictedHeight();
             chatMessageElement.y = yOffset;
             chatMessageElement.setWidth(this.chatWidth);
         }
@@ -274,9 +275,6 @@ export class ChatGUI extends Container {
     }
 
     public resize(width: number, height: number) {
-        this.fullWidth = width;
-        this.fullHeight = height;
-
         let yOffset = 32;
 
         this.chatWidth = Math.max(width * 0.5, Math.min(320, width - 4));
