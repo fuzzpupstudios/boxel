@@ -6,7 +6,6 @@ export enum MouseButton {
     RIGHT = 2,
     MOUSE4 = 3,
     MOUSE5 = 4,
-    UNLOCK = 100,
     SCROLL_UP = 101,
     SCROLL_DOWN = 102
 };
@@ -18,27 +17,19 @@ export class Mouse {
 
     private readonly position = new Vector2;
     private readonly deltaPosition = new Vector2;
-    private locked: boolean = false;
     private element?: HTMLElement;
     private readonly onMouseDownEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
     private readonly onMouseUpEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
     private readonly onMouseMoveEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
     private readonly onContextMenuEvents = new Map<HTMLElement, (event: MouseEvent) => void>;
     private readonly onWheelEvents = new Map<HTMLElement, (event: WheelEvent) => void>;
-    private readonly onPointerLockChangeEvents = new Set<() => void>;
-    public unadjustedMovement: boolean = true;
 
     public addListeners(element: HTMLElement) {
         this.element = element;
 
         const onMouseDown = (event: MouseEvent) => {
-            const changed = this.updatePointerLock();
-            event.preventDefault();
-
-            if(!changed) {
-                this.pressingButtons.add(event.button);
-                this.wasPressedButtons.add(event.button);
-            }
+            this.pressingButtons.add(event.button);
+            this.wasPressedButtons.add(event.button);
         };
         const onMouseUp = (event: MouseEvent) => {
             this.pressingButtons.delete(event.button);
@@ -54,26 +45,18 @@ export class Mouse {
             if(event.deltaY > 0) this.wasPressedButtons.add(MouseButton.SCROLL_UP);
             if(event.deltaY < 0) this.wasPressedButtons.add(MouseButton.SCROLL_DOWN);
         }
-        const onPointerLockChange = () => {
-            if(!this.isCurrentlyLocked()) {
-                this.wasPressedButtons.add(MouseButton.UNLOCK);
-                this.locked = false;
-            }
-        }
         
         element.addEventListener("mousedown", onMouseDown);
         element.addEventListener("mouseup", onMouseUp);
         element.addEventListener("mousemove", onMouseMove);
         element.addEventListener("contextmenu", onContextMenu);
         element.addEventListener("wheel", onWheel);
-        document.addEventListener("pointerlockchange", onPointerLockChange);
 
         this.onMouseDownEvents.set(element, onMouseDown);
         this.onMouseUpEvents.set(element, onMouseUp);
         this.onMouseMoveEvents.set(element, onMouseMove);
         this.onContextMenuEvents.set(element, onContextMenu);
         this.onWheelEvents.set(element, onWheel);
-        this.onPointerLockChangeEvents.add(onPointerLockChange);
     }
 
     public removeAllListeners() {
@@ -92,26 +75,6 @@ export class Mouse {
         for(const [ element, onWheel ] of this.onWheelEvents) {
             element.removeEventListener("wheel", onWheel);
         }
-        for(const onPointerLockChange of this.onPointerLockChangeEvents) {
-            document.removeEventListener("pointerlockchange", onPointerLockChange);
-        }
-    }
-
-    public updatePointerLock(): boolean {
-        if(this.locked) {
-            if(!this.isCurrentlyLocked()) {
-                this.element!.requestPointerLock({ unadjustedMovement: this.unadjustedMovement }).catch(() => {
-                    this.locked = false;
-                });
-                return true;
-            }
-        } else {
-            if(this.isCurrentlyLocked()) {
-                document.exitPointerLock();
-                return true;
-            }
-        }
-        return false;
     }
 
     public isPressed(button: MouseButton) {
@@ -145,29 +108,9 @@ export class Mouse {
         return out.copy(this.deltaPosition);
     }
 
-    public isCurrentlyLocked() {
-        return this.element != null && document.pointerLockElement === this.element;
-    }
-    public isLocked() {
-        return this.locked;
-    }
-
     public clearAll() {
         this.pressingButtons.clear();
         this.wasPressedButtons.clear();
-
-        this.unlock();
-    }
-
-    public async lock() {
-        this.locked = true;
-
-        this.updatePointerLock();
-    }
-    public async unlock() {
-        this.locked = false;
-        
-        this.updatePointerLock();
     }
 
     public update() {

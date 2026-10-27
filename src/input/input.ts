@@ -2,6 +2,7 @@ import { Controller, ControllerAxis, ControllerButton } from "./controller";
 import { Keyboard } from "./keyboard";
 import { MobileButton, MobileController } from "./mobileController";
 import { Mouse, MouseButton } from "./mouse";
+import { PointerLock } from "./pointerLock";
 import { TouchController } from "./touch";
 
 export enum ControlBinding {
@@ -31,6 +32,7 @@ export enum ControlBinding {
     TOGGLE_DEBUG,
     OPEN_CHAT, OPEN_COMMAND,
     CHAT_HISTORY_OLDER, CHAT_HISTORY_NEWER,
+    SUBMIT_CHAT_MESSAGE,
 
     SLOT_0, SLOT_1, SLOT_2, SLOT_3, SLOT_4, SLOT_5, SLOT_6, SLOT_7, SLOT_8, SLOT_9,
 }
@@ -56,6 +58,7 @@ export interface CompositeControl {
 export class Input {
     public keyboard: Keyboard | null = null;
     public mouse: Mouse | null = null;
+    public pointerLock: PointerLock | null = null;
     public touch: TouchController | null = null;
     public mobile: MobileController | null = null;
     public readonly controllers: Map<Gamepad, Controller> = new Map;
@@ -102,6 +105,7 @@ export class Input {
         [ControlBinding.OPEN_COMMAND]: "Slash",
         [ControlBinding.CHAT_HISTORY_OLDER]: "ArrowUp",
         [ControlBinding.CHAT_HISTORY_NEWER]: "ArrowDown",
+        [ControlBinding.SUBMIT_CHAT_MESSAGE]: "Enter",
 
         [ControlBinding.SLOT_0]: "Digit1",
         [ControlBinding.SLOT_1]: "Digit2",
@@ -212,6 +216,7 @@ export class Input {
     public attachMouse(body: HTMLElement) {
         this.mouse = new Mouse;
         this.mouse.addListeners(body);
+        this.pointerLock = new PointerLock(body);
     }
     public attachTouch(body: HTMLElement, isTouchingGui: (x: number, y: number) => boolean) {
         this.touch = new TouchController(isTouchingGui);
@@ -333,7 +338,7 @@ export class Input {
     }
     public getMouseAxis(axis: MouseAxis, lockedOnly: boolean = false): number {
         if(this.mouse == null) return 0;
-        if(lockedOnly && !this.mouse.isCurrentlyLocked()) return 0;
+        if(lockedOnly && !this.pointerLock?.isLocked()) return 0;
 
         switch(axis) {
             case MouseAxis.DELTA_X:
@@ -515,6 +520,8 @@ export class Input {
         this.keyboard = null;
         this.mouse?.removeAllListeners();
         this.mouse = null;
+        this.pointerLock?.dispose();
+        this.pointerLock = null;
         this.controllers.clear();
     }
 }

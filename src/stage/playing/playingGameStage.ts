@@ -3,6 +3,8 @@ import { Frustum, MathUtils, Matrix4, PerspectiveCamera } from "three";
 import type { Node } from "three/webgpu";
 import { blockStateRegistry } from "../../block/blockRegistry";
 import type { BoxelGame } from "../../boxel";
+import { Chat } from "../../chat/chat";
+import { CommandExecutor } from "../../chat/command/commandExecutor";
 import { ItemHologramProvider } from "../../entity/itemHologram";
 import { Player } from "../../entity/player";
 import { EventCursor } from "../../events/eventSheet";
@@ -16,13 +18,13 @@ import { isGuiGraphicContainer } from "../../gui/graphic/graphic";
 import { InventoryEvent } from "../../gui/guiCursor";
 import { GuiManager } from "../../gui/guiManager";
 import { guiTypeRegistry } from "../../gui/guiTypeRegistry";
+import { ChatGUI } from "../../gui/prefab/chat";
 import { DebugMenu, DebugMenuLineAlignment } from "../../gui/prefab/debugMenu";
 import { GuiDPadLeft } from "../../gui/prefab/dPadLeft";
 import { GuiDPadRight } from "../../gui/prefab/dPadRight";
 import { Topbar } from "../../gui/prefab/topbar";
 import { ControlBinding } from "../../input/input";
 import { MobileController } from "../../input/mobileController";
-import { MouseButton } from "../../input/mouse";
 import { itemRegistry } from "../../item/itemRegistry";
 import { ItemStack } from "../../item/itemStack";
 import type { PersistentWorld } from "../../persistence/persistentWorld";
@@ -36,9 +38,6 @@ import { GameStage } from "../gameStage";
 import { SettingsScreenStage } from "../settings/settingsGameStage";
 import { TitleScreenStage } from "../title/titleScreenStage";
 import { PlayerController } from "./playerController";
-import { ChatGUI } from "../../gui/prefab/chat";
-import { Chat, ChatMessage } from "../../chat/chat";
-import { CommandExecutor } from "../../chat/command/commandExecutor";
 
 export class PlayingGameStage extends GameStage {
     public readonly world: World;
@@ -152,6 +151,7 @@ export class PlayingGameStage extends GameStage {
     private readonly dPadLeft: GuiDPadLeft | null = null;
     private readonly dPadRight: GuiDPadRight | null = null;
     private readonly topbar: Topbar | null = null;
+    private clearInputNextFrame: boolean = false;
 
     public constructor(game: BoxelGame) {
         super(game);
@@ -166,11 +166,19 @@ export class PlayingGameStage extends GameStage {
         this.itemSpriteProvider = new GuiItemSpriteProvider(game.textureAtlases!);
         this.itemHologramProvider = new ItemHologramProvider(game.textureAtlases!);
 
-        this.guiManager = new GuiManager(this.tileHologramProvider, this.itemSpriteProvider);
+        this.guiManager = new GuiManager(this.tileHologramProvider, this.itemSpriteProvider, game.input.pointerLock!);
         this.gui.addChild(this.guiManager.view);
         this.guiManager.onUpdate.connect(() => {
             this.updateInputLocks();
         });
+
+        if(game.input.pointerLock) {
+            game.input.pointerLock.onUnlock.connect(() => {
+                if(!this.chatGui.messageBarOpen && this.guiManager.getOpenModalCount() === 0) {
+                    this.setPaused(true);
+                }
+            });
+        }
 
         this.holdingBlockPreview = new GuiItemStack(
             ItemStack.empty(),
@@ -204,9 +212,14 @@ export class PlayingGameStage extends GameStage {
         this.debugMenuLines.version.setData(this.game.version);
 
         this.chatGui.zIndex = 5;
-        this.chatGui.onClose.connect(() => {
+        this.chatGui.onClose.connect(async () => {
             if(this.controlAllowed) {
-                this.game.input.mouse?.lock();
+                try {
+                    await this.game.input.pointerLock?.lock();
+                    this.updateInputLocks();
+                } catch(e) {
+                    this.chatGui.openMessageBar("");
+                }
             }
         });
         this.chatGui.onMessage.connect(message => {
@@ -298,6 +311,8 @@ export class PlayingGameStage extends GameStage {
         this.resumeButton = new GuiButton("Resume", 100, 30);
         this.resumeButton.on("pointerdown", () => {
             this.game.audioManager.playMenuBack();
+            
+            this.clearInputNextFrame = true;
             this.setPaused(false);
         });
 
@@ -424,33 +439,38 @@ export class PlayingGameStage extends GameStage {
         return !this.paused && this.isTopmostStage() && !this.chatGui.messageBarOpen && this.guiManager.getOpenModalCount() === 0;
     }
 
-    public setPaused(paused: boolean) {
-        this.paused = paused;
-            
-        this.worldRenderer.setPaused(paused);
+    public async setPaused(paused: boolean) {
+        if(paused) {
+            this.game.input.pointerLock?.unlock();
+        } else {
+            await this.game.input.pointerLock?.lock();
+        }
+        this.updateInputLocks();
 
+        this.paused = paused;
+        this.worldRenderer.setPaused(paused);
+        
+        
         if(paused) {
             this.pausedContainer.visible = true;
-
+            
             this.game.controllerCrosshair?.crosshairPosition
-                .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
+            .set(this.game.guiWidth / 2, this.game.guiHeight / 2);
         } else {
             this.pausedContainer.visible = false;
         }
-
-        this.updateInputLocks();
+        
+        await this.save();
     }
 
     public updateInputLocks() {
         if(this.guiManager.getOpenModalCount() > 0 || this.paused) {
             if(this.game.isDesktop) {
-                this.game.input.mouse?.unlock();
                 this.game.input.keyboard?.unlock();
             }
             this.game.controllerCrosshair?.enable();
         } else {
             if(this.game.isDesktop) {
-                this.game.input.mouse?.lock();
                 this.game.input.keyboard?.lock();
             }
             this.game.controllerCrosshair?.disable();
@@ -539,6 +559,11 @@ export class PlayingGameStage extends GameStage {
     public tick(time: Time) {
         if(this.worldLoading) return;
 
+        if(this.clearInputNextFrame) {
+            this.game.input.clearAll();
+            this.clearInputNextFrame = false;
+        }
+
         const game = this.game;
 
         this.autosaveCooldown -= time.deltaTime;
@@ -554,42 +579,29 @@ export class PlayingGameStage extends GameStage {
         this.debugMenuLines.framerate.setData(this.frameCounter.length, this.game.settings.maxFramerate);
 
 
-        if(this.controlAllowed || (this.paused && this.isTopmostStage())) {
-            if(game.input.wasPressed(ControlBinding.PAUSE)) {
-                if(this.paused) {
-                    this.setPaused(false);
-                } else {
-                    this.setPaused(true);
-                    this.save();
-                }
-            } else if(game.input.wasPressed(ControlBinding.BACK) && this.paused) {
-                this.setPaused(false);
-                this.unlockTime = 0;
-            }
-        }
-
-        if(game.input.mouse != null && game.input.controllers.size == 0 && game.isDesktop) {
-            if(game.input.mouse.isCurrentlyLocked() || !this.controlAllowed) {
-                this.unlockTime = 0;
-            } else {
-                this.unlockTime += time.deltaTime;
-
-                if(game.focused) {
-                    game.input.mouse.lock();
-                }
-            }
-            if(
-                (this.unlockTime > 1 && this.game.settings.pauseIfUnlocked)
-                || (game.input.mouse.wasPressed(MouseButton.UNLOCK) && this.controlAllowed)
-            ) {
+        if(this.controlAllowed) {
+            if(game.input.wasPressed(ControlBinding.PAUSE) || game.input.wasPressed(ControlBinding.BACK)) {
                 this.setPaused(true);
+            }
+        } else {
+            if(this.paused) {
+                if(game.input.wasUnpressed(ControlBinding.PAUSE) || game.input.wasUnpressed(ControlBinding.BACK)) {
+                    this.setPaused(false);
+                }
+            } else if(this.chatGui.messageBarOpen) {
+                if(game.input.wasUnpressed(ControlBinding.BACK)) {
+                    this.game.input.pointerLock?.lock().then(() => {
+                        this.updateInputLocks();
+                        this.chatGui.closeMessageBar();
+                    })
+                }
             }
         }
 
         if(!this.paused && this.localPlayer != null) {
             const topModal = this.guiManager.getTopModal();
             if(topModal != null) {
-                if(game.input.wasPressed(ControlBinding.CLOSE_MODAL) || game.input.wasPressed(ControlBinding.BACK)) {
+                if(game.input.wasPressed(ControlBinding.CLOSE_MODAL) || game.input.wasUnpressed(ControlBinding.BACK)) {
                     this.guiManager.closeGui(topModal.gui.type.id);
                     this.localPlayer.inventory.addStack(this.localPlayer.pointerInventory.slots[0].stack);
                 }
@@ -646,12 +658,14 @@ export class PlayingGameStage extends GameStage {
 
         if(this.controlAllowed) {
             if(this.game.input.wasPressed(ControlBinding.OPEN_CHAT)) {
+                this.game.input.pointerLock?.unlock();
+                this.updateInputLocks();
                 this.chatGui.openMessageBar();
-                this.game.input.mouse?.unlock();
             }
             if(this.game.input.wasPressed(ControlBinding.OPEN_COMMAND)) {
+                this.game.input.pointerLock?.unlock();
+                this.updateInputLocks();
                 this.chatGui.openMessageBar("/");
-                this.game.input.mouse?.unlock();
             }
         }
         if(this.chatGui.messageBarOpen) {
@@ -660,6 +674,9 @@ export class PlayingGameStage extends GameStage {
             }
             if(this.game.input.wasPressed(ControlBinding.CHAT_HISTORY_NEWER)) {
                 this.chatGui.messageBar.newerHistory();
+            }
+            if(this.game.input.wasPressed(ControlBinding.SUBMIT_CHAT_MESSAGE)) {
+                this.chatGui.messageBar.trySubmit();
             }
         }
 

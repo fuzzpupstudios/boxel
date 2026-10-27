@@ -254,8 +254,8 @@ export class BoxelGame {
         this.settings.guiScale = this.settings.guiScale;
         this.updateUiSizes(this.viewportWidth, this.viewportHeight, this.viewportPixelRatio);
 
-        if(this.input.mouse) {
-            this.input.mouse.unadjustedMovement = this.settings.unadjustedMovement;
+        if(this.input.pointerLock) {
+            this.input.pointerLock.unadjustedMovement = this.settings.unadjustedMovement;
         }
         
         for(const controller of this.input.controllers.values()) {

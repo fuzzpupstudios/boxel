@@ -69,20 +69,9 @@ class ChatGuiMessageBar extends Container {
 
         this.messageBox = messageBox;
 
-        this.messageBox.onEnter.connect(() => {
-            const text = this.messageBox.value;
-
-            if(/[^\s\t\r\n]/.test(text)) {
-                this.onSubmit.emit(text);
-
-                if(text != this.history[0]) {
-                    this.history.unshift(text);
-                }
-                this.historyIndex = -1;
-            } else {
-                this.onClose.emit();
-            }
-        })
+        messageBox.on("tap", () => {
+            this.messageBox.focus();
+        });
     }
 
     public newerHistory() {
@@ -100,6 +89,21 @@ class ChatGuiMessageBar extends Container {
 
         this.historyIndex++;
         this.messageBox.value = this.history[this.historyIndex];
+    }
+
+    public trySubmit() {
+        const text = this.messageBox.value;
+        if(!/[^\s\t\r\n]/.test(text)) {
+            this.focus();
+            return;
+        }
+
+        this.onSubmit.emit(text);
+
+        if(text != this.history[0]) {
+            this.history.unshift(text);
+        }
+        this.historyIndex = -1;
     }
 
     public focus() {
